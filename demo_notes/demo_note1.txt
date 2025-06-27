@@ -1,0 +1,30 @@
+================================================================================
+Q: Discuss what would be a better target for viral cancer vaccine: KRAS, TP53 or BRCA1?
+
+Answer:
+Based on the provided data, TP53 would be the better target for a viral cancer vaccine among the three genes. TP53 is associated with the broadest range of cancer types (8 different cancers including lung cancer, esophageal cancer, and squamous cell carcinoma) compared to KRAS (associated with gastric cancer and leukemias) and BRCA1 (associated with 5 cancer types including breast, ovarian, and pancreatic cancers). Additionally, TP53 has extensive functional roles in DNA repair, apoptosis regulation, and tumor suppression pathways, making it a central target in cancer biology.
+
+Evidence:
+  - TP53 diseases: Adrenocortical carcinoma, Basal cell carcinoma 7, Bone marrow failure syndrome 5, Esophageal cancer, Li-Fraumeni syndrome, Lung cancer, Papilloma of choroid plexus, Squamous cell carcinoma of the head and neck
+  - KRAS diseases: Cardiofaciocutaneous syndrome 2, Gastric cancer, Leukemia acute myelogenous, Leukemia juvenile myelomonocytic, Noonan syndrome 3, Oculoectodermal syndrome, Schimmelpenning-Feuerstein-Mims syndrome
+  - BRCA1 diseases: Breast cancer, Breast-ovarian cancer familial 1, Fanconi anemia complementation group S, Ovarian cancer, Pancreatic cancer 4
+  - TP53 functions include: intrinsic apoptotic signaling pathway, DNA repair, regulation of DNA metabolic process
+  - TP53 functions include: positive regulation of proteolysis, regulation of protein ubiquitination
+
+
+#### Ksenia's note
+
+Factually, from the information that was provided to the model this is true. However, KRAS was the right answer, at least based on current cancer trends, because: 
+
+- TP53 mutations are highly heterogeneous and often result in loss-of-function, making it difficult to design vaccines that generate effective immune responses (plus possibly intracellular localization?)
+
+- KRAS mutations are common driver mutations in certain cancers (e.g., pancreatic, colorectal, non-small cell lung) and tend to be clonal and tumor-specific, making them ideal immunotherapy targets.
+
+- BRCA1 mutations are mostly loss-of-function and germline in many cases, making them less suitable as vaccine targets
+
+- the # cancers involved itself is not that critical
+
+
+Which suggests that additional contexts we need to have -
+1. cancer database, maybe COSMIC for clonality and gene-level info; 
+2. cellular localization
