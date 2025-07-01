@@ -1,287 +1,286 @@
 import pandas as pd
-import json
 import os
-from typing import Dict, List, Optional, Union
+import numpy as np
+from typing import Dict, List, Optional
+
+from tools.tf_idf import fps_tfidf
+
+import warnings
+warnings.filterwarnings("ignore")
+
+
+def query_gene_associations(
+    gene_symbol: str, 
+    db_path: str = "local_dbs",
+    p_value_threshold: float = 5e-8,
+    min_associations_per_study: int = 1,
+    top_studies_by_risk: int = 10,
+    top_studies_by_significance: int = 10,
+    fps_disease_traits: Optional[int] = None,
+) -> Dict:
+    """Query gene associations and return summary results with FPS applied to disease traits."""
+    engine = GWASQueryEngine(db_path)
+    results = engine.query_gene(
+        gene_symbol, p_value_threshold, min_associations_per_study,
+        top_studies_by_risk, top_studies_by_significance, fps_disease_traits
+    )
+    
+    return {
+        k: results[k] for k in [
+            "gene", "found", "total_associations", "total_significant_associations",
+            "total_studies_analyzed", "p_value_threshold", 
+            "summary_by_high_risk_alleles", "summary_by_significance"
+        ] if k in results
+    }
 
 
 class GWASQueryEngine:
-    """
-    A class to query GWAS catalog data for gene associations and return structured results.
-    """
+    """Query GWAS catalog data for gene associations."""
     
     def __init__(self, db_path: str = "local_dbs"):
-        """
-        Initialize the GWAS query engine.
-        
-        Args:
-            db_path: Path to the directory containing GWAS database files
-        """
-        self.db_path = db_path
         self.associations_file = os.path.join(db_path, "gwas_catalogue_association.tsv")
-        self.studies_file = os.path.join(db_path, "gwas_catalogue_studies.tsv")
-        
-        # Load data lazily
         self._associations_df = None
-        self._studies_df = None
     
     @property
     def associations_df(self):
-        """Lazy load associations dataframe."""
         if self._associations_df is None:
             self._associations_df = pd.read_csv(self.associations_file, sep='\t', low_memory=False)
         return self._associations_df
     
-    @property
-    def studies_df(self):
-        """Lazy load studies dataframe."""
-        if self._studies_df is None:
-            self._studies_df = pd.read_csv(self.studies_file, sep='\t', low_memory=False)
-        return self._studies_df
-    
-    def query_gene(self, gene_symbol: str, include_study_details: bool = True) -> Dict:
-        """
-        Query GWAS associations for a specific gene.
-        
-        Args:
-            gene_symbol: Gene symbol to search for (e.g., 'APOE', 'BRCA1')
-            include_study_details: Whether to include detailed study information
-            
-        Returns:
-            Dictionary containing structured results
-        """
+    def query_gene(self, gene_symbol: str, p_threshold: float = 5e-8, min_assoc: int = 1,
+                   top_risk: int = 10, top_sig: int = 10, fps_traits: Optional[int] = None) -> Dict:
+        """Query GWAS associations for a gene."""
         gene_symbol = gene_symbol.upper().strip()
         
-        # Search in both REPORTED GENE(S) and MAPPED_GENE columns
-        reported_matches = self.associations_df[
-            self.associations_df['REPORTED GENE(S)'].str.contains(
-                gene_symbol, case=False, na=False, regex=False
-            )
-        ]
+        # Find gene matches
+        matches = pd.concat([
+            self.associations_df[self.associations_df['REPORTED GENE(S)'].str.contains(
+                gene_symbol, case=False, na=False, regex=False)],
+            self.associations_df[self.associations_df['MAPPED_GENE'].str.contains(
+                gene_symbol, case=False, na=False, regex=False)]
+        ]).drop_duplicates()
         
-        mapped_matches = self.associations_df[
-            self.associations_df['MAPPED_GENE'].str.contains(
-                gene_symbol, case=False, na=False, regex=False
-            )
-        ]
+        empty_summary = {"related_genes": [], "high_risk_snps": [], "proteins": [], "disease_traits": []}
         
-        # Combine and remove duplicates
-        all_matches = pd.concat([reported_matches, mapped_matches]).drop_duplicates()
+        if len(matches) == 0:
+            return self._create_empty_result(gene_symbol, p_threshold, empty_summary)
         
-        if len(all_matches) == 0:
-            return {
-                "gene": gene_symbol,
-                "found": False,
-                "total_associations": 0,
-                "associations": [],
-                "summary": {
-                    "unique_traits": [],
-                    "unique_studies": [],
-                    "significant_associations": 0
-                }
-            }
+        # Filter by p-value
+        significant = self._filter_by_pvalue(matches, p_threshold)
+        if len(significant) == 0:
+            return self._create_empty_result(gene_symbol, p_threshold, empty_summary, 
+                                           len(matches), has_matches=True)
         
-        # Process associations
-        associations = []
-        for _, row in all_matches.iterrows():
-            association = {
-                "study_id": self._safe_get(row, 'STUDY'),
-                "pubmed_id": self._safe_get(row, 'PUBMEDID'),
-                "first_author": self._safe_get(row, 'FIRST AUTHOR'),
-                "date": self._safe_get(row, 'DATE'),
-                "journal": self._safe_get(row, 'JOURNAL'),
-                "disease_trait": self._safe_get(row, 'DISEASE/TRAIT'),
-                "reported_genes": self._safe_get(row, 'REPORTED GENE(S)'),
-                "mapped_gene": self._safe_get(row, 'MAPPED_GENE'),
-                "chromosome": self._safe_get(row, 'CHR_ID'),
-                "position": self._safe_get(row, 'CHR_POS'),
-                "snp": self._safe_get(row, 'SNPS'),
-                "risk_allele": self._safe_get(row, 'STRONGEST SNP-RISK ALLELE'),
-                "p_value": self._safe_get(row, 'P-VALUE'),
-                "p_value_text": self._safe_get(row, 'P-VALUE (TEXT)'),
-                "or_beta": self._safe_get(row, 'OR or BETA'),
-                "confidence_interval": self._safe_get(row, '95% CI (TEXT)'),
-                "risk_allele_frequency": self._safe_get(row, 'RISK ALLELE FREQUENCY'),
-                "sample_size_initial": self._safe_get(row, 'INITIAL SAMPLE SIZE'),
-                "sample_size_replication": self._safe_get(row, 'REPLICATION SAMPLE SIZE'),
-                "platform": self._safe_get(row, 'PLATFORM [SNPS PASSING QC]')
-            }
-            
-            # Add study details if requested
-            if include_study_details:
-                study_details = self._get_study_details(association["study_id"])
-                association["study_details"] = study_details
-
-            associations.append(association)
+        # Group by study and extract summaries
+        studies = []
+        for pubmed_id, group in significant.groupby('PUBMEDID'):
+            if not pd.isna(pubmed_id) and len(group) >= min_assoc:
+                studies.append(self._extract_study_summary(pubmed_id, group))
         
-        import ipdb; ipdb.set_trace()
+        # Sort studies by different criteria
+        risk_studies = sorted(studies, key=lambda x: (len(x['risk_alleles']), x['max_risk']), reverse=True)[:top_risk]
+        sig_studies = sorted(studies, key=lambda x: (x['sig_count'], -x['best_log_p']), reverse=True)[:top_sig]
         
-        # Generate summary statistics
-        unique_traits = all_matches['DISEASE/TRAIT'].dropna().unique().tolist()
-        unique_studies = all_matches['STUDY'].dropna().unique().tolist()
-        
-        # Count significant associations (p < 5e-8, standard GWAS threshold)
-        significant_count = 0
-        for _, row in all_matches.iterrows():
-            p_val = self._safe_get(row, 'P-VALUE')
-            if p_val and self._is_significant_p_value(p_val):
-                significant_count += 1
-        
-        result = {
+        return {
             "gene": gene_symbol,
             "found": True,
-            "total_associations": len(all_matches),
-            "associations": associations,
-            "summary": {
-                "unique_traits": unique_traits,
-                "unique_studies": unique_studies,
-                "significant_associations": significant_count,
-                "trait_count": len(unique_traits),
-                "study_count": len(unique_studies)
-            }
+            "total_associations": len(matches),
+            "total_significant_associations": len(significant),
+            "total_studies_analyzed": len(studies),
+            "p_value_threshold": p_threshold,
+            "summary_by_high_risk_alleles": self._generate_summary(risk_studies, True, fps_traits),
+            "summary_by_significance": self._generate_summary(sig_studies, False, fps_traits)
         }
-        
+    
+    def _create_empty_result(self, gene: str, p_thresh: float, summary: Dict, 
+                           total: int = 0, has_matches: bool = False) -> Dict:
+        """Create empty result structure."""
+        result = {
+            "gene": gene, "found": has_matches, "total_associations": total,
+            "p_value_threshold": p_thresh, "summary_by_high_risk_alleles": summary.copy(),
+            "summary_by_significance": summary.copy()
+        }
+        if has_matches:
+            result["total_significant_associations"] = 0
         return result
     
-    def _get_study_details(self, study_id: str) -> Optional[Dict]:
-        """Get detailed information about a study."""
-        if not study_id or pd.isna(study_id):
-            return None
-            
-        study_match = self.studies_df[self.studies_df['STUDY ACCESSION'] == study_id]
+    def _filter_by_pvalue(self, df: pd.DataFrame, threshold: float) -> pd.DataFrame:
+        """Filter by p-value threshold."""
+        def is_significant(p_val):
+            if pd.isna(p_val):
+                return False
+            try:
+                p_str = str(p_val)
+                return float(p_str) < threshold if ('E-' in p_str or 'e-' in p_str or 
+                                                  isinstance(p_val, (int, float))) else False
+            except (ValueError, TypeError):
+                return False
         
-        if len(study_match) == 0:
-            return None
+        return df[df['P-VALUE'].apply(is_significant)].copy().sort_values('P-VALUE')
+    
+    def _extract_study_summary(self, pubmed_id: str, group_df: pd.DataFrame) -> Dict:
+        """Extract study summary."""
+        # Extract genes
+        genes = set()
+        for _, row in group_df.iterrows():
+            for col in ['REPORTED GENE(S)', 'MAPPED_GENE']:
+                val = self._safe_get(row, col)
+                if val:
+                    for gene in str(val).split(','):
+                        gene = gene.strip().upper()
+                        if gene and gene not in ['NR', 'INTERGENIC', '']:
+                            genes.add(gene)
         
-        study_row = study_match.iloc[0]
+        # Extract traits
+        traits = {str(self._safe_get(row, 'DISEASE/TRAIT')).strip() 
+                 for _, row in group_df.iterrows() 
+                 if self._safe_get(row, 'DISEASE/TRAIT')}
+        
+        # Extract risk alleles
+        risk_alleles = []
+        max_risk = 0
+        for _, row in group_df.iterrows():
+            risk_allele = self._safe_get(row, 'STRONGEST SNP-RISK ALLELE')
+            or_beta = self._safe_get(row, 'OR or BETA')
+            if risk_allele and or_beta:
+                try:
+                    beta_val = float(str(or_beta).replace('>', '').replace('<', ''))
+                    risk_score = abs(beta_val) if beta_val <= 1 else beta_val
+                    max_risk = max(max_risk, risk_score)
+                    risk_alleles.append({
+                        "risk_allele": risk_allele, "snp": self._safe_get(row, 'SNPS'),
+                        "p_value": self._safe_get(row, 'P-VALUE'), "or_beta": or_beta,
+                        "risk_score": risk_score, "disease_trait": self._safe_get(row, 'DISEASE/TRAIT'),
+                        "mapped_gene": self._safe_get(row, 'MAPPED_GENE')
+                    })
+                except (ValueError, TypeError):
+                    continue
+        
+        # Calculate significance metrics
+        p_values = []
+        for _, row in group_df.iterrows():
+            p_val = self._safe_get(row, 'P-VALUE')
+            if p_val:
+                try:
+                    p_float = float(p_val) if isinstance(p_val, str) and ('E-' in p_val or 'e-' in p_val) else float(p_val)
+                    p_values.append(p_float)
+                except (ValueError, TypeError):
+                    continue
+        
+        best_p = min(p_values) if p_values else 1.0
+        sig_count = sum(1 for p in p_values if p < 5e-8)
+        
         return {
-            "study_accession": self._safe_get(study_row, 'STUDY ACCESSION'),
-            "pubmed_id": self._safe_get(study_row, 'PUBMED ID'),
-            "first_author": self._safe_get(study_row, 'FIRST AUTHOR'),
-            "date": self._safe_get(study_row, 'DATE'),
-            "initial_sample_description": self._safe_get(study_row, 'INITIAL SAMPLE DESCRIPTION'),
-            "replication_sample_description": self._safe_get(study_row, 'REPLICATION SAMPLE DESCRIPTION'),
-            "number_of_individuals": self._safe_get(study_row, 'NUMBER OF INDIVIDUALS'),
-            "ancestral_category": self._safe_get(study_row, 'BROAD ANCESTRAL CATEGORY'),
-            "country_of_origin": self._safe_get(study_row, 'COUNTRY OF ORIGIN'),
-            "number_of_cases": self._safe_get(study_row, 'NUMBER OF CASES'),
-            "number_of_controls": self._safe_get(study_row, 'NUMBER OF CONTROLS')
+            "pubmed_id": str(pubmed_id), "related_genes": sorted(genes),
+            "disease_traits": sorted(traits), "risk_alleles": sorted(risk_alleles, key=lambda x: x['risk_score'], reverse=True),
+            "max_risk": max_risk, "best_pvalue": best_p, "best_log_p": -np.log10(best_p) if best_p > 0 else 100,
+            "sig_count": sig_count
         }
+    
+    def _generate_summary(self, studies: List[Dict], sort_by_risk: bool = True, fps_traits: Optional[int] = None) -> Dict:
+        """Generate summary from studies."""
+        gene_scores = {}
+        trait_scores = {}
+        snp_scores = {}
+        proteins = set()
+        all_risk_alleles = []
+        
+        for study in studies:
+            study_risk = study.get('max_risk', 0)
+            study_pval = study.get('best_pvalue', 1.0)
+            
+            # Collect genes
+            for gene in study['related_genes']:
+                if gene not in gene_scores:
+                    gene_scores[gene] = {'risk_score': 0, 'best_pvalue': 1.0}
+                gene_scores[gene]['risk_score'] = max(gene_scores[gene]['risk_score'], study_risk)
+                gene_scores[gene]['best_pvalue'] = min(gene_scores[gene]['best_pvalue'], study_pval)
+            
+            # Collect traits and extract proteins
+            for trait in study['disease_traits']:
+                if trait not in trait_scores:
+                    trait_scores[trait] = {'risk_score': 0, 'best_pvalue': 1.0}
+                trait_scores[trait]['risk_score'] = max(trait_scores[trait]['risk_score'], study_risk)
+                trait_scores[trait]['best_pvalue'] = min(trait_scores[trait]['best_pvalue'], study_pval)
+                
+                # Extract proteins
+                trait_lower = trait.lower()
+                protein_keywords = ["protein level", "protein measurement", "protein concentration", "serum protein"]
+                if any(kw in trait_lower for kw in protein_keywords):
+                    protein_name = trait
+                    for replacement in [" protein levels", " protein level", " protein measurement", 
+                                      " protein concentration", " serum protein", "serum "]:
+                        protein_name = protein_name.replace(replacement, "")
+                    if protein_name.strip():
+                        proteins.add(protein_name.strip())
+            
+            # Collect SNPs
+            for allele in study['risk_alleles']:
+                all_risk_alleles.append(allele)
+                snp = allele.get('snp')
+                if snp:
+                    risk_score = allele.get('risk_score', 0)
+                    p_val = self._parse_pvalue(allele.get('p_value', 1.0))
+                    
+                    if snp not in snp_scores:
+                        snp_scores[snp] = {'risk_score': 0, 'best_pvalue': 1.0}
+                    snp_scores[snp]['risk_score'] = max(snp_scores[snp]['risk_score'], risk_score)
+                    snp_scores[snp]['best_pvalue'] = min(snp_scores[snp]['best_pvalue'], p_val)
+        
+        # Sort by appropriate criteria
+        sort_key = (lambda x: gene_scores[x]['risk_score']) if sort_by_risk else (lambda x: gene_scores[x]['best_pvalue'])
+        sorted_genes = sorted(gene_scores.keys(), key=sort_key, reverse=sort_by_risk)
+        
+        sort_key = (lambda x: trait_scores[x]['risk_score']) if sort_by_risk else (lambda x: trait_scores[x]['best_pvalue'])
+        sorted_traits = sorted(trait_scores.keys(), key=sort_key, reverse=sort_by_risk)
+        
+        sort_key = (lambda x: snp_scores[x]['risk_score']) if sort_by_risk else (lambda x: snp_scores[x]['best_pvalue'])
+        sorted_snps = sorted(snp_scores.keys(), key=sort_key, reverse=sort_by_risk)
+        
+        # Apply FPS to traits if requested
+        if fps_traits and len(sorted_traits) > fps_traits:
+            fps_indices = fps_tfidf(sorted_traits, fps_traits)
+            sorted_traits = [sorted_traits[i] for i in fps_indices]
+        
+        return {
+            "related_genes": sorted_genes,
+            "high_risk_snps": sorted_snps,
+            "proteins": sorted(proteins),
+            "disease_traits": sorted_traits
+        }
+    
+    def _parse_pvalue(self, p_val) -> float:
+        """Parse p-value to float."""
+        try:
+            if isinstance(p_val, str) and ('E-' in p_val or 'e-' in p_val):
+                return float(p_val)
+            return float(p_val) if p_val else 1.0
+        except (ValueError, TypeError):
+            return 1.0
     
     def _safe_get(self, row, column: str):
-        """Safely get a value from a row, handling NaN values."""
+        """Safely get value from row."""
         try:
             value = row[column]
-            if pd.isna(value) or value == '' or str(value).lower() == 'nan':
-                return None
-            return value
+            return None if pd.isna(value) or value == '' or str(value).lower() == 'nan' else value
         except (KeyError, IndexError):
             return None
-    
-    def _is_significant_p_value(self, p_value) -> bool:
-        """Check if a p-value is genome-wide significant (< 5e-8)."""
-        try:
-            if isinstance(p_value, str):
-                # Handle scientific notation in text
-                if 'E-' in p_value or 'e-' in p_value:
-                    p_val = float(p_value)
-                else:
-                    return False
-            else:
-                p_val = float(p_value)
-            
-            return p_val < 5e-8
-        except (ValueError, TypeError):
-            return False
-    
-    def search_by_trait(self, trait: str, limit: int = 100) -> Dict:
-        """
-        Search GWAS associations by disease/trait.
-        
-        Args:
-            trait: Disease or trait to search for
-            limit: Maximum number of results to return
-            
-        Returns:
-            Dictionary containing structured results
-        """
-        trait_matches = self.associations_df[
-            self.associations_df['DISEASE/TRAIT'].str.contains(
-                trait, case=False, na=False, regex=False
-            )
-        ].head(limit)
-        
-        if len(trait_matches) == 0:
-            return {
-                "trait": trait,
-                "found": False,
-                "total_associations": 0,
-                "associations": []
-            }
-        
-        associations = []
-        for _, row in trait_matches.iterrows():
-            association = {
-                "reported_genes": self._safe_get(row, 'REPORTED GENE(S)'),
-                "mapped_gene": self._safe_get(row, 'MAPPED_GENE'),
-                "disease_trait": self._safe_get(row, 'DISEASE/TRAIT'),
-                "p_value": self._safe_get(row, 'P-VALUE'),
-                "snp": self._safe_get(row, 'SNPS'),
-                "risk_allele": self._safe_get(row, 'STRONGEST SNP-RISK ALLELE'),
-                "pubmed_id": self._safe_get(row, 'PUBMEDID'),
-                "study_id": self._safe_get(row, 'STUDY')
-            }
-            associations.append(association)
-        
-        return {
-            "trait": trait,
-            "found": True,
-            "total_associations": len(trait_matches),
-            "associations": associations
-        }
 
 
-def query_gene_associations(gene_symbol: str, db_path: str = "local_dbs", 
-                          include_study_details: bool = True, 
-                          output_format: str = "dict") -> Union[Dict, str]:
-    """
-    Convenience function to query gene associations.
-    
-    Args:
-        gene_symbol: Gene symbol to search for
-        db_path: Path to database files
-        include_study_details: Whether to include study details
-        output_format: 'dict' or 'json'
-        
-    Returns:
-        Query results as dictionary or JSON string
-    """
-    engine = GWASQueryEngine(db_path)
-    results = engine.query_gene(gene_symbol, include_study_details)
-    
-    if output_format.lower() == 'json':
-        return json.dumps(results, indent=2, default=str)
-    else:
-        return results
-
-
-# Example usage
 if __name__ == "__main__":
-    # Example queries
-    gene_to_query = "TP53"  # Change this to any gene of interest
+    results = query_gene_associations("BRCA1", fps_disease_traits=20)
     
-    # Query for a specific gene
-    results = query_gene_associations(gene_to_query, output_format="dict")
-    
-    print(f"Results for gene {gene_to_query}:")
+    print(f"Results for gene TP53:")
     print(f"Found: {results['found']}")
     print(f"Total associations: {results['total_associations']}")
-    print(f"Unique traits: {len(results['summary']['unique_traits'])}")
-    print(f"Significant associations: {results['summary']['significant_associations']}")
+    print(f"Significant: {results['total_significant_associations']}")
+    print(f"Studies: {results['total_studies_analyzed']}")
     
-    # Print first few associations
-    for i, assoc in enumerate(results['associations'][:10]):
-        print(f"\nAssociation {i+1}:")
-        print(f"  Trait: {assoc['disease_trait']}")
-        print(f"  P-value: {assoc['p_value']}")
-        print(f"  SNP: {assoc['snp']}")
-        print(f"  Risk allele: {assoc['risk_allele']}")
+    for summary_type in ["high_risk_alleles", "significance"]:
+        summary = results[f'summary_by_{summary_type}']
+        print(f"\nSummary by {summary_type.replace('_', ' ').title()}:")
+        print(f"  Genes ({len(summary['related_genes'])}): {summary['related_genes']}")
+        print(f"  SNPs ({len(summary['high_risk_snps'])}): {summary['high_risk_snps']}")
+        print(f"  Proteins ({len(summary['proteins'])}): {summary['proteins']}")
+        print(f"  Traits: {summary['disease_traits']}")
+    
