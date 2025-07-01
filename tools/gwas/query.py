@@ -25,13 +25,21 @@ def query_gene_associations(
         top_studies_by_risk, top_studies_by_significance, fps_disease_traits
     )
     
-    return {
+    all_results = {
         k: results[k] for k in [
-            "gene", "found", "total_associations", "total_significant_associations",
-            "total_studies_analyzed", "p_value_threshold", 
-            "summary_by_high_risk_alleles", "summary_by_significance"
+            "gene", 
+            "found", 
+            "total_associations", 
+            "total_significant_associations",
+            "total_studies_analyzed", 
+            "p_value_threshold", 
+            "support_types",
+            "support_values",
+            "summary_by_high_risk_alleles", 
+            "summary_by_significance"
         ] if k in results
     }
+    return all_results
 
 
 class GWASQueryEngine:
@@ -79,7 +87,7 @@ class GWASQueryEngine:
         
         # Sort studies by different criteria
         risk_studies = sorted(studies, key=lambda x: (len(x['risk_alleles']), x['max_risk']), reverse=True)[:top_risk]
-        sig_studies = sorted(studies, key=lambda x: (x['sig_count'], -x['best_log_p']), reverse=True)[:top_sig]
+        sig_studies = sorted(studies, key=lambda x: (x['sig_count'], -x['best_log_p']), reverse=False)[:top_sig]
         
         return {
             "gene": gene_symbol,
@@ -89,7 +97,9 @@ class GWASQueryEngine:
             "total_studies_analyzed": len(studies),
             "p_value_threshold": p_threshold,
             "summary_by_high_risk_alleles": self._generate_summary(risk_studies, True, fps_traits),
-            "summary_by_significance": self._generate_summary(sig_studies, False, fps_traits)
+            "summary_by_significance": self._generate_summary(sig_studies, False, fps_traits),
+            "studies_by_high_risk_alleles": risk_studies,
+            "studies_by_significance": sig_studies,
         }
     
     def _create_empty_result(self, gene: str, p_thresh: float, summary: Dict, 
@@ -171,9 +181,13 @@ class GWASQueryEngine:
         sig_count = sum(1 for p in p_values if p < 5e-8)
         
         return {
-            "pubmed_id": str(pubmed_id), "related_genes": sorted(genes),
-            "disease_traits": sorted(traits), "risk_alleles": sorted(risk_alleles, key=lambda x: x['risk_score'], reverse=True),
-            "max_risk": max_risk, "best_pvalue": best_p, "best_log_p": -np.log10(best_p) if best_p > 0 else 100,
+            "pubmed_id": str(pubmed_id), 
+            "related_genes": sorted(genes),
+            "disease_traits": sorted(traits), 
+            "risk_alleles": sorted(risk_alleles, key=lambda x: x['risk_score'], reverse=True),
+            "max_risk": max_risk, 
+            "best_pvalue": best_p, 
+            "best_log_p": -np.log10(best_p) if best_p > 0 else 100,
             "sig_count": sig_count
         }
     
@@ -243,10 +257,10 @@ class GWASQueryEngine:
             sorted_traits = [sorted_traits[i] for i in fps_indices]
         
         return {
-            "related_genes": sorted_genes,
-            "high_risk_snps": sorted_snps,
-            "proteins": sorted(proteins),
-            "disease_traits": sorted_traits
+            "gwas_related_genes": sorted_genes,
+            "gwas_high_risk_snps": sorted_snps,
+            "gwas_affected_protein_levels": sorted(proteins),
+            "gwas_disease_traits": sorted_traits
         }
     
     def _parse_pvalue(self, p_val) -> float:
@@ -268,13 +282,22 @@ class GWASQueryEngine:
 
 
 if __name__ == "__main__":
-    results = query_gene_associations("BRCA1", fps_disease_traits=20)
+    gene = "NBR2"
+    results = query_gene_associations(gene, fps_disease_traits=20)
     
-    print(f"Results for gene TP53:")
+    print(f"Results for gene {gene}:")
     print(f"Found: {results['found']}")
     print(f"Total associations: {results['total_associations']}")
     print(f"Significant: {results['total_significant_associations']}")
     print(f"Studies: {results['total_studies_analyzed']}")
+    print(f"Studies by high-risk alleles: ")
+    for study in results['studies_by_high_risk_alleles']:
+        print(f"  {study['pubmed_id']}: {study['related_genes']}, {study['max_risk']}, {study['best_pvalue']}, {study['risk_alleles']}")
+    
+    print(f"--------------------------------")
+    print(f"Studies by significance: ")
+    for study in results['studies_by_significance']:
+        print(f"  {study['pubmed_id']}: {study['related_genes']}, {study['best_pvalue']}, {study['risk_alleles']}")
     
     for summary_type in ["high_risk_alleles", "significance"]:
         summary = results[f'summary_by_{summary_type}']
