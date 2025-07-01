@@ -27,6 +27,9 @@ class State(TypedDict, total=False):
     gene_function_traits: Annotated[Dict[str, List[str]], operator.or_]
     gene_GO_traits: Annotated[Dict[str, List[str]], operator.or_]
     humanbase_predictions: Annotated[Dict[str, List[Dict[str, Any]]], operator.or_]
+    
+    # GWAS associations
+    gwas_associations: Annotated[Dict[str, Dict[str, Any]], operator.or_]
 
     # LLM bookkeeping
     context_block: Annotated[str, operator.add]
