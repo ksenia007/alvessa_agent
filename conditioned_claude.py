@@ -32,8 +32,7 @@ def conditioned_claude_node(state: "State") -> "State":
     
     # Build CONTEXT payload
     gene_payload: List[Dict[str, Any]] = []
-    gene_list = list(set(state.get("genes", [])))
-    for g in gene_list:
+    for g in state.get("genes", []):
         gene_info: Dict[str, Any] = {"gene": g}
 
         diseases = state.get("gene_disease_traits", {}).get(g, [])
@@ -46,23 +45,15 @@ def conditioned_claude_node(state: "State") -> "State":
             if terms:
                 gene_info["functions"] = terms[:30]
 
+        biogrid_hits = state.get("bioGRID_predictions", {}).get(g, [])
+        if biogrid_hits:
+            if terms:
+                gene_info["interacting_genes"] = biogrid_hits
+
         gene_payload.append(gene_info)
-        
-        # Add associations to the gene info
-        associations = state["gwas_associations"].get(g, [])
-        if associations:
-            gene_info["gwas_associations"] = associations
-            
-        # Add UniProt entries
-        uniprot_entries_base = state.get("uniprot_entries_base", {}).get(g, [])
-        if uniprot_entries_base:
-            gene_info["uniprot_entries_base"] = uniprot_entries_base
-        uniprot_entries_gwas = state.get("uniprot_entries_gwas", {}).get(g, [])
-        if uniprot_entries_gwas:
-            gene_info["uniprot_entries_gwas"] = uniprot_entries_gwas
 
-    context_block = json.dumps(gene_payload, separators=(",", ":"))
-
+    
+    context_block: str = json.dumps(gene_payload, separators=(",", ":"))
     if DEBUG:
         print("[conditioned_claude_node] context length:", len(context_block))
     if len(context_block) > N_CHARS:
@@ -73,7 +64,6 @@ def conditioned_claude_node(state: "State") -> "State":
     system_msg: str = (
         "You are a biology data analyst. Answer strictly with facts you can "
         "point to inside CONTEXT. Respond only with JSON with keys answer and evidence. Ensure proper JSON format. "
-        "Produce raw json output. I don't want markdown."
         "The 'evidence' field must always be a list of short strings."
     )
     user_question: str = state["messages"][-1]["content"]
@@ -81,7 +71,7 @@ def conditioned_claude_node(state: "State") -> "State":
     raw = claude_call(
         model=CONDITIONED_MODEL,
         temperature=0,
-        max_tokens=20000,
+        max_tokens=5000,
         system=system_msg,
         messages=[{"role": "user", "content": f"User asked: {user_question}\n\nCONTEXT:\n{context_block}"}],
     )
