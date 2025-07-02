@@ -52,6 +52,14 @@ def conditioned_claude_node(state: "State") -> "State":
         associations = state["gwas_associations"].get(g, [])
         if associations:
             gene_info["gwas_associations"] = associations
+            
+        # Add UniProt entries
+        uniprot_entries_base = state.get("uniprot_entries_base", {}).get(g, [])
+        if uniprot_entries_base:
+            gene_info["uniprot_entries_base"] = uniprot_entries_base
+        uniprot_entries_gwas = state.get("uniprot_entries_gwas", {}).get(g, [])
+        if uniprot_entries_gwas:
+            gene_info["uniprot_entries_gwas"] = uniprot_entries_gwas
 
     context_block = json.dumps(gene_payload, separators=(",", ":"))
 
