@@ -45,18 +45,20 @@ def build_graph() -> Callable[[State], State]:
 
     # Tool nodes
     g.add_node("humanbase", humanbase_predictions_agent)
-    g.add_node("uniprot", uniprot_node)
+    g.add_node("uniprot_base", uniprot_node)
+    g.add_node("uniprot_gwas", uniprot_node)
     g.add_node("trait_disease", trait_disease_extraction_node)
     g.add_node("trait_function", trait_function_extraction_node)
     g.add_node("trait_go", trait_GO_extraction_node)
     g.add_node("gwas", gwas_associations_agent)
 
-    g.add_edge("humanbase", "uniprot")
-    g.add_edge("uniprot", "trait_disease")
+    g.add_edge("humanbase", "uniprot_base")
+    g.add_edge("uniprot_base", "trait_disease")
     g.add_edge("trait_disease", "trait_function")
     g.add_edge("trait_function", "trait_go")
     g.add_edge("trait_go", "gwas")
-    g.add_edge("gwas", "claude")
+    g.add_edge("gwas", "uniprot_gwas")
+    g.add_edge("uniprot_gwas", "claude")
     
     # Main LLM
     g.add_node("claude", conditioned_claude_node)
