@@ -39,6 +39,12 @@ def query_gene_associations(
             "summary_by_significance"
         ] if k in results
     }
+    all_results["gwas_linked_genes"] = set(
+        [
+            *results["summary_by_high_risk_alleles"]["gwas_related_genes"], 
+            *results["summary_by_significance"]["gwas_related_genes"]
+        ]
+    )
     return all_results
 
 
@@ -225,8 +231,14 @@ class GWASQueryEngine:
                     for replacement in [" protein levels", " protein level", " protein measurement", 
                                       " protein concentration", " serum protein", "serum "]:
                         protein_name = protein_name.replace(replacement, "")
-                    if protein_name.strip():
-                        proteins.add(protein_name.strip())
+                        if "ratio" in protein_name:
+                            protein_names = protein_name.replace("ratio", "")
+                            for protein in protein_names.split("/"):
+                                if protein.strip():
+                                    proteins.add(protein.strip())
+                        else:
+                            if protein_name.strip():
+                                proteins.add(protein_name.strip())
             
             # Collect SNPs
             for allele in study['risk_alleles']:
