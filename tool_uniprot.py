@@ -89,15 +89,23 @@ def extract_GO_from_uniprot_entry(entry: Dict) -> List[str]:
 
 def uniprot_node(state: "State") -> "State":
     """Download UniProt entries for every gene symbol."""
-    genes = state.get("genes", [])
-    uniprot_entries: Dict[str, Dict] = {}
+
+    base_genes = list(set(state.get("genes", [])))
+    gwas_linked_genes = list(set(state.get("gwas_linked_genes", [])))
+    genes = list(set(base_genes + gwas_linked_genes))
+
+    uniprot_entries_base: Dict[str, Dict] = {}
+    uniprot_entries_gwas: Dict[str, Dict] = {}
 
     for gene in genes:
-        entry = get_uniprot_entry_for_gene(gene)
-        if entry:
-            uniprot_entries[gene] = entry
+        entry_base = get_uniprot_entry_for_gene(gene)
+        if entry_base:
+            uniprot_entries_base[gene] = entry_base
+        entry_gwas = get_uniprot_entry_for_gene(gene)
+        if entry_gwas:
+            uniprot_entries_gwas[gene] = entry_gwas
 
-    return {**state, "uniprot_entries": uniprot_entries}
+    return {**state, "uniprot_entries_base": uniprot_entries_base, "uniprot_entries_gwas": uniprot_entries_gwas}
 
 
 def trait_disease_extraction_node(state: "State") -> "State":

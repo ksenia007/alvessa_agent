@@ -1,3 +1,5 @@
 env/
 .DS_Store
 .vscode/
+local_dbs/gwas_catalogue_association.tsv
+local_dbs/gwas_catalogue_studies.tsv

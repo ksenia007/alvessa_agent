@@ -22,12 +22,14 @@ class State(TypedDict, total=False):
     genes: Annotated[List[str], operator.add]
 
     # UniProt / HumanBase look-ups
-    uniprot_entries: Annotated[Dict[str, Dict], operator.or_]
+    uniprot_entries_base: Annotated[Dict[str, Dict], operator.or_]
+    uniprot_entries_gwas: Annotated[Dict[str, Dict], operator.or_]
     gene_disease_traits: Annotated[Dict[str, List[str]], operator.or_]
     gene_function_traits: Annotated[Dict[str, List[str]], operator.or_]
     gene_GO_traits: Annotated[Dict[str, List[str]], operator.or_]
     humanbase_predictions: Annotated[Dict[str, List[Dict[str, Any]]], operator.or_]
     bioGRID_predictions: Annotated[Dict[str, Dict[str, Dict[str, List[str]]]], operator.or_]
+    gwas_associations: Annotated[Dict[str, Dict[str, Any]], operator.or_]
 
     # LLM bookkeeping
     context_block: Annotated[str, operator.add]
