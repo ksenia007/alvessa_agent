@@ -49,7 +49,6 @@ def build_graph() -> Callable[[State], State]:
     g.add_node("humanbase", humanbase_predictions_agent)
     g.add_node("uniprot_base", uniprot_node)
     g.add_node("uniprot_gwas", uniprot_node)
-    g.add_node("uniprot", uniprot_node)
     g.add_node("trait_disease", trait_disease_extraction_node)
     g.add_node("trait_function", trait_function_extraction_node)
     g.add_node("trait_go", trait_GO_extraction_node)

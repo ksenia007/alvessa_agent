@@ -1,0 +1,31 @@
+================================================================================
+Q: Describe distinct roles of TP53 and BRCA1 in cancer biology.
+
+Answer:
+TP53 and BRCA1 have distinct but complementary roles in cancer biology. TP53 functions as a multifunctional transcription factor and tumor suppressor that induces cell cycle arrest, DNA repair, or apoptosis upon DNA damage. It acts as the 'guardian of the genome' by negatively regulating cell division and controlling expression of genes required for this process. TP53 can activate pro-apoptotic pathways through stimulation of BAX and FAS expression or repression of Bcl-2. It also regulates the circadian clock and prevents CDK7 kinase activity in response to DNA damage. BRCA1, while not detailed in the provided context, is known to play a critical role in homologous recombination DNA repair and maintaining genomic stability. Both genes are frequently mutated in cancers - TP53 is mutated or inactivated in about 60% of cancers and is associated with Li-Fraumeni syndrome, esophageal cancer, lung cancer, and other malignancies. The context shows TP53 has extensive protein interactions and undergoes complex post-translational modifications including phosphorylation, acetylation, ubiquitination, and methylation that regulate its stability and activity.
+
+Evidence:
+  - Multifunctional transcription factor that induces cell cycle arrest, DNA repair or apoptosis upon binding to its target DNA sequence
+  - Acts as a tumor suppressor in many tumor types; induces growth arrest or apoptosis depending on the physiological circumstances and cell type
+  - Negatively regulates cell division by controlling expression of a set of genes required for this process
+  - Apoptosis induction seems to be mediated either by stimulation of BAX and FAS antigen expression, or by repression of Bcl-2 expression
+  - TP53 is frequently mutated or inactivated in about 60% of cancers
+  - Prevents CDK7 kinase activity when associated to CAK complex in response to DNA damage, thus stopping cell cycle progression
+  - Regulates the circadian clock by repressing CLOCK-BMAL1-mediated transcriptional activation of PER2
+
+
+================================================================================
+Q: Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?
+
+Answer:
+TP53 is important for all cancers because it functions as a universal tumor suppressor with fundamental roles in DNA repair, cell cycle control, and apoptosis that are essential across all cell types. BRCA1 is primarily important in breast and ovarian cancers because it has specialized functions in DNA repair pathways that are particularly critical in hormone-responsive tissues like breast and ovarian cells.
+
+Evidence:
+  - TP53 acts as a tumor suppressor in many tumor types; induces growth arrest or apoptosis depending on the physiological circumstances and cell type
+  - Multifunctional transcription factor that induces cell cycle arrest, DNA repair or apoptosis upon binding to its target DNA sequence
+  - TP53 functions include nucleotide-excision repair, DNA repair, regulation of DNA metabolic process, intrinsic apoptotic signaling pathway
+  - TP53 has 653 GWAS associations across diverse disease traits including skin cancer, colon polyp, uterine fibroids, basal cell carcinoma, type 2 diabetes
+  - TP53 is found in increased amounts in a wide variety of transformed cells and is frequently mutated or inactivated in about 60% of cancers
+  - BRCA1 interacting gene GSTM4 has functions specifically related to ovary epithelial cancer, ovarian carcinoma, malignant ovarian surface epithelial-stromal neoplasm
+
+
