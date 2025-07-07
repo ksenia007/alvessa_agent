@@ -1,0 +1,22 @@
+================================================================================
+Q: How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?
+
+[TOOL SELECTION] Claude (Haiku) selected: ['uniprot_base', 'trait_function', 'trait_disease', 'gwas', 'uniprot_gwas']
+
+Answer:
+NUCKS1 plays important roles in both cancer and viral infections through its DNA repair and transcriptional regulatory functions. In cancer, NUCKS1 is involved in DNA repair by promoting homologous recombination and maintaining genome stability, with GWAS associations showing links to various cancers including prostate cancer. In viral infections, NUCKS1 acts as a host factor that positively regulates viral genome replication and transcription. The overlap between these roles centers on NUCKS1's fundamental functions in DNA binding, chromatin organization, and transcriptional regulation - mechanisms that are exploited by both cancer cells for survival and by viruses for replication.
+
+Evidence:
+  - Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR)
+  - Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures
+  - Phosphorylated in an ATM-dependent manner in response to DNA damage
+  - GWAS associations with prostate cancer and prostate-specific antigen levels
+  - modulation by host of viral genome replication
+  - positive regulation by host of viral genome replication
+  - positive regulation by host of viral transcription
+  - transcription coactivator activity
+  - double-strand break repair via homologous recombination
+  - regulation of DNA replication
+  - chromatin organization
+
+

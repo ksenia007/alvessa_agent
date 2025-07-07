@@ -12,6 +12,7 @@ Evidence:
   - TP53 functions include: positive regulation of proteolysis, regulation of protein ubiquitination
 
 
+
 #### Ksenia's note
 
 Factually, from the information that was provided to the model this is true. However, KRAS was the right answer, at least based on current cancer trends, because: 

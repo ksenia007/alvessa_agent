@@ -16,6 +16,7 @@ RATE_LIMIT: int = 60  # Claude calls per rolling minute
 GENE_EXTRACT_MODEL: str = "claude-3-haiku-20240307"
 CONDITIONED_MODEL: str = "claude-sonnet-4-20250514"
 VERIFY_MODEL: str = "claude-3-haiku-20240307"
+TOOL_SELECTOR_MODEL: str = "claude-3-haiku-20240307"
 
 ANTHROPIC_API_KEY: str = os.environ["ANTHROPIC_API_KEY"]
 BioGRID_API_KEY: str = os.environ["BioGRID_API_KEY"]

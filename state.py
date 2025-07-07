@@ -36,3 +36,4 @@ class State(TypedDict, total=False):
     llm_json: Annotated[Dict[str, Any], operator.or_]
     verification: str
     verify_attempts: int
+    used_tools: Annotated[List[str], operator.add]

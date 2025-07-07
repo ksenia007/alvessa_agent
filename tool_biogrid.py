@@ -66,6 +66,8 @@ def bioGRID_predictions_agent(state: "State") -> "State":
     -------
     State
         Updated state with the `"bioGRID_predictions"` field filled.
+        
+    # TODO: Split the functionality, BioGRID should only fetch interactions, and HB called outside
     """
     preds = state.get("bioGRID_predictions", {}).copy()
 
