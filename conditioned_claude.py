@@ -40,17 +40,17 @@ def conditioned_claude_node(state: "State") -> "State":
         diseases = state.get("gene_disease_traits", {}).get(g, [])
         if diseases:
             gene_info["diseases"] = diseases
-
+            
         humanbase_hits = state.get("humanbase_predictions", {}).get(g, [])
+        terms = []
         if humanbase_hits:
             terms = [hit["term"] for hit in humanbase_hits if "term" in hit]
             if terms:
-                gene_info["functions"] = terms[:30]
+                gene_info["functions"] = terms[:30] # TODO: update this to a more flexible limit
 
         biogrid_hits = state.get("bioGRID_predictions", {}).get(g, [])
         if biogrid_hits:
-            if terms:
-                gene_info["interacting_genes"] = biogrid_hits
+            gene_info["interacting_genes"] = biogrid_hits
 
         gene_payload.append(gene_info)
 
@@ -79,7 +79,7 @@ def conditioned_claude_node(state: "State") -> "State":
         "You are a biology data analyst. Answer strictly with facts you can "
         "point to inside CONTEXT. Respond only with JSON with keys answer and evidence. Ensure proper JSON format. "
         "Produce raw json output. I don't want markdown."
-        "The 'evidence' field must always be a list of short strings."
+        "The 'evidence' field must always be a list of short strings, and always reference the entity to which you are referring."
     )
     user_question: str = state["messages"][-1]["content"]
 

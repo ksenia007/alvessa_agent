@@ -54,7 +54,8 @@ if __name__ == "__main__":
         # "Describe distinct roles of TP53 and BRCA1 in cancer biology.",
         # "How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
         # "Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?",
-        "Through what pathways or protein interactions does viral gene E6 (or E7) modulate cellular metabolism?"
+        # "Through what pathways or protein interactions does viral gene E6 (or E7) modulate cellular metabolism?"
+        "Is there evidence of protein-protein interaction or functional intercation between TP53 and KRAS?"
     ]
 
     with open("demo.txt", "w") as f:

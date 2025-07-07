@@ -1,6 +1,7 @@
 from state import State
 # from entity_extraction import gene_extraction_node
 from tool_humanbase import humanbase_predictions_agent
+from tool_biogrid import bioGRID_predictions_agent
 from tool_uniprot import (
     uniprot_node,
     trait_disease_extraction_node,
@@ -26,6 +27,7 @@ def select_tools_and_run_ALL(state: State) -> State:
     state = trait_GO_extraction_node(state)
     state = gwas_associations_agent(state)
     state = uniprot_node(state)  # again for gwas genes (you may want to scope this)
+    state = bioGRID_predictions_agent(state)
 
     return state
 
