@@ -89,10 +89,11 @@ def extract_GO_from_uniprot_entry(entry: Dict) -> List[str]:
 
 def uniprot_node(state: "State") -> "State":
     """Download UniProt entries for every gene symbol."""
+
     base_genes = list(set(state.get("genes", [])))
     gwas_linked_genes = list(set(state.get("gwas_linked_genes", [])))
     genes = list(set(base_genes + gwas_linked_genes))
-    
+
     uniprot_entries_base: Dict[str, Dict] = {}
     uniprot_entries_gwas: Dict[str, Dict] = {}
 

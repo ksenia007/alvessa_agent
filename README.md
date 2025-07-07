@@ -6,6 +6,7 @@ To run sample requests:
 ```
 # install environment from requirements.txt
 export ANTHROPIC_API_KEY=[..your key here..]
+export BioGRID_API_KEY=[..your key here..]
 python -m run
 ```
 

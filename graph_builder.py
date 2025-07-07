@@ -15,6 +15,7 @@ from typing import Callable
 
 from state import State
 from entity_extraction import gene_extraction_node, has_genes
+from tool_biogrid import bioGRID_predictions_agent
 from tool_humanbase import humanbase_predictions_agent
 from tool_uniprot import (
     uniprot_node,
@@ -40,10 +41,11 @@ def build_graph() -> Callable[[State], State]:
     g.add_conditional_edges(
         "extract_genes",
         has_genes,
-        {True: "humanbase", False: "claude"},
+        {True: "biogrid", False: "claude"},
     )
 
     # Tool nodes
+    g.add_node("biogrid", bioGRID_predictions_agent)
     g.add_node("humanbase", humanbase_predictions_agent)
     g.add_node("uniprot_base", uniprot_node)
     g.add_node("uniprot_gwas", uniprot_node)
@@ -52,6 +54,8 @@ def build_graph() -> Callable[[State], State]:
     g.add_node("trait_go", trait_GO_extraction_node)
     g.add_node("gwas", gwas_associations_agent)
 
+
+    g.add_edge("biogrid", "humanbase")    
     g.add_edge("humanbase", "uniprot_base")
     g.add_edge("uniprot_base", "trait_disease")
     g.add_edge("trait_disease", "trait_function")
@@ -59,7 +63,7 @@ def build_graph() -> Callable[[State], State]:
     g.add_edge("trait_go", "gwas")
     g.add_edge("gwas", "uniprot_gwas")
     g.add_edge("uniprot_gwas", "claude")
-    
+
     # Main LLM
     g.add_node("claude", conditioned_claude_node)
     # g.add_edge("trait_go", "claude")  # normal path
