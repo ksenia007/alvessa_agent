@@ -28,7 +28,7 @@ def gene_extraction_node(state: "State") -> "State":
     """
     user_input: str = state["messages"][-1]["content"]
     system_message: str = (
-        "Extract gene symbols from the message. "
+        "Extract gene symbols from the message. Extract gene names **only if they appear verbatim in the input**. "
         "Reply with a comma-separated list of gene names only, no extra words."
     )
     response = claude_call(

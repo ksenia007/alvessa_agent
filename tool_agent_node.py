@@ -1,0 +1,83 @@
+from state import State
+# from entity_extraction import gene_extraction_node
+from tool_humanbase import humanbase_predictions_agent
+from tool_uniprot import (
+    uniprot_node,
+    trait_disease_extraction_node,
+    trait_function_extraction_node,
+    trait_GO_extraction_node,
+)
+from tool_gwas import gwas_associations_agent
+from tool_descriptions import TOOL_CATALOG, TOOL_FN_MAP
+from config import TOOL_SELECTOR_MODEL
+from claude_client import claude_call
+from typing import Any, Dict, List
+import inspect
+
+def select_tools_and_run_ALL(state: State) -> State:
+    """Dynamic tool runner without LLM — just calls all tools in order. 
+    Primarily used for debugging, but also could be viewed as data collection
+    """
+    # You already have genes from extract_genes
+    state = humanbase_predictions_agent(state)
+    state = uniprot_node(state)  # for base genes
+    state = trait_disease_extraction_node(state)
+    state = trait_function_extraction_node(state)
+    state = trait_GO_extraction_node(state)
+    state = gwas_associations_agent(state)
+    state = uniprot_node(state)  # again for gwas genes (you may want to scope this)
+
+    return state
+
+
+def format_state_for_prompt(state: State) -> str:
+    
+    genes = ", ".join(state.get("genes", [])) or "None"
+    question = state["messages"][-1]["content"]
+
+    catalog = "\n".join(f"- {name}: {desc}" for name, desc in TOOL_CATALOG.items())
+    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" Extracted gene symbols: {', '.join(genes) if genes else 'None'} Available tools: {catalog}. Which tools should be called, and in what order? Respond ONLY with a Python list of tool names. Example: ["humanbase", "uniprot_base", "trait_go" """
+
+async def select_tools_and_run_dynamic(state: State) -> State:
+
+    # prepare the prompt for tool selection
+    prompt = format_state_for_prompt(state)
+    
+    try:
+        completion = claude_call(
+            model=TOOL_SELECTOR_MODEL,
+            max_tokens=256,
+            temperature=0,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        tool_response = completion.content[0].text.strip()
+        
+    # if there is an error in the LLM call, we catch it and return an empty list
+    except Exception as e:
+        print(f"[CLAUDE ERROR] {e}")
+        tool_response = "[]"
+
+    try:
+        selected_tools: List[str] = eval(tool_response)
+        assert isinstance(selected_tools, list)
+    except Exception as e:
+        print(f"[TOOL SELECTION ERROR] Could not parse: {tool_response}\n{e}")
+        selected_tools = []
+
+    print(f"[TOOL SELECTION] Claude (Haiku) selected: {selected_tools}")
+
+    for name in selected_tools:
+        fn = TOOL_FN_MAP.get(name)
+        if not fn:  continue
+        print(f"[TOOL RUN] → {name}")
+
+        out = fn(state)                  # call real function
+        if inspect.iscoroutine(out):     # if it’s async, await it
+            out = await out
+        if isinstance(out, dict):
+            state.update(out)            # merge results
+
+    state["used_tools"] = selected_tools
+    return state

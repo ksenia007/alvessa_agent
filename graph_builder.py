@@ -30,6 +30,21 @@ from verify import verify_evidence_node
 
 MAX_ATTEMPTS: int = 3  # verification retries
 
+import asyncio
+from typing import Callable, Any
+
+def run_async_sync(fn: Callable[..., Any]) -> Callable[..., Any]:
+    """
+    Take an async function or coroutine-returning function and return a sync version
+    that runs it via asyncio.run().
+    """
+    def wrapper(*args, **kwargs):
+        result = fn(*args, **kwargs)
+        if asyncio.iscoroutine(result):
+            return asyncio.run(result)
+        return result
+    return wrapper
+
 
 def build_graph() -> Callable[[State], State]:
     """Return a compiled LangGraph ready for invocation."""
@@ -66,7 +81,6 @@ def build_graph() -> Callable[[State], State]:
 
     # Main LLM
     g.add_node("claude", conditioned_claude_node)
-    # g.add_edge("trait_go", "claude")  # normal path
 
     # Verification loop
     g.add_node("verify", verify_evidence_node)
