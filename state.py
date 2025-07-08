@@ -28,7 +28,7 @@ class State(TypedDict, total=False):
     gene_function_traits: Annotated[Dict[str, List[str]], operator.or_]
     gene_GO_traits: Annotated[Dict[str, List[str]], operator.or_]
     humanbase_predictions: Annotated[Dict[str, List[Dict[str, Any]]], operator.or_]
-    bioGRID_predictions: Annotated[Dict[str, Dict[str, Dict[str, List[str]]]], operator.or_]
+    bioGRID_predictions: Annotated[Dict[str, List[str]], operator.or_]
     gwas_associations: Annotated[Dict[str, Dict[str, Any]], operator.or_]
 
     # LLM bookkeeping

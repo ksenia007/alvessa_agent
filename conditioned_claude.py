@@ -50,7 +50,7 @@ def conditioned_claude_node(state: "State") -> "State":
 
         biogrid_hits = state.get("bioGRID_predictions", {}).get(g, [])
         if biogrid_hits:
-            gene_info["interacting_genes"] = biogrid_hits
+            gene_info["gene_ontology_terms_of_interacting_genes"] = biogrid_hits
 
         gene_payload.append(gene_info)
 
