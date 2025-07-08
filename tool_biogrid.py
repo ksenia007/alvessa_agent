@@ -17,7 +17,7 @@ from config import BioGRID_API_KEY
 # from tool_humanbase import _fetch_predictions_HB, _filter_predictions_HB, _symbol_to_entrez
 from tool_uniprot import get_uniprot_entry_for_gene, extract_GO_from_uniprot_entry
 from state import State 
-from tools.tf_idf import fps_tfidf
+from tools.word2vec import fps_word2vec
 
 DEBUG=True
 
@@ -97,7 +97,7 @@ def bioGRID_predictions_agent(state: "State") -> "State":
                 
 
             if all_go_terms:
-                fps_indices = fps_tfidf(list(set(all_go_terms)), 20)
+                fps_indices = fps_word2vec(list(set(all_go_terms)), 20)
                 selected_go_terms = [all_go_terms[i] for i in fps_indices]
                 
                 preds[gene] = selected_go_terms
