@@ -1,21 +1,20 @@
 from gensim.models import Word2Vec
 from sklearn.metrics import pairwise_distances
 import numpy as np
+from collections import defaultdict
 
-
-def fps_word2vec(sentences, k, vector_size=100, window=5, min_count=1):
+def fps_word2vec(sentences, k, vector_size=100, window=5, min_count=1, separate_sampling=False):
     """
     Farthest‐Point Sampling on Word2Vec.
     
     Args:
       sentences   (List[str]): your corpus
       k           (int):       how many to sample
-      max_features(int):       max vocab size (for speed)
     
     Returns:
       List[int]: indices of the selected sentences
     """
-    # 1) Vectorize
+    
     tokenized = [sentence.lower().split() for sentence in sentences]
     w2v_model = Word2Vec(sentences=tokenized, vector_size=vector_size, window=window, min_count=min_count, workers=1)
     def sentence_vector(words):
@@ -26,42 +25,40 @@ def fps_word2vec(sentences, k, vector_size=100, window=5, min_count=1):
     
     X = np.array([sentence_vector(s) for s in tokenized])
     
-    # 2) Precompute cosine distances
-    dist = pairwise_distances(X, metric='cosine')
+    def fps_on_subset(indices_subset, k_subset):
+        if len(indices_subset) <= k_subset:
+            return indices_subset
+        
+        subset_vectors = X[indices_subset]
+        dist = pairwise_distances(subset_vectors, metric='cosine')
+        
+        centroid = subset_vectors.mean(axis=0)
+        centroid_dists = pairwise_distances(subset_vectors, centroid[None, :], metric='cosine').reshape(-1)
+        first = int(np.argmax(centroid_dists))
+        selected_local = [first]
+        
+        min_dist = dist[first, :].copy()
+        
+        for _ in range(1, k_subset):
+            next_idx = int(np.argmax(min_dist))
+            selected_local.append(next_idx)
+            min_dist = np.minimum(min_dist, dist[next_idx, :])
+        
+        return [indices_subset[i] for i in selected_local]
     
-    n = len(sentences)
-    if k >= n:
-        return list(range(n))
+    if not separate_sampling:
+        return fps_on_subset(list(range(len(sentences))), k)
     
-    # 3) Seed: pick the point farthest from the centroid
-    centroid = X.mean(axis=0)
-    centroid_dists = pairwise_distances(X, centroid[None, :], metric='cosine').reshape(-1)
-    first = int(np.argmax(centroid_dists))
-    selected = [first]
+    prefix_to_indices = defaultdict(list)
+    for i, sent in enumerate(sentences):
+        prefix = sent.split(':', 1)[0] 
+        prefix_to_indices[prefix].append(i)
     
-    min_dist = dist[first, :].copy()
+    sampled_indices_by_prefix = {}
+    for prefix, indices_subset in prefix_to_indices.items():
+        sampled_indices_by_prefix[prefix] = fps_on_subset(indices_subset, k)
     
-    for _ in range(1, k):
-        # Add the next best sentence to the selected list
-        next_idx = int(np.argmax(min_dist))
-        selected.append(next_idx)
-
-        # Minimum here because we pick the least similar sentence to the selected sentences
-        min_dist = np.minimum(min_dist, dist[next_idx, :])
-    
-    return selected
-
-
-if __name__ == "__main__":
-    sentences = [
-        "The cat sat on the mat.",
-        "A quick brown fox jumps over the lazy dog.",
-        "Machine learning models can learn embeddings.",
-        "Sentence diversity is useful for summarization.",
-        "Natural language processing includes tokenization, parsing, and more.",
-        "The lazy dog was too slow in the race."
-    ]
-    picks = fps_word2vec(sentences, k=3)
-    print("Selected sentences:")
-    for idx in picks:
-        print(f" - [{idx}] {sentences[idx]}")
+    combined = []
+    for prefix in sorted(sampled_indices_by_prefix.keys()):
+        combined.extend(sampled_indices_by_prefix[prefix])
+    return combined

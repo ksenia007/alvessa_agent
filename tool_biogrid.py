@@ -14,8 +14,6 @@ import requests
 import time
 from typing import Any, Dict, List, Optional
 from config import BioGRID_API_KEY
-# from tool_humanbase import _fetch_predictions_HB, _filter_predictions_HB, _symbol_to_entrez
-from tool_uniprot import get_uniprot_entry_for_gene, extract_GO_from_uniprot_entry
 from state import State 
 from tools.word2vec import fps_word2vec
 
@@ -84,29 +82,10 @@ def bioGRID_predictions_agent(state: "State") -> "State":
         except Exception as exc:
             print(f"[BioGRID] {gene}: {exc}")
         else:
-            uniprot_entries: Dict[str, Dict] = {}
+            preds[gene] = list(interactions)[:100]
 
-            all_go_terms = []
-            for interactor in list(interactions)[:100]:
-                if interactor:
-                    interactor_entry = get_uniprot_entry_for_gene(interactor)
-
-                    if interactor_entry:
-                        traits = extract_GO_from_uniprot_entry(interactor_entry)
-                        all_go_terms.extend(traits)
-                
-
-            if all_go_terms:
-                fps_indices = fps_word2vec(list(set(all_go_terms)), 20)
-                selected_go_terms = [all_go_terms[i] for i in fps_indices]
-                
-                preds[gene] = selected_go_terms
-
-
-
-        
         time.sleep(0.3)  # courteous pause
 
     return {
         **state,
-        "bioGRID_predictions": preds}
+        "biogrid_predictions": preds}
