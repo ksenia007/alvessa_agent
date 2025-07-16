@@ -50,7 +50,6 @@ def build_graph() -> Callable[[State], State]:
         has_genes,
         {True: "select_tools", False: "claude"},
     )
-
     g.add_edge("select_tools", "claude")
     
     # Main LLM
