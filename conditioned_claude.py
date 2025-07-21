@@ -17,31 +17,6 @@ from claude_client import claude_call
 from config import CONDITIONED_MODEL, DEBUG, N_CHARS
 from state import State
 
-def summarize_biogrid_hits(biogrid_hits: List[Dict[str, Any]]) -> List[str]:
-    """
-    Summarize BioGRID hits into a shorter summary using a conditioned extra-model
-    """
-    
-    # Call Claude
-    system_msg: str = (
-        "You are a functional biology expert. I have a dictiionary of genes and their Gene ontology terms. I need to summarize these genes and their functional annotations as a context block for downstream LLMs. Only use gene symbols and their functional annotations I provide, do not use any other information. Summarize all key information, highlight commonalities and differences, trends. Make sure you ONLY use information I provide"
-    )
-    user_question: str = str(biogrid_hits)
-
-    raw = claude_call(
-        model=CONDITIONED_MODEL,
-        temperature=0,
-        max_tokens=20000,
-        system=system_msg,
-        messages=[{"role": "user", "content": f"User asked: {user_question}"}],
-    )
-    
-    if hasattr(raw.content[0], "text"):
-        llm_resp: str | Dict[str, Any] = raw.content[0].text.strip()
-    else:
-        llm_resp = raw.content[0]
-    
-    return llm_resp
 
 def conditioned_claude_node(state: "State") -> "State":
     """

@@ -15,18 +15,7 @@ from typing import Callable
 
 from state import State
 from entity_extraction import gene_extraction_node, has_genes
-from tool_biogrid import bioGRID_predictions_agent
-from tool_go_summarization import go_summarization_agent, make_go_summarization_node
-from tool_humanbase import humanbase_predictions_agent
-from tool_uniprot import (
-    uniprot_node,
-    trait_disease_extraction_node,
-    trait_function_extraction_node,
-    trait_GO_extraction_node,
-    has_uniprot_entries,
-)
 from tool_agent_node import select_tools_and_run_dynamic, run_async_sync
-from tool_gwas import gwas_associations_agent
 from conditioned_claude import conditioned_claude_node
 from verify import verify_evidence_node
 
