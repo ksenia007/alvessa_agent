@@ -1,3 +1,14 @@
+"""
+Author: Ksenia Sokolova <sokolova@princeton.edu>
+Contributors: 
+Created: 2024-07-15
+Updated: 2025-07-21
+
+
+Description: 
+
+Selecting tools"""
+
 from state import State
 # from entity_extraction import gene_extraction_node
 from tool_humanbase import humanbase_predictions_agent
@@ -14,6 +25,7 @@ from config import TOOL_SELECTOR_MODEL
 from claude_client import claude_call
 from typing import Any, Dict, List
 import inspect
+import asyncio
 
 def select_tools_and_run_ALL(state: State) -> State:
     """Dynamic tool runner without LLM — just calls all tools in order. 
@@ -83,3 +95,11 @@ async def select_tools_and_run_dynamic(state: State) -> State:
 
     state["used_tools"] = selected_tools
     return state
+
+
+def run_async_sync(fn):
+    def wrapper(*args, **kwargs):
+        async def run_coroutine():
+            return await fn(*args, **kwargs)
+        return asyncio.run(run_coroutine())
+    return wrapper

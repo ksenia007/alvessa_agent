@@ -15,17 +15,7 @@ from typing import Callable
 
 from state import State
 from entity_extraction import gene_extraction_node, has_genes
-from tool_biogrid import bioGRID_predictions_agent
-from tool_go_summarization import go_summarization_agent, make_go_summarization_node
-from tool_humanbase import humanbase_predictions_agent
-from tool_uniprot import (
-    uniprot_node,
-    trait_disease_extraction_node,
-    trait_function_extraction_node,
-    trait_GO_extraction_node,
-    has_uniprot_entries,
-)
-from tool_gwas import gwas_associations_agent
+from tool_agent_node import select_tools_and_run_dynamic, run_async_sync
 from conditioned_claude import conditioned_claude_node
 from verify import verify_evidence_node
 
@@ -53,35 +43,16 @@ def build_graph() -> Callable[[State], State]:
 
     # Entry + gene extraction
     g.add_node("extract_genes", gene_extraction_node)
+    g.add_node("select_tools", run_async_sync(select_tools_and_run_dynamic))
     g.set_entry_point("extract_genes")
     g.add_conditional_edges(
         "extract_genes",
         has_genes,
-        {True: "biogrid", False: "claude"},
+        {True: "select_tools", False: "claude"},
     )
 
-    # Tool nodes
-    g.add_node("biogrid", bioGRID_predictions_agent)
-    g.add_node("biogrid_go_summarization", make_go_summarization_node("biogrid", "word2vec"))
-    g.add_node("humanbase", humanbase_predictions_agent)
-    g.add_node("uniprot_base", uniprot_node)
-    g.add_node("uniprot_gwas", uniprot_node)
-    g.add_node("trait_disease", trait_disease_extraction_node)
-    g.add_node("trait_function", trait_function_extraction_node)
-    g.add_node("trait_go", trait_GO_extraction_node)
-    g.add_node("gwas", gwas_associations_agent)
-
-
-    g.add_edge("biogrid", "biogrid_go_summarization")    
-    g.add_edge("biogrid_go_summarization", "humanbase")
-    g.add_edge("humanbase", "uniprot_base")
-    g.add_edge("uniprot_base", "trait_disease")
-    g.add_edge("trait_disease", "trait_function")
-    g.add_edge("trait_function", "trait_go")
-    g.add_edge("trait_go", "gwas")
-    g.add_edge("gwas", "uniprot_gwas")
-    g.add_edge("uniprot_gwas", "claude")
-
+    g.add_edge("select_tools", "claude")
+    
     # Main LLM
     g.add_node("claude", conditioned_claude_node)
 
