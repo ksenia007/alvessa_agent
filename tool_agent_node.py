@@ -85,7 +85,6 @@ async def select_tools_and_run_dynamic(state: State) -> State:
         if isinstance(out, dict):
             state.update(out)            # merge results
             
-    state["used_tools"] = selected_tools+['BioGRID_summary']
     return state
 
 
