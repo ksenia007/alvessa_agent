@@ -14,8 +14,8 @@ import requests
 import time
 from typing import Any, Dict, List, Optional
 from config import BioGRID_API_KEY
-from tool_humanbase import _fetch_predictions_HB, _filter_predictions_HB, _symbol_to_entrez
 from state import State 
+from tools.word2vec import fps_word2vec
 
 DEBUG=True
 
@@ -82,27 +82,10 @@ def bioGRID_predictions_agent(state: "State") -> "State":
         except Exception as exc:
             print(f"[BioGRID] {gene}: {exc}")
         else:
+            preds[gene] = list(interactions)[:100]
 
-            for interactor in list(interactions)[:30]:
-                entrez = _symbol_to_entrez(interactor)
-                if not entrez:
-                    functions_list = []
-                    continue
-        
-                try:
-                    tmp = _fetch_predictions_HB(entrez)
-                except Exception as exc:
-                    functions_list = []
-                else:
-                    functions_list = _filter_predictions_HB(tmp, threshold=0.95)
-
-                if functions_list:
-                    terms = [hit["term"] for hit in functions_list if "term" in hit]
-                    if terms:
-                        preds[gene][interactor] = {'functions': terms[:30]}
-        
         time.sleep(0.3)  # courteous pause
 
     return {
         **state,
-        "bioGRID_predictions": preds}
+        "biogrid_predictions": preds}
