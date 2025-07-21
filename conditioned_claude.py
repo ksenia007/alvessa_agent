@@ -50,9 +50,9 @@ def conditioned_claude_node(state: "State") -> "State":
 
         biogrid_hits = state.get("biogrid_summarized_go", {}).get(g, [])
         if biogrid_hits:
+            if DEBUG:
+                print('[conditioned_claude_node] Found BioGRID GO terms for', g, biogrid_hits)
             gene_info["gene_ontology_terms_of_interacting_genes"] = biogrid_hits
-
-        gene_payload.append(gene_info)
 
         # Add associations to the gene info
         associations = state["gwas_associations"].get(g, [])
@@ -62,16 +62,22 @@ def conditioned_claude_node(state: "State") -> "State":
         # Add UniProt entries
         uniprot_entries_base = state.get("uniprot_entries_base", {}).get(g, [])
         if uniprot_entries_base:
+            uniprot_entries_base.pop('go_terms', None)
             gene_info["uniprot_entries_base"] = uniprot_entries_base
         uniprot_entries_gwas = state.get("uniprot_entries_gwas", {}).get(g, [])
         if uniprot_entries_gwas:
+            uniprot_entries_gwas.pop('go_terms', None)
             gene_info["uniprot_entries_gwas"] = uniprot_entries_gwas
+            
+        gene_payload.append(gene_info)
 
     context_block: str = json.dumps(gene_payload, separators=(",", ":"))
     if DEBUG:
         print("[conditioned_claude_node] context length:", len(context_block))
     if len(context_block) > N_CHARS:
         context_block = context_block[:N_CHARS] + "...<truncated>"
+    else:
+        print("[conditioned_claude_node] context", context_block)
     print(context_block)
     
     # Call Claude

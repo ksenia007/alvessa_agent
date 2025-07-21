@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 from config import BioGRID_API_KEY
 from state import State 
 from tools.word2vec import fps_word2vec
+from tool_go_summarization import make_go_summarization_node
 
 DEBUG=True
 
@@ -85,6 +86,10 @@ def bioGRID_predictions_agent(state: "State") -> "State":
             preds[gene] = list(interactions)[:100]
 
         time.sleep(0.3)  # courteous pause
+
+    if DEBUG:
+        print(f"[BioGRID] Predictions fetched for {len(preds)} genes.")
+        print("[BioGRID] Example predictions:", list(preds.items())[:2])
 
     return {
         **state,

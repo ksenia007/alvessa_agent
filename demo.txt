@@ -2,12 +2,13 @@
 Q: Is there evidence of protein-protein interaction or functional overlaps between TP53 and KRAS?
 
 Answer:
-Yes, there is evidence of protein-protein interaction and functional overlaps between TP53 and KRAS. However, the provided context only contains detailed information about KRAS, with no specific information about TP53 or direct interactions between TP53 and KRAS proteins.
+Based on the provided context, there is no direct evidence of protein-protein interaction between TP53 and KRAS. However, there are functional overlaps as both proteins are involved in cell proliferation regulation and cancer development, though they have opposing roles - TP53 acts as a tumor suppressor while KRAS promotes oncogenic events.
 
 Evidence:
+  - TP53 acts as a tumor suppressor in many tumor types
+  - TP53 negatively regulates cell division by controlling expression of a set of genes required for this process
   - KRAS plays an important role in the regulation of cell proliferation
-  - KRAS plays a role in promoting oncogenic events by inducing transcriptional silencing of tumor suppressor genes (TSGs) in colorectal cancer (CRC) cells
-  - KRAS mutations are involved in cancer development
-  - KRAS is associated with multiple cancer types including gastric cancer, leukemia, and various carcinomas
+  - KRAS plays a role in promoting oncogenic events by inducing transcriptional silencing of tumor suppressor genes
+  - Both TP53 and KRAS are associated with various cancer types including gastric cancer and leukemia
 
 

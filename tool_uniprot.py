@@ -12,6 +12,7 @@ UniProt tool: fetch entry + extract disease / function / GO traits.
 
 from __future__ import annotations
 import requests
+import re
 from typing import Dict, List, Optional
 from state import State
 
@@ -85,7 +86,28 @@ def extract_GO_from_uniprot_entry(entry: Dict) -> List[str]:
                     traits.add(prop["value"])
     return sorted(traits)
 
+def remove_pubmed_text(description: str) -> str:
+    cleaned = re.sub(r'\s*PubMed:\d+\s*,?', '', description)
+    cleaned = re.sub(r'\(\s*,*\s*\)', '()', cleaned)
+    return re.sub(r'\(\s*\)', '', cleaned).strip()
 
+def extract_summaries(entry: Dict) -> Dict[str, str]:
+    """Extract summaries from a UniProt entry."""
+    if DEBUG:
+        print("Extracting summaries")
+    summaries: Dict[str, str] = {}
+    diseases = extract_disease_from_uniprot_entry(entry)
+    function = extract_function_from_uniprot_entry(entry)
+    go_terms = extract_GO_from_uniprot_entry(entry)
+    if diseases:
+        summaries["diseases"] = remove_pubmed_text(", ".join(diseases))
+    if function:
+        summaries["function"] = remove_pubmed_text(", ".join(function))
+    if go_terms:
+        summaries["go_terms"] = remove_pubmed_text(", ".join(go_terms))
+    if DEBUG:
+        print(f"Extracted summaries: {summaries}")
+    return summaries
 
 def uniprot_node(state: "State") -> "State":
     """Download UniProt entries for every gene symbol."""
@@ -100,10 +122,10 @@ def uniprot_node(state: "State") -> "State":
     for gene in genes:
         entry_base = get_uniprot_entry_for_gene(gene)
         if entry_base:
-            uniprot_entries_base[gene] = entry_base
+            uniprot_entries_base[gene] = extract_summaries(entry_base)
         entry_gwas = get_uniprot_entry_for_gene(gene)
         if entry_gwas:
-            uniprot_entries_gwas[gene] = entry_gwas
+            uniprot_entries_gwas[gene] = extract_summaries(entry_gwas)
 
     return {**state, "uniprot_entries_base": uniprot_entries_base, "uniprot_entries_gwas": uniprot_entries_gwas}
 

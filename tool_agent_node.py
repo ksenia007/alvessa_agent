@@ -13,12 +13,7 @@ from state import State
 # from entity_extraction import gene_extraction_node
 from tool_humanbase import humanbase_predictions_agent
 from tool_biogrid import bioGRID_predictions_agent
-from tool_uniprot import (
-    uniprot_node,
-    trait_disease_extraction_node,
-    trait_function_extraction_node,
-    trait_GO_extraction_node,
-)
+from tool_uniprot import uniprot_node
 from tool_gwas import gwas_associations_agent
 from tool_descriptions import TOOL_CATALOG, TOOL_FN_MAP
 from config import TOOL_SELECTOR_MODEL
@@ -34,9 +29,6 @@ def select_tools_and_run_ALL(state: State) -> State:
     # You already have genes from extract_genes
     state = humanbase_predictions_agent(state)
     state = uniprot_node(state)  # for base genes
-    state = trait_disease_extraction_node(state)
-    state = trait_function_extraction_node(state)
-    state = trait_GO_extraction_node(state)
     state = gwas_associations_agent(state)
     state = uniprot_node(state)  # again for gwas genes (you may want to scope this)
     state = bioGRID_predictions_agent(state)
@@ -92,8 +84,7 @@ async def select_tools_and_run_dynamic(state: State) -> State:
             out = await out
         if isinstance(out, dict):
             state.update(out)            # merge results
-
-    state["used_tools"] = selected_tools
+            
     return state
 
 
