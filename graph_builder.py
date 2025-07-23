@@ -14,7 +14,7 @@ from langgraph.graph import StateGraph, END
 from typing import Callable
 
 from state import State
-from entity_extraction import gene_extraction_node, has_genes, gene_extraction_node_gliner
+from entity_extraction import gene_extraction_node, has_genes
 from tool_agent_node import select_tools_and_run_dynamic, run_async_sync
 from conditioned_claude import conditioned_claude_node
 from verify import verify_evidence_node
@@ -42,7 +42,7 @@ def build_graph() -> Callable[[State], State]:
     g = StateGraph(State)
 
     # Entry + gene extraction
-    g.add_node("extract_genes", gene_extraction_node_gliner)
+    g.add_node("extract_genes", gene_extraction_node)
     g.add_node("select_tools", run_async_sync(select_tools_and_run_dynamic))
     g.set_entry_point("extract_genes")
     g.add_conditional_edges(
