@@ -13,8 +13,9 @@ from __future__ import annotations
 from typing import List
 
 from claude_client import claude_call
-from config import DEBUG, GENE_EXTRACT_MODEL
+from config import DEBUG, GENE_EXTRACT_MODEL, GLINER_CONFIG
 from state import State
+from gliner import GLiNER
 
 
 def gene_extraction_node(state: "State") -> "State":
@@ -42,6 +43,24 @@ def gene_extraction_node(state: "State") -> "State":
     if DEBUG:
         print("[gene_extraction_node] extracted:", genes)
     return {**state, "genes": genes}
+
+def gene_extraction_node_gliner(state: "State") -> "State":
+    """
+    Identify entities mentioned in the last user message.
+    """
+    user_input: str = state["messages"][-1]["content"]
+    model = GLiNER.from_pretrained(GLINER_CONFIG["model_name"])
+    entities = model.predict_entities(user_input, GLINER_CONFIG["labels"], threshold=GLINER_CONFIG["threshold"])
+    if DEBUG:
+        print("[entity_extraction_node] extracted:", entities)
+    # Collect all entities of type "Gene" or "Protein"
+    # Display predicted entities and their labels
+    for entity in entities:
+        print(entity["text"], "=>", entity["label"])
+    genes = [e["text"] for e in entities if e["label"] == "Gene"]
+    proteins = [e["text"] for e in entities if e["label"] == "Protein"]
+    print(f"[entity_extraction_node] extracted genes: {genes}")
+    return {**state, "genes": list(set([*genes, *proteins]))}
 
 
 def has_genes(state: "State") -> bool:
