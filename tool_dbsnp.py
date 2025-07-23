@@ -70,8 +70,6 @@ def dbsnp_variants_agent(state: "State") -> "State":
 
         # Courteous pause
         time.sleep(0.1)
-
-    import ipdb; ipdb.set_trace()
     return {**state, "dbsnp_variants": variants}
 
 
