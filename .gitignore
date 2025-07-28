@@ -3,4 +3,6 @@ env/
 .vscode/
 local_dbs/gwas_catalogue_association.tsv
 local_dbs/gwas_catalogue_studies.tsv
+local_dbs/seqclass.names
+local_dbs/sorted.hg38.tiling.bed.ipca_randomized_300.labels.merged.bed
 **/__pycache__/

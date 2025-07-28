@@ -68,6 +68,11 @@ def conditioned_claude_node(state: "State") -> "State":
         if uniprot_entries_gwas:
             uniprot_entries_gwas.pop('go_terms', None)
             gene_info["uniprot_entries_gwas"] = uniprot_entries_gwas
+
+        # Add sei predictions
+        sei_effect_predictions = state.get("sei_predictions", {}).get(g, [])
+        if sei_effect_predictions:
+            gene_info["sei_sequence_class_predictions"] = sei_effect_predictions
             
         gene_payload.append(gene_info)
 
