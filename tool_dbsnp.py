@@ -27,49 +27,64 @@ def dbsnp_variants_agent(state: "State") -> "State":
     
     # Extract rsIDs from GWAS associations
     rsids = _extract_rsids_from_gwas(state)
+
+    print(rsids)
     
     if DEBUG:
         print(f"[dbSNP] Found {len(rsids)} unique rsIDs to query")
     
-    for rsid in rsids:
-        if rsid in variants:
+    for gene, gene_rsids in rsids.items():
+        if gene in variants:
             if DEBUG:
                 print(f"[dbSNP] Skipping {rsid} - already processed")
             continue
 
-        if DEBUG:
-            print(f"[dbSNP] Querying variant information for: {rsid}")
+        variants[gene] = {}
+        
+        for i, rsid in enumerate(gene_rsids):
 
-        try:
-            # Query dbSNP variant information
-            result = get_variant_info(rsid)
-            
-            variants[rsid] = {
-                "rsid": result.get("rsid", rsid),
-                "found": True,
-                "coordinates": result.get("coordinates", []),
-                "coordinate_count": len(result.get("coordinates", [])),
-                "chromosomes": list(set(coord.get("chrom", "Unknown") for coord in result.get("coordinates", [])))
-            }
-            
+            if rsid in variants[gene]:
+                if DEBUG:
+                    print(f"[dbSNP] Skipping {rsid} - already processed")
+                continue
+
             if DEBUG:
-                coord_count = len(result.get("coordinates", []))
-                print(f"[dbSNP] {rsid}: found, {coord_count} coordinates")
+                print(f"[dbSNP] Querying variant information for: {rsid}")
+
+            try:
+                # Query dbSNP variant information
+                result = get_variant_info(rsid)
                 
-        except Exception as exc:
-            if DEBUG:
-                print(f"[dbSNP] Error querying {rsid}: {exc}")
-            variants[rsid] = {
-                "rsid": rsid,
-                "found": False,
-                "coordinates": [],
-                "coordinate_count": 0,
-                "chromosomes": [],
-                "error": str(exc)
-            }
+                variants[gene][rsid] = {
+                    "rsid": result.get("rsid", rsid),
+                    "found": True,
+                    "coordinates": result.get("coordinates", []),
+                    "coordinate_count": len(result.get("coordinates", [])),
+                    "chromosomes": list(set(coord.get("chrom", "Unknown") for coord in result.get("coordinates", [])))
+                }
+                
+                if DEBUG:
+                    coord_count = len(result.get("coordinates", []))
+                    print(f"[dbSNP] {rsid}: found, {coord_count} coordinates")
+                    print(variants[gene][rsid])
 
-        # Courteous pause
-        time.sleep(0.1)
+                    
+            except Exception as exc:
+                if DEBUG:
+                    print(f"[dbSNP] Error querying {rsid}: {exc}")
+                variants[gene][rsid] = {
+                    "rsid": rsid,
+                    "found": False,
+                    "coordinates": [],
+                    "coordinate_count": 0,
+                    "chromosomes": [],
+                    "error": str(exc)
+                }
+
+            # Courteous pause
+            time.sleep(0.1)
+
+    # import ipdb; ipdb.set_trace()
     return {**state, "dbsnp_variants": variants}
 
 
@@ -87,10 +102,11 @@ def _extract_rsids_from_gwas(state: "State") -> Set[str]:
     Set[str]
         Set of unique rsIDs found in GWAS data.
     """
-    rsids = set()
+    rsids = dict()
     associations = state.get("gwas_associations", {})
     
     for gene, data in associations.items():
+        gene_rsids = set()
         if not data.get("found", False):
             continue
             
@@ -100,7 +116,7 @@ def _extract_rsids_from_gwas(state: "State") -> Set[str]:
         for snp in high_risk_snps:
             if isinstance(snp, str):
                 extracted = _extract_rsids_from_text(snp)
-                rsids.update(extracted)
+                gene_rsids.update(extracted)
         
         # Extract from significance summary
         significance_summary = data.get("summary_by_significance", {})
@@ -108,7 +124,9 @@ def _extract_rsids_from_gwas(state: "State") -> Set[str]:
         for snp in sig_snps:
             if isinstance(snp, str):
                 extracted = _extract_rsids_from_text(snp)
-                rsids.update(extracted)
+                gene_rsids.update(extracted)
+
+        rsids[gene] = gene_rsids
     
     return rsids
 

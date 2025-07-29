@@ -10,6 +10,7 @@ from tool_gwas import gwas_associations_agent
 from conditioned_claude import conditioned_claude_node
 from verify import verify_evidence_node
 from tool_dbsnp import dbsnp_variants_agent
+from tool_sei import sei_predictions_agent
 
 TOOL_CATALOG = {
     "humanbase": "Fetch functional predictions from HumanBase tissue-specific networks. Provides expanded list of functions.",
@@ -19,6 +20,7 @@ TOOL_CATALOG = {
     "BioGRID": "Fetches BioGRID interactions and their functional annotations for the input genes. Provides a curated context-specific list of protein-protein, genetic and chemical interactions.",
     "Summarize_bioGRID_GO": "Required for BioGrid. Summarizes BioGRID GO terms for the input genes. Provides a compact list of GO terms for the input genes.",
     "dbsnp": "Fetches dbSNP data about the identified variants. This requires gwas to be run first.",
+    "sei": "Fetches Sei sequence class label for identified variants. This requires dbsnp to be run first."
 }
 
 
@@ -30,5 +32,6 @@ TOOL_FN_MAP = {
     "BioGRID":        bioGRID_predictions_agent,
     "Summarize_bioGRID_GO": make_go_summarization_node, 
     "dbsnp":          dbsnp_variants_agent,
+    "sei":          sei_predictions_agent,
 }
 
