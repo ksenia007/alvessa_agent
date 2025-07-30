@@ -56,7 +56,7 @@ if __name__ == "__main__":
         # "Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?",
         # "Through what pathways or protein interactions does viral gene E6 (or E7) modulate cellular metabolism?"
         # "Is there evidence of protein-protein interaction or functional overlaps between TP53 and KRAS?"
-        "How many variants are identified for TP53 and KRAS? What does it imply about the genes?",
+        "How many variants are identified for TP53 and KRAS? What does it imply about the genes in terms of regulatory activity??",
     ]
 
     with open("demo.txt", "w") as f:
