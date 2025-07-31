@@ -1,17 +1,19 @@
 ================================================================================
-Q: How many variants are identified for TP53 and KRAS? What does it imply about the genes in terms of regulatory activity??
+Q: Compare and contrast roles of TP53 and BRCA1 in cancer biology
 
 Answer:
-TP53 has 42 variants identified and KRAS has 17 variants identified. This implies that TP53 has significantly higher regulatory activity than KRAS, as evidenced by TP53 variants showing predominantly transcriptional and promoter regulatory classifications (TN1 Transcription, P Promoter) while KRAS variants show more diverse regulatory patterns including heterochromatin and low signal classifications.
+TP53 and BRCA1 are both tumor suppressor genes with distinct but complementary roles in cancer biology. TP53 functions as a multifunctional transcription factor that induces cell cycle arrest, DNA repair, or apoptosis upon DNA damage, acting as a tumor suppressor in many tumor types by negatively regulating cell division and controlling expression of genes required for this process. BRCA1 functions as an E3 ubiquitin-protein ligase that plays a central role in DNA repair by facilitating cellular responses to DNA damage, specifically contributing to homologous recombination repair and coordinating diverse cellular pathways including DNA damage repair, ubiquitination and transcriptional regulation to maintain genomic stability. Both genes are required for appropriate cell cycle arrests after DNA damage, but TP53 prevents CDK7 kinase activity in response to DNA damage while BRCA1 regulates cell cycle G2/M checkpoints through its interaction with RBBP8. TP53 is associated with a broader range of cancers including adrenocortical carcinoma, basal cell carcinoma, esophageal cancer, Li-Fraumeni syndrome, lung cancer, and squamous cell carcinoma, while BRCA1 is primarily associated with breast cancer, breast-ovarian cancer, ovarian cancer, and pancreatic cancer.
 
 Evidence:
-  - TP53 gwas_high_risk_snps contains 42 variants
-  - KRAS gwas_high_risk_snps contains 17 variants
-  - TP53 sei_sequence_class predictions show multiple TN1 Transcription classifications
-  - TP53 sei_sequence_class predictions show multiple P Promoter classifications
-  - KRAS sei_sequence_class predictions show HET1, HET2, HET3 Heterochromatin classifications
-  - KRAS sei_sequence_class predictions show L1, L2, L4, L6 Low signal classifications
-  - TP53 function describes it as a multifunctional transcription factor
-  - TP53 total_associations is 653 compared to KRAS total_associations of 153
+  - TP53 acts as a tumor suppressor in many tumor types; induces growth arrest or apoptosis depending on the physiological circumstances and cell type
+  - TP53 negatively regulates cell division by controlling expression of a set of genes required for this process
+  - TP53 prevents CDK7 kinase activity when associated to CAK complex in response to DNA damage, thus stopping cell cycle progression
+  - BRCA1 plays a central role in DNA repair by facilitating cellular responses to DNA damage
+  - BRCA1 coordinates a diverse range of cellular pathways such as DNA damage repair, ubiquitination and transcriptional regulation to maintain genomic stability
+  - BRCA1 contributes to homologous recombination repair (HRR) via its direct interaction with PALB2
+  - BRCA1 required for appropriate cell cycle arrests after ionizing irradiation in both the S-phase and the G2 phase of the cell cycle
+  - BRCA1 component of the BRCA1-RBBP8 complex which regulates CHEK1 activation and controls cell cycle G2/M checkpoints on DNA damage
+  - TP53 diseases include Adrenocortical carcinoma, Basal cell carcinoma 7, Bone marrow failure syndrome 5, Esophageal cancer, Li-Fraumeni syndrome, Lung cancer, Papilloma of choroid plexus, Squamous cell carcinoma of the head and neck
+  - BRCA1 diseases include Breast cancer, Breast-ovarian cancer, familial, 1, Fanconi anemia, complementation group S, Ovarian cancer, Pancreatic cancer 4
 
 

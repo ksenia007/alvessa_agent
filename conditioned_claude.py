@@ -72,7 +72,9 @@ def conditioned_claude_node(state: "State") -> "State":
         # Add sei predictions
         sei_effect_predictions = state.get("sei_predictions", {}).get(g, [])
         if sei_effect_predictions:
-            gene_info["sei_sequence_class_(regulatory_activity_classification_for_variant)_predictions"] = sei_effect_predictions
+            #gene_info["sei_sequence_class_(regulatory_activity_classification_for_variant)_predictions"] = sei_effect_predictions
+            gene_info["Regulatory activity role for the regions where variants were found. Defined computationally through Sei, a deep learning model that predicts transcription factors, histone marks and dnase, though clustering prediction over the genome and then assinging values. Reperesents role of the region"] = sei_effect_predictions
+
             
         gene_payload.append(gene_info)
 

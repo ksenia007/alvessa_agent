@@ -20,7 +20,7 @@ TOOL_CATALOG = {
     "BioGRID": "Fetches BioGRID interactions and their functional annotations for the input genes. Provides a curated context-specific list of protein-protein, genetic and chemical interactions.",
     "Summarize_bioGRID_GO": "Required for BioGrid. Summarizes BioGRID GO terms for the input genes. Provides a compact list of GO terms for the input genes.",
     "dbsnp": "Fetches dbSNP data about the identified variants. This requires gwas to be run first.",
-    "sei": "Fetches Sei sequence class label for identified variants. This requires dbsnp to be run first."
+    "sei": "Fetches predictions of the sequence regulatory activity for given variants. This requires dbsnp to be run first."
 }
 
 

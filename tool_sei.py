@@ -13,7 +13,7 @@ import os
 import sys
 
 sys.path.append('../../sei')
-import sei_argo as sei
+# import sei_argo as sei
 import pandas as pd
 import time
 import shutil
