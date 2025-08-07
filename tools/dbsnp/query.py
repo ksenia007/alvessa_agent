@@ -4,6 +4,12 @@ from urllib3.util.retry import Retry
 import re
 from typing import List, Dict
 
+# Import configuration
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from config import DBSNP_DEFAULT_ASSEMBLY, DBSNP_ASSEMBLY_PATTERNS
+
 
 def get_with_retries(url, max_retries=5, backoff_factor=1.0):
     """Get URL with retry logic for robustness."""
@@ -62,23 +68,43 @@ def _accession_to_chrom(seq_id: str) -> str:
     return str(num)  # 1-22
 
 
-def get_variant_coordinates(rsid: str, assembly: str = "GRCh38") -> List[Dict[str, str]]:
+def _matches_assembly(assembly_name: str, target_assembly: str) -> bool:
+    """
+    Check if an assembly name matches the target assembly pattern.
+    
+    Args:
+        assembly_name: Assembly name from dbSNP (e.g., "GRCh38.p14")
+        target_assembly: Target assembly pattern (e.g., "GRCh38", "GRCh37", "all")
+    
+    Returns:
+        bool: True if the assembly matches the target pattern
+    """
+    if target_assembly == "all":
+        return True
+    
+    patterns = DBSNP_ASSEMBLY_PATTERNS.get(target_assembly, [])
+    if not patterns:
+        # If no patterns defined, do exact match
+        return assembly_name.startswith(target_assembly)
+    
+    return any(pattern in assembly_name for pattern in patterns)
+
+
+def get_variant_coordinates(rsid: str, assembly: str = None) -> List[Dict[str, str]]:
     """
     Get genomic coordinates for an rsID.
     
     Args:
         rsid: The rsID to query (e.g., "rs1333049" or "1333049")
-        assembly: Genome assembly version (default: "GRCh38")
+        assembly: Genome assembly version (default: config.DBSNP_DEFAULT_ASSEMBLY)
+                 Options: "GRCh38", "GRCh37", "all"
     
     Returns:
         List of dictionaries with variant coordinates:
         [{"chrom": str, "pos": int, "ref": str, "alt": str, "assembly": str}]
     """
-    def _same_major(a, b) -> bool:
-        """Compare assembly names ignoring patch version."""
-        if a is None or b is None:
-            return True
-        return a.split(".")[0] == b.split(".")[0]
+    if assembly is None:
+        assembly = DBSNP_DEFAULT_ASSEMBLY
 
     data = fetch_snp_json(rsid)
     placements = data["primary_snapshot_data"]["placements_with_allele"]
@@ -97,6 +123,17 @@ def get_variant_coordinates(rsid: str, assembly: str = "GRCh38") -> List[Dict[st
             except ValueError:
                 continue  # Skip if chrom is not a number or X/Y
         
+        # Get assembly information for this placement
+        placement_assembly = None
+        if 'placement_annot' in plc and 'seq_id_traits_by_assembly' in plc['placement_annot']:
+            for assembly_info in plc['placement_annot']['seq_id_traits_by_assembly']:
+                placement_assembly = assembly_info.get('assembly_name', '')
+                break  # Use the first assembly name found
+        
+        # Skip if assembly doesn't match filter
+        if placement_assembly and not _matches_assembly(placement_assembly, assembly):
+            continue
+        
         for al in plc["alleles"]:
             spdi = al["allele"]["spdi"]
             ref, alt = spdi["deleted_sequence"], spdi["inserted_sequence"]
@@ -107,44 +144,49 @@ def get_variant_coordinates(rsid: str, assembly: str = "GRCh38") -> List[Dict[st
                 "pos": spdi["position"] + 1,  # Convert from 0-based to 1-based
                 "ref": ref,
                 "alt": alt,
+                "assembly": placement_assembly or "Unknown"
             })
 
-    # Return the first non-empty bucket
     return bucket
 
 
-def get_variant_info(rsid: str) -> Dict:
+def get_variant_info(rsid: str, assembly: str = None) -> Dict:
     """
     Get basic variant information for an rsID.
     
     Args:
         rsid: The rsID to query (e.g., "rs1333049" or "1333049")
+        assembly: Genome assembly version (default: config.DBSNP_DEFAULT_ASSEMBLY)
     
     Returns:
         Dictionary with variant information including coordinates
     """
+    if assembly is None:
+        assembly = DBSNP_DEFAULT_ASSEMBLY
+        
     rsid_with_prefix = rsid if rsid.lower().startswith("rs") else f"rs{rsid}"
-    coords = get_variant_coordinates(rsid)
+    coords = get_variant_coordinates(rsid, assembly)
 
     return {
         "rsid": rsid_with_prefix,
         "coordinates": coords,
+        "assembly_filter": assembly,
         "raw_data": fetch_snp_json(rsid)
     }
 
 if __name__ == "__main__":
-    # Get all basic info
-    info = get_variant_info("rs138188004")
-
-    # Get just coordinates  
-    coords = get_variant_coordinates("rs138188004")
-
-    # Get raw API data
-    raw_data = fetch_snp_json("rs138188004")
-    
-    print(info['raw_data'].keys())
-
-    print("-"*100)
-    for i, c in enumerate(coords):
+    # Test with different assemblies
+    print("=== Testing GRCh38 (default) ===")
+    info_38 = get_variant_info("rs138188004", "GRCh38")
+    for i, c in enumerate(info_38['coordinates']):
         print(f"{i}: {c}")
-    # print(raw_data)
+    
+    print("\n=== Testing GRCh37 ===")
+    info_37 = get_variant_info("rs138188004", "GRCh37")
+    for i, c in enumerate(info_37['coordinates']):
+        print(f"{i}: {c}")
+    
+    print("\n=== Testing ALL assemblies ===")
+    info_all = get_variant_info("rs138188004", "all")
+    for i, c in enumerate(info_all['coordinates']):
+        print(f"{i}: {c}")
