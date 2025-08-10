@@ -3,32 +3,34 @@ import time
 import re
 from typing import Set
 
-from config import DEBUG
+from config import DEBUG, DBSNP_DEFAULT_ASSEMBLY
 from tools.dbsnp.query import get_variant_info
 from state import State
 
 
-def dbsnp_variants_agent(state: "State") -> "State":
+def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
     """
     LangGraph node that annotates SNPs with dbSNP variant information.
     Extracts rsIDs from GWAS associations and queries dbSNP for each variant.
 
-    Parameters
-    ----------
-    state
-        Current graph state.
+    Args:
+        state: Current workflow state containing gene symbols and GWAS associations
+        assembly: Genome assembly to use (default: config.DBSNP_DEFAULT_ASSEMBLY)
+                 Options: "GRCh38", "GRCh37", "all"
 
-    Returns
-    -------
-    State
-        Updated state with the `"dbsnp_variants"` field filled with variant information.
+    Returns:
+        Updated state with dbSNP variant information
     """
+    if assembly is None:
+        assembly = DBSNP_DEFAULT_ASSEMBLY
+    
+    if DEBUG:
+        print(f"[dbSNP] Using genome assembly: {assembly}")
+
     variants = state.get("dbsnp_variants", {}).copy()
     
     # Extract rsIDs from GWAS associations
     rsids = _extract_rsids_from_gwas(state)
-
-    print(rsids)
     
     if DEBUG:
         print(f"[dbSNP] Found {len(rsids)} unique rsIDs to query")
@@ -36,7 +38,7 @@ def dbsnp_variants_agent(state: "State") -> "State":
     for gene, gene_rsids in rsids.items():
         if gene in variants:
             if DEBUG:
-                print(f"[dbSNP] Skipping {rsid} - already processed")
+                print(f"[dbSNP] Skipping {gene} - already processed")
             continue
 
         variants[gene] = {}
@@ -53,14 +55,15 @@ def dbsnp_variants_agent(state: "State") -> "State":
 
             try:
                 # Query dbSNP variant information
-                result = get_variant_info(rsid)
+                result = get_variant_info(rsid, assembly)
                 
                 variants[gene][rsid] = {
                     "rsid": result.get("rsid", rsid),
                     "found": True,
                     "coordinates": result.get("coordinates", []),
                     "coordinate_count": len(result.get("coordinates", [])),
-                    "chromosomes": list(set(coord.get("chrom", "Unknown") for coord in result.get("coordinates", [])))
+                    "chromosomes": list(set(coord.get("chrom", "Unknown") for coord in result.get("coordinates", []))),
+                    "assembly_filter": result.get("assembly_filter", assembly)
                 }
                 
                 if DEBUG:
@@ -158,7 +161,8 @@ def has_dbsnp_variants(state: "State") -> bool:
     variants = state.get("dbsnp_variants", {})
     has_variants = any(
         variant.get("found", False) and variant.get("coordinate_count", 0) > 0
-        for variant in variants.values()
+        for gene_variants in variants.values()
+        for variant in gene_variants.values()
     )
     
     if DEBUG:
@@ -174,7 +178,8 @@ def has_dbsnp_coordinates(state: "State") -> bool:
     variants = state.get("dbsnp_variants", {})
     has_coords = any(
         len(variant.get("coordinates", [])) > 0
-        for variant in variants.values()
+        for gene_variants in variants.values()
+        for variant in gene_variants.values()
     )
     
     if DEBUG:

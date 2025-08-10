@@ -1,19 +1,18 @@
 ================================================================================
-Q: Compare and contrast roles of TP53 and BRCA1 in cancer biology
+Q: How many variants are identified for TP53 and PTEN? What does it imply about the genes in terms of regulatory activity and pathogenicity?
 
 Answer:
-TP53 and BRCA1 are both tumor suppressor genes with distinct but complementary roles in cancer biology. TP53 functions as a multifunctional transcription factor that induces cell cycle arrest, DNA repair, or apoptosis upon DNA damage, acting as a tumor suppressor in many tumor types by negatively regulating cell division and controlling expression of genes required for this process. BRCA1 functions as an E3 ubiquitin-protein ligase that plays a central role in DNA repair by facilitating cellular responses to DNA damage, specifically contributing to homologous recombination repair and coordinating diverse cellular pathways including DNA damage repair, ubiquitination and transcriptional regulation to maintain genomic stability. Both genes are required for appropriate cell cycle arrests after DNA damage, but TP53 prevents CDK7 kinase activity in response to DNA damage while BRCA1 regulates cell cycle G2/M checkpoints through its interaction with RBBP8. TP53 is associated with a broader range of cancers including adrenocortical carcinoma, basal cell carcinoma, esophageal cancer, Li-Fraumeni syndrome, lung cancer, and squamous cell carcinoma, while BRCA1 is primarily associated with breast cancer, breast-ovarian cancer, ovarian cancer, and pancreatic cancer.
+TP53 has 42 variants identified, while PTEN has 42 variants identified. For regulatory activity, TP53 variants show diverse roles including promoter regions (P Promoter), transcription factors (TF3 FOXA1/AR/ESR1), transcriptional activity (TN1-TN4 Transcription), stem cell activity (E1 Stem cell), and heterochromatin regions. PTEN variants also show diverse regulatory roles including transcription factors (TF1 NANOG/FOXA1, TF3 FOXA1/AR/ESR1, TF5 AR), transcriptional activity (TN1-TN4 Transcription), stem cell activity (E1 Stem cell), and various tissue-specific enhancers. For pathogenicity, TP53 has variants with likely pathogenic (rs28934576) and likely benign (rs1042522, rs560191) predictions, while all PTEN variants show null pathogenicity predictions, indicating they are likely non-missense variants.
 
 Evidence:
-  - TP53 acts as a tumor suppressor in many tumor types; induces growth arrest or apoptosis depending on the physiological circumstances and cell type
-  - TP53 negatively regulates cell division by controlling expression of a set of genes required for this process
-  - TP53 prevents CDK7 kinase activity when associated to CAK complex in response to DNA damage, thus stopping cell cycle progression
-  - BRCA1 plays a central role in DNA repair by facilitating cellular responses to DNA damage
-  - BRCA1 coordinates a diverse range of cellular pathways such as DNA damage repair, ubiquitination and transcriptional regulation to maintain genomic stability
-  - BRCA1 contributes to homologous recombination repair (HRR) via its direct interaction with PALB2
-  - BRCA1 required for appropriate cell cycle arrests after ionizing irradiation in both the S-phase and the G2 phase of the cell cycle
-  - BRCA1 component of the BRCA1-RBBP8 complex which regulates CHEK1 activation and controls cell cycle G2/M checkpoints on DNA damage
-  - TP53 diseases include Adrenocortical carcinoma, Basal cell carcinoma 7, Bone marrow failure syndrome 5, Esophageal cancer, Li-Fraumeni syndrome, Lung cancer, Papilloma of choroid plexus, Squamous cell carcinoma of the head and neck
-  - BRCA1 diseases include Breast cancer, Breast-ovarian cancer, familial, 1, Fanconi anemia, complementation group S, Ovarian cancer, Pancreatic cancer 4
+  - TP53 gwas_high_risk_snps contains 42 variants
+  - PTEN gwas_high_risk_snps contains 42 variants
+  - TP53 regulatory activity shows rs181067279: P Promoter, rs17883687: P Promoter, rs896855: P Promoter
+  - TP53 regulatory activity shows rs113910919: TF3 FOXA1 / AR / ESR1, rs62523081: TF3 FOXA1 / AR / ESR1
+  - TP53 regulatory activity shows rs2303287: TN1 Transcription, rs78378222: TN4 Transcription
+  - PTEN regulatory activity shows rs644205: TF1 NANOG / FOXA1, rs149071840: TF3 FOXA1 / AR / ESR1, rs2673824: TF5 AR
+  - PTEN regulatory activity shows rs478839: E1 Stem cell, rs1234214: E1 Stem cell
+  - TP53 pathogenicity shows rs28934576: likely_pathogenic, rs1042522: likely_benign, rs560191: likely_benign
+  - PTEN pathogenicity predictions all show null values
 
 
