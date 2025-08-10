@@ -59,6 +59,13 @@ def conditioned_claude_node(state: "State") -> "State":
                 print('[conditioned_claude_node] Found BioGRID GO terms for', g, biogrid_hits)
             gene_info["gene_ontology_terms_of_interacting_genes"] = biogrid_hits
 
+        # Add Reactome pathways
+        reactome_hits = state.get("reactome_pathways", {}).get(g, [])
+        if reactome_hits:
+            if DEBUG:
+                print('[conditioned_claude_node] Found Reactome pathways terms for', g, reactome_hits)
+            gene_info["Associated Reactome pathways (curated biological pathways which describe how molecules interact within a cell to carry out different biological processes)"] = reactome_hits
+
         # Add associations to the gene info
         associations = state["gwas_associations"].get(g, [])
         if associations:
@@ -77,7 +84,6 @@ def conditioned_claude_node(state: "State") -> "State":
         # Add sei predictions
         sei_effect_predictions = state.get("sei_predictions", {}).get(g, [])
         if sei_effect_predictions:
-            #gene_info["sei_sequence_class_(regulatory_activity_classification_for_variant)_predictions"] = sei_effect_predictions
             gene_info["Regulatory activity role for the regions where variants were found. Defined computationally through Sei, a deep learning model that predicts transcription factors, histone marks and dnase, though clustering prediction over the genome and then assinging values. Reperesents role of the region"] = sei_effect_predictions
             
         # Add summary text from Expecto from HB
@@ -89,7 +95,11 @@ def conditioned_claude_node(state: "State") -> "State":
         tissue_expression_preds_variant_text_description = state.get("tissue_expression_preds_variant_text_description", {}).get(g, {})
         if tissue_expression_preds_variant_text_description:
             gene_info["Per variant GE modulation predictions:"] = tissue_expression_preds_variant_text_description
-            
+        # Add alphamissense predictions
+        alphamissense_effect_predictions = state.get("alphamissense_predictions", {}).get(g, [])
+        if alphamissense_effect_predictions:
+            gene_info["Pathogenicity predictions for each missense variant of interest. Computed through AlphaMissense, which predicts the likelihood that missense variants (genetic mutations where a single amino acid in a protein is changed) can cause disease"] = alphamissense_effect_predictions
+           
         gene_payload.append(gene_info)
 
     context_block: str = json.dumps(gene_payload, separators=(",", ":"))

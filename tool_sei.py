@@ -69,8 +69,11 @@ def sei_predictions_agent(state: "State") -> "State":
                     ]
             
             if not match.empty:
-                seq_class_num = match['seq_class'].iloc[0]
-                seq_class_name = seq_class_names[int(seq_class_num)] 
+                seq_class_num = match.iloc[0]['seq_class']
+                if seq_class_num<40:
+                    seq_class_name = seq_class_names[int(seq_class_num)] 
+                else:
+                    seq_class_name = None
             else:
                 print(chrom, variant_pos, ref_base, alt_base)
                 seq_class_name = None
