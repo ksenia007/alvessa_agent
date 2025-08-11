@@ -1,20 +1,18 @@
 ================================================================================
-Q: Tell me about regulatory role of TP53 variants
+Q: Tell me about role of TP53 variants in GWAS catalogue
 
 Answer:
-TP53 variants play crucial regulatory roles through multiple mechanisms. The variants are located in key regulatory regions including promoters (rs1042522, rs17881850, rs17880847, rs78378222) and transcriptional regions (multiple TN1 Transcription variants). TP53 functions as a multifunctional transcription factor that induces cell cycle arrest, DNA repair, or apoptosis upon binding to target DNA sequences. It acts as a tumor suppressor by negatively regulating cell division through controlling expression of genes required for this process, including cyclin-dependent kinase inhibitors. The protein regulates apoptosis by stimulating BAX and FAS expression or repressing Bcl-2 expression. Different TP53 isoforms have distinct regulatory effects: Isoform 2 enhances transactivation activity, Isoform 4 suppresses transactivation and impairs growth suppression, and Isoform 7 inhibits apoptosis. TP53 also regulates circadian rhythms by repressing CLOCK-BMAL1-mediated transcriptional activation of PER2 and induces transcription of regulatory long non-coding RNAs including lincRNA-p21.
+TP53 variants show extensive associations in GWAS catalogue with 239 total associations across 72 studies, with 235 being statistically significant. High-risk SNPs include rs17880847, rs28934576, rs78378222, and others, associated with diverse traits including uterine fibroids, glioblastoma, skin cancer, basal cell carcinoma, and metabolic parameters like sex hormone-binding globulin levels and body fat percentage. The variants show regulatory activity in transcriptional regions (TN1-TN4), promoter regions, and stem cell enhancers. Pathogenicity predictions indicate rs28934576 as pathogenic and rs1042522 as benign. Tissue-specific expression analysis reveals strongest effects in muscle skeletal and keratinocyte tissues, with variants showing differential expression modulation across 218 tissues.
 
 Evidence:
-  - TP53 variants located in promoter regions: rs1042522, rs17881850, rs17880847, rs78378222
-  - TP53 variants in transcriptional regions with TN1 Transcription activity
-  - TP53 multifunctional transcription factor that induces cell cycle arrest, DNA repair or apoptosis
-  - TP53 acts as tumor suppressor by negatively regulating cell division
-  - TP53 controls expression of cyclin-dependent kinase inhibitors
-  - TP53 regulates apoptosis through BAX and FAS stimulation or Bcl-2 repression
-  - TP53 Isoform 2 enhances transactivation activity
-  - TP53 Isoform 4 suppresses transactivation activity and impairs growth suppression
-  - TP53 Isoform 7 inhibits isoform 1-mediated apoptosis
-  - TP53 regulates circadian clock by repressing CLOCK-BMAL1-mediated transcriptional activation of PER2
-  - TP53 induces transcription of lincRNA-p21 and lincRNA-Mkln1
+  - TP53 total_associations: 239
+  - TP53 total_significant_associations: 235
+  - TP53 total_studies_analyzed: 72
+  - TP53 gwas_high_risk_snps: rs17880847, rs28934576, rs78378222, rs74351250, rs572488097, rs201214141, rs17881850, rs1642792, rs62062585, rs138932666, rs78496430, rs17883687, rs1042522, rs55745760, rs1625895, rs8073498, rs17882854, rs2909430, rs4968204, rs9894946
+  - TP53 gwas_disease_traits include: Uterine fibroids, Glioblastoma, Skin cancer, Basal cell carcinoma
+  - rs28934576 pathogenicity: pathogenic
+  - rs1042522 pathogenicity: benign
+  - TP53 regulatory activity roles: TN1 Transcription, P Promoter, E1 Stem cell, TN4 Transcription
+  - TP53 tissue expression: Strongest positive effect in Muscle Skeletal (0.5529), strongest negative effect in Keratinocyte (-1.3602)
 
 
