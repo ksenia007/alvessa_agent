@@ -1,18 +1,1 @@
-================================================================================
-Q: Tell me about role of TP53 variants in GWAS catalogue
-
-Answer:
-TP53 variants show extensive associations in GWAS catalogue with 239 total associations across 72 studies, with 235 being statistically significant. High-risk SNPs include rs17880847, rs28934576, rs78378222, and others, associated with diverse traits including uterine fibroids, glioblastoma, skin cancer, basal cell carcinoma, and metabolic parameters like sex hormone-binding globulin levels and body fat percentage. The variants show regulatory activity in transcriptional regions (TN1-TN4), promoter regions, and stem cell enhancers. Pathogenicity predictions indicate rs28934576 as pathogenic and rs1042522 as benign. Tissue-specific expression analysis reveals strongest effects in muscle skeletal and keratinocyte tissues, with variants showing differential expression modulation across 218 tissues.
-
-Evidence:
-  - TP53 total_associations: 239
-  - TP53 total_significant_associations: 235
-  - TP53 total_studies_analyzed: 72
-  - TP53 gwas_high_risk_snps: rs17880847, rs28934576, rs78378222, rs74351250, rs572488097, rs201214141, rs17881850, rs1642792, rs62062585, rs138932666, rs78496430, rs17883687, rs1042522, rs55745760, rs1625895, rs8073498, rs17882854, rs2909430, rs4968204, rs9894946
-  - TP53 gwas_disease_traits include: Uterine fibroids, Glioblastoma, Skin cancer, Basal cell carcinoma
-  - rs28934576 pathogenicity: pathogenic
-  - rs1042522 pathogenicity: benign
-  - TP53 regulatory activity roles: TN1 Transcription, P Promoter, E1 Stem cell, TN4 Transcription
-  - TP53 tissue expression: Strongest positive effect in Muscle Skeletal (0.5529), strongest negative effect in Keratinocyte (-1.3602)
-
 

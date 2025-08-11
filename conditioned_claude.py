@@ -95,6 +95,7 @@ def conditioned_claude_node(state: "State") -> "State":
         tissue_expression_preds_variant_text_description = state.get("tissue_expression_preds_variant_text_description", {}).get(g, {})
         if tissue_expression_preds_variant_text_description:
             gene_info["Per variant GE modulation predictions:"] = tissue_expression_preds_variant_text_description
+
         # Add alphamissense predictions
         alphamissense_effect_predictions = state.get("alphamissense_predictions", {}).get(g, [])
         if alphamissense_effect_predictions:
