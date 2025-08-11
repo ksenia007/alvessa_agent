@@ -39,7 +39,8 @@ def sei_predictions_agent(state: "State") -> "State":
     preds = state.get("sei_predictions", {}).copy()
     variants = state.get("dbsnp_variants", {}).copy()
 
-    seq_class_df = pd.read_csv('local_dbs/sorted.hg38.tiling.bed.ipca_randomized_300.labels.merged.bed', names=['chr', 'start_pos', 'end_pos', 'seq_class'], sep = '\t')
+    seq_class_df_hg38 = pd.read_csv('local_dbs/sorted.hg38.tiling.bed.ipca_randomized_300.labels.merged.bed', names=['chr', 'start_pos', 'end_pos', 'seq_class'], sep = '\t')
+    seq_class_df_hg19 = pd.read_csv('local_dbs/sorted.hg19.tiling.bed.ipca_randomized_300.labels.merged.bed', names=['chr', 'start_pos', 'end_pos', 'seq_class'], sep = '\t')
 
     with open('local_dbs/seqclass.names', 'r') as f:
         seq_class_names = [line.strip() for line in f]
@@ -48,19 +49,30 @@ def sei_predictions_agent(state: "State") -> "State":
 
     for gene, gene_vars in variants.items():
         state_all_snps[gene] = {}
+        
         for var, var_data in gene_vars.items():
             all_snps = var_data['coordinates']
+            if 'assembly_filter' in var_data:
+                assembly = var_data['assembly_filter']
+            else:
+                continue
+
             for snp in all_snps:
                 chrom = snp['chrom']
                 pos = snp['pos']
                 ref_base = snp['ref']
                 alt_base = snp['alt']
-                state_all_snps[gene][var] = [chrom, pos, ref_base, alt_base]
+                state_all_snps[gene][var] = [chrom, pos, ref_base, alt_base, assembly]
 
     for gene, variants in state_all_snps.items():
         preds[gene] = {}
-        for var_id, (chrom, variant_pos, ref_base, alt_base) in variants.items():
+        for var_id, (chrom, variant_pos, ref_base, alt_base, assembly) in variants.items():
             chr_str = f'chr{chrom}'
+
+            if 'GRCh38' in assembly:
+                seq_class_df = seq_class_df_hg38
+            else:
+                seq_class_df = seq_class_df_hg19
 
             match = seq_class_df[
                         (seq_class_df['chr'] == chr_str) &
@@ -69,8 +81,11 @@ def sei_predictions_agent(state: "State") -> "State":
                     ]
             
             if not match.empty:
-                seq_class_num = match['seq_class'].iloc[0]
-                seq_class_name = seq_class_names[int(seq_class_num)] 
+                seq_class_num = match.iloc[0]['seq_class']
+                if seq_class_num<40:
+                    seq_class_name = seq_class_names[int(seq_class_num)] 
+                else:
+                    seq_class_name = None
             else:
                 print(chrom, variant_pos, ref_base, alt_base)
                 seq_class_name = None

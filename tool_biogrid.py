@@ -76,8 +76,6 @@ def bioGRID_predictions_agent(state: "State") -> "State":
         if gene in preds:
             continue
 
-        preds[gene] = {}
-
         try:
             interactions = _fetch_predictions_BioGRID(gene)
         except Exception as exc:
