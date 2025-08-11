@@ -7,4 +7,6 @@ local_dbs/seqclass.names
 local_dbs/sorted.hg38.tiling.bed.ipca_randomized_300.labels.merged.bed
 local_dbs/AlphaMissense_hg38.tsv
 local_dbs/NCBI2Reactome_All_Levels.txt
+local_dbs/AlphaMissense_hg19.tsv
+local_dbs/sorted.hg19.tiling.bed.ipca_randomized_300.labels.merged.bed
 **/__pycache__/
