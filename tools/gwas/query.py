@@ -66,12 +66,15 @@ class GWASQueryEngine:
         """Query GWAS associations for a gene."""
         gene_symbol = gene_symbol.upper().strip()
         
-        # Find gene matches
         matches = pd.concat([
-            self.associations_df[self.associations_df['REPORTED GENE(S)'].str.contains(
-                gene_symbol, case=False, na=False, regex=False)],
-            self.associations_df[self.associations_df['MAPPED_GENE'].str.contains(
-                gene_symbol, case=False, na=False, regex=False)]
+            self.associations_df[
+                self.associations_df['REPORTED GENE(S)']
+                .str.upper().str.strip() == gene_symbol
+            ],
+            self.associations_df[
+                self.associations_df['MAPPED_GENE']
+                .str.upper().str.strip() == gene_symbol
+            ]
         ]).drop_duplicates()
         
         empty_summary = {"related_genes": [], "high_risk_snps": [], "proteins": [], "disease_traits": []}

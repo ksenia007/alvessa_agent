@@ -15,7 +15,7 @@ RATE_LIMIT: int = 60  # Claude calls per rolling minute
 # -----------------------------------------------------------------------------
 # Default genome assembly for dbSNP queries
 # Options: "GRCh38", "GRCh37", "all" (returns coordinates from all assemblies)
-DBSNP_DEFAULT_ASSEMBLY: str = "GRCh38"
+DBSNP_DEFAULT_ASSEMBLY: str = "all"
 
 # Assembly mapping for filtering dbSNP results
 DBSNP_ASSEMBLY_PATTERNS = {

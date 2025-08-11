@@ -1,19 +1,20 @@
 ================================================================================
-Q: Compare and contrast roles of TP53 and BRCA1 in cancer biology
+Q: Tell me about regulatory role of TP53 variants
 
 Answer:
-TP53 and BRCA1 are both tumor suppressor genes with distinct but complementary roles in cancer biology. TP53 functions as a multifunctional transcription factor that induces cell cycle arrest, DNA repair, or apoptosis upon DNA damage, acting as a tumor suppressor in many tumor types by negatively regulating cell division and controlling expression of genes required for this process. BRCA1 functions as an E3 ubiquitin-protein ligase that plays a central role in DNA repair by facilitating cellular responses to DNA damage, specifically contributing to homologous recombination repair and coordinating diverse cellular pathways including DNA damage repair, ubiquitination and transcriptional regulation to maintain genomic stability. Both genes are required for appropriate cell cycle arrests after DNA damage, but TP53 prevents CDK7 kinase activity in response to DNA damage while BRCA1 regulates cell cycle G2/M checkpoints through its interaction with RBBP8. TP53 is associated with a broader range of cancers including adrenocortical carcinoma, basal cell carcinoma, esophageal cancer, Li-Fraumeni syndrome, lung cancer, and squamous cell carcinoma, while BRCA1 is primarily associated with breast cancer, breast-ovarian cancer, ovarian cancer, and pancreatic cancer.
+TP53 variants play crucial regulatory roles through multiple mechanisms. The variants are located in key regulatory regions including promoters (rs1042522, rs17881850, rs17880847, rs78378222) and transcriptional regions (multiple TN1 Transcription variants). TP53 functions as a multifunctional transcription factor that induces cell cycle arrest, DNA repair, or apoptosis upon binding to target DNA sequences. It acts as a tumor suppressor by negatively regulating cell division through controlling expression of genes required for this process, including cyclin-dependent kinase inhibitors. The protein regulates apoptosis by stimulating BAX and FAS expression or repressing Bcl-2 expression. Different TP53 isoforms have distinct regulatory effects: Isoform 2 enhances transactivation activity, Isoform 4 suppresses transactivation and impairs growth suppression, and Isoform 7 inhibits apoptosis. TP53 also regulates circadian rhythms by repressing CLOCK-BMAL1-mediated transcriptional activation of PER2 and induces transcription of regulatory long non-coding RNAs including lincRNA-p21.
 
 Evidence:
-  - TP53 acts as a tumor suppressor in many tumor types; induces growth arrest or apoptosis depending on the physiological circumstances and cell type
-  - TP53 negatively regulates cell division by controlling expression of a set of genes required for this process
-  - TP53 prevents CDK7 kinase activity when associated to CAK complex in response to DNA damage, thus stopping cell cycle progression
-  - BRCA1 plays a central role in DNA repair by facilitating cellular responses to DNA damage
-  - BRCA1 coordinates a diverse range of cellular pathways such as DNA damage repair, ubiquitination and transcriptional regulation to maintain genomic stability
-  - BRCA1 contributes to homologous recombination repair (HRR) via its direct interaction with PALB2
-  - BRCA1 required for appropriate cell cycle arrests after ionizing irradiation in both the S-phase and the G2 phase of the cell cycle
-  - BRCA1 component of the BRCA1-RBBP8 complex which regulates CHEK1 activation and controls cell cycle G2/M checkpoints on DNA damage
-  - TP53 diseases include Adrenocortical carcinoma, Basal cell carcinoma 7, Bone marrow failure syndrome 5, Esophageal cancer, Li-Fraumeni syndrome, Lung cancer, Papilloma of choroid plexus, Squamous cell carcinoma of the head and neck
-  - BRCA1 diseases include Breast cancer, Breast-ovarian cancer, familial, 1, Fanconi anemia, complementation group S, Ovarian cancer, Pancreatic cancer 4
+  - TP53 variants located in promoter regions: rs1042522, rs17881850, rs17880847, rs78378222
+  - TP53 variants in transcriptional regions with TN1 Transcription activity
+  - TP53 multifunctional transcription factor that induces cell cycle arrest, DNA repair or apoptosis
+  - TP53 acts as tumor suppressor by negatively regulating cell division
+  - TP53 controls expression of cyclin-dependent kinase inhibitors
+  - TP53 regulates apoptosis through BAX and FAS stimulation or Bcl-2 repression
+  - TP53 Isoform 2 enhances transactivation activity
+  - TP53 Isoform 4 suppresses transactivation activity and impairs growth suppression
+  - TP53 Isoform 7 inhibits isoform 1-mediated apoptosis
+  - TP53 regulates circadian clock by repressing CLOCK-BMAL1-mediated transcriptional activation of PER2
+  - TP53 induces transcription of lincRNA-p21 and lincRNA-Mkln1
 
 

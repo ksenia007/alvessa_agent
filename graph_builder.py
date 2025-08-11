@@ -36,29 +36,21 @@ def run_async_sync(fn: Callable[..., Any]) -> Callable[..., Any]:
         return result
     return wrapper
 
-
 def build_graph() -> Callable[[State], State]:
-    """Return a compiled LangGraph ready for invocation."""
+    """Return a compiled LangGraph ready for invocation (diagram export is best‑effort)."""
     g = StateGraph(State)
 
-    # Entry + gene extraction
+    # Nodes
     g.add_node("extract_genes", gene_extraction_node)
     g.add_node("select_tools", run_async_sync(select_tools_and_run_dynamic))
-    g.set_entry_point("extract_genes")
-    g.add_conditional_edges(
-        "extract_genes",
-        has_genes,
-        {True: "select_tools", False: "claude"},
-    )
-    g.add_edge("select_tools", "claude")
-    
-    # Main LLM
     g.add_node("claude", conditioned_claude_node)
-
-    # Verification loop
     g.add_node("verify", verify_evidence_node)
-    g.add_edge("claude", "verify")
 
+    # Edges
+    g.set_entry_point("extract_genes")
+    g.add_conditional_edges("extract_genes", has_genes, {True: "select_tools", False: "claude"})
+    g.add_edge("select_tools", "claude")
+    g.add_edge("claude", "verify")
     g.add_conditional_edges(
         "verify",
         lambda s: (
@@ -69,10 +61,35 @@ def build_graph() -> Callable[[State], State]:
         {"retry": "claude", "done": END},
     )
 
-    g = g.compile()
-    
-    # Save the graph diagram as PNG
-    png_bytes = g.get_graph().draw_mermaid_png()
-    with open("graph_diagram.png", "wb") as f:
-        f.write(png_bytes)
-    return g
+    compiled = g.compile()
+
+    # ---- Best‑effort diagram export (handles multiple LangGraph versions) ----
+    try:
+        # Newer pattern (sometimes on the compiled object)
+        png = compiled.draw_mermaid_png()
+        with open("graph_diagram.png", "wb") as f:
+            f.write(png)
+    except AttributeError:
+        try:
+            # Older pattern via an internal graph on compiled
+            png = compiled.get_graph().draw_mermaid_png()  # may exist in some versions
+            with open("graph_diagram.png", "wb") as f:
+                f.write(png)
+        except Exception:
+            try:
+                # Fall back to Mermaid text (you can render externally)
+                mermaid = getattr(compiled, "draw_mermaid", None)
+                if callable(mermaid):
+                    mm = compiled.draw_mermaid()
+                else:
+                    mm = compiled.get_graph().draw_mermaid()  # older fallback
+                with open("graph_diagram.mmd", "w") as f:
+                    f.write(mm)
+            except Exception:
+                print('UNABLE TO UPDATE THE DIAGRAM')
+                # Give up quietly; diagram generation is optional
+                pass
+
+    return compiled
+
+
