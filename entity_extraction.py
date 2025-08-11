@@ -39,6 +39,7 @@ def gene_extraction_node(state: "State") -> "State":
         messages=[{"role": "user", "content": user_input}],
     )
     genes: List[str] = [g.strip() for g in response.content[0].text.split(",") if g.strip()]
+    genes = list(set(genes))  # Ensure unique genes
     if DEBUG:
         print("[gene_extraction_node] extracted:", genes)
     return {**state, "genes": genes}

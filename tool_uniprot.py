@@ -118,6 +118,9 @@ def uniprot_node(state: "State") -> "State":
 
     uniprot_entries_base: Dict[str, Dict] = {}
     uniprot_entries_gwas: Dict[str, Dict] = {}
+    
+    if DEBUG:
+        print(f"Fetching UniProt entries for {len(genes)} genes: {genes}")
 
     for gene in genes:
         entry_base = get_uniprot_entry_for_gene(gene)

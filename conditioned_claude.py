@@ -33,7 +33,12 @@ def conditioned_claude_node(state: "State") -> "State":
     # Build CONTEXT payload
     gene_payload: List[Dict[str, Any]] = []
     gene_list = list(set(state.get("genes", [])))
-
+    
+    if DEBUG:
+        print("[conditioned_claude_node] genes to summarize:", gene_list)
+    
+    gene_list = list(set(gene_list))  # Ensure unique genes
+    
     for g in gene_list:
         gene_info: Dict[str, Any] = {"gene": g}
 
@@ -80,6 +85,16 @@ def conditioned_claude_node(state: "State") -> "State":
         sei_effect_predictions = state.get("sei_predictions", {}).get(g, [])
         if sei_effect_predictions:
             gene_info["Regulatory activity role for the regions where variants were found. Defined computationally through Sei, a deep learning model that predicts transcription factors, histone marks and dnase, though clustering prediction over the genome and then assinging values. Reperesents role of the region"] = sei_effect_predictions
+            
+        # Add summary text from Expecto from HB
+        humanbase_expecto = state.get("humanbase_expecto", {}).get(g, [])
+        if humanbase_expecto:
+            gene_info["Tissue-specific expression disruption predictions from sequence"] = humanbase_expecto['summary_text']
+        
+        # Add per-variant info
+        tissue_expression_preds_variant_text_description = state.get("tissue_expression_preds_variant_text_description", {}).get(g, {})
+        if tissue_expression_preds_variant_text_description:
+            gene_info["Per variant GE modulation predictions:"] = tissue_expression_preds_variant_text_description
 
         # Add alphamissense predictions
         alphamissense_effect_predictions = state.get("alphamissense_predictions", {}).get(g, [])

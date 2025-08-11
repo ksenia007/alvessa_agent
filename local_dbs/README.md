@@ -23,4 +23,3 @@ The following files must be downloaded before using the GWAS and Sei tools:
 
 
 
-

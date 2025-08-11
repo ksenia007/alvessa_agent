@@ -1,15 +1,1 @@
-================================================================================
-Q: How many variants are identified for TP53 and PTEN? What does it imply about the genes in terms of regulatory activity and pathogenicity?
-
-Answer:
-TP53 has 41 variants identified, while PTEN has 42 variants identified. In terms of regulatory activity, both genes show variants in transcriptional regions (TN1-TN4), with TP53 having additional promoter variants and PTEN showing more heterochromatin variants. For pathogenicity, TP53 has one pathogenic variant (rs28934576) and two benign variants (rs560191, rs1042522), while PTEN shows no pathogenicity predictions for any variants, suggesting TP53 may have more direct disease-causing potential through missense mutations.
-
-Evidence:
-  - TP53 gwas_high_risk_snps contains 41 variants
-  - PTEN gwas_high_risk_snps contains 42 variants
-  - TP53 regulatory activity shows variants in TN1 Transcription, TN2 Transcription, TN3 Transcription, TN4 Transcription, and P Promoter regions
-  - PTEN regulatory activity shows variants in TN1 Transcription, TN2 Transcription, TN3 Transcription, TN4 Transcription, and HET1/HET2 Heterochromatin regions
-  - TP53 pathogenicity predictions show rs28934576 as pathogenic and rs560191, rs1042522 as benign
-  - PTEN pathogenicity predictions show all variants as null
-
 
