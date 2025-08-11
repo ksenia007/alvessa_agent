@@ -19,7 +19,7 @@ TOOL_CATALOG = {
     "uniprot_gwas":   "Runs UniProt query again on genes identified via GWAS associations. Helps to expand the base annotations with related genes.",
     "BioGRID": "Fetches BioGRID interactions and their functional annotations for the input genes. Provides a curated context-specific list of protein-protein, genetic and chemical interactions.",
     "Summarize_bioGRID_GO": "Required for BioGrid. Summarizes BioGRID GO terms for the input genes. Provides a compact list of GO terms for the input genes.",
-    "dbsnp": "Fetches dbSNP data about the identified variants. This requires gwas to be run first.",
+    "dbsnp": "Fetches dbSNP data about the identified variants. This requires gwas to be run first. Returns genomic coordinates and allele/variant frequencies across different studies/populations.",
     "sei": "Fetches predictions of the sequence regulatory activity for given variants. This requires dbsnp to be run first."
 }
 

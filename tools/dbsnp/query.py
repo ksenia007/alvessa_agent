@@ -150,6 +150,58 @@ def get_variant_coordinates(rsid: str, assembly: str = None) -> List[Dict[str, s
     return bucket
 
 
+def extract_allele_frequencies(data: dict) -> List[Dict]:
+    """
+    Extract allele frequency data from dbSNP JSON response.
+    
+    Args:
+        data: Raw JSON response from dbSNP API
+    
+    Returns:
+        List of dictionaries containing frequency information from different studies
+    """
+    frequencies = []
+    
+    if 'primary_snapshot_data' not in data:
+        return frequencies
+    
+    # Extract from all allele annotations
+    allele_annotations = data['primary_snapshot_data'].get('allele_annotations', [])
+    
+    for annotation in allele_annotations:
+        if 'frequency' not in annotation:
+            continue
+            
+        freq_data = annotation['frequency']
+        
+        for study in freq_data:
+            study_info = {
+                "study_name": study.get("study_name", "Unknown"),
+                "study_version": study.get("study_version", ""),
+                "allele_count": study.get("allele_count", 0),
+                "total_count": study.get("total_count", 0),
+                "allele_frequency": 0.0
+            }
+            
+            # Calculate allele frequency
+            if study_info["total_count"] > 0:
+                study_info["allele_frequency"] = study_info["allele_count"] / study_info["total_count"]
+            
+            # Add observation details if available
+            if "observation" in study:
+                obs = study["observation"]
+                study_info["observation"] = {
+                    "seq_id": obs.get("seq_id", ""),
+                    "position": obs.get("position", 0),
+                    "deleted_sequence": obs.get("deleted_sequence", ""),
+                    "inserted_sequence": obs.get("inserted_sequence", "")
+                }
+            
+            frequencies.append(study_info)
+    
+    return frequencies
+
+
 def get_variant_info(rsid: str, assembly: str = None) -> Dict:
     """
     Get basic variant information for an rsID.
@@ -159,34 +211,41 @@ def get_variant_info(rsid: str, assembly: str = None) -> Dict:
         assembly: Genome assembly version (default: config.DBSNP_DEFAULT_ASSEMBLY)
     
     Returns:
-        Dictionary with variant information including coordinates
+        Dictionary with variant information including coordinates and allele frequencies
     """
     if assembly is None:
         assembly = DBSNP_DEFAULT_ASSEMBLY
         
     rsid_with_prefix = rsid if rsid.lower().startswith("rs") else f"rs{rsid}"
+    raw_data = fetch_snp_json(rsid)
     coords = get_variant_coordinates(rsid, assembly)
-
+    frequencies = extract_allele_frequencies(raw_data)
     return {
         "rsid": rsid_with_prefix,
         "coordinates": coords,
+        "allele_frequencies": frequencies,
         "assembly_filter": assembly,
-        "raw_data": fetch_snp_json(rsid)
+        "raw_data": raw_data
     }
 
 if __name__ == "__main__":
     # Test with different assemblies
     print("=== Testing GRCh38 (default) ===")
     info_38 = get_variant_info("rs138188004", "GRCh38")
+    print(f"Coordinates: {len(info_38['coordinates'])}")
     for i, c in enumerate(info_38['coordinates']):
         print(f"{i}: {c}")
     
+    print(f"\nAllele frequencies: {len(info_38['allele_frequencies'])}")
+    for i, freq in enumerate(info_38['allele_frequencies'][:5]):  # Show first 5
+        print(f"{i}: {freq['study_name']} - AF: {freq['allele_frequency']:.4f} ({freq['allele_count']}/{freq['total_count']})")
+    
     print("\n=== Testing GRCh37 ===")
     info_37 = get_variant_info("rs138188004", "GRCh37")
-    for i, c in enumerate(info_37['coordinates']):
-        print(f"{i}: {c}")
+    print(f"Coordinates: {len(info_37['coordinates'])}")
+    print(f"Allele frequencies: {len(info_37['allele_frequencies'])}")
     
     print("\n=== Testing ALL assemblies ===")
     info_all = get_variant_info("rs138188004", "all")
-    for i, c in enumerate(info_all['coordinates']):
-        print(f"{i}: {c}")
+    print(f"Coordinates: {len(info_all['coordinates'])}")
+    print(f"Allele frequencies: {len(info_all['allele_frequencies'])}")
