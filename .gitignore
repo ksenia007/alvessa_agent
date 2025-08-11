@@ -1,12 +1,6 @@
 env/
 .DS_Store
 .vscode/
-local_dbs/gwas_catalogue_association.tsv
-local_dbs/gwas_catalogue_studies.tsv
-local_dbs/seqclass.names
-local_dbs/sorted.hg38.tiling.bed.ipca_randomized_300.labels.merged.bed
-local_dbs/AlphaMissense_hg38.tsv
-local_dbs/NCBI2Reactome_All_Levels.txt
-local_dbs/AlphaMissense_hg19.tsv
-local_dbs/sorted.hg19.tiling.bed.ipca_randomized_300.labels.merged.bed
+local_dbs/*
 **/__pycache__/
+scratch.py

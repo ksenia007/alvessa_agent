@@ -13,8 +13,10 @@ from verify import verify_evidence_node
 from tool_dbsnp import dbsnp_variants_agent
 from tool_sei import sei_predictions_agent
 from tool_alphamissense import alphamissense_predictions_agent
+from tool_annotate_gencode import gencode_gene_node
 
 TOOL_CATALOG = {
+    "gencode_gene_node": "Annotates genes with GENCODE gene annotations. Provides gene-level information such as gene name, description, and genomic coordinates. Essential for many downstream analyses.",
     "humanbase_functions": "Fetch per-gene functional predictions from HumanBase tissue-specific networks. Provides expanded list of functions.",
     "uniprot_base":  "Queries UniProt for functional annotations and disease links",
     "gwas":  "Fetches GWAS associations for genes, including diseases, related variants and genes. Population-level variant associations from common variants.",
@@ -44,5 +46,6 @@ TOOL_FN_MAP = {
     "dbsnp":          dbsnp_variants_agent,
     "sei":            sei_predictions_agent,
     "alphamissense":  alphamissense_predictions_agent,
+    "gencode_gene_node": gencode_gene_node
 }
 

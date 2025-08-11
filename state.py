@@ -20,6 +20,7 @@ class State(TypedDict, total=False):
     # Conversation
     messages: Annotated[List[Dict[str, str]], operator.add]
     genes: Annotated[List[str], operator.add]
+    gene_level_gencode: Annotated[Dict[str, Dict[str, Any]], operator.or_]
 
     # UniProt / HumanBase look-ups
     uniprot_entries_base: Annotated[Dict[str, Dict], operator.or_]
