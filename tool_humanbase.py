@@ -362,7 +362,8 @@ def humanbase_expecto_agent(state: "State") -> "State":
     """
     if DEBUG:
         print("[HumanBase Expecto] Fetching tissue-specific predictions for genes")
-    preds = state.get("humanbase_predictions", {}).copy()
+    
+    preds = state.get("humanbase_expecto", {}).copy()
 
     for gene in state.get("genes", []):
         if gene in preds:
@@ -370,18 +371,18 @@ def humanbase_expecto_agent(state: "State") -> "State":
 
         entrez = _symbol_to_entrez(gene)
         if not entrez:
-            preds[gene] = []
+            preds[gene] = {}
             continue
 
         try:
             tmp = _fetch_tissue_variants_HB(entrez)
         except Exception as exc:
             print(f"[HumanBase] {gene}: {exc}")
-            preds[gene] = []
+            preds[gene] = {}
         else:
             summary_text = summarize_tissue_variants_text_HB(tmp)
             if summary_text is None:
-                preds[gene] = []
+                preds[gene] = {}
             else:
                 preds[gene] = {
                     "summary_text": summary_text,
@@ -404,6 +405,9 @@ def humanbase_tissue_expecto_annotate_variants(state: "State") -> "State":
     State
         Updated state with the `"humanbase_tissue_expecto"` field filled.
     """
+    print('***'*20)
+    print(state)
+    print('***'*20)
     if DEBUG:
         print("[HumanBase Expecto Variant] Annotating variants with tissue-specific predictions")
     variant_descr = {}
@@ -414,13 +418,16 @@ def humanbase_tissue_expecto_annotate_variants(state: "State") -> "State":
 
     # annotate each variant with tissue-specific predictions
     for gene, gene_vars in variants.items():
+        if DEBUG:
+            print('[HumanBase Expecto Variant] Processing gene:', gene)
         if gene not in preds:
             continue
         gene_descr = f"Gene: {gene}: " 
+        if DEBUG:
+            print(preds[gene])
         for variant_id, var_data in gene_vars.items():
             # use describe_variant_in_tissues_HB
             all_snps = var_data['coordinates']
-            print('all snps:', all_snps)
             for snp in all_snps:
                 if 'GRCh38' in snp['assembly']:
                     continue

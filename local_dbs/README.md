@@ -21,5 +21,6 @@ The following files must be downloaded before using the GWAS and Sei tools:
 - `NCBI2Reactome_All_Levels.txt`
 **Download Location:** https://reactome.org/download/current/NCBI2Reactome_All_Levels.txt
 
-
+**Donwload location** https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_48/gencode.v48.primary_assembly.basic.annotation.gtf.gz
+-  Gencode annotaitons
 

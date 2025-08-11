@@ -6,6 +6,7 @@ from typing import Set
 from config import DEBUG, DBSNP_DEFAULT_ASSEMBLY
 from tools.dbsnp.query import get_variant_info
 from state import State
+from tools.gencode.query import annotate_variant
 
 
 def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
@@ -51,7 +52,7 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
                 continue
 
             if DEBUG:
-                print(f"[dbSNP] Querying variant information for: {rsid}")
+                print(f"[dbSNP] Querying variant informations for: {rsid}")
 
             try:
                 # Query dbSNP variant information
@@ -70,7 +71,22 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
                     coord_count = len(result.get("coordinates", []))
                     print(f"[dbSNP] {rsid}: found, {coord_count} coordinates")
                     print(variants[gene][rsid])
-
+                    
+                # go through coordinates, find build 38 chrom and position and annotate
+                # set deafult annots to empty list
+                variants[gene][rsid].setdefault("annotations", [])
+                for coord in result.get("coordinates", []):
+                    build = coord.get("assembly", "Unknown")
+                    if 'GRCh37' in build or 'hg19' in build:
+                        continue
+                    chrom = coord.get("chrom", "Unknown")
+                    pos = coord.get("pos", 0)
+                    annots = annotate_variant(chrom, pos)
+                    if annots:
+                        variants[gene][rsid]["annotations"].extend(annots)
+                        if DEBUG:
+                            print(f"[dbSNP] Annotated {rsid} at {chrom}:{pos} with {annots}")
+                        break
                     
             except Exception as exc:
                 if DEBUG:
