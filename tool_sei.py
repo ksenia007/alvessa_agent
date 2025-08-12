@@ -40,8 +40,7 @@ def sei_predictions_agent(state: "State") -> "State":
     variants = state.get("dbsnp_variants", {}).copy()
 
     seq_class_df_hg38 = pd.read_csv('local_dbs/sorted.hg38.tiling.bed.ipca_randomized_300.labels.merged.bed', names=['chr', 'start_pos', 'end_pos', 'seq_class'], sep = '\t')
-    seq_class_df_hg19 = pd.read_csv('local_dbs/sorted.hg19.tiling.bed.ipca_randomized_300.labels.merged.bed', names=['chr', 'start_pos', 'end_pos', 'seq_class'], sep = '\t')
-
+ 
     with open('local_dbs/seqclass.names', 'r') as f:
         seq_class_names = [line.strip() for line in f]
 
@@ -72,7 +71,8 @@ def sei_predictions_agent(state: "State") -> "State":
             if 'GRCh38' in assembly:
                 seq_class_df = seq_class_df_hg38
             else:
-                seq_class_df = seq_class_df_hg19
+                preds[gene][var_id] = None
+                continue
 
             match = seq_class_df[
                         (seq_class_df['chr'] == chr_str) &

@@ -34,7 +34,6 @@ def alphamissense_predictions_agent(state: "State") -> "State":
     variants = state.get("dbsnp_variants", {}).copy()
 
     pathogenicity_class_df_hg38 = pd.read_csv('local_dbs/AlphaMissense_hg38.tsv', skiprows=4, names = ['chrom', 'pos', 'ref', 'alt', 'genome', 'uniprot_id', 'transcript_id', 'protein_variant', 'am_pathogenicity', 'am_class'], sep = '\t')
-    pathogenicity_class_df_hg19 = pd.read_csv('local_dbs/AlphaMissense_hg19.tsv', skiprows=4, names = ['chrom', 'pos', 'ref', 'alt', 'genome', 'uniprot_id', 'transcript_id', 'protein_variant', 'am_pathogenicity', 'am_class'], sep = '\t')
 
     state_all_snps = {}
 
@@ -63,7 +62,8 @@ def alphamissense_predictions_agent(state: "State") -> "State":
             if 'GRCh38' in assembly:
                 pathogenicity_class_df = pathogenicity_class_df_hg38
             else:
-                pathogenicity_class_df = pathogenicity_class_df_hg19
+                preds[gene][var_id] = None
+                continue
 
             match = pathogenicity_class_df[
                         (pathogenicity_class_df['chrom'] == chr_str) &
