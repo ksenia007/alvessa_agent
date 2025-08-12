@@ -36,30 +36,7 @@ def annotate_variant(chrom: str, pos: int) -> Optional[Dict[str, Any]]:
             - matches: DataFrame with matching features
             - genes_related_to: List of unique gene names related to the variant
             
-    'chrom': 'chr17',
- 'pos': 7589811,
- 'feature_flags': {'gene': True,
-  'transcript': True,
-  'exon': True,
-  'CDS': False,
-  'UTR': True,
-  'start_codon': False,
-  'stop_codon': False},
- 'feature_gene_lists': {'gene_genes': ['MPDU1', 'SOX15'],
-  'transcript_genes': ['MPDU1', 'SOX15'],
-  'exon_genes': ['SOX15'],
-  'CDS_genes': [],
-  'UTR_genes': ['SOX15'],
-  'start_codon_genes': [],
-  'stop_codon_genes': []},
- 'matches': [{'feature': 'gene',
-   'gene_name': 'MPDU1',
-   'transcript_id': None,
-   'start': 7583529,
-   'end': 7592789,
-   'strand': '+'},
-  {'feature': 'transcript',
-   'gene_name': 'MPDU1',
+
    
     """
     
@@ -117,15 +94,6 @@ def summarize_gene_structure(gene_name: str) -> Optional[Dict[str, Any]]:
             - transcript_ids
             - gene_span_bp (tuple: start, end)
         Returns None if gene not found.
-        
-        'gene_name': 'TP53',
- 'n_transcripts': 24,
- 'exons_per_transcript': {'ENST00000413465.6': 7,
-  'ENST00000714356.1': 10,
-  'ENST00000359597.8': 9,
-  'ENST00000504290.5': 8,
-  ...
-  'gene_span_bp': (7661779, 7687546)}
 
     """
     gene_df = gtf_df[gtf_df["gene_name"] == gene_name]
