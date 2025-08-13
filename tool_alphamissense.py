@@ -12,6 +12,7 @@ Tool to extract AlphaMissense prediction for variants of interest"""
 import pandas as pd
 import time
 from state import State 
+import warnings
 
 DEBUG=True
 
@@ -33,51 +34,81 @@ def alphamissense_predictions_agent(state: "State") -> "State":
     preds = state.get("alphamissense_predictions", {}).copy()
     variants = state.get("dbsnp_variants", {}).copy()
 
-    pathogenicity_class_df_hg38 = pd.read_csv('local_dbs/AlphaMissense_hg38.tsv', skiprows=4, names = ['chrom', 'pos', 'ref', 'alt', 'genome', 'uniprot_id', 'transcript_id', 'protein_variant', 'am_pathogenicity', 'am_class'], sep = '\t')
-
+    # Gracefully handle file reading errors
+    try:
+       pathogenicity_class_df_hg38 = pd.read_csv('local_dbs/AlphaMissense_hg38.tsv', skiprows=4, names = ['chrom', 'pos', 'ref', 'alt', 'genome', 'uniprot_id', 'transcript_id', 'protein_variant', 'am_pathogenicity', 'am_class'], sep = '\t')
+    except Exception as e:
+        warnings.warn(f"Failed to load required files: {e}. Cannot run AlphaMissense predictions.")
+        return {**state, "alphamissense_predictions": preds}
+    
     state_all_snps = {}
 
     for gene, gene_vars in variants.items():
         state_all_snps[gene] = {}
-        for var, var_data in gene_vars.items():
-            all_snps = var_data['coordinates']
-            if 'assembly_filter' in var_data:
-                assembly = var_data['assembly_filter']
-            else:
-                continue
 
-            for snp in all_snps:
-                chrom = snp['chrom']
-                pos = snp['pos']
-                ref_base = snp['ref']
-                alt_base = snp['alt']
-                state_all_snps[gene][var] = [chrom, pos, ref_base, alt_base, assembly]
+        try:
+            for var, var_data in gene_vars.items():
+                try:
+                    all_snps = var_data['coordinates']
+                    if 'assembly_filter' in var_data:
+                        assembly = var_data['assembly_filter']
+                    else:
+                        continue
+
+                    for snp in all_snps:
+                        chrom = snp['chrom']
+                        pos = snp['pos']
+                        ref_base = snp['ref']
+                        alt_base = snp['alt']
+
+                        if all(x is not None for x in [chrom, pos, ref_base, alt_base, assembly]):
+                            state_all_snps[gene][var] = [chrom, pos, ref_base, alt_base, assembly]
+                        else:
+                            warnings.warn(f"Missing coordinate data for {gene} variant {var}")
+
+                except Exception as e:
+                    warnings.warn(f"Failed to process variant {var} for gene {gene}: {e}")
+                    continue
+
+        except Exception as e:
+            warnings.warn(f"AlphaMissense prediction unavailable for gene {gene}: {e}")
+            continue
 
     for gene, variants in state_all_snps.items():
         preds[gene] = {}
         for var_id, (chrom, variant_pos, ref_base, alt_base, assembly) in variants.items():
+            try:
+                chr_str = f'chr{chrom}'
 
-            chr_str = f'chr{chrom}'
+                if 'GRCh38' in assembly:
+                    pathogenicity_class_df = pathogenicity_class_df_hg38
+                else:
+                    preds[gene][var_id] = None
+                    continue
 
-            if 'GRCh38' in assembly:
-                pathogenicity_class_df = pathogenicity_class_df_hg38
-            else:
-                preds[gene][var_id] = None
-                continue
-
-            match = pathogenicity_class_df[
-                        (pathogenicity_class_df['chrom'] == chr_str) &
-                        (pathogenicity_class_df['pos'] == variant_pos) &
-                        (pathogenicity_class_df['ref'] == ref_base) &
-                        (pathogenicity_class_df['alt'] == alt_base)
-                    ]
-            
-            if not match.empty:
-                pathogenicity_class = match.iloc[0]['am_class'] 
-            else:
-                pathogenicity_class = None
+                match = pathogenicity_class_df[
+                            (pathogenicity_class_df['chrom'] == chr_str) &
+                            (pathogenicity_class_df['pos'] == variant_pos) &
+                            (pathogenicity_class_df['ref'] == ref_base) &
+                            (pathogenicity_class_df['alt'] == alt_base)
+                        ]
                 
-            preds[gene][var_id] = pathogenicity_class
+                if not match.empty:
+                    try:
+                        pathogenicity_class = match.iloc[0]['am_class'] 
+                    except (IndexError, ValueError) as e:
+                        warnings.warn(f"Failed to get pathogenicity class for {gene} variant {var_id}: {e}")
+                        pathogenicity_class = None
+                else:
+                    if DEBUG:
+                        print(f"No pathogenicity class found for: {chrom}, {variant_pos}, {ref_base}, {alt_base}")
+                    pathogenicity_class = None
+
+                preds[gene][var_id] = pathogenicity_class
+
+            except Exception as e:
+                warnings.warn(f"Failed to process prediction for {gene} variant {var_id}: {e}")
+                preds[gene][var_id] = None
 
     print(preds)
     time.sleep(0.3)  # courteous pause
