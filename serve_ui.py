@@ -32,7 +32,7 @@ try:
 except Exception:
     HAS_PD = False
 
-from run import run_pipeline  # IMPORTANT: ensure run.py does NOT rebind sys.stdout at import
+from run import run_pipeline  
 
 # -----------------------------------------------------------------------------
 # App & paths
@@ -171,33 +171,3 @@ def get_log(pos: int = 0):
 if __name__ == "__main__":
     # Run with a single worker; multiple workers would have distinct processes/files.
     uvicorn.run(app, host="127.0.0.1", port=8000)
-
-# from fastapi import FastAPI, Query
-# from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
-# from fastapi.staticfiles import StaticFiles
-# import uvicorn, json, pathlib, subprocess, sys
-# import os 
-# from run import run_pipeline
-
-# app = FastAPI()
-# BASE = pathlib.Path(__file__).parent.resolve()
-# STATE_FILE = BASE / "demo.json"  
-
-# @app.get("/", response_class=HTMLResponse)
-# def index():
-#     return FileResponse(BASE / "ui.html")
-
-# @app.get("/state")
-# def get_state():
-#     if not STATE_FILE.exists():
-#         return JSONResponse({"error": "No run yet. Click Run."}, status_code=404)
-#     return JSONResponse(json.loads(STATE_FILE.read_text()))
-
-# @app.get("/run")
-# def run(q: str = Query(..., description="User question")):
-#     state = run_pipeline(q)
-#     STATE_FILE.write_text(json.dumps(state, indent=2, default=str))
-#     return JSONResponse(state)
-
-# if __name__ == "__main__":
-#     uvicorn.run(app, host="127.0.0.1", port=8000)
