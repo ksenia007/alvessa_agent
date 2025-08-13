@@ -55,22 +55,22 @@ def sei_predictions_agent(state: "State") -> "State":
             for var, var_data in gene_vars.items():
                 try:
                     all_snps = var_data['coordinates']
-
-                    if 'assembly_filter' in var_data:
-                        assembly = var_data['assembly_filter']
-                    else:
-                        continue
+                    state_all_snps[gene][var] = []
 
                     for snp in all_snps:
                         chrom = snp.get('chrom')
                         pos = snp.get('pos')
-                        ref_base = snp.get('ref')
-                        alt_base = snp.get('alt')
+                        assembly = snp.get('assembly')
 
-                        if all(x is not None for x in [chrom, pos, ref_base, alt_base, assembly]):
-                            state_all_snps[gene][var] = [chrom, pos, ref_base, alt_base, assembly]
+                        if 'GRCh38' in assembly:
+                            if all(x is not None for x in [chrom, pos]):
+                                state_all_snps[gene][var] = [chrom, pos]
+                                break
+                            else:
+                                continue
                         else:
-                            warnings.warn(f"Missing coordinate data for {gene} variant {var}")
+                            continue
+
                 except Exception as e:
                     warnings.warn(f"Failed to process variant {var} for gene {gene}: {e}")
                     continue
@@ -80,20 +80,15 @@ def sei_predictions_agent(state: "State") -> "State":
 
     for gene, variants in state_all_snps.items():
         preds[gene] = {}
-        for var_id, (chrom, variant_pos, ref_base, alt_base, assembly) in variants.items():
+        for var_id, (chrom, variant_pos) in variants.items():
             try:
                 chr_str = f'chr{chrom}'
 
-                if 'GRCh38' in assembly:
-                    seq_class_df = seq_class_df_hg38
-                else:
-                    preds[gene][var_id] = None
-                    continue
 
-                match = seq_class_df[
-                            (seq_class_df['chr'] == chr_str) &
-                            (seq_class_df['start_pos'] <= variant_pos) &
-                            (seq_class_df['end_pos'] >= variant_pos)
+                match = seq_class_df_hg38[
+                            (seq_class_df_hg38['chr'] == chr_str) &
+                            (seq_class_df_hg38['start_pos'] <= variant_pos) &
+                            (seq_class_df_hg38['end_pos'] >= variant_pos)
                         ]
                 
                 if not match.empty:
@@ -105,7 +100,7 @@ def sei_predictions_agent(state: "State") -> "State":
                         seq_class_name = None
                 else:
                     if DEBUG:
-                        print(f"No sequence class match found for: {chrom}, {variant_pos}, {ref_base}, {alt_base}")
+                        print(f"No sequence class match found for: {chrom}, {variant_pos}")
                     seq_class_name = None
                     
                 preds[gene][var_id] = seq_class_name
