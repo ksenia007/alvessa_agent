@@ -51,6 +51,5 @@ def gencode_gene_node(state: "State") -> "State":
     gene_structure['assembly'] = "GRCh38"  # Gencode uses GRCh38 as the default assembly
     if DEBUG:
         print("[gencode_gene_node] Gene structure summary:", gene_structure)
-    state["gene_level_gencode"] = gene_structure
     
-    return state
+    return {'gene_level_gencode': gene_structure}

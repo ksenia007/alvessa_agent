@@ -1,19 +1,17 @@
 ================================================================================
-Q: Tell me about role of TP53 variants in GWAS catalogue
+Q: Tell me about variants in TP53
 
 Answer:
-TP53 variants show extensive associations in GWAS studies with 239 total associations across 72 studies, with 235 being statistically significant. High-risk SNPs include rs17880847, rs28934576, rs78378222, and others, associated with diverse traits including uterine fibroids, glioblastoma, skin cancer, and metabolic parameters. The variants affect protein levels of multiple targets including AXL, SHBG, and TP53 itself. Regulatory analysis shows variants located in transcriptional regions (TN1-TN4), promoters, and heterochromatin. Pathogenicity predictions identify rs28934576 as pathogenic and rs1042522 as benign. Tissue-specific expression analysis reveals strongest effects in muscle skeletal and keratinocyte tissues.
+TP53 has numerous variants identified through GWAS studies, with 239 total associations and 235 significant associations across 72 studies. Key high-risk variants include rs17880847, rs28934576, rs78378222, rs74351250, rs572488097, rs201214141, rs17881850, rs1642792, rs62062585, rs138932666, rs78496430, rs17883687, rs1042522, rs55745760, rs1625895, rs8073498, rs17882854, rs2909430, rs4968204, and rs9894946. These variants are associated with various disease traits including uterine fibroids, glioblastoma, glioma, skin cancer, colon polyp, and basal cell carcinoma. The variants show different regulatory activities, with some located in transcription regions (TN1, TN2, TN3, TN4), promoter regions (P), and other regulatory elements. Pathogenicity predictions show rs1042522 as benign and rs28934576 as pathogenic. The variants also show tissue-specific expression disruption patterns, with the strongest positive effect variant being chr17:7590695 C>G in skeletal muscle and the strongest negative effect variant being chr17:7590666 G>T in keratinocytes.
 
 Evidence:
   - TP53 total_associations: 239
   - TP53 total_significant_associations: 235
   - TP53 total_studies_analyzed: 72
   - TP53 gwas_high_risk_snps: rs17880847, rs28934576, rs78378222, rs74351250, rs572488097, rs201214141, rs17881850, rs1642792, rs62062585, rs138932666, rs78496430, rs17883687, rs1042522, rs55745760, rs1625895, rs8073498, rs17882854, rs2909430, rs4968204, rs9894946
-  - TP53 gwas_disease_traits include: Uterine fibroids, Glioblastoma, Skin cancer, Colon polyp
-  - TP53 gwas_affected_protein_levels: AXL, EDA2R, FLT3LG, Non-albumin, SAT2, SHBG, Serum total, TNFSF13, TP53
-  - TP53 rs28934576: pathogenic
-  - TP53 rs1042522: benign
-  - TP53 variants regulatory roles: TN1 Transcription, P Promoter, TN2 Transcription, HET4 Heterochromatin
+  - TP53 gwas_disease_traits include: Uterine fibroids, Glioblastoma, Glioma, Skin cancer, Colon polyp, Basal cell carcinoma
+  - TP53 regulatory activities: rs17882854 P Promoter, rs17883687 P Promoter, rs8073498 TN2 Transcription, rs2909430 TN1 Transcription
+  - TP53 pathogenicity predictions: rs1042522 benign, rs28934576 pathogenic
   - TP53 strongest positive effect variant: chr17:7590695 C>G in Muscle Skeletal (0.5529)
   - TP53 strongest negative effect variant: chr17:7590666 G>T in Keratinocyte (-1.3602)
 

@@ -29,7 +29,7 @@ def gene_extraction_node(state: "State") -> "State":
     user_input: str = state["messages"][-1]["content"]
     system_message: str = (
         "Extract gene symbols from the message. Extract gene names **only if they appear verbatim in the input**. "
-        "Reply with a comma-separated list of gene names only, no extra words."
+        "Reply with a comma-separated list of gene names only, no extra words. If no gene names are found, reply with an empty string."
     )
     response = claude_call(
         model=GENE_EXTRACT_MODEL,
@@ -38,11 +38,15 @@ def gene_extraction_node(state: "State") -> "State":
         system=system_message,
         messages=[{"role": "user", "content": user_input}],
     )
-    genes: List[str] = [g.strip() for g in response.content[0].text.split(",") if g.strip()]
+    try:
+        genes = [g.strip() for g in response.content[0].text.split(",") if g.strip()]
+    except:
+        print("[gene_extraction_node] Error parsing genes")
+        genes = []
     genes = list(set(genes))  # Ensure unique genes
     if DEBUG:
         print("[gene_extraction_node] extracted:", genes)
-    return {**state, "genes": genes}
+    return {"genes": genes}
 
 
 def has_genes(state: "State") -> bool:

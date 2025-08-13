@@ -104,7 +104,7 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
             time.sleep(0.1)
 
     # import ipdb; ipdb.set_trace()
-    return {**state, "dbsnp_variants": variants}
+    return {"dbsnp_variants": variants}
 
 
 def _extract_rsids_from_gwas(state: "State") -> Set[str]:

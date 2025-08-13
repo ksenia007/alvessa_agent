@@ -49,5 +49,4 @@ def reactome_pathways_agent(state: "State") -> "State":
         preds[gene] = list(set(match['pathway_name'].values))
 
     return {
-        **state,
         "reactome_pathways": preds}

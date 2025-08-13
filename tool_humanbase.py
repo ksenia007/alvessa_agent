@@ -456,6 +456,5 @@ def humanbase_tissue_expecto_annotate_variants(state: "State") -> "State":
             variant_descr[gene] = gene_descr
         
     return {
-        **state, 
         "tissue_expression_preds_variant_text_description": variant_descr
     }

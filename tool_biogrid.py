@@ -90,5 +90,4 @@ def bioGRID_predictions_agent(state: "State") -> "State":
         print("[BioGRID] Example predictions:", list(preds.items())[:2])
 
     return {
-        **state,
         "biogrid_predictions": preds}

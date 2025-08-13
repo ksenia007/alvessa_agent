@@ -113,7 +113,6 @@ def sei_predictions_agent(state: "State") -> "State":
     time.sleep(0.3)  # courteous pause
 
     return {
-        **state,
         "sei_predictions": preds}
 
 

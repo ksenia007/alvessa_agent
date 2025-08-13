@@ -87,7 +87,7 @@ def gwas_associations_agent(state: "State") -> "State":
         # Courteous pause to avoid overwhelming the system
         time.sleep(0.1)
 
-    return {**state, "gwas_associations": associations}
+    return {"gwas_associations": associations}
 
 
 def has_gwas_associations(state: "State") -> bool:

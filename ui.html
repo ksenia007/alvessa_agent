@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Alvessa: Gene-Centric Agentic Framework</title>
+<style>
+  :root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+  body { margin: 0; background: #0b1020; color: #e6e8ef; }
+  .wrap { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+
+  .card { background: #121832; border: 1px solid #1e2a52; border-radius: 16px; padding: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.2); }
+  .title { font-size: 20px; font-weight: 700; margin: 0 0 8px; }
+  .mono  { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .pill  { display: inline-block; padding: 2px 8px; border-radius: 999px; background:#1a2347; border:1px solid #2a3a72; margin:2px 6px 2px 0; font-size:12px; }
+  .answer { white-space: pre-wrap; line-height: 1.5; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .muted { color:#aab4d6; font-size: 12px; }
+  button { cursor:pointer; background:#1b2450; color:#e6e8ef; border:1px solid #2a3a72; border-radius:10px; padding:8px 12px; }
+  input[type="text"] { width:100%; background:#0e1430; color:#e6e8ef; border:1px solid #2a3a72; border-radius:10px; padding:10px; }
+  .full { grid-column: 1 / -1; }
+  .json pre { overflow:auto; max-height: 340px; }
+  .scroll { max-height: 180px; overflow: auto; }
+
+  /* Centered start screen */
+  #hero { min-height: 60vh; display: grid; place-items: center; }
+  #hero .card { width: 100%; max-width: 720px; text-align: center; }
+  #hero .title { font-size: 24px; margin-bottom: 12px; }
+
+  /* Hide containers until needed */
+  #grid { display: none; }
+  #runStatusCard { display: none; }
+  #toolbar { display: none; } /* appears after first run */
+
+  /* Spinner + status line */
+  .spinner { width:16px; height:16px; border:2px solid #2a3a72; border-top-color: transparent; border-radius:50%;
+             animation: spin 1s linear infinite; display:inline-block; vertical-align:middle; margin-right:6px; }
+  .spinner.big { width:28px; height:28px; border-width:3px; margin-right:8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .statusline{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; color:#aab4d6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:72ch; }
+
+  /* GENCODE histogram */
+  .hist-svg { width:100%; height:150px; display:block; }
+  .hist-axis { font-size:12px; fill:#aab4d6; }
+  .hist-bar { fill:#2a3a72; }
+  .hist-bar:hover { opacity:0.9; }
+  .hist-baseline { stroke:#2a3a72; stroke-width:1; }
+</style>
+<body>
+<div class="wrap">
+
+  <!-- Centered start screen -->
+  <div id="hero">
+    <div class="card">
+      <div class="title">Gene-Centric Agent</div>
+      <div class="muted" style="margin-bottom:12px;">Enter a question to explore entities, tools, and curated outputs.</div>
+      <div class="row" style="justify-content:center;">
+        <input id="q" type="text" placeholder="Ask a question… e.g., Genes interacting with TP53" />
+        <button id="runBtn" onclick="run()">Run</button>
+      </div>
+      <div class="muted" style="margin-top:8px;">Tip: press Enter to run</div>
+    </div>
+  </div>
+
+  <!-- Run status (spinner + single last-line status). Stays outside the grid. -->
+  <div id="runStatusCard" class="card full">
+    <div class="row" style="justify-content:flex-start; gap:12px;">
+      <span class="spinner big"></span>
+      <div>
+        <div style="font-weight:600;">Running…</div>
+        <div id="statusLine" class="statusline" title="latest log line">(waiting for output…)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secondary input toolbar (shown after first run so you can ask more) -->
+  <div id="toolbar" class="card full">
+    <div class="row" style="justify-content:space-between; gap:12px;">
+      <div class="muted" style="min-width:160px;">Ask another question</div>
+      <div class="row" style="flex:1;">
+        <input id="q2" type="text" placeholder="Type another question… then press Enter" />
+        <button onclick="runFrom('q2')">Run</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content grid -->
+  <div id="grid" class="grid">
+
+    <div class="card full">
+      <div class="title" id="questionTitle">Question</div>
+      <div id="question" style="font-size:18px; font-weight:600;"></div>
+    </div>
+
+    <div id="entitiesCard" class="card" data-section style="display:none;">
+      <div class="title">Detected Entities</div>
+      <div id="entities"></div>
+    </div>
+
+    <div id="toolsCard" class="card" data-section style="display:none;">
+      <div class="title">Tools Used</div>
+      <div id="tools" class="row"></div>
+    </div>
+
+    <div id="answerCard" class="card" data-section style="display:none;">
+      <div class="title">Answer</div>
+      <div id="answer" class="answer"></div>
+    </div>
+
+    <div id="evidenceCard" class="card full" data-section style="display:none;">
+      <div class="title">Evidence</div>
+      <div id="evidence"></div>
+    </div>
+
+    <div id="biogridCard" class="card" data-section style="display:none;">
+      <div class="title">BioGRID (genes)</div>
+      <div id="biogrid"></div>
+    </div>
+
+    <div id="reactomeCard" class="card" data-section style="display:none;">
+      <div class="title">Reactome Pathways</div>
+      <div id="reactome" class="scroll"></div>
+    </div>
+
+    <div id="uniprotCard" class="card full" data-section style="display:none;">
+      <div class="title">UniProt (base)</div>
+      <div id="uniprot"></div>
+    </div>
+
+    <div id="gwasCard" class="card full" data-section style="display:none;">
+      <div class="title">GWAS Summary</div>
+      <div id="gwas"></div>
+    </div>
+
+    <div id="gencodeCard" class="card full" data-section style="display:none;">
+      <div class="title">GENCODE (per gene)</div>
+      <div id="gencode"></div>
+    </div>
+
+    <div id="debugCard" class="card full" data-section style="display:none;">
+      <div class="title">Debug (other fields)</div>
+      <pre id="debug" class="mono json scroll"></pre>
+    </div>
+
+    <div id="rawCard" class="card full json" data-section style="display:none;">
+      <div class="title">Raw State (debug)</div>
+      <pre id="raw" class="mono"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Basic helpers
+  const show  = id => { const el=document.getElementById(id); if (el) el.style.display='block'; };
+  const hide  = id => { const el=document.getElementById(id); if (el) el.style.display='none'; };
+  const setText = (id, text) => { const el=document.getElementById(id); if (el) el.textContent = text ?? ""; };
+  const setHTML = (id, html) => { const el=document.getElementById(id); if (el) el.innerHTML = html ?? ""; };
+  const uc = s => (s||"").toUpperCase();
+  function escapeHtml(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;","&gt;":">","\"":"&quot;","'":"&#39;"}[m])); }
+  function asPills(arr){ return (arr||[]).map(x=>`<span class="pill">${escapeHtml(x)}</span>`).join(""); }
+  function hideAllSections(){ document.querySelectorAll('[data-section]').forEach(el => el.style.display='none'); }
+  function setStatus(text){ const el=document.getElementById('statusLine'); if (el){ el.textContent = text || ""; el.title = text || ""; } }
+
+  // Log polling (latest line only)
+  let logPos = 0, isPolling = false;
+  function showRunStatus(){ show('runStatusCard'); }
+  function hideRunStatus(){ hide('runStatusCard'); }
+
+  async function startLogPolling(){
+    if (isPolling) return;
+    isPolling = true; logPos = 0;
+    setStatus("(waiting for output…)"); showRunStatus();
+    while (isPolling){
+      try{
+        const res = await fetch(`/log?pos=${logPos}`, { cache: "no-store" });
+        if (!res.ok) throw new Error(String(res.status));
+        const { pos, data } = await res.json();
+        if (typeof pos === "number") logPos = pos;
+        if (data && data.length){
+          const lines = data.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+          if (lines.length) setStatus(lines[lines.length - 1]);
+        }
+      }catch(e){ console.error("[log poll]", e); }
+      await new Promise(r => setTimeout(r, 400));
+    }
+  }
+  function stopLogPolling(){ isPolling = false; }
+
+  // Data fetch
+  async function fetchState() {
+    const res = await fetch("/state");
+    if (!res.ok) return null;
+    return await res.json();
+  }
+
+  // Renderers
+  function renderQuestion(st, qInput){
+    const q = (qInput && qInput.trim()) || (st?.messages?.slice(-1)[0]?.content) || "";
+    setText("question", q);
+    setText("questionTitle", "Question");
+  }
+
+  function renderEntities(st){
+    const genes = st?.genes || [];
+    if (genes.length) { setHTML("entities", `<div><strong>Genes:</strong> ${asPills(genes)}</div>`); show("entitiesCard"); }
+    else hide("entitiesCard");
+  }
+
+  function renderTools(st){
+    const used = st?.used_tools || [];
+    if (used.length) { setHTML("tools", asPills(used)); show("toolsCard"); }
+    else hide("toolsCard");
+  }
+
+  function renderAnswer(st){
+    const lj = st?.llm_json || {};
+    const ans = lj?.answer || "";
+    if (ans) { setText("answer", ans); show("answerCard"); }
+    else hide("answerCard");
+
+    const ev = Array.isArray(lj?.evidence) ? lj.evidence : [];
+    if (ev.length) { setHTML("evidence", ev.map(e=>`<div class="pill">${escapeHtml(e)}</div>`).join("")); show("evidenceCard"); }
+    else hide("evidenceCard");
+  }
+
+  function renderBioGRID(st){
+    const bg = st?.biogrid_predictions;
+    if (!bg || typeof bg !== 'object') return hide("biogridCard");
+
+    const entries = Object.entries(bg);
+    if (!entries.length) { setHTML("biogrid", `<div class="muted">no interactions returned</div>`); return show("biogridCard"); }
+
+    const allEmpty = entries.every(([_, arr]) => !arr || (Array.isArray(arr) && arr.length === 0));
+    if (allEmpty) {
+      setHTML("biogrid", `<div class="muted">no interactions returned</div>`);
+      return show("biogridCard");
+    }
+
+    const html = entries.map(([gene, arr]) => {
+      const n = Array.isArray(arr) ? arr.length : 0;
+      return `<div><strong>${escapeHtml(uc(gene))}:</strong> ${n} interactions</div>`;
+    }).join("");
+    setHTML("biogrid", html);
+    show("biogridCard");
+  }
+
+  function renderReactome(st){
+    const rx = st?.reactome_pathways;
+    if (!rx || typeof rx !== 'object') return hide("reactomeCard");
+    const rows = Object.entries(rx)
+      .filter(([_, paths]) => Array.isArray(paths) && paths.length)
+      .map(([gene, paths]) => `<div><strong>${escapeHtml(uc(gene))}</strong><div class="muted">${paths.length} pathways</div><div class="scroll">${asPills(paths.slice(0,50))}</div></div>`)
+      .join("");
+    if (rows) { setHTML("reactome", rows); show("reactomeCard"); } else hide("reactomeCard");
+  }
+
+  function renderUniProtBase(st){
+    const up = st?.uniprot_entries_base;
+    if (!up || typeof up !== 'object') return hide("uniprotCard");
+    const blocks = Object.entries(up).map(([gene, obj])=>{
+      if (!obj || typeof obj !== 'object') return "";
+      const diseases = obj.diseases || "";
+      const func = obj.function || "";
+      if (!diseases && !func) return "";
+      return `<div style="margin-bottom:12px;">
+        <div><strong>${escapeHtml(uc(gene))}</strong></div>
+        ${diseases ? `<div class="muted" style="margin-top:4px;">Diseases</div><div class="scroll mono">${escapeHtml(diseases)}</div>` : ""}
+        ${func ? `<div class="muted" style="margin-top:6px;">Function</div><div class="scroll mono">${escapeHtml(func)}</div>` : ""}
+      </div>`;
+    }).join("");
+    if (blocks.trim()) { setHTML("uniprot", blocks); show("uniprotCard"); } else hide("uniprotCard");
+  }
+
+  function renderGWAS(st){
+    const gw = st?.gwas_associations;
+    if (!gw || typeof gw !== 'object') return hide("gwasCard");
+
+    const html = Object.entries(gw).map(([gene, obj])=>{
+      if (!obj || typeof obj !== 'object') return "";
+
+      const found = String(obj.found);
+      const total = obj.total_associations ?? 0;
+      const signif = obj.total_significant_associations ?? 0;
+      const studies = obj.total_studies_analyzed ?? 0;
+
+      const head = `
+        <div><strong>${escapeHtml(uc(gene))}</strong></div>
+        <div class="muted">found: ${found} • total: ${total} • significant: ${signif} • studies: ${studies}</div>
+      `;
+
+      function listBlock(title, arr, max=12){
+        if (!Array.isArray(arr) || !arr.length) return "";
+        const more = arr.length > max ? `<span class="muted"> +${arr.length - max} more</span>` : "";
+        return `<div style="margin-top:6px;">
+          <div class="muted">${title}</div>
+          <div>${asPills(arr.slice(0, max))}${more}</div>
+        </div>`;
+      }
+
+      const hr = obj.summary_by_high_risk_alleles || {};
+      const sg = obj.summary_by_significance || {};
+
+      const hrBlock = (hr.gwas_high_risk_snps || hr.gwas_disease_traits || hr.gwas_related_genes || hr.gwas_affected_protein_levels)
+        ? `<div style="margin-top:8px;"><strong>High-risk alleles</strong>
+            ${listBlock("SNPs", hr.gwas_high_risk_snps)}
+            ${listBlock("Diseases/traits", hr.gwas_disease_traits)}
+            ${listBlock("Related genes", hr.gwas_related_genes)}
+            ${listBlock("Affected protein levels", hr.gwas_affected_protein_levels)}
+          </div>` : "";
+
+      const sgBlock = (sg.gwas_high_risk_snps || sg.gwas_disease_traits || sg.gwas_related_genes || sg.gwas_affected_protein_levels)
+        ? `<div style="margin-top:8px;"><strong>By significance</strong>
+            ${listBlock("SNPs", sg.gwas_high_risk_snps)}
+            ${listBlock("Diseases/traits", sg.gwas_disease_traits)}
+            ${listBlock("Related genes", sg.gwas_related_genes)}
+            ${listBlock("Affected protein levels", sg.gwas_affected_protein_levels)}
+          </div>` : "";
+
+      return `<div style="margin-bottom:12px;">${head}${hrBlock}${sgBlock}</div>`;
+    }).join("");
+
+    if (html.trim()) { setHTML("gwas", html); show("gwasCard"); } else hide("gwasCard");
+  }
+
+  function renderGENCODE(st){
+    const gc = st?.gene_level_gencode;
+    if (!gc || typeof gc !== 'object') return hide("gencodeCard");
+
+    const W = 700, H = 150;
+    const P = { top: 10, right: 10, bottom: 40, left: 28 };
+
+    const sections = Object.entries(gc).map(([gene, obj])=>{
+      if (!obj || typeof obj !== 'object') return "";
+
+      const exonsMap = obj.exons_per_transcript || {};
+      const counts = Object.values(exonsMap).map(v=>Number(v)).filter(n=>Number.isFinite(n));
+      const nTx = Array.isArray(obj.transcript_ids) ? obj.transcript_ids.length : (obj.n_transcripts ?? counts.length);
+
+      const spanMin = obj.min_transcript_span_bp, spanMax = obj.max_transcript_span_bp;
+      const spanLine = (spanMin && spanMax) ? `<div class="muted">span: ${escapeHtml(spanMin)}–${escapeHtml(spanMax)} bp</div>` : "";
+
+      if (!counts.length){
+        return `<div style="margin-bottom:14px;">
+          <div><strong>${escapeHtml(uc(gene))}</strong></div>
+          <div class="muted">transcripts: ${nTx}</div>
+          ${spanLine}
+          <div class="muted">No exon data available to plot.</div>
+        </div>`;
+      }
+
+      const freq = {};
+      for (const n of counts) freq[n] = (freq[n]||0) + 1;
+      const bins = Object.keys(freq).map(Number).sort((a,b)=>a-b);
+      const maxCount = Math.max(...bins.map(b => freq[b]));
+
+      const sorted = [...counts].sort((a,b)=>a-b);
+      const mid = Math.floor(sorted.length/2);
+      const median = (sorted.length % 2) ? sorted[mid] : (sorted[mid-1] + sorted[mid]) / 2;
+
+      const plotW = W - P.left - P.right;
+      const plotH = H - P.top - P.bottom;
+      const bandW = plotW / bins.length;
+      const gap = Math.min(6, Math.max(2, bandW * 0.12));
+
+      const bars = bins.map((b, i) => {
+        const c = freq[b];
+        const h = (c / maxCount) * plotH;
+        const x = P.left + i * bandW + gap/2;
+        const y = P.top + (plotH - h);
+        const w = Math.max(1, bandW - gap);
+        return `<rect class="hist-bar" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${w.toFixed(2)}" height="${Math.max(0,h).toFixed(2)}">
+                  <title>${b} exons • ${c} transcript${c===1?"":"s"}</title>
+                </rect>`;
+      }).join("");
+
+      const tickY = H - 18;
+      let xLabels = "";
+      if (bins.length <= 18) {
+        xLabels = bins.map((b, i) => {
+          const x = P.left + i * bandW + bandW/2;
+          return `<text class="hist-axis" x="${x.toFixed(2)}" y="${tickY}" text-anchor="middle">${b}</text>`;
+        }).join("");
+      } else {
+        const minB = bins[0], maxB = bins[bins.length-1];
+        const nearestIdx = Math.max(0, Math.min(bins.length-1, bins.findIndex(v => v>=median)));
+        const xMin = P.left + 0 * bandW + bandW/2;
+        const xMed = P.left + nearestIdx * bandW + bandW/2;
+        const xMax = P.left + (bins.length-1) * bandW + bandW/2;
+        xLabels = `
+          <text class="hist-axis" x="${xMin.toFixed(2)}" y="${tickY}" text-anchor="middle">${minB}</text>
+          <text class="hist-axis" x="${xMed.toFixed(2)}" y="${tickY}" text-anchor="middle">median ${median}</text>
+          <text class="hist-axis" x="${xMax.toFixed(2)}" y="${tickY}" text-anchor="middle">${maxB}</text>
+        `;
+      }
+
+      const baseY = P.top + plotH;
+      const baseline = `<line class="hist-baseline" x1="${P.left}" y1="${baseY}" x2="${W-P.right}" y2="${baseY}"/>`;
+      const xTitle = `<text class="hist-axis" x="${W/2}" y="${H-4}" text-anchor="middle"># exons</text>`;
+      const yTitle = `<text class="hist-axis" transform="rotate(-90 12 ${H/2})" x="12" y="${H/2}" text-anchor="middle"># transcripts</text>`;
+
+      return `<div style="margin-bottom:16px;">
+        <div><strong>${escapeHtml(uc(gene))}</strong></div>
+        <div class="muted">transcripts: ${nTx} • median exons: ${median}</div>
+        ${spanLine}
+        <svg class="hist-svg" viewBox="0 0 ${W} ${H}">
+          ${yTitle}
+          ${baseline}
+          ${bars}
+          ${xLabels}
+          ${xTitle}
+        </svg>
+      </div>`;
+    }).join("");
+
+    if (sections.trim()) { setHTML("gencode", sections); show("gencodeCard"); }
+    else hide("gencodeCard");
+  }
+
+  function renderDebug(st){
+    const keys = [
+      "uniprot_entries_gwas",
+      "gene_disease_traits",
+      "gene_function_traits",
+      "gene_GO_traits",
+      "humanbase_predictions",
+      "humanbase_expecto",
+      "tissue_expression_preds_variant_text_description",
+      "dbsnp_variants",
+      "sei_predictions",
+      "alphamissense_predictions",
+      "biogrid_summarized_go"
+    ];
+    const subset = {};
+    for (const k of keys) {
+      const v = st?.[k];
+      if (v && ((Array.isArray(v) && v.length) || (typeof v === 'object' && Object.keys(v).length))) {
+        subset[k] = v;
+      }
+    }
+    if (Object.keys(subset).length) { setText("debug", JSON.stringify(subset, null, 2)); show("debugCard"); } else hide("debugCard");
+  }
+
+  function renderRaw(st){
+    if (st) { setText("raw", JSON.stringify(st, null, 2)); show("rawCard"); }
+    else hide("rawCard");
+  }
+
+  // Orchestration
+  async function refresh(qJustRan="") {
+    const st = await fetchState();
+    if (!st) return;
+
+    // On first run, switch from hero to grid and show toolbar for follow-up runs
+    const hero = document.getElementById('hero');
+    if (hero && hero.style.display !== 'none'){ hide('hero'); show('grid'); }
+    show('toolbar');
+    const q2 = document.getElementById('q2'); if (q2) { q2.value = ""; q2.focus(); }
+
+    renderQuestion(st, qJustRan);
+    renderEntities(st);
+    renderTools(st);
+    renderAnswer(st);
+    renderBioGRID(st);
+    renderReactome(st);
+    renderUniProtBase(st);
+    renderGWAS(st);
+    renderGENCODE(st);
+    renderDebug(st);
+    renderRaw(st);
+  }
+
+  // Run helpers
+  async function run(qOverride) {
+    const qEl = document.getElementById("q");
+    const q = (typeof qOverride === "string" ? qOverride : (qEl?.value || "")).trim();
+    if (!q) { alert("Type a question first."); return; }
+    if (qEl) qEl.blur();
+
+    // Clear previous sections; keep layout
+    hideAllSections();
+    setStatus("(waiting for output…)");
+    showRunStatus();
+
+    // Start polling logs before kicking off the run
+    startLogPolling();
+
+    const res = await fetch("/run?q=" + encodeURIComponent(q));
+    if (!res.ok) {
+      setStatus("Run failed.");
+      setTimeout(()=>{ stopLogPolling(); hideRunStatus(); }, 800);
+      return;
+    }
+
+    await refresh(q);
+    setTimeout(()=>{ stopLogPolling(); hideRunStatus(); }, 800);
+  }
+
+  function runFrom(inputId){
+    const el = document.getElementById(inputId);
+    const val = el ? el.value.trim() : "";
+    if (!val) { alert("Type a question first."); return; }
+    run(val);
+  }
+
+  // Enter-to-run
+  window.addEventListener('load', () => {
+    const input = document.getElementById('q');
+    input?.focus();
+    input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
+
+    const input2 = document.getElementById('q2');
+    input2?.addEventListener('keydown', (e) => { if (e.key === 'Enter') runFrom('q2'); });
+  });
+</script>
+</body>
+</html>
+

@@ -58,6 +58,12 @@ def conditioned_claude_node(state: "State") -> "State":
             if DEBUG:
                 print('[conditioned_claude_node] Found BioGRID GO terms for', g, biogrid_hits)
             gene_info["gene_ontology_terms_of_interacting_genes"] = biogrid_hits
+            
+        biogrid_genes = state.get("biogrid_predictions", {}).get(g, [])
+        if biogrid_genes:
+            if DEBUG:
+                print('[conditioned_claude_node] Found BioGRID interacting genes for', g, biogrid_genes)
+            gene_info["Interacting genes based on BioGRID curated database"] = biogrid_genes
 
         # Add Reactome pathways
         reactome_hits = state.get("reactome_pathways", {}).get(g, [])
@@ -110,7 +116,6 @@ def conditioned_claude_node(state: "State") -> "State":
         context_block = context_block[:N_CHARS] + "...<truncated>"
     else:
         print("[conditioned_claude_node] context", context_block)
-    print(context_block)
     
     # Call Claude
     system_msg: str = (
@@ -146,8 +151,7 @@ def conditioned_claude_node(state: "State") -> "State":
         ) from exc
 
     return {
-        **state,
-        "messages": state["messages"] + [{"role": "assistant", "content": llm_resp}],
+       "messages": [{"role": "assistant", "content": llm_resp}],
         "context_block": context_block,
         "llm_json": parsed_resp,
     }
