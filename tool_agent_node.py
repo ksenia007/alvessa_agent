@@ -77,19 +77,9 @@ def select_tools_and_run_dynamic(state: State) -> State:
 
     print(f"[TOOL SELECTION] Claude (Haiku) selected: {selected_tools}")
 
-    # for name in selected_tools:
-    #     fn = TOOL_FN_MAP.get(name)
-    #     if not fn:  continue
-    #     print(f"[TOOL RUN] → {name}")
-
-    #     out = fn(state)                  # call real function
-    #     # if inspect.iscoroutine(out):     # if it’s async, await it
-    #     #     out = await out
-    #     if isinstance(out, dict):
-    #         state.update(out)            # merge results
-            
-    # return state
     state.update({'used_tools': selected_tools})  # record used tools
+    
+    # update state
     for name in selected_tools:
         fn = TOOL_FN_MAP.get(name)
         if not fn:
