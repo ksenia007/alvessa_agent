@@ -142,12 +142,12 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
                 "total_variants": len(found_variants),
                 "chromosomes": sorted(list(chromosomes)),
                 "assembly": assembly,
-                "rare_variants": len(rare_variants),
-                "common_variants": len(common_variants),
-                "very_common_variants": len(very_common_variants),
-                "rare_rsids (<1%)": rare_variants,
-                "common_rsids (1-15%)": common_variants,
-                "very_common_rsids (>15%)": very_common_variants,
+                "num_rare_variants (<1%)": len(rare_variants),
+                "num_common_variants (1-15%)": len(common_variants),
+                "num_very_common_variants (>15%)": len(very_common_variants),
+                "rare_rsids": rare_variants,
+                "common_rsids": common_variants,
+                "very_common_rsids": very_common_variants,
             }
 
     return {"dbsnp_variants": variants, "dbsnp_summaries": variant_summaries}
