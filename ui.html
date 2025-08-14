@@ -2,12 +2,21 @@
 <html lang="en">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="/favicon.ico?v=9">
+<link rel="icon" type="image/png" sizes="32x32" href="/images/rocket_favicon_32.png?v=9">
+<link rel="icon" type="image/png" sizes="64x64" href="/images/rocket_favicon_64.png?v=9">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/rocket_favicon_180.png?v=9">
+<meta name="theme-color" content="#0b1020">
+
 <title>Alvessa: Gene-Centric Agentic Framework</title>
 <style>
   :root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
   body { margin: 0; background: #0b1020; color: #e6e8ef; }
   .wrap { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
   .grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+
+  .logo-hero { height: 40px; vertical-align: middle; }
+.logo-bar  { height: 24px; vertical-align: middle; }
 
   .card { background: #121832; border: 1px solid #1e2a52; border-radius: 16px; padding: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.2); }
   .title { font-size: 20px; font-weight: 700; margin: 0 0 8px; }
@@ -45,6 +54,8 @@
   .hist-bar { fill:#2a3a72; }
   .hist-bar:hover { opacity:0.9; }
   .hist-baseline { stroke:#2a3a72; stroke-width:1; }
+
+  
 </style>
 <body>
 <div class="wrap">
@@ -52,7 +63,10 @@
   <!-- Centered start screen -->
   <div id="hero">
     <div class="card">
-      <div class="title">Gene-Centric Agent</div>
+        <div class="title">
+            <img src="/images/rocket_logo.png" alt="Alvessa logo" class="logo-hero" />
+            <span style="margin-left:8px;">Alvessa: Gene-Centric Agentic Framework</span>
+          </div>
       <div class="muted" style="margin-bottom:12px;">Enter a question to explore entities, tools, and curated outputs.</div>
       <div class="row" style="justify-content:center;">
         <input id="q" type="text" placeholder="Ask a question… e.g., Genes interacting with TP53" />
@@ -86,6 +100,13 @@
 
   <!-- Main content grid -->
   <div id="grid" class="grid">
+
+    <div id="brandCard" class="card full">
+        <div class="row" style="align-items:center; gap:12px;">
+          <img src="/images/rocket_logo.png" alt="Alvessa logo" class="logo-bar" />
+          <div class="title" style="margin:0;">Alvessa: Gene-Centric Agentic Framework</div>
+        </div>
+      </div>
 
     <div class="card full">
       <div class="title" id="questionTitle">Question</div>
@@ -222,24 +243,31 @@
     if (ev.length) { setHTML("evidence", ev.map(e=>`<div class="pill">${escapeHtml(e)}</div>`).join("")); show("evidenceCard"); }
     else hide("evidenceCard");
   }
-
   function renderBioGRID(st){
     const bg = st?.biogrid_predictions;
     if (!bg || typeof bg !== 'object') return hide("biogridCard");
-
+  
     const entries = Object.entries(bg);
-    if (!entries.length) { setHTML("biogrid", `<div class="muted">no interactions returned</div>`); return show("biogridCard"); }
-
-    const allEmpty = entries.every(([_, arr]) => !arr || (Array.isArray(arr) && arr.length === 0));
-    if (allEmpty) {
+    if (!entries.length) {
       setHTML("biogrid", `<div class="muted">no interactions returned</div>`);
       return show("biogridCard");
     }
-
+  
     const html = entries.map(([gene, arr]) => {
-      const n = Array.isArray(arr) ? arr.length : 0;
-      return `<div><strong>${escapeHtml(uc(gene))}:</strong> ${n} interactions</div>`;
+      const list = Array.isArray(arr) ? [...new Set(arr)].filter(Boolean) : [];
+      const n = list.length;
+      if (!n) {
+        return `<div style="margin-bottom:10px;">
+          <strong>${escapeHtml(uc(gene))}:</strong> 0 genes
+          <div class="muted">no interactions returned</div>
+        </div>`;
+      }
+      return `<div style="margin-bottom:10px;">
+        <strong>${escapeHtml(uc(gene))}:</strong> ${n} gene${n===1?'':'s'}
+        <div class="scroll" style="margin-top:6px;">${asPills(list)}</div>
+      </div>`;
     }).join("");
+  
     setHTML("biogrid", html);
     show("biogridCard");
   }

@@ -25,6 +25,8 @@ import uvicorn
 from fastapi import FastAPI, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+
 
 try:
     import pandas as pd
@@ -34,13 +36,32 @@ except Exception:
 
 from run import run_pipeline  
 
+
 # -----------------------------------------------------------------------------
-# App & paths
+# App & paths & images
 # -----------------------------------------------------------------------------
 app = FastAPI()
 BASE = Path(__file__).parent.resolve()
 STATE_FILE = BASE / "demo.json"
 LOG_FILE = BASE / "demo.log"   # single, absolute path used everywhere
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    ico = BASE / "images" / "favicon.ico"
+    if ico.exists():
+        return FileResponse(ico, media_type="image/x-icon", headers={"Cache-Control":"no-store"})
+    # fallback to your 32x32 PNG if you don't have an .ico yet
+    return FileResponse(BASE / "images" / "rocket_favicon_32.png",
+                        media_type="image/png",
+                        headers={"Cache-Control":"no-store"})
+
+@app.get("/apple-touch-icon.png", include_in_schema=False)
+def apple_touch_icon():
+    return FileResponse(BASE / "images" / "rocket_favicon_180.png",
+                        media_type="image/png",
+                        headers={"Cache-Control":"no-store"})
+
+app.mount("/images", StaticFiles(directory=BASE / "images"), name="images")
 
 # -----------------------------------------------------------------------------
 # JSON sanitizer for NumPy/Pandas types
