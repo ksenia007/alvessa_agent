@@ -124,17 +124,19 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
             for v in found_variants:
                 chromosomes.update(v.get("chromosomes", []))
             
-            # Categorize by frequency: rare (<15%), common (15-50%), very common (>50%)
+            # Categorize by frequency: rare (<1%), common (1-15%), very common (>15%)
             rare_variants, common_variants, very_common_variants = [], [], []
             
             for v in found_variants:
                 afs = [freq.get('allele_frequency', 0) for freq in v.get("allele_frequencies", [])]
                 min_af, _ = (min(afs), max(afs)) if afs else (0, 0)
                 
-                if min_af < 0.15:
+                if min_af < 0.01:
                     rare_variants.append(v.get("rsid"))
-                else:
+                elif min_af < 0.15:
                     common_variants.append(v.get("rsid"))
+                else:
+                    very_common_variants.append(v.get("rsid"))
             
             variant_summaries[gene] = {
                 "total_variants": len(found_variants),
@@ -142,8 +144,10 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
                 "assembly": assembly,
                 "rare_variants": len(rare_variants),
                 "common_variants": len(common_variants),
-                "rare_rsids": rare_variants,
-                "common_rsids": common_variants,
+                "very_common_variants": len(very_common_variants),
+                "rare_rsids (<1%)": rare_variants,
+                "common_rsids (1-15%)": common_variants,
+                "very_common_rsids (>15%)": very_common_variants,
             }
 
     return {"dbsnp_variants": variants, "dbsnp_summaries": variant_summaries}
