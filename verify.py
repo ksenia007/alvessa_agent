@@ -68,12 +68,7 @@ def verify_evidence_node(state: "State") -> "State":
         print("[verify_evidence_node]", verdict, parsed.get("reason", ""))
 
     msgs = list(state["messages"])
+    delta = []
     if verdict == "fail":
-        last = dict(msgs[-1])
-        last["content"] += (
-            "\n\nVERIFICATION FAILED: LLM check failed.\n"
-            f"Reason: {parsed.get('reason', 'unknown')}"
-        )
-        msgs[-1] = last
-
-    return {"messages": msgs, "verification": verdict}
+        delta.append(msgs[-1])  # only the modified last message
+    return {"messages": delta, "verification": verdict}

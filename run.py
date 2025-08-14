@@ -1,8 +1,8 @@
 """ 
 Author: Ksenia Sokolova <sokolova@princeton.edu>
 Contributors: 
-Created: 2024-06-25
-Updated: 2025-06-26
+Created: 2025-06-25
+Updated: 2025-08-12
 
 
 Description: 
@@ -23,9 +23,8 @@ from typing import Dict, List
 from graph_builder import build_graph
 
 import sys
+import json
 
-logfile = open("demo.log", "w")
-sys.stdout = logfile
 
 
 def run_pipeline(user_message: str) -> Dict:
@@ -48,9 +47,13 @@ def run_pipeline(user_message: str) -> Dict:
 
 
 if __name__ == "__main__":
+    logfile = open("demo.log", "w")
+    sys.stdout = logfile
+
     EXAMPLE_QUESTIONS: List[str] = [
-        "Tell me about role of TP53 variants in GWAS catalogue",
-        # "Which diseases and traits are associated with the genes TP53 and KRAS?",
+        #"Do not run any of the tools, just proceed directly to the LLM.",
+        "Tell me about variants in TP53",
+        #"Which diseases and traits are associated with the genes TP53 and KRAS?",
         # "Which gene is the best drug target for virally induced cancers, KRAS or TP53?",
         # "How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
         # "Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?",
@@ -64,6 +67,10 @@ if __name__ == "__main__":
             print("\n" + "=" * 80)
             print("Q:", q)
             result = run_pipeline(q)
+            # save for the html
+            with open("demo.json", "w") as jf:
+                json.dump(result, jf, indent=2, default=str)
+                
             last_msg = result["messages"][-1]["content"]
             answer = result["llm_json"].get("answer", "")
             evidence = result["llm_json"].get("evidence", [])
@@ -80,4 +87,9 @@ if __name__ == "__main__":
             for ev in evidence:
                 f.write(f"  - {ev}\n")
             f.write("\n\n")
+            
+
+            with open("demo.json", "w") as jf:
+                json.dump(result, jf, indent=2, default=str)
+
 

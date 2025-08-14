@@ -36,19 +36,18 @@ def run_async_sync(fn: Callable[..., Any]) -> Callable[..., Any]:
         return result
     return wrapper
 
+
 def build_graph() -> Callable[[State], State]:
     """Return a compiled LangGraph ready for invocation (diagram export is best‑effort)."""
     g = StateGraph(State)
 
     # Nodes
-    g.add_node("extract_genes", gene_extraction_node)
     g.add_node("select_tools", run_async_sync(select_tools_and_run_dynamic))
     g.add_node("claude", conditioned_claude_node)
-    g.add_node("verify", verify_evidence_node)
+    g.add_node("verify", verify_evidence_node) 
 
     # Edges
-    g.set_entry_point("extract_genes")
-    g.add_conditional_edges("extract_genes", has_genes, {True: "select_tools", False: "claude"})
+    g.set_entry_point("select_tools")
     g.add_edge("select_tools", "claude")
     g.add_edge("claude", "verify")
     g.add_conditional_edges(
@@ -63,7 +62,7 @@ def build_graph() -> Callable[[State], State]:
 
     compiled = g.compile()
 
-    # ---- Best‑effort diagram export (handles multiple LangGraph versions) ----
+    # Best‑effort diagram printing
     try:
         # Newer pattern (sometimes on the compiled object)
         png = compiled.draw_mermaid_png()
@@ -87,7 +86,6 @@ def build_graph() -> Callable[[State], State]:
                     f.write(mm)
             except Exception:
                 print('UNABLE TO UPDATE THE DIAGRAM')
-                # Give up quietly; diagram generation is optional
                 pass
 
     return compiled

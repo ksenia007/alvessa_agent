@@ -14,8 +14,10 @@ from tool_dbsnp import dbsnp_variants_agent
 from tool_sei import sei_predictions_agent
 from tool_alphamissense import alphamissense_predictions_agent
 from tool_annotate_gencode import gencode_gene_node
+from entity_extraction import gene_extraction_node
 
 TOOL_CATALOG = {
+    "extract_genes": "Extracts gene symbols from the user question. This is the first step in the pipeline, and it is required to run any other tool.",
     "gencode_gene_node": "Annotates genes with GENCODE gene annotations. Provides gene-level information such as gene name, description, and genomic coordinates. Essential for many downstream analyses.",
     "humanbase_functions": "Fetch per-gene functional predictions from HumanBase tissue-specific networks. Provides expanded list of functions.",
     "uniprot_base":  "Queries UniProt for functional annotations and disease links",
@@ -34,6 +36,7 @@ TOOL_CATALOG = {
 
 
 TOOL_FN_MAP = {
+    "extract_genes":       gene_extraction_node,
     "humanbase_functions":      humanbase_predictions_agent,
     "humanbase_expecto":       humanbase_expecto_agent,
     "humanbase_tissue_expecto_annotate_variants": humanbase_tissue_expecto_annotate_variants,

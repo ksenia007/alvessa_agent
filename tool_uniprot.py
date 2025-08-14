@@ -130,7 +130,7 @@ def uniprot_node(state: "State") -> "State":
         if entry_gwas:
             uniprot_entries_gwas[gene] = extract_summaries(entry_gwas)
 
-    return {**state, "uniprot_entries_base": uniprot_entries_base, "uniprot_entries_gwas": uniprot_entries_gwas}
+    return {"uniprot_entries_base": uniprot_entries_base, "uniprot_entries_gwas": uniprot_entries_gwas}
 
 
 def trait_disease_extraction_node(state: "State") -> "State":
@@ -141,7 +141,7 @@ def trait_disease_extraction_node(state: "State") -> "State":
     }
     # prune empties
     gene_traits = {g: t for g, t in gene_traits.items() if t}
-    return {**state, "gene_disease_traits": gene_traits}
+    return {"gene_disease_traits": gene_traits}
 
 
 def trait_function_extraction_node(state: "State") -> "State":
@@ -151,7 +151,7 @@ def trait_function_extraction_node(state: "State") -> "State":
         g: extract_function_from_uniprot_entry(e) for g, e in entries.items()
     }
     gene_traits = {g: t for g, t in gene_traits.items() if t}
-    return {**state, "gene_function_traits": gene_traits}
+    return {"gene_function_traits": gene_traits}
 
 
 def trait_GO_extraction_node(state: "State") -> "State":
@@ -161,7 +161,7 @@ def trait_GO_extraction_node(state: "State") -> "State":
         g: extract_GO_from_uniprot_entry(e) for g, e in entries.items()
     }
     gene_traits = {g: t for g, t in gene_traits.items() if t}
-    return {**state, "gene_GO_traits": gene_traits}
+    return {"gene_GO_traits": gene_traits}
 
 
 def has_uniprot_entries(state: "State") -> bool:

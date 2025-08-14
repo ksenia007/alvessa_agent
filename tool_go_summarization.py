@@ -72,5 +72,4 @@ def go_summarization_agent(state: "State", genes: List, source: str, embedding_m
     time.sleep(0.3)  # courteous pause
 
     return {
-        **state,
         f"{source}_summarized_go": preds}

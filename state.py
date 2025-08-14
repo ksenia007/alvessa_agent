@@ -47,3 +47,6 @@ class State(TypedDict, total=False):
     verification: str
     verify_attempts: int
     used_tools: Annotated[List[str], operator.add]
+    
+    # interactive view
+    ui: Annotated[Dict[str, Any], operator.or_]  # e.g., {"panels": [...]}
