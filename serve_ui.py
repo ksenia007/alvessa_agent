@@ -9,8 +9,6 @@ Description:
 
 UI for the pipeline
 """
-# serve_ui.py
-# serve_ui.py
 from __future__ import annotations
 
 import io
