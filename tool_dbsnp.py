@@ -58,19 +58,23 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
                 # Query dbSNP variant information
                 result = get_variant_info(rsid, assembly)
                 
+                allele_frequencies = result.get("allele_frequencies", [])
+                coordinates = result.get("coordinates", [])
+                
                 variants[gene][rsid] = {
                     "rsid": result.get("rsid", rsid),
                     "found": True,
-                    "coordinates": result.get("coordinates", []),
-                    "coordinate_count": len(result.get("coordinates", [])),
-                    "chromosomes": list(set(coord.get("chrom", "Unknown") for coord in result.get("coordinates", []))),
+                    "coordinates": coordinates,
+                    "coordinate_count": len(coordinates),
+                    "chromosomes": list(set(coord.get("chrom", "Unknown") for coord in coordinates)),
+                    "allele_frequencies": allele_frequencies,
+                    "frequency_study_count": len(allele_frequencies),
+                    "frequency_studies": [freq.get("study_name", "Unknown") for freq in allele_frequencies],
                     "assembly_filter": result.get("assembly_filter", assembly)
                 }
                 
                 if DEBUG:
-                    coord_count = len(result.get("coordinates", []))
-                    print(f"[dbSNP] {rsid}: found, {coord_count} coordinates")
-                    print(variants[gene][rsid])
+                    print(f"[dbSNP] {rsid}: {len(coordinates)} coords, {len(allele_frequencies)} studies")
                     
                 # go through coordinates, find build 38 chrom and position and annotate
                 # set deafult annots to empty list
@@ -97,14 +101,52 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
                     "coordinates": [],
                     "coordinate_count": 0,
                     "chromosomes": [],
+                    "allele_frequencies": [],
+                    "frequency_study_count": 0,
+                    "frequency_studies": [],
                     "error": str(exc)
                 }
 
             # Courteous pause
             time.sleep(0.1)
 
-    # import ipdb; ipdb.set_trace()
-    return {"dbsnp_variants": variants}
+    # Generate summary statistics for each gene
+    variant_summaries = {}
+    for gene, gene_variants in variants.items():
+        if not gene_variants:
+            continue
+            
+        # Calculate summary statistics
+        found_variants = [v for v in gene_variants.values() if v.get("found", False)]
+        
+        if found_variants:
+            chromosomes = set()
+            for v in found_variants:
+                chromosomes.update(v.get("chromosomes", []))
+            
+            # Categorize by frequency: rare (<15%), common (15-50%), very common (>50%)
+            rare_variants, common_variants, very_common_variants = [], [], []
+            
+            for v in found_variants:
+                afs = [freq.get('allele_frequency', 0) for freq in v.get("allele_frequencies", [])]
+                min_af, _ = (min(afs), max(afs)) if afs else (0, 0)
+                
+                if min_af < 0.15:
+                    rare_variants.append(v.get("rsid"))
+                else:
+                    common_variants.append(v.get("rsid"))
+            
+            variant_summaries[gene] = {
+                "total_variants": len(found_variants),
+                "chromosomes": sorted(list(chromosomes)),
+                "assembly": assembly,
+                "rare_variants": len(rare_variants),
+                "common_variants": len(common_variants),
+                "rare_rsids": rare_variants,
+                "common_rsids": common_variants,
+            }
+
+    return {"dbsnp_variants": variants, "dbsnp_summaries": variant_summaries}
 
 
 def _extract_rsids_from_gwas(state: "State") -> Set[str]:

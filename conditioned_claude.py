@@ -106,6 +106,16 @@ def conditioned_claude_node(state: "State") -> "State":
         alphamissense_effect_predictions = state.get("alphamissense_predictions", {}).get(g, [])
         if alphamissense_effect_predictions:
             gene_info["Pathogenicity predictions for each missense variant of interest. Computed through AlphaMissense, which predicts the likelihood that missense variants (genetic mutations where a single amino acid in a protein is changed) can cause disease"] = alphamissense_effect_predictions
+
+        # Add dbSNP variant information
+        dbsnp_variants = state.get("dbsnp_variants", {}).get(g, {})
+        if dbsnp_variants:
+            gene_info["dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)"] = dbsnp_variants
+
+        # Add dbSNP summary statistics
+        dbsnp_summaries = state.get("dbsnp_summaries", {}).get(g, {})
+        if dbsnp_summaries:
+            gene_info["dbSNP variant summary (rare vs common variants, chromosomes, assembly info)"] = dbsnp_summaries
            
         gene_payload.append(gene_info)
 
