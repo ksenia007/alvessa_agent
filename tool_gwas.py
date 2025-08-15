@@ -39,7 +39,7 @@ def gwas_associations_agent(state: "State") -> "State":
                 fps_disease_traits=20  # Apply FPS to disease traits for manageable output
             )
             
-            # Extract only the summaries for downstream processing
+            # Extract variant summaries and their annotations for downstream processing
             if result.get("found", True):
                 associations[gene] = {
                     "gene": gene,
@@ -48,14 +48,15 @@ def gwas_associations_agent(state: "State") -> "State":
                     "total_significant_associations": result.get("total_significant_associations", 0),
                     "total_studies_analyzed": result.get("total_studies_analyzed", 0),
                     "summary_by_high_risk_alleles": result.get("summary_by_high_risk_alleles", {}),
-                    "summary_by_significance": result.get("summary_by_significance", {})
+                    "summary_by_significance": result.get("summary_by_significance", {}),
+                    "variant_annotations": result.get("variant_annotations", {})
                 }
-                
                 if DEBUG:
                     total_assoc = result.get("total_associations", 0)
                     significant_assoc = result.get("total_significant_associations", 0)
                     studies = result.get("total_studies_analyzed", 0)
-                    print(f"[GWAS] {gene}: found, {total_assoc} total associations, {significant_assoc} significant, {studies} studies")
+                    raw_variants_count = len(result.get("summary_by_high_risk_alleles", {}).get("raw_variants", {}))
+                    print(f"[GWAS] {gene}: found, {total_assoc} total associations, {significant_assoc} significant, {studies} studies, {raw_variants_count} raw variants")
             else:
                 associations[gene] = {
                     "gene": gene,
@@ -64,7 +65,8 @@ def gwas_associations_agent(state: "State") -> "State":
                     "total_significant_associations": 0,
                     "total_studies_analyzed": 0,
                     "summary_by_high_risk_alleles": {"related_genes": [], "high_risk_snps": [], "proteins": [], "disease_traits": []},
-                    "summary_by_significance": {"related_genes": [], "high_risk_snps": [], "proteins": [], "disease_traits": []}
+                    "summary_by_significance": {"related_genes": [], "high_risk_snps": [], "proteins": [], "disease_traits": []},
+                    "variant_annotations": {}
                 }
                 
                 if DEBUG:
@@ -81,6 +83,7 @@ def gwas_associations_agent(state: "State") -> "State":
                 "total_studies_analyzed": 0,
                 "summary_by_high_risk_alleles": {"related_genes": [], "high_risk_snps": [], "proteins": [], "disease_traits": []},
                 "summary_by_significance": {"related_genes": [], "high_risk_snps": [], "proteins": [], "disease_traits": []},
+                "variant_annotations": {},
                 "error": str(exc)
             }
 
