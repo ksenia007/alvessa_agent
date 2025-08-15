@@ -34,7 +34,8 @@ class State(TypedDict, total=False):
     biogrid_predictions: Annotated[Dict[str, List[str]], operator.or_]
     reactome_pathways: Annotated[Dict[str, List[str]], operator.or_]
     biogrid_summarized_go: Annotated[Dict[str, List[str]], operator.or_]
-    dbsnp_variants: Annotated[Dict[str, Dict[str, Any]], operator.or_]
+    dbsnp_variants: Annotated[Dict[str, Dict[str, Dict[str, Any]]], operator.or_]
+    dbsnp_summaries: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     sei_predictions: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     alphamissense_predictions: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     
