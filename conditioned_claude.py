@@ -11,16 +11,84 @@ LLM node that answers the user question using compiled context: main reasoning L
 
 from __future__ import annotations
 import json
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 from claude_client import claude_call
 from config import CONDITIONED_MODEL, DEBUG, N_CHARS
 from state import State
 
 
+# Data aggregation helpers
+def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
+    """Extract all data for a single gene from state."""
+    gene_info = {"gene": gene}
+    
+    # Define data sources with their state keys and optional processing
+    data_sources = [
+        ("diseases", "gene_disease_traits"),
+        ("functions", "humanbase_predictions", lambda hits: [hit["term"] for hit in hits if "term" in hit][:30]),
+        ("gene_ontology_terms_of_interacting_genes", "biogrid_summarized_go"),
+        ("Interacting genes based on BioGRID curated database", "biogrid_predictions"),
+        ("Associated Reactome pathways (curated biological pathways which describe how molecules interact within a cell to carry out different biological processes)", "reactome_pathways"),
+        ("gwas_associations", "gwas_associations"),
+        ("uniprot_entries_base", "uniprot_entries_base", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
+        ("uniprot_entries_gwas", "uniprot_entries_gwas", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
+        ("Regulatory activity role for the regions where variants were found. Defined computationally through Sei, a deep learning model that predicts transcription factors, histone marks and dnase, though clustering prediction over the genome and then assinging values. Reperesents role of the region", "sei_predictions"),
+        ("Tissue-specific expression disruption predictions from sequence", "humanbase_expecto", lambda data: data.get('summary_text')),
+        ("Per variant GE modulation predictions:", "tissue_expression_preds_variant_text_description"),
+        ("Pathogenicity predictions for each missense variant of interest. Computed through AlphaMissense, which predicts the likelihood that missense variants (genetic mutations where a single amino acid in a protein is changed) can cause disease", "alphamissense_predictions"),
+        ("dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)", "dbsnp_variants"),
+        ("dbSNP variant summary (rare vs common variants, chromosomes, assembly info)", "dbsnp_summaries")
+    ]
+    
+    for source in data_sources:
+        field_name, state_key = source[:2]
+        processor = source[2] if len(source) > 2 else None
+        
+        data = state.get(state_key, {}).get(gene)
+        if data:
+            if processor:
+                data = processor(data)
+            if data:  # Only add if data exists after processing
+                gene_info[field_name] = data
+                if DEBUG and state_key in ['biogrid_summarized_go', 'biogrid_predictions', 'reactome_pathways']:
+                    print(f'[conditioned_claude_node] Found {state_key} for {gene}: {data}')
+    
+    return gene_info
+
+
+def _build_trait_context(trait_associations: Dict[str, Any]) -> Dict[str, Any]:
+    """Build trait-based context from trait associations."""
+    trait_info = {
+        "query_type": "trait_based",
+        "trait_term": trait_associations.get("trait_term", ""),
+        "total_associations": trait_associations.get("total_associations", 0),
+        "total_significant_associations": trait_associations.get("total_significant_associations", 0),
+        "total_studies_analyzed": trait_associations.get("total_studies_analyzed", 0)
+    }
+    
+    # Add summary data with consistent structure
+    for summary_type, prefix in [("summary_by_high_risk_alleles", ""), ("summary_by_significance", "significant_")]:
+        summary = trait_associations.get(summary_type, {})
+        if summary:
+            for key in ["related_genes", "high_risk_snps", "proteins", "disease_traits"]:
+                if summary.get(key):
+                    trait_info[f"{prefix}{key}"] = summary[key]
+    
+    # Add variant annotations
+    variant_annotations = trait_associations.get("variant_annotations", {})
+    if variant_annotations:
+        trait_info["variant_annotations"] = variant_annotations
+    
+    return trait_info
+
+
 def conditioned_claude_node(state: "State") -> "State":
     """
     Build a compact JSON context and ask Claude for an answer.
+    
+    This is the main reasoning engine that synthesizes data from all biomedical tools
+    into a coherent, evidence-based response.
 
     Returns
     -------
@@ -30,112 +98,43 @@ def conditioned_claude_node(state: "State") -> "State":
     if DEBUG:
         print("[conditioned_claude_node] preparing context block...")
     
-    # Build CONTEXT payload
-    gene_payload: List[Dict[str, Any]] = []
+    # Build gene-based context
     gene_list = list(set(state.get("genes", [])))
+    context_payload = [_extract_gene_data(state, gene) for gene in gene_list]
     
     if DEBUG:
-        print("[conditioned_claude_node] genes to summarize:", gene_list)
+        print(f"[conditioned_claude_node] genes to summarize: {gene_list}")
     
-    gene_list = list(set(gene_list))  # Ensure unique genes
+    # Add trait-based context if no genes but trait data exists
+    trait_associations = state.get("trait_associations", {})
+    if not gene_list and trait_associations.get("found", False):
+        if DEBUG:
+            print("[conditioned_claude_node] No genes found, adding trait-based associations")
+        context_payload.append(_build_trait_context(trait_associations))
     
-    for g in gene_list:
-        gene_info: Dict[str, Any] = {"gene": g}
+    # Context building is now handled by helper functions above
 
-        diseases = state.get("gene_disease_traits", {}).get(g, [])
-        if diseases:
-            gene_info["diseases"] = diseases
-            
-        humanbase_hits = state.get("humanbase_predictions", {}).get(g, [])
-        terms = []
-        if humanbase_hits:
-            terms = [hit["term"] for hit in humanbase_hits if "term" in hit]
-            if terms:
-                gene_info["functions"] = terms[:30] # TODO: update this to a more flexible limit
-
-        biogrid_hits = state.get("biogrid_summarized_go", {}).get(g, [])
-        if biogrid_hits:
-            if DEBUG:
-                print('[conditioned_claude_node] Found BioGRID GO terms for', g, biogrid_hits)
-            gene_info["gene_ontology_terms_of_interacting_genes"] = biogrid_hits
-            
-        biogrid_genes = state.get("biogrid_predictions", {}).get(g, [])
-        if biogrid_genes:
-            if DEBUG:
-                print('[conditioned_claude_node] Found BioGRID interacting genes for', g, biogrid_genes)
-            gene_info["Interacting genes based on BioGRID curated database"] = biogrid_genes
-
-        # Add Reactome pathways
-        reactome_hits = state.get("reactome_pathways", {}).get(g, [])
-        if reactome_hits:
-            if DEBUG:
-                print('[conditioned_claude_node] Found Reactome pathways terms for', g, reactome_hits)
-            gene_info["Associated Reactome pathways (curated biological pathways which describe how molecules interact within a cell to carry out different biological processes)"] = reactome_hits
-
-        # Add associations to the gene info
-        associations = state["gwas_associations"].get(g, [])
-        if associations:
-            gene_info["gwas_associations"] = associations
-
-        # Add UniProt entries
-        uniprot_entries_base = state.get("uniprot_entries_base", {}).get(g, [])
-        if uniprot_entries_base:
-            uniprot_entries_base.pop('go_terms', None)
-            gene_info["uniprot_entries_base"] = uniprot_entries_base
-        uniprot_entries_gwas = state.get("uniprot_entries_gwas", {}).get(g, [])
-        if uniprot_entries_gwas:
-            uniprot_entries_gwas.pop('go_terms', None)
-            gene_info["uniprot_entries_gwas"] = uniprot_entries_gwas
-
-        # Add sei predictions
-        sei_effect_predictions = state.get("sei_predictions", {}).get(g, [])
-        if sei_effect_predictions:
-            gene_info["Regulatory activity role for the regions where variants were found. Defined computationally through Sei, a deep learning model that predicts transcription factors, histone marks and dnase, though clustering prediction over the genome and then assinging values. Reperesents role of the region"] = sei_effect_predictions
-            
-        # Add summary text from Expecto from HB
-        humanbase_expecto = state.get("humanbase_expecto", {}).get(g, [])
-        if humanbase_expecto:
-            gene_info["Tissue-specific expression disruption predictions from sequence"] = humanbase_expecto['summary_text']
-        
-        # Add per-variant info
-        tissue_expression_preds_variant_text_description = state.get("tissue_expression_preds_variant_text_description", {}).get(g, {})
-        if tissue_expression_preds_variant_text_description:
-            gene_info["Per variant GE modulation predictions:"] = tissue_expression_preds_variant_text_description
-
-        # Add alphamissense predictions
-        alphamissense_effect_predictions = state.get("alphamissense_predictions", {}).get(g, [])
-        if alphamissense_effect_predictions:
-            gene_info["Pathogenicity predictions for each missense variant of interest. Computed through AlphaMissense, which predicts the likelihood that missense variants (genetic mutations where a single amino acid in a protein is changed) can cause disease"] = alphamissense_effect_predictions
-
-        # Add dbSNP variant information
-        dbsnp_variants = state.get("dbsnp_variants", {}).get(g, {})
-        if dbsnp_variants:
-            gene_info["dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)"] = dbsnp_variants
-
-        # Add dbSNP summary statistics
-        dbsnp_summaries = state.get("dbsnp_summaries", {}).get(g, {})
-        if dbsnp_summaries:
-            gene_info["dbSNP variant summary (rare vs common variants, chromosomes, assembly info)"] = dbsnp_summaries
-           
-        gene_payload.append(gene_info)
-
-    context_block: str = json.dumps(gene_payload, separators=(",", ":"))
+    # Serialize context and handle truncation
+    context_block = json.dumps(context_payload, separators=(",", ":"))
     if DEBUG:
-        print("[conditioned_claude_node] context length:", len(context_block))
+        print(f"[conditioned_claude_node] context length: {len(context_block)}")
+        if len(context_block) <= N_CHARS:
+            print(f"[conditioned_claude_node] context: {context_block}")
+    
     if len(context_block) > N_CHARS:
         context_block = context_block[:N_CHARS] + "...<truncated>"
-    else:
-        print("[conditioned_claude_node] context", context_block)
     
-    # Call Claude
-    system_msg: str = (
+    # Generate Claude response
+    user_question = state["messages"][-1]["content"]
+    system_msg = (
         "You are a biology data analyst. Answer strictly with facts you can "
         "point to inside CONTEXT. Respond only with JSON with keys answer and evidence. Ensure proper JSON format. "
-        "Produce raw json output. I don't want markdown."
-        "The 'evidence' field must always be a list of short strings, and always reference the entity to which you are referring."
+        "Produce raw json output. I don't want markdown. "
+        "The 'evidence' field must always be a list of short strings, and always reference the entity to which you are referring. "
+        "If the CONTEXT contains trait-based associations (query_type: 'trait_based'), focus on the genetic associations "
+        "with the queried trait/disease, including related genes, variants, and their biological significance."
     )
-    user_question: str = state["messages"][-1]["content"]
-
+    
     raw = claude_call(
         model=CONDITIONED_MODEL,
         temperature=0,
@@ -143,25 +142,19 @@ def conditioned_claude_node(state: "State") -> "State":
         system=system_msg,
         messages=[{"role": "user", "content": f"User asked: {user_question}\n\nCONTEXT:\n{context_block}"}],
     )
-
-    if hasattr(raw.content[0], "text"):
-        llm_resp: str | Dict[str, Any] = raw.content[0].text.strip()
-    else:
-        llm_resp = raw.content[0]
-
+    
+    # Parse Claude response
+    llm_resp = raw.content[0].text.strip() if hasattr(raw.content[0], "text") else raw.content[0]
+    
     try:
-        parsed_resp: Dict[str, Any]
-        if isinstance(llm_resp, dict):
-            parsed_resp = llm_resp
-        else:
-            parsed_resp = json.loads(llm_resp)
-    except Exception as exc:  # Fall back to raw JSON string
+        parsed_resp = json.loads(llm_resp) if isinstance(llm_resp, str) else llm_resp
+    except Exception as exc:
         raise ValueError(
             f"Failed to parse LLM response as JSON. Response was:\n{llm_resp}\nError: {exc}"
         ) from exc
-
+    
     return {
-       "messages": [{"role": "assistant", "content": llm_resp}],
+        "messages": [{"role": "assistant", "content": llm_resp}],
         "context_block": context_block,
         "llm_json": parsed_resp,
     }
