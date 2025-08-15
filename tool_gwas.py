@@ -1,27 +1,143 @@
 from __future__ import annotations
 import time
+from typing import List, Dict, Any
 
 from config import DEBUG
-from tools.gwas.query import query_gene_associations
+from tools.gwas.query import query_gene_associations, query_trait_associations
 from state import State
+
+
+def _create_empty_association_record(identifier: str, is_gene: bool = True) -> Dict[str, Any]:
+    """Create a standardized empty association record."""
+    base_record = {
+        "found": False,
+        "total_associations": 0,
+        "total_significant_associations": 0,
+        "total_studies_analyzed": 0,
+        "summary_by_high_risk_alleles": {
+            "related_genes": [] if is_gene else [],
+            "gwas_related_genes": [] if not is_gene else [],
+            "high_risk_snps": [],
+            "proteins": [],
+            "disease_traits": []
+        },
+        "summary_by_significance": {
+            "related_genes": [] if is_gene else [],
+            "gwas_related_genes": [] if not is_gene else [],
+            "high_risk_snps": [],
+            "proteins": [],
+            "disease_traits": []
+        },
+        "variant_annotations": {}
+    }
+    
+    if is_gene:
+        base_record["gene"] = identifier
+    else:
+        base_record["trait_term"] = identifier
+    
+    return base_record
+
+
+def _extract_genes_from_trait_result(result: Dict[str, Any]) -> List[str]:
+    """
+    Extract top 20 genes from trait query results based on multiple criteria:
+    - Top 20 by number of studies
+    - Top 20 by number of significant hits  
+    - Top 20 by maximum risk scores
+    """
+    if not result.get("found", False):
+        return []
+    
+    # Collect gene statistics from studies
+    gene_stats = {}
+    
+    # Process high-risk studies
+    for study in result.get("studies_by_high_risk_alleles", []):
+        max_risk = study.get("max_risk", 0)
+        sig_count = study.get("sig_count", 0)
+        for gene in study.get("related_genes", []):
+            if gene not in gene_stats:
+                gene_stats[gene] = {"studies": 0, "total_sig_hits": 0, "max_risk": 0}
+            gene_stats[gene]["studies"] += 1
+            gene_stats[gene]["total_sig_hits"] += sig_count
+            gene_stats[gene]["max_risk"] = max(gene_stats[gene]["max_risk"], max_risk)
+    
+    # Process significance studies
+    for study in result.get("studies_by_significance", []):
+        max_risk = study.get("max_risk", 0)
+        sig_count = study.get("sig_count", 0)
+        for gene in study.get("related_genes", []):
+            if gene not in gene_stats:
+                gene_stats[gene] = {"studies": 0, "total_sig_hits": 0, "max_risk": 0}
+            gene_stats[gene]["studies"] += 1
+            gene_stats[gene]["total_sig_hits"] += sig_count
+            gene_stats[gene]["max_risk"] = max(gene_stats[gene]["max_risk"], max_risk)
+    
+    if not gene_stats:
+        return []
+    
+    # Get top 20 genes by each criterion
+    top_by_studies = sorted(gene_stats.items(), key=lambda x: x[1]["studies"], reverse=True)[:20]
+    top_by_sig_hits = sorted(gene_stats.items(), key=lambda x: x[1]["total_sig_hits"], reverse=True)[:20]
+    top_by_max_risk = sorted(gene_stats.items(), key=lambda x: x[1]["max_risk"], reverse=True)[:20]
+    
+    # Combine all top genes and deduplicate while preserving priority order
+    selected_genes = []
+    for gene, _ in top_by_studies + top_by_sig_hits + top_by_max_risk:
+        if gene not in selected_genes:
+            selected_genes.append(gene)
+    
+    return selected_genes
+
+
+def _log_query_result(query_type: str, identifier: str, result: Dict[str, Any], 
+                     related_genes: List[str] = None) -> None:
+    """Centralized logging for query results."""
+    if not DEBUG:
+        return
+    
+    if result.get("found", False):
+        total_assoc = result.get("total_associations", 0)
+        significant_assoc = result.get("total_significant_associations", 0)
+        studies = result.get("total_studies_analyzed", 0)
+        
+        if query_type == "gene":
+            raw_variants_count = len(result.get("summary_by_high_risk_alleles", {}).get("raw_variants", {}))
+            print(f"[GWAS] {identifier}: found, {total_assoc} total associations, "
+                  f"{significant_assoc} significant, {studies} studies, {raw_variants_count} raw variants")
+        else:  # trait
+            genes_found = len(related_genes) if related_genes else 0
+            print(f"[query_by_trait_agent] Found: {total_assoc} total associations, "
+                  f"{significant_assoc} significant, {studies} studies, {genes_found} selected genes")
+            if related_genes:
+                print(f"[query_by_trait_agent] Top genes selected by studies/significance/risk: {related_genes[:10]}...")
+    else:
+        print(f"[{query_type.upper()}] {identifier}: not found")
 
 
 def gwas_associations_agent(state: "State") -> "State":
     """
-    LangGraph node that annotates each gene with GWAS association summaries.
-
+    Query GWAS associations for each gene in the state.
+    
+    Annotates genes with comprehensive GWAS association data including:
+    - Association counts and significance statistics
+    - High-risk allele summaries
+    - Variant annotations
+    
     Parameters
     ----------
-    state
-        Current graph state.
-
+    state : State
+        Current graph state containing genes to query
+        
     Returns
     -------
     State
-        Updated state with the `"gwas_associations"` field filled with summaries only.
+        Updated state with "gwas_associations" field
     """
     associations = state.get("gwas_associations", {}).copy()
     gene_list = list(set(state.get("genes", [])))
+    
     for gene in gene_list:
         if gene in associations:
             if DEBUG:
@@ -32,14 +148,12 @@ def gwas_associations_agent(state: "State") -> "State":
             print(f"[GWAS] Querying associations for gene: {gene}")
 
         try:
-            # Query GWAS associations using the simplified function
             result = query_gene_associations(
                 gene_symbol=gene,
                 db_path="local_dbs",
-                fps_disease_traits=20  # Apply FPS to disease traits for manageable output
+                fps_disease_traits=20
             )
             
-            # Extract variant summaries and their annotations for downstream processing
             if result.get("found", True):
                 associations[gene] = {
                     "gene": gene,
@@ -51,52 +165,95 @@ def gwas_associations_agent(state: "State") -> "State":
                     "summary_by_significance": result.get("summary_by_significance", {}),
                     "variant_annotations": result.get("variant_annotations", {})
                 }
-                if DEBUG:
-                    total_assoc = result.get("total_associations", 0)
-                    significant_assoc = result.get("total_significant_associations", 0)
-                    studies = result.get("total_studies_analyzed", 0)
-                    raw_variants_count = len(result.get("summary_by_high_risk_alleles", {}).get("raw_variants", {}))
-                    print(f"[GWAS] {gene}: found, {total_assoc} total associations, {significant_assoc} significant, {studies} studies, {raw_variants_count} raw variants")
+                _log_query_result("gene", gene, result)
             else:
-                associations[gene] = {
-                    "gene": gene,
-                    "found": False,
-                    "total_associations": 0,
-                    "total_significant_associations": 0,
-                    "total_studies_analyzed": 0,
-                    "summary_by_high_risk_alleles": {"related_genes": [], "high_risk_snps": [], "proteins": [], "disease_traits": []},
-                    "summary_by_significance": {"related_genes": [], "high_risk_snps": [], "proteins": [], "disease_traits": []},
-                    "variant_annotations": {}
-                }
-                
-                if DEBUG:
-                    print(f"[GWAS] {gene}: not found")
+                associations[gene] = _create_empty_association_record(gene, is_gene=True)
+                _log_query_result("gene", gene, result)
                 
         except Exception as exc:
             if DEBUG:
                 print(f"[GWAS] Error querying {gene}: {exc}")
-            associations[gene] = {
-                "gene": gene,
-                "found": False,
-                "total_associations": 0,
-                "total_significant_associations": 0,
-                "total_studies_analyzed": 0,
-                "summary_by_high_risk_alleles": {"related_genes": [], "high_risk_snps": [], "proteins": [], "disease_traits": []},
-                "summary_by_significance": {"related_genes": [], "high_risk_snps": [], "proteins": [], "disease_traits": []},
-                "variant_annotations": {},
-                "error": str(exc)
-            }
+            
+            error_record = _create_empty_association_record(gene, is_gene=True)
+            error_record["error"] = str(exc)
+            associations[gene] = error_record
 
-        # Courteous pause to avoid overwhelming the system
+        # Rate limiting
         time.sleep(0.1)
 
     return {"gwas_associations": associations}
 
 
+def query_by_trait_agent(state: "State") -> "State":
+    """
+    Query GWAS associations by disease/trait terms.
+    
+    Uses extracted traits from state or falls back to full user input.
+    Populates genes field with discovered genes for downstream processing.
+    
+    Parameters
+    ----------
+    state : State
+        Current graph state
+        
+    Returns
+    -------
+    State
+        Updated state with "trait_associations" and "genes" fields
+    """
+    user_input = state["messages"][-1]["content"]
+    
+    # Determine trait term to query
+    extracted_traits = state.get("traits", [])
+    if extracted_traits:
+        trait_term = extracted_traits[0]  # Use most prominent trait
+        if DEBUG:
+            print(f"[query_by_trait_agent] Using extracted trait: {trait_term} "
+                  f"(from {len(extracted_traits)} total traits)")
+    else:
+        trait_term = user_input.strip()
+        if DEBUG:
+            print(f"[query_by_trait_agent] No extracted traits found, using full query: {trait_term}")
+    
+    if DEBUG:
+        print(f"[query_by_trait_agent] Querying trait associations for: {trait_term}")
+
+    try:
+        result = query_trait_associations(
+            trait_term=trait_term,
+            db_path="local_dbs",
+            fps_genes=60,  # Here I think we should be generous?
+            exact_match=False
+        )
+        
+        trait_associations = {
+            "trait_term": trait_term,
+            "found": result.get("found", False),
+            "total_associations": result.get("total_associations", 0),
+            "total_significant_associations": result.get("total_significant_associations", 0),
+            "total_studies_analyzed": result.get("total_studies_analyzed", 0),
+            "summary_by_high_risk_alleles": result.get("summary_by_high_risk_alleles", {}),
+            "summary_by_significance": result.get("summary_by_significance", {}),
+            "variant_annotations": result.get("variant_annotations", {})
+        }
+        
+        # Extract genes for downstream processing
+        related_genes = _extract_genes_from_trait_result(result)
+        _log_query_result("trait", trait_term, result, related_genes)
+                
+    except Exception as exc:
+        if DEBUG:
+            print(f"[query_by_trait_agent] Error querying trait '{trait_term}': {exc}")
+        
+        trait_associations = _create_empty_association_record(trait_term, is_gene=False)
+        trait_associations["error"] = str(exc)
+        related_genes = []
+
+    return {"trait_associations": trait_associations, "genes": related_genes}
+
+
 def has_gwas_associations(state: "State") -> bool:
-    """
-    Edge-condition helper for LangGraph: returns `True` if any GWAS associations were found.
-    """
+    """Check if any GWAS associations were found for genes."""
     associations = state.get("gwas_associations", {})
     has_associations = any(
         assoc.get("found", False) and assoc.get("total_associations", 0) > 0
@@ -110,9 +267,7 @@ def has_gwas_associations(state: "State") -> bool:
 
 
 def has_significant_gwas_associations(state: "State") -> bool:
-    """
-    Edge-condition helper for LangGraph: returns `True` if any significant GWAS associations were found.
-    """
+    """Check if any significant GWAS associations were found for genes."""
     associations = state.get("gwas_associations", {})
     has_significant = any(
         assoc.get("total_significant_associations", 0) > 0
@@ -122,4 +277,18 @@ def has_significant_gwas_associations(state: "State") -> bool:
     if DEBUG:
         print(f"[has_significant_gwas_associations] significant associations found: {has_significant}")
     
-    return has_significant 
+    return has_significant
+
+
+def has_trait_associations(state: "State") -> bool:
+    """Check if any trait associations were found."""
+    trait_associations = state.get("trait_associations", {})
+    has_associations = (
+        trait_associations.get("found", False) and 
+        trait_associations.get("total_associations", 0) > 0
+    )
+    
+    if DEBUG:
+        print(f"[has_trait_associations] trait associations found: {has_associations}")
+    
+    return has_associations
