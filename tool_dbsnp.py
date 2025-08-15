@@ -149,7 +149,6 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
                 "common_rsids": common_variants,
                 "very_common_rsids": very_common_variants,
             }
-
     return {"dbsnp_variants": variants, "dbsnp_summaries": variant_summaries}
 
 
@@ -177,7 +176,7 @@ def _extract_rsids_from_gwas(state: "State") -> Set[str]:
             
         # Extract from high risk alleles summary
         high_risk_summary = data.get("summary_by_high_risk_alleles", {})
-        high_risk_snps = high_risk_summary.get("gwas_high_risk_snps", [])
+        high_risk_snps = high_risk_summary.get("high_risk_snps", [])
         for snp in high_risk_snps:
             if isinstance(snp, str):
                 extracted = _extract_rsids_from_text(snp)
@@ -185,7 +184,7 @@ def _extract_rsids_from_gwas(state: "State") -> Set[str]:
         
         # Extract from significance summary
         significance_summary = data.get("summary_by_significance", {})
-        sig_snps = significance_summary.get("gwas_high_risk_snps", [])
+        sig_snps = significance_summary.get("high_risk_snps", [])
         for snp in sig_snps:
             if isinstance(snp, str):
                 extracted = _extract_rsids_from_text(snp)
