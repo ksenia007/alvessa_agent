@@ -317,7 +317,6 @@ class GWASQueryEngine:
             self._extract_proteins_from_traits(study['disease_traits'], proteins)
             self._collect_snp_scores(study['risk_alleles'], snp_scores)
             self._collect_raw_variants(study['risk_alleles'], raw_variants)
-            print(raw_variants.keys())
         
         sorted_genes = self._sort_by_scores(gene_scores, sort_by_risk)
         sorted_traits = self._sort_by_scores(trait_scores, sort_by_risk)
