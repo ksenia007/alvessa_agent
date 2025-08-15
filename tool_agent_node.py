@@ -38,11 +38,18 @@ def select_tools_and_run_ALL(state: State) -> State:
 
 def format_state_for_prompt(state: State) -> str:
     
-    genes = ", ".join(state.get("genes", [])) or "None"
+    genes = state.get("genes", [])
+    genes_str = ", ".join(genes) if genes else "None"
     question = state["messages"][-1]["content"]
 
     catalog = "\n".join(f"- {name}: {desc}" for name, desc in TOOL_CATALOG.items())
-    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" Extracted gene symbols: {', '.join(genes) if genes else 'None'} Available tools: {catalog}. Which tools should be called, and in what order? Respond ONLY with a Python list of tool names. Example: ["humanbase", "uniprot_base", "trait_go" """
+    
+    # Add guidance for trait-based queries when no genes are found
+    guidance = ""
+    if not genes:
+        guidance = " IMPORTANT: Since no genes were extracted, consider using 'extract_traits' first to identify specific diseases/traits, then 'query_by_trait' to search for genetic associations. Alternatively, use 'extract_all_entities' for comprehensive entity extraction. This will populate genes that can then be used by other gene-based tools like 'humanbase_functions', 'uniprot_base', 'gwas', etc."
+    
+    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" Extracted gene symbols: {genes_str} Available tools: {catalog}.{guidance} Which tools should be called, and in what order? Respond ONLY with a Python list of tool names. Example: ["extract_traits", "query_by_trait", "humanbase_functions", "uniprot_base"] or ["extract_all_entities", "query_by_trait", "gwas"] or ["humanbase_functions", "uniprot_base", "gwas"]"""
 
 def select_tools_and_run_dynamic(state: State) -> State:
     
