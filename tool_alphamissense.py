@@ -13,6 +13,7 @@ import pandas as pd
 import time
 from state import State 
 import warnings
+from datetime import datetime
 
 DEBUG=True
 
@@ -36,7 +37,7 @@ def alphamissense_predictions_agent(state: "State") -> "State":
 
     # Gracefully handle file reading errors
     try:
-       pathogenicity_class_df_hg38 = pd.read_csv('local_dbs/AlphaMissense_hg38.tsv', skiprows=4, names = ['chrom', 'pos', 'ref', 'alt', 'genome', 'uniprot_id', 'transcript_id', 'protein_variant', 'am_pathogenicity', 'am_class'], sep = '\t')
+        pathogenicity_class_df_hg38 = pd.read_parquet('local_dbs/AlphaMissense_hg38.parquet')
     except Exception as e:
         warnings.warn(f"Failed to load required files: {e}. Cannot run AlphaMissense predictions.")
         return {**state, "alphamissense_predictions": preds}
@@ -115,5 +116,6 @@ def alphamissense_predictions_agent(state: "State") -> "State":
 
     return {
         "alphamissense_predictions": preds}
+
 
 
