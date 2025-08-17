@@ -55,7 +55,6 @@ def sei_predictions_agent(state: "State") -> "State":
             for var, var_data in gene_vars.items():
                 try:
                     all_snps = var_data['coordinates']
-                    state_all_snps[gene][var] = []
 
                     for snp in all_snps:
                         chrom = snp.get('chrom')
@@ -64,7 +63,11 @@ def sei_predictions_agent(state: "State") -> "State":
 
                         if 'GRCh38' in assembly:
                             if all(x is not None for x in [chrom, pos]):
+                                print(var)
+                                print(chrom)
+                                print(pos)
                                 state_all_snps[gene][var] = [chrom, pos]
+                                print(state_all_snps[gene][var])
                                 break
                             else:
                                 continue
@@ -77,13 +80,12 @@ def sei_predictions_agent(state: "State") -> "State":
         except Exception as e:
             warnings.warn(f"Sei prediction unavailable for gene {gene}: {e}")
             continue
-
+    
     for gene, variants in state_all_snps.items():
         preds[gene] = {}
         for var_id, (chrom, variant_pos) in variants.items():
             try:
                 chr_str = f'chr{chrom}'
-
 
                 match = seq_class_df_hg38[
                             (seq_class_df_hg38['chr'] == chr_str) &
