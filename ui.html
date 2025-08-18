@@ -29,7 +29,7 @@
   input[type="text"] { width:100%; background:#0e1430; color:#e6e8ef; border:1px solid #2a3a72; border-radius:10px; padding:10px; }
   .full { grid-column: 1 / -1; }
   .json pre { overflow:auto; max-height: 340px; }
-  .scroll { max-height: 180px; overflow: auto; }
+  .scroll { max-height: 230px; overflow: auto; }
 
   /* Centered start screen */
   #hero { min-height: 60vh; display: grid; place-items: center; }
@@ -54,6 +54,30 @@
   .hist-bar { fill:#2a3a72; }
   .hist-bar:hover { opacity:0.9; }
   .hist-baseline { stroke:#2a3a72; stroke-width:1; }
+
+  /* GWAS UI helpers */
+.gwas-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.gwas-tabs { display:flex; gap:6px; }
+.gwas-tabs button { padding:6px 10px; border-radius:999px; background:#0e1430; border:1px solid #2a3a72; color:#e6e8ef; cursor:pointer; font-size:12px; }
+.gwas-tabs button.active { background:#1a2347; }
+.gwas-grid { display:grid; gap:12px; grid-template-columns: 1fr; }
+@media (min-width: 900px){ .gwas-grid { grid-template-columns: 1fr 1fr; } }
+.gwas-list { max-height: 240px; overflow:auto; padding-right:4px; }
+.pill.clickable { cursor:pointer; }
+.gwas-detail { border:1px solid #2a3a72; border-radius:12px; padding:10px; background:#0e1430; min-height: 88px; }
+.gwas-table { width:100%; border-collapse:collapse; font-size:12px; }
+.gwas-table th, .gwas-table td { padding:6px 8px; border-bottom:1px solid #1e2a52; text-align:left; }
+.gwas-meta { color:#aab4d6; font-size:12px; }
+
+/* Variant Summary table */
+.vs-table { width: 100%; border-collapse: collapse; }
+.vs-table th, .vs-table td {
+  border-bottom: 1px solid #2a3a72;
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.vs-table thead th { position: sticky; top: 0; background: #121832; }
 
   
 </style>
@@ -156,6 +180,11 @@
     <div id="gencodeCard" class="card full" data-section style="display:none;">
       <div class="title">GENCODE (per gene)</div>
       <div id="gencode"></div>
+    </div>
+
+    <div id="variantSummaryCard" class="card full" data-section style="display:none;">
+      <div class="title">Variant Summary</div>
+      <div id="variantSummary"></div>
     </div>
 
     <div id="debugCard" class="card full" data-section style="display:none;">
@@ -299,56 +328,328 @@
     if (blocks.trim()) { setHTML("uniprot", blocks); show("uniprotCard"); } else hide("uniprotCard");
   }
 
+  <!-- ---------------- GWAS interactive renderer (drop-in) ---------------- -->
+  const GWAS = {
+    state: {},
+  
+    // Merge all variant_annotations dictionaries found anywhere in the object.
+    collectVariantAnnotations(root){
+      const out = {};
+      const seen = new Set();
+      function mergeOne(dict){
+        for (const [vid, v] of Object.entries(dict)){
+          if (!out[vid]) { out[vid] = { ...(v||{}) }; }
+          else {
+            // shallow merge, prefer non-null/new values
+            for (const [k, val] of Object.entries(v||{})){
+              if (out[vid][k] == null && val != null) out[vid][k] = val;
+            }
+          }
+        }
+      }
+      function walk(x){
+        if (!x || typeof x !== "object") return;
+        if (seen.has(x)) return;
+        seen.add(x);
+        if (x.variant_annotations && typeof x.variant_annotations === "object" && !Array.isArray(x.variant_annotations)){
+          mergeOne(x.variant_annotations);
+        }
+        for (const v of Object.values(x)) walk(v);
+      }
+      walk(root);
+      return out;
+    },
+  
+    deepCollectStringArray(obj, keyNames){
+      const out = [];
+      const seenVals = new Set();
+      const seenObjs = new Set();
+      function walk(x){
+        if (!x || typeof x !== "object") return;
+        if (seenObjs.has(x)) return;
+        seenObjs.add(x);
+        for (const [k, v] of Object.entries(x)){
+          if (keyNames.includes(k) && Array.isArray(v)){
+            for (const item of v){
+              if (typeof item === "string" && !seenVals.has(item)) {
+                seenVals.add(item);
+                out.push(item);
+              }
+            }
+          }
+          if (v && typeof v === "object") walk(v);
+        }
+      }
+      walk(obj);
+      return out;
+    },
+  
+    extractVariantTraits(v){
+      const out = new Set();
+      const pushOne = s => { if (s && typeof s === "string") out.add(s); };
+      const pushMany = a => { if (Array.isArray(a)) a.forEach(pushOne); };
+  
+      if (Array.isArray(v?.disease_trait)) pushMany(v.disease_trait); else pushOne(v?.disease_trait);
+      if (Array.isArray(v?.traits)) pushMany(v.traits); else pushOne(v?.trait);
+      if (Array.isArray(v?.phenotypes)) pushMany(v.phenotypes); else pushOne(v?.phenotype);
+      if (Array.isArray(v?.mapped_traits)) pushMany(v.mapped_traits); else pushOne(v?.mapped_trait);
+      if (Array.isArray(v?.gwas_disease_traits)) pushMany(v.gwas_disease_traits);
+  
+      return Array.from(out);
+    },
+  
+    extractContext(v){
+      return v?.context || v?.variant_category || v?.functional_annotation || v?.consequence || "";
+    },
+  
+    extractP(v){
+      const raw = (v?.p_value ?? v?.p ?? null);
+      if (typeof raw === "number") return raw;
+      if (raw == null) return null;
+      const p = parseFloat(String(raw));
+      return Number.isFinite(p) ? p : null;
+    },
+  
+    extractORBeta(v){
+      const cand = v?.or_beta ?? v?.OR ?? v?.or ?? v?.beta ?? null;
+      return (typeof cand === "number") ? cand : null;
+    },
+  
+    normalizeGeneData(obj){
+      // 1) merge all annotations everywhere
+      const ann = this.collectVariantAnnotations(obj);
+  
+      // 2) possible fallback IDs
+      const fallbackIDs = this.deepCollectStringArray(obj, ["high_risk_snps","gwas_high_risk_snps","snps"]);
+  
+      // 3) build variants
+      const byId = {};
+      const variants = Object.entries(ann).map(([vid, v])=>{
+        const row = {
+          id: vid,
+          p_value: this.extractP(v),
+          context: this.extractContext(v),
+          or_beta: this.extractORBeta(v),
+          traits: this.extractVariantTraits(v),
+        };
+        byId[vid] = row;
+        return row;
+      });
+  
+      // 4) add fallback-only ids if needed
+      for (const vid of fallbackIDs){
+        if (vid && !byId[vid]) {
+          byId[vid] = { id: vid, p_value: null, context: "", or_beta: null, traits: [] };
+          variants.push(byId[vid]);
+        }
+      }
+  
+      // 5) trait universe: start with traits that actually map to variants
+      const traitSet = new Set();
+      variants.forEach(v => (v.traits||[]).forEach(t => t && traitSet.add(t)));
+  
+      // Optionally include other summary trait lists (will appear even if unmapped)
+      const extraTraits = this.deepCollectStringArray(obj, [
+        "disease_traits","gwas_disease_traits","traits","mapped_traits","phenotypes"
+      ]);
+      for (const t of extraTraits) traitSet.add(t);
+  
+      const traits = Array.from(traitSet).sort((a,b)=>a.localeCompare(b));
+  
+      // 6) maps
+      const mapT2V = {};
+      const mapV2T = {};
+      for (const v of variants){
+        const tlist = (v.traits||[]);
+        mapV2T[v.id] = tlist.slice().sort((a,b)=>a.localeCompare(b));
+        for (const t of tlist) {
+          if (!t) continue;
+          (mapT2V[t] ||= []).push(v.id);
+        }
+      }
+      for (const t in mapT2V){
+        mapT2V[t].sort((a,b)=>{
+          const va = byId[a], vb = byId[b];
+          const pa = (va?.p_value ?? Number.POSITIVE_INFINITY);
+          const pb = (vb?.p_value ?? Number.POSITIVE_INFINITY);
+          return pa - pb;
+        });
+      }
+  
+      return { traits, variants, mapT2V, mapV2T };
+    },
+  
+    ensureStateForGene(safeId, obj, rawKey){
+      if (!this.state[safeId]){
+        const data = this.normalizeGeneData(obj);
+        this.state[safeId] = {
+          rawKey,
+          mode: "traits",
+          selectedTrait: data.traits.find(t => (data.mapT2V[t]||[]).length) || data.traits[0] || null,
+          selectedVariant: data.variants
+            .slice()
+            .sort((a,b)=>(a.p_value??1e300)-(b.p_value??1e300))[0]?.id || null,
+          data
+        };
+      }
+      return this.state[safeId];
+    },
+  
+    setMode(id, mode){ const s=this.state[id]; if(!s) return; s.mode=mode; this.renderGene(id); },
+    selectTrait(id, trait){ const s=this.state[id]; if(!s) return; s.selectedTrait=trait; s.mode="traits"; this.renderGene(id); },
+    selectVariant(id, varId){ const s=this.state[id]; if(!s) return; s.selectedVariant=varId; s.mode="variants"; this.renderGene(id); },
+  
+    fmtP(p){
+      if (p == null || !isFinite(p)) return "NA";
+      if (p === 0) return "<1e-300";
+      return (p < 1e-3) ? p.toExponential(2) : p.toFixed(3);
+    },
+  
+    geneCounts(obj, data){
+      const nVars = data.variants.length;
+      const nTraits = data.traits.length;
+      const total   = obj?.total_associations ?? nVars;
+      const signif  = obj?.total_significant_associations ?? null;
+      const studies = obj?.total_studies_analyzed ?? null;
+      const bits = [
+        `${nTraits} trait${nTraits===1?"":"s"}`,
+        `${nVars} variant${nVars===1?"":"s"}`
+      ];
+      if (Number.isFinite(total))   bits.push(`total: ${total}`);
+      if (Number.isFinite(signif))  bits.push(`significant: ${signif}`);
+      if (Number.isFinite(studies)) bits.push(`studies: ${studies}`);
+      return bits.join(" • ");
+    },
+  
+    renderGene(id){
+      const mount = document.getElementById(`gwas-${id}`);
+      const s = this.state[id];
+      if (!mount || !s) return;
+  
+      const displayGene = s.rawKey;
+      const { data, mode } = s;
+  
+      const tabs = `
+        <div class="gwas-tabs">
+          <button class="${mode==='traits'?'active':''}" onclick="GWAS.setMode('${id}','traits')">Traits</button>
+          <button class="${mode==='variants'?'active':''}" onclick="GWAS.setMode('${id}','variants')">Variants</button>
+        </div>`;
+  
+      // Left column
+      let listHTML = "";
+      if (mode === "traits"){
+        const pills = data.traits.map(t => {
+          const js = String(t).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+          const cls = (s.selectedTrait===t) ? "pill clickable selected" : "pill clickable";
+          return `<span class="${cls}" onclick="GWAS.selectTrait('${id}','${js}')">${escapeHtml(t)}</span>`;
+        }).join("");
+        listHTML = `<div class="gwas-list">${pills || '<div class="muted">No traits found.</div>'}</div>`;
+      } else {
+        const rows = data.variants
+          .slice()
+          .sort((a,b)=> (a.p_value??1e300)-(b.p_value??1e300))
+          .map(v => `
+            <tr class="clickable" onclick="GWAS.selectVariant('${id}','${v.id}')">
+              <td class="mono">${escapeHtml(v.id)}</td>
+              <td>${escapeHtml(v.context||"")}</td>
+              <td class="mono">${this.fmtP(v.p_value)}</td>
+              <td class="gwas-meta">${(v.traits||[]).length}</td>
+            </tr>`).join("");
+        listHTML = rows
+          ? `<div class="gwas-list">
+               <table class="gwas-table">
+                 <thead><tr><th>Variant</th><th>Context</th><th>P</th><th>#traits</th></tr></thead>
+                 <tbody>${rows}</tbody>
+               </table>
+             </div>`
+          : '<div class="muted">No variants found.</div>';
+      }
+  
+      // Right column
+      let detailHTML = "";
+      if (mode === "traits"){
+        const t = s.selectedTrait;
+        if (!t){
+          detailHTML = '<div class="muted">Select a trait to see associated variants.</div>';
+        } else {
+          const vIds = s.data.mapT2V[t] || [];
+          if (!vIds.length){
+            detailHTML = `<div><strong>${escapeHtml(t)}</strong><div class="muted">No variants mapped to this trait.</div></div>`;
+          } else {
+            const rows = vIds.map(vid => {
+              const v = s.data.variants.find(x=>x.id===vid);
+              return `<tr>
+                <td class="mono">${escapeHtml(vid)}</td>
+                <td>${escapeHtml(v?.context||"")}</td>
+                <td class="mono">${this.fmtP(v?.p_value)}</td>
+              </tr>`;
+            }).join("");
+            detailHTML = `
+              <div><strong>${escapeHtml(t)}</strong></div>
+              <div class="muted" style="margin:4px 0 8px;">${vIds.length} variant${vIds.length===1?'':'s'}</div>
+              <div class="gwas-detail">
+                <table class="gwas-table">
+                  <thead><tr><th>Variant</th><th>Context</th><th>P</th></tr></thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>`;
+          }
+        }
+      } else {
+        const varId = s.selectedVariant;
+        if (!varId){
+          detailHTML = '<div class="muted">Select a variant to see associated traits.</div>';
+        } else {
+          const v = s.data.variants.find(x=>x.id===varId);
+          const traits = s.data.mapV2T[varId] || [];
+          const traitPills = traits.map(t => `<span class="pill">${escapeHtml(t)}</span>`).join("");
+          detailHTML = `
+            <div><strong>${escapeHtml(varId)}</strong></div>
+            <div class="gwas-meta">context: ${escapeHtml(v?.context||"")} • p: <span class="mono">${this.fmtP(v?.p_value)}</span>${(v?.or_beta!=null?` • OR/Beta: ${v.or_beta}`:"")}</div>
+            <div class="gwas-detail" style="margin-top:8px;">
+              <div class="muted" style="margin-bottom:6px;">Traits</div>
+              ${traitPills || '<div class="muted">No traits available.</div>'}
+            </div>`;
+        }
+      }
+  
+      const counts = this.geneCounts(window.__GWAS_RAW?.[s.rawKey] || {}, s.data);
+      mount.innerHTML = `
+        <div class="gwas-head">
+          <div>
+            <div><strong>${escapeHtml(uc(displayGene))}</strong></div>
+            <div class="gwas-meta">${counts}</div>
+          </div>
+          ${tabs}
+        </div>
+        <div class="gwas-grid" style="margin-top:8px;">
+          <div>${listHTML}</div>
+          <div>${detailHTML}</div>
+        </div>`;
+    }
+  };
+  
   function renderGWAS(st){
     const gw = st?.gwas_associations;
     if (!gw || typeof gw !== 'object') return hide("gwasCard");
-
-    const html = Object.entries(gw).map(([gene, obj])=>{
-      if (!obj || typeof obj !== 'object') return "";
-
-      const found = String(obj.found);
-      const total = obj.total_associations ?? 0;
-      const signif = obj.total_significant_associations ?? 0;
-      const studies = obj.total_studies_analyzed ?? 0;
-
-      const head = `
-        <div><strong>${escapeHtml(uc(gene))}</strong></div>
-        <div class="muted">found: ${found} • total: ${total} • significant: ${signif} • studies: ${studies}</div>
-      `;
-
-      function listBlock(title, arr, max=12){
-        if (!Array.isArray(arr) || !arr.length) return "";
-        const more = arr.length > max ? `<span class="muted"> +${arr.length - max} more</span>` : "";
-        return `<div style="margin-top:6px;">
-          <div class="muted">${title}</div>
-          <div>${asPills(arr.slice(0, max))}${more}</div>
-        </div>`;
-      }
-
-      const hr = obj.summary_by_high_risk_alleles || {};
-      const sg = obj.summary_by_significance || {};
-
-      const hrBlock = (hr.gwas_high_risk_snps || hr.gwas_disease_traits || hr.gwas_related_genes || hr.gwas_affected_protein_levels)
-        ? `<div style="margin-top:8px;"><strong>High-risk alleles</strong>
-            ${listBlock("SNPs", hr.gwas_high_risk_snps)}
-            ${listBlock("Diseases/traits", hr.gwas_disease_traits)}
-            ${listBlock("Related genes", hr.gwas_related_genes)}
-            ${listBlock("Affected protein levels", hr.gwas_affected_protein_levels)}
-          </div>` : "";
-
-      const sgBlock = (sg.gwas_high_risk_snps || sg.gwas_disease_traits || sg.gwas_related_genes || sg.gwas_affected_protein_levels)
-        ? `<div style="margin-top:8px;"><strong>By significance</strong>
-            ${listBlock("SNPs", sg.gwas_high_risk_snps)}
-            ${listBlock("Diseases/traits", sg.gwas_disease_traits)}
-            ${listBlock("Related genes", sg.gwas_related_genes)}
-            ${listBlock("Affected protein levels", sg.gwas_affected_protein_levels)}
-          </div>` : "";
-
-      return `<div style="margin-bottom:12px;">${head}${hrBlock}${sgBlock}</div>`;
+    window.__GWAS_RAW = gw;
+  
+    const html = Object.keys(gw).map(gene => {
+      const safe = gene.replace(/[^a-z0-9_-]/gi, '_');
+      return `<div id="gwas-${safe}" style="margin-bottom:16px;"></div>`;
     }).join("");
-
-    if (html.trim()) { setHTML("gwas", html); show("gwasCard"); } else hide("gwasCard");
+    if (!html.trim()){ hide("gwasCard"); return; }
+  
+    setHTML("gwas", html);
+    show("gwasCard");
+  
+    for (const [rawGene, obj] of Object.entries(gw)){
+      const safe = rawGene.replace(/[^a-z0-9_-]/gi, '_');
+      GWAS.ensureStateForGene(safe, obj, rawGene);
+      GWAS.renderGene(safe);
+    }
   }
+  
 
   function renderGENCODE(st){
     const gc = st?.gene_level_gencode;
@@ -443,6 +744,171 @@
     if (sections.trim()) { setHTML("gencode", sections); show("gencodeCard"); }
     else hide("gencodeCard");
   }
+    // ---------------- Variant Summary renderer ----------------
+    function renderVariantSummary(st){
+      const sei   = st?.sei_predictions || {};
+      const am    = st?.alphamissense_predictions || {};
+      const dbsum = st?.dbsnp_summaries || {};     // expects { gene: {... counts and rsid lists ...} }
+      const gwas  = st?.gwas_associations || {};
+    
+      // union of genes that appear in any source
+      const genes = new Set([
+        ...Object.keys(sei),
+        ...Object.keys(am),
+        ...Object.keys(dbsum),
+        ...Object.keys(gwas)
+      ]);
+    
+      const sections = [];
+    
+      for (const gene of genes){
+        const geneSei = sei[gene] || {};
+        const geneAm  = am[gene]  || {};
+        const geneDb  = dbsum[gene] || {};
+        const gwasObj = gwas[gene];
+    
+        // collect all variant_annotations for this gene (merges from anywhere in the object)
+        const ann = (window.GWAS && typeof GWAS.collectVariantAnnotations === "function")
+          ? GWAS.collectVariantAnnotations(gwasObj || {})
+          : (function collectAllVariantAnnotations(obj){
+              const out = {}; const seen = new Set();
+              function walk(x){
+                if (!x || typeof x !== "object" || seen.has(x)) return;
+                seen.add(x);
+                if (x.variant_annotations && typeof x.variant_annotations === "object" && !Array.isArray(x.variant_annotations)){
+                  for (const [vid, v] of Object.entries(x.variant_annotations)) out[vid] = v;
+                }
+                for (const v of Object.values(x)) walk(v);
+              }
+              walk(gwasObj || {});
+              return out;
+            })();
+    
+        // frequency buckets for this gene
+        const rareSet       = new Set(geneDb["rare_rsids"] || []);
+        const commonSet     = new Set(geneDb["common_rsids"] || []);
+        const veryCommonSet = new Set(geneDb["very_common_rsids"] || []);
+        const freqLabel = (rs) => (
+          rareSet.has(rs)       ? "Rare (<1%)" :
+          commonSet.has(rs)     ? "Common (1–15%)" :
+          veryCommonSet.has(rs) ? "Very common (>15%)" : "N/A"
+        );
+    
+        // gather all rsids we know about for this gene
+        const rsids = new Set([
+          ...Object.keys(geneSei),
+          ...Object.keys(geneAm),
+          ...Object.keys(ann || {}),
+          ...(geneDb["rare_rsids"] || []),
+          ...(geneDb["common_rsids"] || []),
+          ...(geneDb["very_common_rsids"] || [])
+        ]);
+        if (rsids.size === 0) continue;
+    
+        // helpers to extract GWAS fields
+        const extractP = (v) => {
+          const raw = (v?.p_value ?? v?.p ?? null);
+          if (typeof raw === "number") return raw;
+          if (raw == null) return null;
+          const n = parseFloat(String(raw));
+          return Number.isFinite(n) ? n : null;
+        };
+        const extractTraits = (v) => {
+          const out = new Set();
+          const add = s => { if (s && typeof s === "string") out.add(s); };
+          const addMany = a => { if (Array.isArray(a)) a.forEach(add); };
+          if (!v) return [];
+          addMany(v.disease_trait); add(v.disease_trait);
+          addMany(v.traits); add(v.trait);
+          addMany(v.phenotypes); add(v.phenotype);
+          addMany(v.mapped_traits); add(v.mapped_trait);
+          addMany(v.gwas_disease_traits);
+          return Array.from(out);
+        };
+    
+        // build rows
+        const rows = Array.from(rsids).map(rs => {
+          const seiLabel = geneSei?.[rs] ?? "N/A";
+          const amMap    = geneAm?.[rs] || null;
+          let amList = [];
+          if (amMap && typeof amMap === "object"){
+            for (const [change, label] of Object.entries(amMap)){
+              // "SNP:C->A" -> "C→A" then append label if present
+              const c = change.replace(/^SNP:/i, "").replace("->", "→");
+              amList.push(label ? `${c}: ${label}` : c);
+            }
+          }
+          if (amList.length === 0) amList = ["N/A"];
+    
+          const vAnn = ann?.[rs] || {};
+          const traits = extractTraits(vAnn);
+          const p = extractP(vAnn); // used for sorting only
+    
+          return {
+            rs,
+            freq: freqLabel(rs),
+            sei: seiLabel || "N/A",
+            am: amList,
+            traits,
+            p
+          };
+        });
+    
+        // sort by frequency bucket, then by p-value asc, then by rsid
+        const freqOrder = {"Rare (<1%)":0, "Common (1–15%)":1, "Very common (>15%)":2, "N/A":3};
+        rows.sort((a,b)=>{
+          const fa = (freqOrder[a.freq] ?? 9), fb = (freqOrder[b.freq] ?? 9);
+          if (fa !== fb) return fa - fb;
+          const pa = (a.p ?? Number.POSITIVE_INFINITY), pb = (b.p ?? Number.POSITIVE_INFINITY);
+          if (pa !== pb) return pa - pb;
+          return a.rs.localeCompare(b.rs);
+        });
+    
+        // counts line above the table
+        const statsBits = [];
+        if (Number.isFinite(geneDb["num_rare_variants (<1%)"]))       statsBits.push(`rare: ${geneDb["num_rare_variants (<1%)"]}`);
+        if (Number.isFinite(geneDb["num_common_variants (1-15%)"]))   statsBits.push(`common: ${geneDb["num_common_variants (1-15%)"]}`);
+        if (Number.isFinite(geneDb["num_very_common_variants (>15%)"])) statsBits.push(`very common: ${geneDb["num_very_common_variants (>15%)"]}`);
+    
+        const rowsHtml = rows.map(r=>{
+          const amHtml = r.am.map(x=>`<span class="pill">${escapeHtml(x)}</span>`).join(" ");
+          const tShown = r.traits.slice(0, 6);
+          const tMore  = r.traits.length > 6 ? `<span class="muted"> +${r.traits.length-6} more</span>` : "";
+          const traitsHtml = tShown.map(t=>`<span class="pill">${escapeHtml(t)}</span>`).join(" ") + tMore;
+          return `<tr>
+            <td class="mono">${escapeHtml(r.rs)}</td>
+            <td>${escapeHtml(r.freq)}</td>
+            <td>${escapeHtml(r.sei)}</td>
+            <td>${amHtml || 'N/A'}</td>
+            <td>${traitsHtml || '<span class="muted">N/A</span>'}</td>
+          </tr>`;
+        }).join("");
+    
+        sections.push(`
+          <div style="margin-bottom:8px;">
+            <strong>${escapeHtml(uc(gene))}</strong>
+            ${statsBits.length ? `<span class="muted"> • ${statsBits.join(" • ")}</span>` : ""}
+          </div>
+          <div class="scroll">
+            <table class="vs-table">
+              <thead>
+                <tr><th>Variant</th><th>Frequency</th><th>SEI label</th><th>AlphaMissense</th><th>GWAS traits</th></tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>
+        `);
+      }
+    
+      if (sections.length){
+        setHTML("variantSummary", sections.join(""));
+        show("variantSummaryCard");
+      } else {
+        hide("variantSummaryCard");
+      }
+    }
+    
+
 
   function renderDebug(st){
     const keys = [
@@ -477,13 +943,12 @@
   async function refresh(qJustRan="") {
     const st = await fetchState();
     if (!st) return;
-
-    // On first run, switch from hero to grid and show toolbar for follow-up runs
+  
     const hero = document.getElementById('hero');
     if (hero && hero.style.display !== 'none'){ hide('hero'); show('grid'); }
     show('toolbar');
     const q2 = document.getElementById('q2'); if (q2) { q2.value = ""; q2.focus(); }
-
+  
     renderQuestion(st, qJustRan);
     renderEntities(st);
     renderTools(st);
@@ -492,11 +957,12 @@
     renderReactome(st);
     renderUniProtBase(st);
     renderGWAS(st);
+    renderVariantSummary(st);
+  
     renderGENCODE(st);
     renderDebug(st);
     renderRaw(st);
   }
-
   // Run helpers
   async function run(qOverride) {
     const qEl = document.getElementById("q");
