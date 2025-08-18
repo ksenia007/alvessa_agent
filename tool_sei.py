@@ -83,7 +83,17 @@ def sei_predictions_agent(state: "State") -> "State":
     
     for gene, variants in state_all_snps.items():
         preds[gene] = {}
-        for var_id, (chrom, variant_pos) in variants.items():
+        if variants=={}:
+            if DEBUG:
+                print(f"No variants found for gene {gene}, skipping.")
+            continue
+        print(variants)
+        for var_id, coords in variants.items():
+            try:
+                chrom, variant_pos = coords
+            except (ValueError, TypeError):
+                print(f"[WARN] {var_id} has no valid coordinates: {coords}")
+                continue
             try:
                 chr_str = f'chr{chrom}'
 

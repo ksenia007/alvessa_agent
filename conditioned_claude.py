@@ -16,6 +16,7 @@ from typing import Dict, List, Any, Optional
 from claude_client import claude_call
 from config import CONDITIONED_MODEL, DEBUG, N_CHARS
 from state import State
+import re
 
 
 # Data aggregation helpers
@@ -145,6 +146,10 @@ def conditioned_claude_node(state: "State") -> "State":
     
     # Parse Claude response
     llm_resp = raw.content[0].text.strip() if hasattr(raw.content[0], "text") else raw.content[0]
+    
+    if llm_resp.startswith("```"):
+        llm_resp = re.sub(r"^```(?:json)?\s*|\s*```$", "", llm_resp.strip(), flags=re.DOTALL).strip()
+
     
     try:
         parsed_resp = json.loads(llm_resp) if isinstance(llm_resp, str) else llm_resp

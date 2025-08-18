@@ -91,16 +91,25 @@ def select_tools_and_run_dynamic(state: State) -> State:
         fn = TOOL_FN_MAP.get(name)
         if not fn:
             continue
-        print(f"[TOOL RUN] → {name}", flush=True)
 
+        # Skip trait tools if genes are already present
+        if name in ("extract_traits", "query_by_trait") and state.get("genes"):
+            print(f"[SKIP] Already have genes, skipping {name}")
+            continue
+
+        print(f"[TOOL RUN] → {name}", flush=True)
         out = fn(state)
         if not isinstance(out, dict):
             continue
+
         out.pop("messages", None)
-        if "used_tools" in out:
-            updates["used_tools"] = (updates.get("used_tools") or []) + out.pop("used_tools")
-        if "genes" in out and not isinstance(out["genes"], list):
-            out.pop("genes", None)
+
+        # Keep existing genes if tool returns nothing useful
+        if "genes" in out:
+            if not isinstance(out["genes"], list) or not out["genes"]:
+                out.pop("genes", None)
+
+        # Merge tool output safely
         state.update(out)
 
     return state
