@@ -1,0 +1,21 @@
+question,answer,tool
+Which of the following genes is interacting with gene SMARCAL1? [A] LPCAT1 [B] N4BP3 [C] BTF3 [D] NXPH3,C,BioGRID
+Which of the following genes is interacting with gene ATP1A1? [A] TRUB2 [B] N [C] CXorf38 [D] APIP,B,BioGRID
+Which of the following genes is interacting with gene DDIT3? [A] SPACA1 [B] RASSF4 [C] ACTL6A [D] PABPN1L,C,BioGRID
+Which of the following genes is interacting with gene EMC2? [A] BCKDHB [B] LRRC41 [C] SMG1 [D] TIF4631,D,BioGRID
+Which of the following genes is interacting with gene UFD1? [A] caf4 [B] COL6A3 [C] MRPS26 [D] ZBTB7C,A,BioGRID
+Which of the following genes is interacting with gene ZNF681? [A] ATP1B4 [B] TRIM28 [C] DDX21 [D] LYPD4,B,BioGRID
+Which of the following genes is interacting with gene OSER1? [A] EPRS1 [B] KLK8 [C] SLC25A36 [D] GSTK1,D,BioGRID
+Which of the following genes is interacting with gene MIF4GD? [A] STK4 [B] nsp16 [C] NT5C2 [D] CXADR,B,BioGRID
+Which of the following genes is interacting with gene VIPAS39? [A] INPP4B [B] EXOC6B [C] LHX6 [D] STX6,D,BioGRID
+Which of the following genes is interacting with gene MYL12B? [A] SLC22A5 [B] FRG2B [C] MRPS18C [D] PNPLA5,C,BioGRID
+Which of the following genes is interacting with gene TRIM6-TRIM34? [A] TRIM5 [B] FBXO24 [C] IL9R [D] COX10,A,BioGRID
+Which of the following genes is interacting with gene ZBTB1? [A] RPL8 [B] ELMOD2 [C] MELK [D] GNE,A,BioGRID
+Which of the following genes is interacting with gene WFIKKN1? [A] SLC25A30 [B] TP53BP2 [C] YBX1 [D] STK26,A,BioGRID
+Which of the following genes is interacting with gene TDP2? [A] RPS7 [B] UBE2I [C] H2AC11 [D] ZC3H12A,B,BioGRID
+Which of the following genes is interacting with gene CEP19? [A] MRPS22 [B] RABL6 [C] NFE2L1 [D] TBC1D13,B,BioGRID
+Which of the following genes is interacting with gene CPN2? [A] RNF103 [B] Sgol2 [C] CENPC [D] MAPK8IP1,B,BioGRID
+Which of the following genes is interacting with gene RPL34? [A] SFTPA1 [B] RTT109 [C] EPX [D] DEPDC5,B,BioGRID
+Which of the following genes is interacting with gene ZP3? [A] STC2 [B] GET4 [C] ABCC2 [D] DBX2,B,BioGRID
+Which of the following genes is interacting with gene AADACL3? [A] GIMAP2 [B] C1QTNF8 [C] HPX [D] ORF7b,D,BioGRID
+Which of the following genes is interacting with gene NPY5R? [A] DLGAP5 [B] NUPR1 [C] GLB1L [D] RASA2,B,BioGRID
