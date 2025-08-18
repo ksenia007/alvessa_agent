@@ -14,7 +14,7 @@ from typing import List, Dict, Any
 import re
 
 from claude_client import claude_call
-from config import DEBUG, GENE_EXTRACT_MODEL, ENTITY_EXTRACTION_METHOD, GLINER_MODEL, GLINER_THRESHOLD, GLINER_ENTITY_LABELS
+from config import DEBUG, GENE_EXTRACT_MODEL, GLINER_MODEL, GLINER_THRESHOLD, GLINER_ENTITY_LABELS
 from state import State
 
 # Global variable to cache the GLiNER model
@@ -37,42 +37,6 @@ def _get_gliner_model():
         except Exception as e:
             raise RuntimeError(f"Failed to load GLiNER model {GLINER_MODEL}: {e}")
     return _gliner_model
-
-
-def _extract_genes_with_gliner(text: str) -> List[str]:
-    """
-    Extract gene symbols using GLiNER model.
-    
-    Parameters
-    ----------
-    text : str
-        Input text to extract genes from
-        
-    Returns
-    -------
-    List[str]
-        List of unique gene symbols found
-    """
-    model = _get_gliner_model()
-    
-    # Predict entities using GLiNER
-    entities = model.predict_entities(text, GLINER_ENTITY_LABELS, threshold=GLINER_THRESHOLD)
-    
-    # Filter for gene entities and extract text
-    genes = []
-    for entity in entities:
-        if entity["label"].lower() in ["gene", "protein"]:  # Include both genes and proteins
-            gene_text = entity["text"].strip()
-            # Basic validation: gene symbols are typically uppercase and 3-10 characters
-            if re.match(r'^[A-Z0-9-]+$', gene_text) and 2 <= len(gene_text) <= 15:
-                genes.append(gene_text)
-    
-    # Remove duplicates and return
-    genes = list(set(genes))
-    if DEBUG:
-        print(f"[_extract_genes_with_gliner] Found genes: {genes}")
-    
-    return genes
 
 
 def _extract_genes_with_claude(text: str) -> List[str]:
@@ -113,28 +77,109 @@ def _extract_genes_with_claude(text: str) -> List[str]:
     return genes
 
 
-def gene_extraction_node(state: "State") -> "State":
+def _extract_entities_merged(text: str) -> Dict[str, Any]:
     """
-    Identify HGNC gene symbols mentioned in the last user message.
-    Uses either Claude or GLiNER based on ENTITY_EXTRACTION_METHOD configuration.
+    Extract entities using both Claude and GLiNER models, then merge results.
+    Returns both genes specifically and all entity types from GLiNER.
+    
+    Parameters
+    ----------
+    text : str
+        Input text to extract entities from
+        
+    Returns
+    -------
+    Dict[str, Any]
+        Dictionary containing:
+        - "genes": List of unique gene symbols found by both methods combined
+        - "all_entities": Dict of all entity types found by GLiNER
+        - "traits": List of disease/trait entities from GLiNER
+    """
+    # Extract genes using Claude
+    claude_genes = _extract_genes_with_claude(text)
+    
+    # Extract all entities using GLiNER
+    model = _get_gliner_model()
+    gliner_entities = model.predict_entities(text, GLINER_ENTITY_LABELS, threshold=GLINER_THRESHOLD)
+    # import ipdb; ipdb.set_trace()
+    
+    # Organize GLiNER entities by type
+    all_entities = {}
+    gliner_genes = []
+    traits = []
+    
+    for entity in gliner_entities:
+        label = entity["label"]
+        text_entity = entity["text"].strip()
+        
+        # Populate all_entities dict
+        if label not in all_entities:
+            all_entities[label] = []
+        if text_entity not in all_entities[label]:
+            all_entities[label].append(text_entity)
+        
+        # Extract genes from GLiNER results
+        if label.lower() in ["gene", "protein"]:
+            # Gene validation
+            if re.match(r'^[A-Z0-9-]+$', text_entity) and 2 <= len(text_entity) <= 15:
+                if text_entity not in gliner_genes:
+                    gliner_genes.append(text_entity)
+        
+        # Extract diseases/traits
+        elif label.lower() in ["disease", "trait", "phenotype", "disorder", "syndrome", "condition"]:
+            if len(text_entity) > 2 and text_entity not in traits:
+                traits.append(text_entity)
+    
+    # Merge gene results (Claude + GLiNER)
+    merged_genes = claude_genes + [gene for gene in gliner_genes if gene not in claude_genes]
+    
+    # Remove duplicates while preserving order
+    merged_genes = list(dict.fromkeys(merged_genes))
+    traits = list(dict.fromkeys(traits))
+    
+    if DEBUG:
+        print(f"[_extract_entities_merged] Claude genes: {claude_genes}")
+        print(f"[_extract_entities_merged] GLiNER genes: {gliner_genes}")
+        print(f"[_extract_entities_merged] Merged genes: {merged_genes}")
+        print(f"[_extract_entities_merged] GLiNER traits: {traits}")
+        print(f"[_extract_entities_merged] All entity types: {list(all_entities.keys())}")
+    
+    return {
+        "genes": merged_genes,
+        "all_entities": all_entities,
+        "traits": traits
+    }
+
+
+def entity_extraction_node(state: "State") -> "State":
+    """
+    Extract entities using both Claude and GLiNER methods for comprehensive query understanding.
+    Provides extraction of genes, traits, and all biomedical entity types mentioned in user queries.
+    Uses Claude for gene extraction and GLiNER for comprehensive biomedical entity extraction.
 
     Returns
     -------
     State
-        Same state with a new `"genes"` list.
+        Updated state with:
+        - "genes": List of gene symbols from both Claude and GLiNER
+        - "all_entities": Dict of all entity types found by GLiNER  
+        - "traits": List of disease/trait entities from GLiNER
     """
     user_input: str = state["messages"][-1]["content"]
     
-    # Choose extraction method based on configuration
-    if ENTITY_EXTRACTION_METHOD.lower() == "gliner":
-        genes = _extract_genes_with_gliner(user_input)
-    else:
-        genes = _extract_genes_with_claude(user_input)
+    # Use comprehensive merged extraction method
+    extraction_result = _extract_entities_merged(user_input)
     
     if DEBUG:
-        print(f"[gene_extraction_node] extracted using {ENTITY_EXTRACTION_METHOD}: {genes}")
+        print(f"[entity_extraction_node] extracted genes: {extraction_result['genes']}")
+        print(f"[entity_extraction_node] extracted traits: {extraction_result['traits']}")
+        print(f"[entity_extraction_node] all entity types: {list(extraction_result['all_entities'].keys())}")
     
-    return {"genes": genes}
+    return {
+        "genes": extraction_result["genes"],
+        "all_entities": extraction_result["all_entities"], 
+        "traits": extraction_result["traits"]
+    }
 
 
 def gliner_entity_extraction_node(state: "State") -> "State":
@@ -170,117 +215,6 @@ def gliner_entity_extraction_node(state: "State") -> "State":
         print(f"[gliner_entity_extraction_node] extracted entities: {entities_by_type}")
     
     return {"entities": entities_by_type}
-
-
-def trait_extraction_node(state: "State") -> "State":
-    """
-    Extract disease/trait entities from the user message using GLiNER.
-    This is used to identify specific diseases or traits for trait-based queries.
-
-    Returns
-    -------
-    State
-        Same state with a new `"traits"` list containing extracted diseases/traits.
-    """
-    user_input: str = state["messages"][-1]["content"]
-    
-    try:
-        model = _get_gliner_model()
-        
-        # Predict entities using GLiNER with focus on diseases and traits
-        disease_trait_labels = ["Disease", "Trait", "Phenotype", "Disorder", "Syndrome", "Condition"]
-        entities = model.predict_entities(user_input, disease_trait_labels, threshold=GLINER_THRESHOLD)
-        
-        # Extract and clean disease/trait entities
-        traits = []
-        for entity in entities:
-            trait_text = entity["text"].strip()
-            # Basic validation and cleaning
-            if len(trait_text) > 2 and trait_text not in traits:  # Avoid very short or duplicate entries
-                traits.append(trait_text)
-        
-        # Remove duplicates while preserving order
-        traits = list(dict.fromkeys(traits))
-        
-        if DEBUG:
-            print(f"[trait_extraction_node] extracted traits/diseases: {traits}")
-        
-        return {"traits": traits}
-        
-    except Exception as e:
-        if DEBUG:
-            print(f"[trait_extraction_node] Error extracting traits: {e}")
-        return {"traits": []}
-
-
-def comprehensive_entity_extraction_node(state: "State") -> "State":
-    """
-    Extract all types of entities (genes, diseases, traits, etc.) using GLiNER.
-    This provides a complete entity extraction covering genes, diseases, and other biomedical entities.
-
-    Returns
-    -------
-    State
-        Updated state with `"genes"`, `"traits"`, and `"all_entities"` fields.
-    """
-    user_input: str = state["messages"][-1]["content"]
-    
-    try:
-        model = _get_gliner_model()
-        
-        # Predict all entity types using GLiNER
-        entities = model.predict_entities(user_input, GLINER_ENTITY_LABELS, threshold=GLINER_THRESHOLD)
-        
-        # Organize entities by type
-        genes = []
-        traits = []
-        all_entities = {}
-        
-        for entity in entities:
-            label = entity["label"]
-            text = entity["text"].strip()
-            
-            # Populate all_entities dict
-            if label not in all_entities:
-                all_entities[label] = []
-            if text not in all_entities[label]:
-                all_entities[label].append(text)
-            
-            # Extract genes
-            if label.lower() in ["gene", "protein"]:
-                # Gene validation
-                if re.match(r'^[A-Z0-9-]+$', text) and 2 <= len(text) <= 15:
-                    if text not in genes:
-                        genes.append(text)
-            
-            # Extract diseases/traits
-            elif label.lower() in ["disease", "trait", "phenotype", "disorder", "syndrome", "condition"]:
-                if len(text) > 2 and text not in traits:
-                    traits.append(text)
-        
-        # Remove duplicates while preserving order
-        genes = list(dict.fromkeys(genes))
-        traits = list(dict.fromkeys(traits))
-        
-        if DEBUG:
-            print(f"[comprehensive_entity_extraction_node] extracted genes: {genes}")
-            print(f"[comprehensive_entity_extraction_node] extracted traits: {traits}")
-            print(f"[comprehensive_entity_extraction_node] all entities: {list(all_entities.keys())}")
-        
-        return {
-            "genes": genes,
-            "traits": traits,
-            "all_entities": all_entities
-        }
-        
-    except Exception as e:
-        if DEBUG:
-            print(f"[comprehensive_entity_extraction_node] Error extracting entities: {e}")
-        return {
-            "genes": [],
-            "traits": [],
-            "all_entities": {}
-        }
 
 
 def has_genes(state: "State") -> bool:

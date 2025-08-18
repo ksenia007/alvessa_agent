@@ -27,13 +27,10 @@ DBSNP_ASSEMBLY_PATTERNS = {
 # -----------------------------------------------------------------------------
 # Entity extraction configuration
 # -----------------------------------------------------------------------------
-# Entity extraction method: "claude" or "gliner"
-ENTITY_EXTRACTION_METHOD: str = "claude"
-
 # GLiNER model configuration
 GLINER_MODEL: str = "urchade/gliner_medium-v2.1"
-GLINER_THRESHOLD: float = 0.5
-GLINER_ENTITY_LABELS: list = ["gene", "disease", "trait", "protein function", "go terms", "protein", "genetic variant", "condition", "phenotype", "disorder", "syndrome", "GO terms"]
+GLINER_THRESHOLD: float = 0.4
+GLINER_ENTITY_LABELS: list = ["gene", "disease", "trait"]
 
 # -----------------------------------------------------------------------------
 # Anthropic model versions

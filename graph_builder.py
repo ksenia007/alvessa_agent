@@ -14,7 +14,7 @@ from langgraph.graph import StateGraph, END
 from typing import Callable
 
 from state import State
-from entity_extraction import gene_extraction_node, has_genes
+from entity_extraction import entity_extraction_node, has_genes
 from tool_agent_node import select_tools_and_run_dynamic, run_async_sync
 from conditioned_claude import conditioned_claude_node
 from verify import verify_evidence_node

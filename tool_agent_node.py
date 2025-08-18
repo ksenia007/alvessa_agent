@@ -10,7 +10,7 @@ Description:
 Selecting tools"""
 
 from state import State
-# from entity_extraction import gene_extraction_node
+
 from tool_humanbase import humanbase_predictions_agent
 from tool_biogrid import bioGRID_predictions_agent
 from tool_uniprot import uniprot_node
@@ -44,12 +44,7 @@ def format_state_for_prompt(state: State) -> str:
 
     catalog = "\n".join(f"- {name}: {desc}" for name, desc in TOOL_CATALOG.items())
     
-    # Add guidance for trait-based queries when no genes are found
-    guidance = ""
-    if not genes:
-        guidance = " IMPORTANT: Since no genes were extracted, consider using 'extract_traits' first to identify specific diseases/traits, then 'query_by_trait' to search for genetic associations. Alternatively, use 'extract_all_entities' for comprehensive entity extraction. This will populate genes that can then be used by other gene-based tools like 'humanbase_functions', 'uniprot_base', 'gwas', etc."
-    
-    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" Extracted gene symbols: {genes_str} Available tools: {catalog}.{guidance} Which tools should be called, and in what order? Respond ONLY with a Python list of tool names. Example: ["extract_traits", "query_by_trait", "humanbase_functions", "uniprot_base"] or ["extract_all_entities", "query_by_trait", "gwas"] or ["humanbase_functions", "uniprot_base", "gwas"]"""
+    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" Extracted gene symbols: {genes_str} Available tools: {catalog}.\n Which tools should be called, and in what order? Respond ONLY with a Python list of tool names. Example: ["query_by_trait", "humanbase_functions", "uniprot_base"] or ["humanbase_functions", "uniprot_base", "gwas"] or ["query_by_trait", "gwas", "BioGRID"]"""
 
 def select_tools_and_run_dynamic(state: State) -> State:
     
@@ -92,11 +87,6 @@ def select_tools_and_run_dynamic(state: State) -> State:
         if not fn:
             continue
 
-        # Skip trait tools if genes are already present
-        if name in ("extract_traits", "query_by_trait") and state.get("genes"):
-            print(f"[SKIP] Already have genes, skipping {name}")
-            continue
-
         print(f"[TOOL RUN] → {name}", flush=True)
         out = fn(state)
         if not isinstance(out, dict):
@@ -106,6 +96,8 @@ def select_tools_and_run_dynamic(state: State) -> State:
 
         # Keep existing genes if tool returns nothing useful
         if "genes" in out:
+            # Add genes to the current genes list
+            state["genes"] = list(set(state["genes"] + out["genes"]))
             if not isinstance(out["genes"], list) or not out["genes"]:
                 out.pop("genes", None)
 
