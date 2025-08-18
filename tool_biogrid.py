@@ -81,7 +81,7 @@ def bioGRID_predictions_agent(state: "State") -> "State":
         except Exception as exc:
             print(f"[BioGRID] {gene}: {exc}")
         else:
-            preds[gene] = list(interactions)[:100]
+            preds[gene] = list(interactions)
 
         time.sleep(0.3)  # courteous pause
 
