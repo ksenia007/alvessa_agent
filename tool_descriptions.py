@@ -1,5 +1,5 @@
 from langchain.agents import Tool
-from entity_extraction import gene_extraction_node, trait_extraction_node, comprehensive_entity_extraction_node
+from entity_extraction import entity_extraction_node
 from tool_humanbase import humanbase_predictions_agent, humanbase_expecto_agent, humanbase_tissue_expecto_annotate_variants
 from tool_biogrid import bioGRID_predictions_agent
 from tool_reactome import reactome_pathways_agent
@@ -16,10 +16,8 @@ from tool_alphamissense import alphamissense_predictions_agent
 from tool_annotate_gencode import gencode_gene_node
 
 TOOL_CATALOG = {
-    "extract_genes": "Extracts gene symbols from the user question. This is the first step in the pipeline, and it is required to run any other tool.",
-    "extract_traits": "Extracts disease and trait entities from the user question using GLiNER. Use this to identify specific diseases, traits, phenotypes, disorders, or conditions mentioned in the query.",
-    "extract_all_entities": "Extracts all types of biomedical entities (genes, diseases, traits, proteins, etc.) from the user question using GLiNER. Provides comprehensive entity extraction in one step.",
-    "query_by_trait": "Queries GWAS associations by disease/trait terms when no genes are found. Searches for genetic associations with diseases, traits, or phenotypes mentioned in the user query and populates the genes field with related genes found. This enables downstream gene-based tools to run on the discovered genes. Use this when the user asks about diseases or traits without mentioning specific genes.",
+    "extract_entities": "Extracts genes and all biomedical entities from the user question for query understanding using both Claude and GLiNER models. Returns genes (Claude + GLiNER), traits, and all entity types found by GLiNER. This tool MUST be called first before running any other tool as it provides essential entity extraction for pipeline execution.",
+    "query_by_trait": "Found traits extracted in the query, it could be expanded by running this tool. Searches for genetic associations with diseases, traits, or phenotypes mentioned in the user query and expands the gene list with additional related genes found through GWAS associations. Consider using this tool when traits are detected in the query to potentially discover more relevant genes, especially when the current gene list is small or when broader genetic context would be valuable for the analysis.",
     "gencode_gene_node": "Annotates genes with GENCODE gene annotations. Provides gene-level information such as gene name, description, and genomic coordinates. Essential for many downstream analyses.",
     "humanbase_functions": "Fetch per-gene functional predictions from HumanBase tissue-specific networks. Provides expanded list of functions.",
     "uniprot_base":  "Queries UniProt for functional annotations and disease links",
@@ -38,9 +36,7 @@ TOOL_CATALOG = {
 
 
 TOOL_FN_MAP = {
-    "extract_genes":       gene_extraction_node,
-    "extract_traits":     trait_extraction_node,
-    "extract_all_entities": comprehensive_entity_extraction_node,
+    "extract_entities":   entity_extraction_node,
     "query_by_trait":     query_by_trait_agent,
     "humanbase_functions":      humanbase_predictions_agent,
     "humanbase_expecto":       humanbase_expecto_agent,
