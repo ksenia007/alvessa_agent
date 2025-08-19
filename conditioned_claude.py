@@ -31,12 +31,12 @@ def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
         ("gene_ontology_terms_of_interacting_genes", "biogrid_summarized_go"),
         ("Interacting genes based on BioGRID curated database", "biogrid_predictions"),
         ("Associated Reactome pathways (curated biological pathways which describe how molecules interact within a cell to carry out different biological processes)", "reactome_pathways"),
-        ("gwas_associations", "gwas_associations"),
+        #("gwas_associations", "gwas_associations"),
         ("uniprot_entries_base", "uniprot_entries_base", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
         ("uniprot_entries_gwas", "uniprot_entries_gwas", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
         ("Regulatory activity role for the regions where variants were found. Defined computationally through Sei, a deep learning model that predicts transcription factors, histone marks and dnase, though clustering prediction over the genome and then assinging values. Reperesents role of the region", "sei_predictions"),
-        ("Tissue-specific expression disruption predictions from sequence", "humanbase_expecto", lambda data: data.get('summary_text')),
-        ("Per variant GE modulation predictions:", "tissue_expression_preds_variant_text_description"),
+        ("Gene expression context of the genes, gives context for the ranges of variants that *could* be observed in this gene:", "humanbase_expecto", lambda data: data.get('summary_text')),
+        ("Per variant gene expression modulation predictions, linked to variants of interest. Note that it is z-scored to 1000Genomes, so values below 1 are a fairly small effect:", "tissue_expression_preds_variant_text_description", lambda txt: txt if isinstance(txt, str) and txt.strip() else None),
         ("Pathogenicity predictions for each missense variant of interest. Computed through AlphaMissense, which predicts the likelihood that missense variants (genetic mutations where a single amino acid in a protein is changed) can cause disease", "alphamissense_predictions"),
         ("dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)", "dbsnp_variants"),
         ("dbSNP variant summary (rare vs common variants, chromosomes, assembly info)", "dbsnp_summaries")
@@ -135,6 +135,12 @@ def conditioned_claude_node(state: "State") -> "State":
         "If the CONTEXT contains trait-based associations (query_type: 'trait_based'), focus on the genetic associations "
         "with the queried trait/disease, including related genes, variants, and their biological significance."
     )
+    
+    if DEBUG:
+        print(f"[conditioned_claude_node] system message: {system_msg}")
+        print(f"[conditioned_claude_node] user question: {user_question}")
+        print(f"[conditioned_claude_node] context block length: {len(context_block)}")
+        print(f"[conditioned_claude_node] full context block: {context_block}")
     
     raw = claude_call(
         model=CONDITIONED_MODEL,

@@ -15,9 +15,29 @@ from tool_sei import sei_predictions_agent
 from tool_alphamissense import alphamissense_predictions_agent
 from tool_annotate_gencode import gencode_gene_node
 
+
+EXAMPLE_TOOL_SELECTION = """EXAMPLE PIPELINES (pay attention to dependencies):
+
+1. Variant regulatory activity (e.g. SEI):
+   extract_entities → gwas → dbsnp → sei
+
+2. Variant pathogenicity (e.g. AlphaMissense):
+   extract_entities → gwas → dbsnp → alphamissense
+
+3. HumanBase Expecto variant annotation:
+   extract_entities → humanbase_expecto → gwas → dbsnp → humanbase_tissue_expecto_annotate_variants
+
+4. Gene-level functional annotation:
+   extract_entities → gencode_gene_node → (humanbase_functions, uniprot_base, reactome, BioGRID) → Summarize_bioGRID_GO (if BioGRID run) → uniprot_gwas (if gwas run)
+
+Note these are only examples, and in real life you may need to run combinations of these tools depending on the user intent and the entities extracted.
+
+"""
+
 TOOL_CATALOG = {
     "extract_entities": "Extracts genes and all biomedical entities from the user question for query understanding using both Claude and GLiNER models. Returns genes (Claude + GLiNER), traits, and all entity types found by GLiNER. This tool MUST be called first before running any other tool as it provides essential entity extraction for pipeline execution.",
     "query_by_trait": "Found traits extracted in the query, it could be expanded by running this tool. Searches for genetic associations with diseases, traits, or phenotypes mentioned in the user query and expands the gene list with additional related genes found through GWAS associations. Consider using this tool when traits are detected in the query to potentially discover more relevant genes, especially when the current gene list is small or when broader genetic context would be valuable for the analysis.",
+    "query_by_trait": "Queries GWAS associations by disease/trait terms when no genes are found. Searches for genetic associations with diseases, traits, or phenotypes mentioned in the user query and populates the genes field with related genes found. This enables downstream gene-based tools to run on the discovered genes. Use this when the user asks about diseases or traits without mentioning specific genes.",
     "gencode_gene_node": "Annotates genes with GENCODE gene annotations. Provides gene-level information such as gene name, description, and genomic coordinates. Essential for many downstream analyses.",
     "humanbase_functions": "Fetch per-gene functional predictions from HumanBase tissue-specific networks. Provides expanded list of functions.",
     "uniprot_base":  "Queries UniProt for functional annotations and disease links",
@@ -33,6 +53,7 @@ TOOL_CATALOG = {
     "alphamissense": "Fetches Alphamissense predicted pathogenicity classes for given variants. This requires dbsnp to be run first.",
 
 }
+
 
 
 TOOL_FN_MAP = {

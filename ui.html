@@ -93,17 +93,34 @@
 .gwas-table th, .gwas-table td { padding:6px 8px; border-bottom:1px solid #1e2a52; text-align:left; }
 .gwas-meta { color:#aab4d6; font-size:12px; }
 
-/* Variant Summary table */
-.vs-table { width: 100%; border-collapse: collapse; }
-.vs-table th, .vs-table td {
-  border-bottom: 1px solid #2a3a72;
-  padding: 6px 8px;
-  text-align: left;
-  vertical-align: top;
-}
-.vs-table thead th { position: sticky; top: 0; background: #121832; }
 
+/* Variant Summary: widen + allow horizontal scroll where needed */
+.vs-scroll { overflow: auto; }
+.vs-table { width: 100%; min-width: 1400px; border-collapse: collapse; }
+.vs-table th, .vs-table td { white-space: nowrap; }            /* keep most columns single-line */
+.vs-table td.wrap, .vs-table th.wrap { white-space: normal; }  /* but allow wrapping for verbose cells */
+.vs-table td.traits { max-width: 520px; }                      /* give traits room */
+.vs-table td.expecto { max-width: 560px; }   
+.vs-table thead th { position: sticky; top: 0; background: #121832; }
+button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px solid #2a3a72; border-radius:999px; padding:2px 8px; font-size:11px; margin-left:6px; }
+.exp-detail-box { background:#0e1430; border:1px solid #2a3a72; border-radius:10px; padding:8px; }
+/* Expecto summary lines */
+.expecto-line { display:block; line-height:1.35; margin:2px 0; }
+.xnum { font-weight:800; font-size:1.12em; padding:0 6px; border-radius:6px; background:#0e1430; border:1px solid #2a3a72; display:inline-block; }
+.xpct { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; opacity:0.9; }
+.xtissue { font-weight:600; }
   
+.vs-table{
+  font-size: 13px;         
+  line-height: 1.45;
+}
+.vs-table th, .vs-table td{
+  padding: 8px 12px;        /* more horiz spacing between columns */
+}
+.vs-table td.traits, .vs-table td.expecto{
+  max-width: 620px;         /* a bit wider for wordy cells */
+}
+
 </style>
 <body>
 <div class="wrap">
@@ -301,7 +318,7 @@
     const entries = Object.entries(bg);
     if (!entries.length) {
       setHTML("biogrid", `<div class="muted">no interactions returned</div>`);
-      return show("biogridCard");
+      return hide("biogridCard");
     }
   
     const html = entries.map(([gene, arr]) => {
@@ -766,189 +783,346 @@
     if (sections.trim()) { setHTML("gencode", sections); show("gencodeCard"); }
     else hide("gencodeCard");
   }
-    // ---------------- Variant Summary renderer ----------------
-      function renderVariantSummary(st){
-        const sei   = st?.sei_predictions || {};
-        const am    = st?.alphamissense_predictions || {};
-        const dbsum = st?.dbsnp_summaries || {};
-        const gwas  = st?.gwas_associations || {};
-    
-        // union of genes that appear in any source
-        const genes = new Set([
-          ...Object.keys(sei),
-          ...Object.keys(am),
-          ...Object.keys(dbsum),
-          ...Object.keys(gwas)
-        ]);
-    
-        const sections = [];
-    
-        for (const gene of genes){
-          const geneSei = sei[gene] || {};
-          const geneAm  = am[gene]  || {};
-          const geneDb  = dbsum[gene] || {};
-          const gwasObj = gwas[gene];
-    
-          // collect all variant_annotations for this gene (merge anywhere in object)
-          const ann = (window.GWAS && typeof GWAS.collectVariantAnnotations === "function")
-            ? GWAS.collectVariantAnnotations(gwasObj || {})
-            : (function collectAllVariantAnnotations(obj){
-                const out = {}; const seen = new Set();
-                function walk(x){
-                  if (!x || typeof x !== "object" || seen.has(x)) return;
-                  seen.add(x);
-                  if (x.variant_annotations && typeof x.variant_annotations === "object" && !Array.isArray(x.variant_annotations)){
-                    for (const [vid, v] of Object.entries(x.variant_annotations)) out[vid] = v;
-                  }
-                  for (const v of Object.values(x)) walk(v);
-                }
-                walk(gwasObj || {});
-                return out;
-              })();
-    
-          // frequency buckets
-          const rareSet       = new Set(geneDb["rare_rsids"] || []);
-          const commonSet     = new Set(geneDb["common_rsids"] || []);
-          const veryCommonSet = new Set(geneDb["very_common_rsids"] || []);
-          const freqLabel = (rs) => (
-            rareSet.has(rs)       ? "Rare (<1%)" :
-            commonSet.has(rs)     ? "Common (1–15%)" :
-            veryCommonSet.has(rs) ? "Very common (>15%)" : "N/A"
-          );
-    
-          // gather all rsids we know about for this gene
-          const rsids = new Set([
-            ...Object.keys(geneSei),
-            ...Object.keys(geneAm),
-            ...Object.keys(ann || {}),
-            ...(geneDb["rare_rsids"] || []),
-            ...(geneDb["common_rsids"] || []),
-            ...(geneDb["very_common_rsids"] || [])
-          ]);
-          if (rsids.size === 0) continue;
-    
-          // helpers to extract GWAS fields
-          const extractP = (v) => {
-            const raw = (v?.p_value ?? v?.p ?? null);
-            if (typeof raw === "number") return raw;
-            if (raw == null) return null;
-            const n = parseFloat(String(raw));
-            return Number.isFinite(n) ? n : null;
-          };
-          const extractTraits = (v) => {
-            const out = new Set();
-            const add = s => { if (s && typeof s === "string") out.add(s); };
-            const addMany = a => { if (Array.isArray(a)) a.forEach(add); };
-            if (!v) return [];
-            addMany(v.disease_trait); add(v.disease_trait);
-            addMany(v.traits); add(v.trait);
-            addMany(v.phenotypes); add(v.phenotype);
-            addMany(v.mapped_traits); add(v.mapped_trait);
-            addMany(v.gwas_disease_traits);
-            return Array.from(out);
-          };
-    
-          // build rows
-          const rows = Array.from(rsids).map(rs => {
-            const vAnn = ann?.[rs] || {};
-            const seiLabel = geneSei?.[rs] ?? "N/A";
-            const amMap    = geneAm?.[rs] || null;
-    
-            // AlphaMissense squash
-            let amList = [];
-            if (amMap && typeof amMap === "object"){
-              for (const [change, label] of Object.entries(amMap)){
-                const c = change.replace(/^SNP:/i, "").replace("->", "→");
-                amList.push(label ? `${c}: ${label}` : c);
-              }
-            }
-            if (amList.length === 0) amList = ["N/A"];
-    
-            const traits  = extractTraits(vAnn);
-            const p       = extractP(vAnn);
-            const context = vAnn?.context ?? "";                 // new column
-            const category= vAnn?.variant_category ?? "";        // new column
-            const mappedG = vAnn?.mapped_gene ?? "";             // new column
-    
-            return {
-              rs,
-              freq: freqLabel(rs),
-              sei: seiLabel || "N/A",
-              am: amList,
-              traits,
-              p,
-              context,
-              category,
-              mapped_gene: mappedG
-            };
-          });
-    
-          // sort by freq bucket, then by p-value asc, then rsid
-          const freqOrder = {"Rare (<1%)":0, "Common (1–15%)":1, "Very common (>15%)":2, "N/A":3};
-          rows.sort((a,b)=>{
-            const fa = (freqOrder[a.freq] ?? 9), fb = (freqOrder[b.freq] ?? 9);
-            if (fa !== fb) return fa - fb;
-            const pa = (a.p ?? Number.POSITIVE_INFINITY), pb = (b.p ?? Number.POSITIVE_INFINITY);
-            if (pa !== pb) return pa - pb;
-            return a.rs.localeCompare(b.rs);
-          });
-    
-          // counts line above the table
-          const statsBits = [];
-          if (Number.isFinite(geneDb["num_rare_variants (<1%)"]))         statsBits.push(`rare: ${geneDb["num_rare_variants (<1%)"]}`);
-          if (Number.isFinite(geneDb["num_common_variants (1-15%)"]))     statsBits.push(`common: ${geneDb["num_common_variants (1-15%)"]}`);
-          if (Number.isFinite(geneDb["num_very_common_variants (>15%)"])) statsBits.push(`very common: ${geneDb["num_very_common_variants (>15%)"]}`);
-    
-          const rowsHtml = rows.map(r=>{
-            const amHtml = r.am.map(x=>`<span class="pill">${escapeHtml(x)}</span>`).join(" ");
-            const tShown = r.traits.slice(0, 6);
-            const tMore  = r.traits.length > 6 ? `<span class="muted"> +${r.traits.length-6} more</span>` : "";
-            const traitsHtml = tShown.map(t=>`<span class="pill">${escapeHtml(t)}</span>`).join(" ") + tMore;
-            return `<tr>
-              <td class="mono">${escapeHtml(r.rs)}</td>
-              <td>${escapeHtml(r.freq)}</td>
-              <td>${escapeHtml(r.context || "N/A")}</td>
-              <td>${escapeHtml(r.category || "N/A")}</td>
-              <td>${escapeHtml(r.mapped_gene || "N/A")}</td>
-              <td>${escapeHtml(r.sei)}</td>
-              <td>${amHtml || 'N/A'}</td>
-              <td>${traitsHtml || '<span class="muted">N/A</span>'}</td>
-            </tr>`;
-          }).join("");
-    
-          sections.push(`
-            <div style="margin-bottom:8px;">
-              <strong>${escapeHtml(uc(gene))}</strong>
-              ${statsBits.length ? `<span class="muted"> • ${statsBits.join(" • ")}</span>` : ""}
-            </div>
-            <div class="scroll">
-              <table class="vs-table">
-                <thead>
-                  <tr>
-                    <th>Variant</th>
-                    <th>Frequency</th>
-                    <th>Context</th>
-                    <th>Category</th>
-                    <th>Mapped gene</th>
-                    <th>SEI label</th>
-                    <th>AlphaMissense</th>
-                    <th>GWAS traits</th>
-                  </tr>
-                </thead>
-                <tbody>${rowsHtml}</tbody>
-              </table>
-            </div>
-          `);
-        }
-    
-        if (sections.length){
-          setHTML("variantSummary", sections.join(""));
-          show("variantSummaryCard");
-        } else {
-          hide("variantSummaryCard");
+  // ---------------- Variant Summary renderer (SEI / Expecto / AM columns shown only when available) ----------------
+  window.__EXPECTO_DETAILS  = window.__EXPECTO_DETAILS  || {}; // geneKey -> { rsSafe -> detailHTML }
+  window.__EXPECTO_EXPANDED = window.__EXPECTO_EXPANDED || {}; // geneKey -> Set(rsSafe)
+  function renderVariantSummary(st){
+  const sei    = st?.sei_predictions || {};
+  const am     = st?.alphamissense_predictions || {};
+  const dbsum  = st?.dbsnp_summaries || {};
+  const gwas   = st?.gwas_associations || {};
+  const exVar  = st?.expression_preds_variant_table || {}; // gene -> rsid -> metrics
+
+  // ---- helpers ----
+  const freqLabel = (rs, geneDb) => {
+    const rareSet       = new Set(geneDb?.["rare_rsids"] || []);
+    const commonSet     = new Set(geneDb?.["common_rsids"] || []);
+    const veryCommonSet = new Set(geneDb?.["very_common_rsids"] || []);
+    return (
+      rareSet.has(rs)       ? "Rare (<1%)" :
+      commonSet.has(rs)     ? "Common (1–15%)" :
+      veryCommonSet.has(rs) ? "Very common (over 15%)" : "N/A"
+    );
+  };
+  const fmtNum = (x, digits=3) => {
+    const n = (typeof x === "number") ? x : parseFloat(String(x));
+    if (!Number.isFinite(n)) return "NA";
+    return Math.abs(n) < 1e-3 ? n.toExponential(2) : n.toFixed(digits);
+  };
+  const asPctInt = (p) => {
+    if (p == null) return null;
+    let n = (typeof p === "number") ? p : parseFloat(String(p));
+    if (!Number.isFinite(n)) return null;
+    if (n <= 1) n *= 100; // accept [0,1]
+    n = Math.round(n);
+    return Math.max(0, Math.min(100, n));
+  };
+  const ordinal = (n) => {
+    if (n == null) return "NA";
+    const v = Math.abs(n);
+    const j = v % 10, k = v % 100;
+    if (j === 1 && k !== 11) return v + "st";
+    if (j === 2 && k !== 12) return v + "nd";
+    if (j === 3 && k !== 13) return v + "rd";
+    return v + "th";
+  };
+  const sanitizeId = (s) => String(s || "").replace(/[^a-z0-9_-]/gi, "_");
+
+  // robust collectors (use GWAS helpers if present; otherwise deep-scan)
+  const collectVariantAnnotations = (obj) => {
+    if (window.GWAS?.collectVariantAnnotations) return GWAS.collectVariantAnnotations(obj);
+    const out = {}; const seen = new Set();
+    (function walk(x){
+      if (!x || typeof x !== "object" || seen.has(x)) return;
+      seen.add(x);
+      if (x.variant_annotations && typeof x.variant_annotations === "object" && !Array.isArray(x.variant_annotations)){
+        Object.assign(out, x.variant_annotations);
+      }
+      for (const v of Object.values(x)) walk(v);
+    })(obj || {});
+    return out;
+  };
+  const extractTraits = (v) => {
+    if (window.GWAS?.extractVariantTraits) return GWAS.extractVariantTraits(v);
+    const out = new Set();
+    const add = s => { if (s && typeof s === "string") out.add(s); };
+    const addMany = a => { if (Array.isArray(a)) a.forEach(add); };
+    if (!v) return [];
+    addMany(v?.disease_trait); add(v?.disease_trait);
+    addMany(v?.traits); add(v?.trait);
+    addMany(v?.phenotypes); add(v?.phenotype);
+    addMany(v?.mapped_traits); add(v?.mapped_trait);
+    addMany(v?.gwas_disease_traits);
+    return Array.from(out);
+  };
+  const extractP = (v) => {
+    if (window.GWAS?.extractP) return GWAS.extractP(v);
+    const raw = (v?.p_value ?? v?.p ?? null);
+    if (typeof raw === "number") return raw;
+    if (raw == null) return null;
+    const n = parseFloat(String(raw));
+    return Number.isFinite(n) ? n : null;
+  };
+  const extractContext = (v) => {
+    if (window.GWAS?.extractContext) return GWAS.extractContext(v);
+    return v?.context || v?.variant_category || v?.functional_annotation || v?.consequence || "";
+  };
+  const extractCategory = (v) => (v?.variant_category ?? v?.functional_annotation ?? v?.consequence ?? "");
+  const extractMappedGene = (v) => {
+    if (typeof v?.mapped_gene === "string") return v.mapped_gene;
+    if (Array.isArray(v?.mapped_genes) && v.mapped_genes.length) return v.mapped_genes[0];
+    return v?.mapped_gene_name || v?.gene || "";
+  };
+
+  // Which genes appear anywhere
+  const genes = new Set([
+    ...Object.keys(gwas || {}),
+    ...Object.keys(dbsum || {}),
+    ...Object.keys(sei || {}),
+    ...Object.keys(am || {}),
+    ...Object.keys(exVar || {})
+  ]);
+
+  // detail store (for Expecto "Details")
+  
+  const sections = [];
+
+  for (const gene of genes){
+    const geneSei = sei[gene] || {};
+    const geneAm  = am[gene]  || {};
+    const geneDb  = dbsum[gene] || {};
+    const gwasObj = gwas[gene] || {};
+    const geneEx  = exVar[gene] || {}; // rsid -> metrics
+
+    // Prefer per-gene annotations, but if empty due to nesting, fall back to global scan
+    let ann = collectVariantAnnotations(gwasObj);
+    if (!Object.keys(ann).length) ann = collectVariantAnnotations(gwas);
+
+    // rsids for this gene
+    const rsids = new Set([
+      ...Object.keys(ann || {}),
+      ...Object.keys(geneSei || {}),
+      ...Object.keys(geneAm || {}),
+      ...Object.keys(geneEx || {}),
+      ...(geneDb?.["rare_rsids"] || []),
+      ...(geneDb?.["common_rsids"] || []),
+      ...(geneDb?.["very_common_rsids"] || [])
+    ]);
+    if (rsids.size === 0) continue;
+
+    // Build rows
+    const rows = Array.from(rsids).map(rs => {
+      const vAnn     = ann?.[rs] || {};
+      const seiLabel = (rs in geneSei) ? (geneSei[rs] ?? "N/A") : "N/A";
+
+      // AlphaMissense
+      const amMap = geneAm?.[rs] || null;
+      let amList = [];
+      if (amMap && typeof amMap === "object"){
+        for (const [change, label] of Object.entries(amMap)){
+          const c = String(change || "").replace(/^SNP:/i, "").replace("->", "→");
+          amList.push(label ? `${c}: ${label}` : c);
         }
       }
-    
+      if (amList.length === 0) amList = ["N/A"];
+
+      // Expecto per-variant metrics (if present)
+            // Expecto per-variant metrics (if present)
+            const ex = geneEx?.[rs] || null;
+            let expectoSummaryHtml = "N/A";
+            let expectoDetailHtml = "";
+            if (ex && typeof ex === "object"){
+              // Helpers
+              const pctInt   = asPctInt(ex.percentile); // may not exist globally; we'll use per-tissue percentiles below
+              const mean     = fmtNum(ex.mean_score);
+              const median   = fmtNum(ex.median_score);
+              const min_s    = fmtNum(ex.min_score);
+              const max_s    = fmtNum(ex.max_score);
+              const std_s    = fmtNum(ex.std_score);
+              const n_t      = (ex.n_tissues ?? "NA");
+              const coord    = ex.variant ? `${escapeHtml(ex.variant.chr || "")}:${escapeHtml(String(ex.variant.position || ""))} ${escapeHtml(ex.variant.alt || "")}` : "";
+      
+              const top1 = Array.isArray(ex.top_tissues) && ex.top_tissues.length ? ex.top_tissues[0] : null;
+              const bot1 = Array.isArray(ex.bottom_tissues) && ex.bottom_tissues.length ? ex.bottom_tissues[0] : null;
+      
+              const tissueLabel = (t) => {
+                if (!t) return "";
+                const bits = [t.tissue, t.organ, t.system, t.category].filter(Boolean);
+                return escapeHtml(bits.join(" / ") || String(t.tissue || ""));
+              };
+              const pctLabel = (p) => {
+                const pI = asPctInt(p);
+                return pI == null ? "NA" : `${ordinal(pI)} pct`;
+              };
+      
+              const lineHTML = (tag, t) => {
+                if (!t) return "";
+                // score highlighted, percentile mono, tissue bold
+                return `<span class="expecto-line">${tag} <span class="xnum">${fmtNum(t.score)}</span> (<span class="xpct">${pctLabel(t.percentile_in_tissue)}</span>) — <span class="xtissue">${tissueLabel(t)}</span></span>`;
+              };
+      
+              // ** headline-style summary (no mean/median here) **
+              const topLine = lineHTML("highest", top1);
+              const botLine = lineHTML("lowest",  bot1);
+              const lines   = [topLine, botLine].filter(Boolean);
+              expectoSummaryHtml = lines.length ? lines.join("") : "N/A";
+      
+              // ** full stats + lists are in the Details panel **
+              const listify = (arr) => {
+                if (!Array.isArray(arr) || !arr.length) return '<div class="muted">None</div>';
+                return `<ul style="margin:6px 0 0 16px; padding:0;">
+                  ${arr.map(t=>{
+                    const lbl = tissueLabel(t);
+                    return `<li><span class="xtissue">${lbl}</span> — score <span class="mono">${fmtNum(t.score)}</span>, ${pctLabel(t.percentile_in_tissue)}</li>`;
+                  }).join("")}
+                </ul>`;
+              };
+      
+              expectoDetailHtml = `
+                <div class="muted">Expecto (tissue expression disruption)</div>
+                ${coord ? `<div class="mono" style="margin:2px 0 6px;">${coord}</div>` : ""}
+                <div>n_tissues: ${escapeHtml(String(n_t))} • mean: ${mean} • median: ${median} • min: ${min_s} • max: ${max_s} • std: ${std_s}</div>
+                ${ex.relative_effect ? `<div style="margin-top:4px;">relative effect: ${escapeHtml(String(ex.relative_effect))}</div>` : ""}
+                ${topLine || botLine ? `<div style="margin-top:6px;">${topLine || ""}${botLine || ""}</div>` : ""}
+                <div style="margin-top:6px;"><strong>Top tissues</strong>${listify(ex.top_tissues)}</div>
+                <div style="margin-top:6px;"><strong>Lowest tissues</strong>${listify(ex.bottom_tissues)}</div>
+              `;
+            }
+      
+
+            return {
+              rs,
+              freq: freqLabel(rs, geneDb),
+              context: extractContext(vAnn),
+              category: extractCategory(vAnn),
+              mapped_gene: extractMappedGene(vAnn),
+              sei: seiLabel || "N/A",
+              expectoHtml: expectoSummaryHtml || "N/A",   
+              expectoDetailHtml,
+              am: amList,
+              traits: extractTraits(vAnn),
+              p: extractP(vAnn)
+            };
+    });
+
+    // Sort rows by frequency bucket, p-value asc, then rsid
+    const freqOrder = {"Rare (<1%)":0, "Common (1–15%)":1, "Very common (>15%)":2, "N/A":3};
+    rows.sort((a,b)=>{
+      const fa = (freqOrder[a.freq] ?? 9), fb = (freqOrder[b.freq] ?? 9);
+      if (fa !== fb) return fa - fb;
+      const pa = (a.p ?? Number.POSITIVE_INFINITY), pb = (b.p ?? Number.POSITIVE_INFINITY);
+      if (pa !== pb) return pa - pb;
+      return a.rs.localeCompare(b.rs);
+    });
+
+    // Column visibility (per gene)
+    const hasSeiCol     = rows.some(r => r.sei && r.sei !== "N/A");
+const hasAmCol      = rows.some(r => Array.isArray(r.am) && r.am.some(x => x && x !== "N/A"));
+const hasExpectoCol = rows.some(r => r.expectoHtml && r.expectoHtml !== "N/A"); // was r.expecto
+
+const headerCols = `
+  <th>Variant</th>
+  <th>Frequency</th>
+  <th>Context</th>
+  <th>Category</th>
+  <th>Mapped gene</th>
+  ${hasSeiCol ? '<th>SEI</th>' : ''}
+  ${hasExpectoCol ? '<th class="wrap">Expecto</th>' : ''}
+  ${hasAmCol ? '<th>AlphaMissense</th>' : ''}
+  <th class="wrap">GWAS traits</th>
+`;
+
+    // Prepare detail store for this gene
+    const gkey = sanitizeId(gene);
+    window.__EXPECTO_DETAILS[gkey] = window.__EXPECTO_DETAILS[gkey] || {};
+
+    // Compute colspan for detail rows
+    const baseCols = 5 /* fixed cols */ + 1 /* GWAS traits */;
+    const colspan = baseCols + (hasSeiCol?1:0) + (hasExpectoCol?1:0) + (hasAmCol?1:0);
+
+    // Rows HTML (Expecto cell is .wrap, Traits cell is .traits.wrap)
+    const rowsHtml = rows.map(r=>{
+      const amHtml = (Array.isArray(r.am) ? r.am : ["N/A"])
+        .map(x => `<span class="pill">${escapeHtml(String(x))}</span>`).join(" ");
+      const tShown = (r.traits || []).slice(0, 8);
+      const traitsHtml = tShown.map(t => `<span class="pill">${escapeHtml(String(t))}</span>`).join(" ")
+        + ((r.traits && r.traits.length > 8) ? `<span class="muted"> +${r.traits.length - 8} more</span>` : "");
+
+      const rsSafe = sanitizeId(r.rs);
+      const hasDetail = Boolean(r.expectoDetailHtml && r.expectoDetailHtml.trim());
+      if (hasDetail) window.__EXPECTO_DETAILS[gkey][rsSafe] = r.expectoDetailHtml;
+
+      const expectoCell = hasExpectoCol
+        ? `<td class="expecto wrap">${r.expectoHtml || 'N/A'}${hasDetail ? ` <button class="mini" onclick="toggleExpectoDetails('${gkey}','${rsSafe}', ${colspan})">Details</button>` : ""}</td>`
+        : "";
+
+      const mainRow = `<tr>
+        <td class="mono">${escapeHtml(r.rs)}</td>
+        <td>${escapeHtml(r.freq)}</td>
+        <td>${escapeHtml(r.context || "N/A")}</td>
+        <td>${escapeHtml(r.category || "N/A")}</td>
+        <td>${escapeHtml(r.mapped_gene || "N/A")}</td>
+        ${hasSeiCol ? `<td>${escapeHtml(r.sei)}</td>` : ""}
+        ${expectoCell}
+        ${hasAmCol ? `<td>${amHtml || 'N/A'}</td>` : ""}
+        <td class="traits wrap">${traitsHtml || '<span class="muted">N/A</span>'}</td>
+      </tr>`;
+
+      const expandedSet = (window.__EXPECTO_EXPANDED[gkey] ||= new Set());
+      const isOpen = expandedSet.has(rsSafe);
+
+      const detailRow = (hasDetail && hasExpectoCol)
+        ? `<tr id="expd_${gkey}_${rsSafe}" class="exp-detail" style="${isOpen ? "" : "display:none;"}">
+             <td colspan="${colspan}">
+               <div class="exp-detail-box">${window.__EXPECTO_DETAILS[gkey][rsSafe]}</div>
+             </td>
+           </tr>`
+        : "";
+
+      return mainRow + detailRow;
+    }).join("");
+
+    // Optional top-line counts from dbsnp_summaries
+    const statsBits = [];
+    if (Number.isFinite(geneDb?.["num_rare_variants (<1%)"]))         statsBits.push(`rare: ${geneDb["num_rare_variants (<1%)"]}`);
+    if (Number.isFinite(geneDb?.["num_common_variants (1-15%)"]))     statsBits.push(`common: ${geneDb["num_common_variants (1-15%)"]}`);
+    if (Number.isFinite(geneDb?.["num_very_common_variants (>15%)"])) statsBits.push(`very common: ${geneDb["num_very_common_variants (>15%)"]}`);
+
+    sections.push(`
+      <div style="margin-bottom:8px;">
+        <strong>${escapeHtml(uc(gene))}</strong>
+        ${statsBits.length ? `<span class="muted"> • ${statsBits.join(" • ")}</span>` : ""}
+      </div>
+      <div class="vs-scroll">
+        <table class="vs-table">
+          <thead><tr>${headerCols}</tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+    `);
+  }
+
+  if (sections.length){
+    setHTML("variantSummary", sections.join(""));
+    show("variantSummaryCard");
+  } else {
+    hide("variantSummaryCard");
+  }
+}
+
+// Tiny helper 
+function toggleExpectoDetails(geneKey, rsSafe, colspan){
+  const rowId = `expd_${geneKey}_${rsSafe}`;
+  const row = document.getElementById(rowId);
+  if (!row) return;
+
+  const store = (window.__EXPECTO_EXPANDED[geneKey] ||= new Set());
+  const opening = (row.style.display === "none" || !row.style.display);
+
+  row.style.display = opening ? "" : "none";
+  if (opening) { store.add(rsSafe); row.scrollIntoView({block:"nearest", behavior:"smooth"}); }
+  else { store.delete(rsSafe); }
+}
 
   function renderDebug(st){
     const keys = [
