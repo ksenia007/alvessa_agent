@@ -32,6 +32,8 @@ def alphamissense_predictions_agent(state: "State") -> "State":
         Updated state with the `"alphamissense_predictions"` field filled.
         
     """
+
+    print(f"started... {datetime.now()}")
     preds = state.get("alphamissense_predictions", {}).copy()
     variants = state.get("dbsnp_variants", {}).copy()
 
@@ -42,80 +44,57 @@ def alphamissense_predictions_agent(state: "State") -> "State":
         warnings.warn(f"Failed to load required files: {e}. Cannot run AlphaMissense predictions.")
         return {**state, "alphamissense_predictions": preds}
     
-    state_all_snps = {}
-
+    print(f"loaded am file... {datetime.now()}")
+    
+    snp_records = []
     for gene, gene_vars in variants.items():
-        state_all_snps[gene] = {}
+        for var_id, var_data in gene_vars.items():
+            all_snps = var_data.get("coordinates", [])
+            for snp in all_snps:
+                chrom, pos, ref, alt, assembly = snp.get("chrom"), snp.get("pos"), snp.get("ref"), snp.get("alt"), snp.get("assembly")
 
-        try:
-            for var, var_data in gene_vars.items():
-                try:
-                    all_snps = var_data['coordinates']
-
-                    state_all_snps[gene][var] = []
-
-                    for snp in all_snps:
-                        chrom = snp['chrom']
-                        pos = snp['pos']
-                        ref_base = snp['ref']
-                        alt_base = snp['alt']
-                        assembly = snp['assembly']
-
-                        if 'GRCh38' in assembly:
-                            if all(x is not None for x in [chrom, pos, ref_base, alt_base]):
-                                state_all_snps[gene][var].append([chrom, pos, ref_base, alt_base])
-                            else:
-                                warnings.warn(f"Missing coordinate data for {gene} variant {var} (SNP {ref_base} -> {alt_base})")
-                        else:
-                            continue
-                        
-                except Exception as e:
-                    warnings.warn(f"Failed to process variant {var} for gene {gene}: {e}")
-                    continue
-
-        except Exception as e:
-            warnings.warn(f"AlphaMissense prediction unavailable for gene {gene}: {e}")
-            continue
-
-    for gene, variants in state_all_snps.items():
-        preds[gene] = {}
-        for var_id, snp_list in variants.items():
-            preds[gene][var_id] = {}
-            for (chrom, variant_pos, ref_base, alt_base) in snp_list:
-
-                snp_key = f"SNP:{ref_base}->{alt_base}"
-                try:
-                    chr_str = f'chr{chrom}'
-
-                    match = pathogenicity_class_df_hg38[
-                                (pathogenicity_class_df_hg38['chrom'] == chr_str) &
-                                (pathogenicity_class_df_hg38['pos'] == variant_pos) &
-                                (pathogenicity_class_df_hg38['ref'] == ref_base) &
-                                (pathogenicity_class_df_hg38['alt'] == alt_base)
-                            ]
-                    
-                    if not match.empty:
-                        try:
-                            pathogenicity_class = match.iloc[0]['am_class'] 
-                        except (IndexError, ValueError) as e:
-                            warnings.warn(f"Failed to get pathogenicity class for {gene} variant {var_id} (SNP {ref_base} -> {alt_base}): {e}")
-                            pathogenicity_class = None
+                if assembly and "GRCh38" in assembly:
+                    if None not in (chrom, pos, ref, alt):
+                        snp_records.append({
+                            "gene": gene,
+                            "var_id": var_id,
+                            "snp_key": f"SNP:{ref}->{alt}",
+                            "chrom": f"chr{chrom}",
+                            "pos": pos,
+                            "ref": ref,
+                            "alt": alt
+                        })
                     else:
-                        if DEBUG:
-                            print(f"No pathogenicity class found for: {chrom}, {variant_pos}, {ref_base}, {alt_base}")
-                        pathogenicity_class = None
+                        warnings.warn(f"Missing coordinate data for {gene} variant {var_id} (SNP {ref}->{alt})")
 
-                    preds[gene][var_id][snp_key] = pathogenicity_class
+    if not snp_records:
+        return {"alphamissense_predictions": preds}
 
-                except Exception as e:
-                    warnings.warn(f"Failed to process prediction for {gene} variant {var_id} (SNP {ref_base} -> {alt_base}): {e}")
-                    preds[gene][var_id][snp_key] = None
+    snps_df = pd.DataFrame(snp_records)
+
+    print(f"finished aggregating snps... {datetime.now()}")
+
+    merged = snps_df.merge(
+    pathogenicity_class_df_hg38[['chrom', 'pos', 'ref', 'alt', 'am_class']],
+    on=['chrom', 'pos', 'ref', 'alt'],
+    how='left'
+    )
+
+    print(f"finished merging... {datetime.now()}")
+
+    for (gene, var_id), group in merged.groupby(["gene", "var_id"]):
+        preds.setdefault(gene, {})
+        preds[gene][var_id] = {
+            row.snp_key: row.am_class if not pd.isna(row.am_class) else None
+            for row in group.itertuples()
+        }
+
+    print(f"done... {datetime.now()}")
 
     print(preds)
     time.sleep(0.3)  # courteous pause
 
     return {
         "alphamissense_predictions": preds}
-
 
 
