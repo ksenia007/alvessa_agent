@@ -15,12 +15,14 @@ from tool_humanbase import humanbase_predictions_agent
 from tool_biogrid import bioGRID_predictions_agent
 from tool_uniprot import uniprot_node
 from tool_gwas import gwas_associations_agent
-from tool_descriptions import TOOL_CATALOG, TOOL_FN_MAP
+from tool_descriptions import TOOL_CATALOG, TOOL_FN_MAP, EXAMPLE_TOOL_SELECTION
 from config import TOOL_SELECTOR_MODEL
 from claude_client import claude_call
 from typing import Any, Dict, List
 import inspect
 import asyncio
+
+DEBUG = True
 
 def select_tools_and_run_ALL(state: State) -> State:
     """Dynamic tool runner without LLM — just calls all tools in order. 
@@ -44,7 +46,7 @@ def format_state_for_prompt(state: State) -> str:
 
     catalog = "\n".join(f"- {name}: {desc}" for name, desc in TOOL_CATALOG.items())
     
-    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" Extracted gene symbols: {genes_str} Available tools: {catalog}.\n Which tools should be called, and in what order? Respond ONLY with a Python list of tool names. Example: ["query_by_trait", "humanbase_functions", "uniprot_base"] or ["humanbase_functions", "uniprot_base", "gwas"] or ["query_by_trait", "gwas", "BioGRID"]"""
+    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" Extracted gene symbols: {genes_str} Available tools: {catalog}.\n. \n Examples workflows: {EXAMPLE_TOOL_SELECTION} \n Which tools should be called, and in what order? Respond ONLY with a Python list of tool names. Example: ["query_by_trait", "humanbase_functions", "uniprot_base"] or ["humanbase_functions", "uniprot_base", "gwas"] or ["query_by_trait", "gwas", "BioGRID"]"""
 
 def select_tools_and_run_dynamic(state: State) -> State:
     
@@ -53,6 +55,9 @@ def select_tools_and_run_dynamic(state: State) -> State:
 
     # prepare the prompt for tool selection
     prompt = format_state_for_prompt(state)
+    
+    if DEBUG:
+        print(f"[TOOL SELECTION PROMPT] {prompt}")
     
     try:
         completion = claude_call(
