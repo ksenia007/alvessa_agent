@@ -15,26 +15,6 @@ from tool_sei import sei_predictions_agent
 from tool_alphamissense import alphamissense_predictions_agent
 from tool_annotate_gencode import gencode_gene_node
 
-# TOOL_CATALOG = {
-#     "extract_genes": "Required tool. Extracts gene symbols from the user question. This is the first step in the pipeline, and it is required to run any other tool.",
-#     "extract_traits": "Extracts disease and trait entities from the user question using GLiNER. Use this to identify specific diseases, traits, phenotypes, disorders, or conditions mentioned in the query.",
-#     "extract_all_entities": "Extracts all types of biomedical entities (genes, diseases, traits, proteins, etc.) from the user question using GLiNER. Provides comprehensive entity extraction in one step.",
-#     "query_by_trait": "Queries GWAS associations by disease/trait terms when no genes are found. Searches for genetic associations with diseases, traits, or phenotypes mentioned in the user query and populates the genes field with related genes found. This enables downstream gene-based tools to run on the discovered genes. Use this when the user asks about diseases or traits without mentioning specific genes.",
-#     "gencode_gene_node": "Annotates genes with GENCODE gene annotations. Provides gene-level information such as gene name, description, and genomic coordinates. Essential for many downstream analyses.",
-#     "humanbase_functions": "Fetch per-gene functional predictions from HumanBase tissue-specific networks. Provides expanded list of functions.",
-#     "uniprot_base":  "Queries UniProt for functional annotations and disease links",
-#     "gwas":  "Fetches GWAS associations for genes, including diseases, related variants and genes. Population-level variant associations from common variants.",
-#     "uniprot_gwas":   "Runs UniProt query again on genes identified via GWAS associations. Helps to expand the base annotations with related genes.",
-#     "BioGRID": "Fetches gene interactions from BioGRID and their functional annotations for the input genes. Provides a curated context-specific list of protein-protein, genetic and chemical interactions.",
-#     "reactome": "Fetches Reactome pathways associated with the input genes. Provides a curated collection of biological pathways which describe how molecules interact within a cell to carry out different biological processes.",
-#     "Summarize_bioGRID_GO": "Required for BioGrid. Summarizes BioGRID GO terms for the input genes. Provides a compact list of GO terms for the input genes.",
-#     "dbsnp": "Fetches dbSNP data about the identified variants. This requires gwas to be run first.",
-#     "sei": "Fetches predictions of the sequence regulatory activity for given variants. This requires dbsnp to be run first.", 
-#     "humanbase_expecto": "Fetches general ExpectoSC background for the gene, gene expression disruption predictions from HumanBase per variant. Pulls all precomputed predictions for the input genes, which might or might not include variants relevant for the query.",
-#     "humanbase_tissue_expecto_annotate_variants": "This tool annotates variants of interest with cell type-specific expression disruption predictions. **It must only be used after both humanbase_expectoanddbsnp have been run.**",
-#     "alphamissense": "Fetches Alphamissense predicted pathogenicity classes for given variants. This requires dbsnp to be run first.",
-
-# }
 
 EXAMPLE_TOOL_SELECTION = """EXAMPLE PIPELINES (pay attention to dependencies):
 
