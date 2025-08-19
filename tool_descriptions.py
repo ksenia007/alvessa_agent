@@ -39,18 +39,18 @@ from tool_annotate_gencode import gencode_gene_node
 EXAMPLE_TOOL_SELECTION = """EXAMPLE PIPELINES (pay attention to dependencies):
 
 1. Variant regulatory activity (e.g. SEI):
-   extract_genes or query_by_trait → gwas → dbsnp → sei
+   extract_entities → gwas → dbsnp → sei
 
 2. Variant pathogenicity (e.g. AlphaMissense):
-   extract_genes or query_by_trait → gwas → dbsnp → alphamissense
+   extract_entities → gwas → dbsnp → alphamissense
 
 3. HumanBase Expecto variant annotation:
-   extract_genes or query_by_trait → humanbase_expecto → gwas → dbsnp → humanbase_tissue_expecto_annotate_variants
+   extract_entities → humanbase_expecto → gwas → dbsnp → humanbase_tissue_expecto_annotate_variants
 
 4. Gene-level functional annotation:
-   extract_genes or query_by_trait → gencode_gene_node → (humanbase_functions, uniprot_base, reactome, BioGRID) → Summarize_bioGRID_GO (if BioGRID run) → uniprot_gwas (if gwas run)
+   extract_entities → gencode_gene_node → (humanbase_functions, uniprot_base, reactome, BioGRID) → Summarize_bioGRID_GO (if BioGRID run) → uniprot_gwas (if gwas run)
 
-Note these are only exmaples, and in real life you may need to run combintations of these tools depending on the user question and the entities extracted.
+Note these are only examples, and in real life you may need to run combinations of these tools depending on the user intent and the entities extracted.
 
 """
 
