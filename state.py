@@ -31,6 +31,7 @@ class State(TypedDict, total=False):
     humanbase_predictions: Annotated[Dict[str, List[Dict[str, Any]]], operator.or_]
     humanbase_expecto: Annotated[Dict[str, List[Dict[str, Any]]], operator.or_]
     tissue_expression_preds_variant_text_description: Annotated[Dict[str, Any], operator.or_]
+    expression_preds_variant_table: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     biogrid_predictions: Annotated[Dict[str, List[str]], operator.or_]
     reactome_pathways: Annotated[Dict[str, List[str]], operator.or_]
     biogrid_summarized_go: Annotated[Dict[str, List[str]], operator.or_]
@@ -38,6 +39,7 @@ class State(TypedDict, total=False):
     dbsnp_summaries: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     sei_predictions: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     alphamissense_predictions: Annotated[Dict[str, Dict[str, Any]], operator.or_]
+    
     
     # GWAS associations
     gwas_associations: Annotated[Dict[str, Dict[str, Any]], operator.or_]

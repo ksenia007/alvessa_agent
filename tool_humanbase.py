@@ -82,7 +82,8 @@ def _fetch_tissue_variants_HB(entrez: str) -> Optional[pd.DataFrame]:
     if DEBUG:
         print(f"[HumanBase] Fetching tissue variant predictions for Entrez ID: {entrez}")
 
-    url = f"https://humanbase.io/api/genes/{entrez}/tissue_variants"
+    #url = f"https://humanbase.io/api/genes/{entrez}/tissue_variants"
+    url = f"https://humanbase.io/api/genes/{entrez}/tissue_variants/?database=clever-tissues&collapse=true"
     r = requests.get(url, timeout=12)
 
     if r.status_code == 404:  # no gene found in HumanBase
@@ -109,7 +110,7 @@ def _fetch_tissue_variants_HB(entrez: str) -> Optional[pd.DataFrame]:
                     records.append({
                         "chr": var_meta["chr"],
                         "position": var_meta["position"],
-                        "ref": var_meta["ref"],
+                        # "ref": "", var_meta["ref"],
                         "alt": alt,
                         "tissue": tissue_name,
                         "score": score
@@ -127,8 +128,8 @@ def summarize_tissue_variants_text_HB(df: Optional[pd.DataFrame]) -> Optional[st
         return None
 
     # Coverage
-    n_variants = df[["chr", "position", "ref"]].drop_duplicates().shape[0]
-    n_alts = df[["chr", "position", "ref", "alt"]].drop_duplicates().shape[0]
+    n_variants = df[["chr", "position"]].drop_duplicates().shape[0]
+    n_alts = df[["chr", "position", "alt"]].drop_duplicates().shape[0]
     n_tissues = df["tissue"].nunique()
     n_scores = len(df)
 
@@ -157,7 +158,6 @@ def summarize_tissue_variants_text_HB(df: Optional[pd.DataFrame]) -> Optional[st
         sub = df[
             (df["chr"] == row["chr"]) &
             (df["position"] == row["position"]) &
-            (df["ref"] == row["ref"]) &
             (df["alt"] == row["alt"])
         ]
         other = sub[sub["tissue"] != row["tissue"]]["score"]
@@ -185,14 +185,6 @@ def summarize_tissue_variants_text_HB(df: Optional[pd.DataFrame]) -> Optional[st
         f"Q75={score_q75:.4f}, max={score_max:.4f}, mean={score_mean:.4f}, std={score_std:.4f}.\n"
         f"Tissues with highest mean score: {top_tissues}.\n"
         f"Tissues with lowest mean score: {bottom_tissues}.\n"
-        f"Strongest positive effect variant: {max_row['chr']}:{int(max_row['position'])} "
-        f"{max_row['ref']}>{max_row['alt']} in {pos_tissue} ({max_row['score']:.4f}).\n"
-        f"  Distribution of scores for all variants in {pos_tissue}: {pos_tissue_context}.\n"
-        f"  In other tissues, this variant has {pos_variant_context}.\n"
-        f"Strongest negative effect variant: {min_row['chr']}:{int(min_row['position'])} "
-        f"{min_row['ref']}>{min_row['alt']} in {neg_tissue} ({min_row['score']:.4f}).\n"
-        f"  Distribution of scores for all variants in {neg_tissue}: {neg_tissue_context}.\n"
-        f"  In other tissues, this variant has {neg_variant_context}."
     )
 
 from typing import Optional, Tuple, Dict
@@ -200,8 +192,8 @@ from typing import Optional, Tuple, Dict
 def describe_variant_in_tissues_HB(df: Optional[pd.DataFrame],
                                  chrom: str,
                                  position: int,
-                                 ref: str,
-                                 alt: str) -> Tuple[Optional[Dict], Optional[str]]:
+                                 alt: str, 
+                                 variant_id: str) -> Tuple[Optional[Dict], Optional[str]]:
     """
     Describe a specific variant's effects across tissues in the HumanBase dataset.
     Parameters:
@@ -212,6 +204,7 @@ def describe_variant_in_tissues_HB(df: Optional[pd.DataFrame],
         alt: Alternate allele.
     Note: build should be hg19.
     """
+    num_label = {}
     if df is None or df.empty:
         return None, None
     
@@ -221,16 +214,21 @@ def describe_variant_in_tissues_HB(df: Optional[pd.DataFrame],
     df["position"] = df["position"].astype(int)
     
     # ensure ref and alt are strings and upper case
-    ref = str(ref).upper()
+    # ref = str(ref).upper()
     alt = str(alt).upper()
+    
+    if 'chr' not in chrom:  
+        chrom = 'chr' + str(chrom)
+    if DEBUG:
+        print(f"[HumanBase Expecto Variant] Describing variant {chrom}:{position} >{alt}")
 
     # Subset for this variant
     sub = df[
         (df["chr"] == chrom) &
         (df["position"] == position) &
-        (df["ref"] == ref) &
         (df["alt"] == alt)
     ]
+
     if sub.empty:
         return None, ""
 
@@ -275,7 +273,8 @@ def describe_variant_in_tissues_HB(df: Optional[pd.DataFrame],
 
     # Structured stats output
     stats_dict = {
-        "variant": {"chr": chrom, "position": position, "ref": ref, "alt": alt},
+        "variant": {"chr": chrom, "position": position, "alt": alt},
+        "variant_id": variant_id,
         "n_tissues": sub["tissue"].nunique(),
         "mean_score": mean_score,
         "median_score": median_score,
@@ -296,7 +295,7 @@ def describe_variant_in_tissues_HB(df: Optional[pd.DataFrame],
         return ", ".join(parts)
 
     text_description = (
-        f"Variant {chrom}:{position} {ref}>{alt} appears in {sub['tissue'].nunique()} tissues.\n"
+        f"Variant {chrom}:{position}>{alt}, id {variant_id}, appears in {sub['tissue'].nunique()} tissues.\n"
         f"Scores: min={min_score:.4f}, median={median_score:.4f}, max={max_score:.4f}, "
         f"mean={mean_score:.4f}, std={std_score:.4f}.\n"
         f"Top tissues: {tissue_str(top_tissues)}.\n"
@@ -313,7 +312,7 @@ from state import State  # noqa: E402
 def humanbase_predictions_agent(state: "State") -> "State":
     """
     LangGraph node that annotates each gene with HumanBase predictions.
-
+ч
     Parameters
     ----------
     state
@@ -405,12 +404,10 @@ def humanbase_tissue_expecto_annotate_variants(state: "State") -> "State":
     State
         Updated state with the `"humanbase_tissue_expecto"` field filled.
     """
-    print('***'*20)
-    print(state)
-    print('***'*20)
     if DEBUG:
-        print("[HumanBase Expecto Variant] Annotating variants with tissue-specific predictions")
+        print("[HumanBase Expecto Variant] Annotating variants with gene expression predictions")
     variant_descr = {}
+    variant_table_dict = {}
     preds = state.get("humanbase_expecto", {}).copy()
     variants = state.get("dbsnp_variants", {}).copy()
     if not variants:
@@ -418,6 +415,7 @@ def humanbase_tissue_expecto_annotate_variants(state: "State") -> "State":
 
     # annotate each variant with tissue-specific predictions
     for gene, gene_vars in variants.items():
+        variant_table_dict[gene] = {}
         if DEBUG:
             print('[HumanBase Expecto Variant] Processing gene:', gene)
         if gene not in preds:
@@ -426,6 +424,8 @@ def humanbase_tissue_expecto_annotate_variants(state: "State") -> "State":
         if DEBUG:
             print(preds[gene])
         for variant_id, var_data in gene_vars.items():
+            if DEBUG:
+                print(f"[HumanBase Expecto Variant] Processing variant {variant_id} for gene {gene}")
             # use describe_variant_in_tissues_HB
             all_snps = var_data['coordinates']
             for snp in all_snps:
@@ -437,24 +437,28 @@ def humanbase_tissue_expecto_annotate_variants(state: "State") -> "State":
                 pos = snp['pos']
                 ref = snp['ref']
                 alt = snp['alt']
+                
                 if DEBUG:
                     print(f"[HumanBase Expecto per variant] Processing variant {chrom}:{pos} {ref}>{alt} for gene {gene}")
                 descr = describe_variant_in_tissues_HB(
                     preds[gene]["dataframe"],
                     chrom,
                     pos,
-                    ref,
-                    alt
+                    alt, 
+                    variant_id
                 )
                 if descr[0] is None:
                     continue
                 
                 if len(descr[1])>1:
                     gene_descr += f" Variant {chrom}:{pos} {ref}>{alt}: {descr[1]};"
+                    
+                variant_table_dict[gene][variant_id] = descr[0]
             
         if gene_descr:
             variant_descr[gene] = gene_descr
         
     return {
-        "tissue_expression_preds_variant_text_description": variant_descr
+        "tissue_expression_preds_variant_text_description": variant_descr, 
+        "expression_preds_variant_table": variant_table_dict
     }
