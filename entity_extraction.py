@@ -16,9 +16,11 @@ import re
 from claude_client import claude_call
 from config import DEBUG, GENE_EXTRACT_MODEL, GLINER_MODEL, GLINER_THRESHOLD, GLINER_ENTITY_LABELS
 from state import State
+from flair.data import Sentence
 
-# Global variable to cache the GLiNER model
+# Global variables to cache the models
 _gliner_model = None
+_flair_model = None
 
 
 def _get_gliner_model():
@@ -37,6 +39,78 @@ def _get_gliner_model():
         except Exception as e:
             raise RuntimeError(f"Failed to load GLiNER model {GLINER_MODEL}: {e}")
     return _gliner_model
+
+
+def _get_flair_model():
+    """
+    Get or initialize the FLAIR model (cached for efficiency).
+    """
+    global _flair_model
+    if _flair_model is None:
+        try:
+            from flair.nn import Classifier
+            _flair_model = Classifier.load("hunflair2")
+            if DEBUG:
+                print(f"[_get_flair_model] Loaded FLAIR model: hunflair2")
+        except ImportError:
+            raise ImportError("Flair is not installed. Please install it with: pip install flair")
+        except Exception as e:
+            raise RuntimeError(f"Failed to load FLAIR model: {e}")
+    return _flair_model
+
+
+def _extract_entities_with_flair(text: str) -> Dict[str, List[str]]:
+    """
+    Extract entities using Flair model and filter for gene, disease, and trait entities.
+    
+    Parameters
+    ----------
+    text : str
+        Input text to extract entities from
+        
+    Returns
+    -------
+    Dict[str, List[str]]
+        Dictionary containing:
+        - "genes": List of gene entities
+        - "diseases_traits": List of disease and trait entities combined
+    """
+    flair_model = _get_flair_model()
+    sentence = Sentence(text)
+    flair_model.predict(sentence)
+    
+    # Get all labels from the sentence
+    labels = sentence.get_labels()
+    
+    genes = []
+    traits = []
+    
+    for label in labels:
+        entity_text = label.data_point.text.strip()
+        entity_type = label.value.lower()
+        
+        if DEBUG:
+            print(f"[_extract_entities_with_flair] Found entity: '{entity_text}' with type: '{entity_type}'")
+        
+        # Filter for gene entities
+        if entity_type in ["gene", "protein"]:
+            # Gene validation: should be alphanumeric, 2-15 characters
+            if entity_text not in genes:
+                genes.append(entity_text)
+        
+        # Filter for disease and trait entities (merge them as requested)
+        elif entity_type in ["disease", "trait", "phenotype", "disorder", "syndrome", "condition"]:
+            if len(entity_text) > 2 and entity_text not in traits:
+                traits.append(entity_text)
+    
+    if DEBUG:
+        print(f"[_extract_entities_with_flair] Extracted genes: {genes}")
+        print(f"[_extract_entities_with_flair] Extracted diseases/traits: {traits}")
+
+    return {
+        "genes": genes,
+        "traits": traits
+    }
 
 
 def _extract_genes_with_claude(text: str) -> List[str]:
@@ -99,9 +173,11 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
     claude_genes = _extract_genes_with_claude(text)
     
     # Extract all entities using GLiNER
-    model = _get_gliner_model()
-    gliner_entities = model.predict_entities(text, GLINER_ENTITY_LABELS, threshold=GLINER_THRESHOLD)
-    # import ipdb; ipdb.set_trace()
+    gliner_model = _get_gliner_model()
+    gliner_entities = gliner_model.predict_entities(text, GLINER_ENTITY_LABELS, threshold=GLINER_THRESHOLD)
+    
+    # Extract entities using FLAIR
+    flair_result = _extract_entities_with_flair(text)
     
     # Organize GLiNER entities by type
     all_entities = {}
@@ -121,33 +197,36 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
         # Extract genes from GLiNER results
         if label.lower() in ["gene", "protein"]:
             # Gene validation
-            if re.match(r'^[A-Z0-9-]+$', text_entity) and 2 <= len(text_entity) <= 15:
-                if text_entity not in gliner_genes:
-                    gliner_genes.append(text_entity)
+            if text_entity not in gliner_genes:
+                gliner_genes.append(text_entity)
         
         # Extract diseases/traits
         elif label.lower() in ["disease", "trait", "phenotype", "disorder", "syndrome", "condition"]:
             if len(text_entity) > 2 and text_entity not in traits:
                 traits.append(text_entity)
     
-    # Merge gene results (Claude + GLiNER)
-    merged_genes = claude_genes + [gene for gene in gliner_genes if gene not in claude_genes]
+    # Merge gene results (Claude + GLiNER + Flair)
+    all_genes = claude_genes + gliner_genes + flair_result["genes"]
+    merged_genes = list(dict.fromkeys(all_genes))  # Remove duplicates while preserving order
     
-    # Remove duplicates while preserving order
-    merged_genes = list(dict.fromkeys(merged_genes))
-    traits = list(dict.fromkeys(traits))
+    # Merge trait results (GLiNER + Flair)
+    all_traits = traits + flair_result["traits"]
+    merged_traits = list(dict.fromkeys(all_traits))  # Remove duplicates while preserving order
     
     if DEBUG:
         print(f"[_extract_entities_merged] Claude genes: {claude_genes}")
         print(f"[_extract_entities_merged] GLiNER genes: {gliner_genes}")
+        print(f"[_extract_entities_merged] Flair genes: {flair_result['genes']}")
         print(f"[_extract_entities_merged] Merged genes: {merged_genes}")
         print(f"[_extract_entities_merged] GLiNER traits: {traits}")
+        print(f"[_extract_entities_merged] Flair diseases/traits: {flair_result['traits']}")
+        print(f"[_extract_entities_merged] Merged traits: {merged_traits}")
         print(f"[_extract_entities_merged] All entity types: {list(all_entities.keys())}")
     
     return {
         "genes": merged_genes,
         "all_entities": all_entities,
-        "traits": traits
+        "traits": merged_traits
     }
 
 
@@ -216,6 +295,33 @@ def gliner_entity_extraction_node(state: "State") -> "State":
     
     return {"entities": entities_by_type}
 
+
+def flair_entity_extraction_node(state: "State") -> "State":
+    """
+    Extract entities using FLAIR model.
+    Filters for gene, disease, and trait entities, merging disease and trait into one category.
+    
+    Returns
+    -------
+    State
+        Updated state with:
+        - "genes": List of gene entities from Flair
+        - "diseases_traits": List of disease and trait entities merged from Flair
+    """
+    user_input: str = state["messages"][-1]["content"]
+    
+    # Extract entities using Flair
+    flair_result = _extract_entities_with_flair(user_input)
+    
+    if DEBUG:
+        print(f"[flair_entity_extraction_node] extracted genes: {flair_result['genes']}")
+        print(f"[flair_entity_extraction_node] extracted diseases/traits: {flair_result['traits']}")
+    
+    return {
+        "genes": flair_result["genes"],
+        "traits": flair_result["traits"]
+    }
+    
 
 def has_genes(state: "State") -> bool:
     """
