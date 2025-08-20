@@ -24,7 +24,6 @@ def _process_dbsnp_variants(state: "State") -> "State":
     for variant_id in state.keys():
         for annotation_i in state[variant_id]["annotations"]:
             annotation_i.pop("matches")
-    import ipdb; ipdb.set_trace()
     return state
 
 # Data aggregation helpers
