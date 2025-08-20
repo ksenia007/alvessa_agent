@@ -19,6 +19,14 @@ from state import State
 import re
 
 
+def _process_dbsnp_variants(state: "State") -> "State":
+    """Process dbSNP variants to remove the `matches` field that is populated by gencode which is too verbose."""
+    for variant_id in state.keys():
+        for annotation_i in state[variant_id]["annotations"]:
+            annotation_i.pop("matches")
+    import ipdb; ipdb.set_trace()
+    return state
+
 # Data aggregation helpers
 def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
     """Extract all data for a single gene from state."""
@@ -41,7 +49,7 @@ def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
         ("Gene expression context of the genes, gives context for the ranges of variants that *could* be observed in this gene:", "humanbase_expecto", lambda data: data.get('summary_text')),
         ("Per variant gene expression modulation predictions, linked to variants of interest. Note that it is z-scored to 1000Genomes, so values below 1 are a fairly small effect:", "tissue_expression_preds_variant_text_description", lambda txt: txt if isinstance(txt, str) and txt.strip() else None),
         ("Pathogenicity predictions for each missense variant of interest. Computed through AlphaMissense, which predicts the likelihood that missense variants (genetic mutations where a single amino acid in a protein is changed) can cause disease", "alphamissense_predictions"),
-        ("dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)", "dbsnp_variants"),
+        ("dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)", "dbsnp_variants", _process_dbsnp_variants),
         ("dbSNP variant summary (rare vs common variants, chromosomes, assembly info)", "dbsnp_summaries")
     ]
     
