@@ -382,7 +382,6 @@ class GWASQueryEngine:
                 
             # Create comprehensive variant record
             variant_record = {
-                'variant_id': variant_id,
                 'chromosome': variant.get('chromosome'),
                 'position': variant.get('position'),
                 'region': variant.get('region'),
@@ -391,15 +390,10 @@ class GWASQueryEngine:
                 'is_intergenic': variant.get('is_intergenic'),
                 'risk_allele': variant.get('risk_allele'),
                 'risk_allele_frequency': variant.get('risk_allele_frequency'),
-                'upstream_gene_id': variant.get('upstream_gene_id'),
-                'downstream_gene_id': variant.get('downstream_gene_id'),
-                'upstream_distance': variant.get('upstream_distance'),
-                'downstream_distance': variant.get('downstream_distance'),
                 'mapped_gene': variant.get('mapped_gene'),
                 'p_value': variant.get('p_value'),
-                'or_beta': variant.get('or_beta'),
                 'risk_score': variant.get('risk_score'),
-                'disease_trait': variant.get('disease_trait')
+                'associated_disease_trait': variant.get('disease_trait')
             }
             
             # If variant already exists, keep the one with better risk score
@@ -417,14 +411,14 @@ class GWASQueryEngine:
             return {
                 "related_genes": genes,
                 "high_risk_snps": snps,
-                "proteins": proteins,
-                "disease_traits": traits
+                "affected_protein_levels": proteins,
+                "associated_disease_traits": traits
             }
         return {
-            "gwas_related_genes": genes,
-            "gwas_high_risk_snps": snps,
-            "gwas_affected_protein_levels": proteins,
-            "gwas_disease_traits": traits
+            "related_genes": genes,
+            "high_risk_snps": snps,
+            "affected_protein_levels": proteins,
+            "associated_disease_traits": traits
         }
     
     def _format_gene_results(self, results: Dict) -> Dict:
@@ -456,8 +450,8 @@ class GWASQueryEngine:
         ] if k in results}
         
         filtered_results["gwas_linked_genes"] = set([
-            *results["summary_by_high_risk_alleles"]["gwas_related_genes"],
-            *results["summary_by_significance"]["gwas_related_genes"]
+            *results["summary_by_high_risk_alleles"]["related_genes"],
+            *results["summary_by_significance"]["related_genes"]
         ])
         return filtered_results
     
