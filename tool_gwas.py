@@ -15,18 +15,16 @@ def _create_empty_association_record(identifier: str, is_gene: bool = True) -> D
         "total_significant_associations": 0,
         "total_studies_analyzed": 0,
         "summary_by_high_risk_alleles": {
-            "related_genes": [] if is_gene else [],
-            "gwas_related_genes": [] if not is_gene else [],
+            "related_genes": [],
             "high_risk_snps": [],
-            "proteins": [],
-            "disease_traits": []
+            "affected_protein_levels": [],
+            "associated_disease_traits": []
         },
         "summary_by_significance": {
-            "related_genes": [] if is_gene else [],
-            "gwas_related_genes": [] if not is_gene else [],
+            "related_genes": [],
             "high_risk_snps": [],
-            "proteins": [],
-            "disease_traits": []
+            "affected_protein_levels": [],
+            "associated_disease_traits": []
         },
         "variant_annotations": {}
     }
@@ -103,9 +101,9 @@ def _log_query_result(query_type: str, identifier: str, result: Dict[str, Any],
         studies = result.get("total_studies_analyzed", 0)
         
         if query_type == "gene":
-            raw_variants_count = len(result.get("summary_by_high_risk_alleles", {}).get("raw_variants", {}))
+            variant_count = len(result.get("summary_by_high_risk_alleles", {}).get("variant_annotations", {}))
             print(f"[GWAS] {identifier}: found, {total_assoc} total associations, "
-                  f"{significant_assoc} significant, {studies} studies, {raw_variants_count} raw variants")
+                  f"{significant_assoc} significant, {studies} studies, {variant_count} variant annotations")
         else:  # trait
             genes_found = len(related_genes) if related_genes else 0
             print(f"[query_by_trait_agent] Found: {total_assoc} total associations, "
@@ -163,8 +161,22 @@ def gwas_associations_agent(state: "State") -> "State":
                     "total_studies_analyzed": result.get("total_studies_analyzed", 0),
                     "summary_by_high_risk_alleles": result.get("summary_by_high_risk_alleles", {}),
                     "summary_by_significance": result.get("summary_by_significance", {}),
-                    "variant_annotations": result.get("variant_annotations", {})
+
                 }
+                # Extract variant_annotations from both summary sections
+                risk_variants = result.get("summary_by_high_risk_alleles", {}).get("variant_annotations", {})
+                sig_variants = result.get("summary_by_significance", {}).get("variant_annotations", {})
+                
+                # Combine variant annotations from both sections
+                all_variants = {}
+                all_variants.update(risk_variants)
+                all_variants.update(sig_variants)
+                associations[gene]["variant_annotations"] = all_variants
+                
+                # Pop out the variant annotations from summary_by_high_risk_alleles, and from summary_by_significance
+                associations[gene]["summary_by_high_risk_alleles"].pop("variant_annotations", None)
+                associations[gene]["summary_by_significance"].pop("variant_annotations", None)
+                
                 _log_query_result("gene", gene, result)
             else:
                 associations[gene] = _create_empty_association_record(gene, is_gene=True)
@@ -234,8 +246,17 @@ def query_by_trait_agent(state: "State") -> "State":
             "total_studies_analyzed": result.get("total_studies_analyzed", 0),
             "summary_by_high_risk_alleles": result.get("summary_by_high_risk_alleles", {}),
             "summary_by_significance": result.get("summary_by_significance", {}),
-            "variant_annotations": result.get("variant_annotations", {})
         }
+        
+        # Extract variant_annotations from both summary sections
+        risk_variants = result.get("summary_by_high_risk_alleles", {}).get("variant_annotations", {})
+        sig_variants = result.get("summary_by_significance", {}).get("variant_annotations", {})
+        
+        # Combine variant annotations from both sections
+        all_variants = {}
+        all_variants.update(risk_variants)
+        all_variants.update(sig_variants)
+        trait_associations["variant_annotations"] = all_variants
         
         # Extract genes for downstream processing
         related_genes = _extract_genes_from_trait_result(result)
