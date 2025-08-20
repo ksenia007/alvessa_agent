@@ -428,6 +428,12 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
       const pushOne = s => { if (s && typeof s === "string") out.add(s); };
       const pushMany = a => { if (Array.isArray(a)) a.forEach(pushOne); };
   
+      // Handle new nested format: associated_disease_trait: { trait_name: { p_value, risk_score } }
+      if (v?.associated_disease_trait && typeof v.associated_disease_trait === "object") {
+        Object.keys(v.associated_disease_trait).forEach(pushOne);
+      }
+      
+      // Handle legacy formats for compatibility
       if (Array.isArray(v?.disease_trait)) pushMany(v.disease_trait); else pushOne(v?.disease_trait);
       if (Array.isArray(v?.traits)) pushMany(v.traits); else pushOne(v?.trait);
       if (Array.isArray(v?.phenotypes)) pushMany(v.phenotypes); else pushOne(v?.phenotype);
@@ -442,7 +448,24 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
     },
   
     extractP(v){
-      const raw = (v?.p_value ?? v?.p ?? null);
+      // First check direct p_value (legacy format)
+      let raw = (v?.p_value ?? v?.p ?? null);
+      
+      // If not found, check the new nested format: associated_disease_trait: { trait_name: { p_value, risk_score } }
+      if (raw == null && v?.associated_disease_trait && typeof v.associated_disease_trait === "object") {
+        // Get the best (lowest) p_value from all disease traits
+        let bestP = null;
+        for (const traitData of Object.values(v.associated_disease_trait)) {
+          if (traitData?.p_value != null) {
+            const p = traitData.p_value;
+            if (bestP == null || p < bestP) {
+              bestP = p;
+            }
+          }
+        }
+        raw = bestP;
+      }
+      
       if (typeof raw === "number") return raw;
       if (raw == null) return null;
       const p = parseFloat(String(raw));
@@ -450,7 +473,24 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
     },
   
     extractORBeta(v){
-      const cand = v?.or_beta ?? v?.OR ?? v?.or ?? v?.beta ?? null;
+      // First check direct or_beta (legacy format)
+      let cand = v?.or_beta ?? v?.OR ?? v?.or ?? v?.beta ?? null;
+      
+      // If not found, check the new nested format for risk_score
+      if (cand == null && v?.associated_disease_trait && typeof v.associated_disease_trait === "object") {
+        // Get the best (highest) risk_score from all disease traits
+        let bestRisk = null;
+        for (const traitData of Object.values(v.associated_disease_trait)) {
+          if (traitData?.risk_score != null) {
+            const risk = traitData.risk_score;
+            if (bestRisk == null || risk > bestRisk) {
+              bestRisk = risk;
+            }
+          }
+        }
+        cand = bestRisk;
+      }
+      
       return (typeof cand === "number") ? cand : null;
     },
   
@@ -848,6 +888,13 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
     const add = s => { if (s && typeof s === "string") out.add(s); };
     const addMany = a => { if (Array.isArray(a)) a.forEach(add); };
     if (!v) return [];
+    
+    // Handle new nested format: associated_disease_trait: { trait_name: { p_value, risk_score } }
+    if (v?.associated_disease_trait && typeof v.associated_disease_trait === "object") {
+      Object.keys(v.associated_disease_trait).forEach(add);
+    }
+    
+    // Handle legacy formats for compatibility
     addMany(v?.disease_trait); add(v?.disease_trait);
     addMany(v?.traits); add(v?.trait);
     addMany(v?.phenotypes); add(v?.phenotype);
@@ -857,7 +904,24 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
   };
   const extractP = (v) => {
     if (window.GWAS?.extractP) return GWAS.extractP(v);
-    const raw = (v?.p_value ?? v?.p ?? null);
+    // First check direct p_value (legacy format)
+    let raw = (v?.p_value ?? v?.p ?? null);
+    
+    // If not found, check the new nested format: associated_disease_trait: { trait_name: { p_value, risk_score } }
+    if (raw == null && v?.associated_disease_trait && typeof v.associated_disease_trait === "object") {
+      // Get the best (lowest) p_value from all disease traits
+      let bestP = null;
+      for (const traitData of Object.values(v.associated_disease_trait)) {
+        if (traitData?.p_value != null) {
+          const p = traitData.p_value;
+          if (bestP == null || p < bestP) {
+            bestP = p;
+          }
+        }
+      }
+      raw = bestP;
+    }
+    
     if (typeof raw === "number") return raw;
     if (raw == null) return null;
     const n = parseFloat(String(raw));
