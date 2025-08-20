@@ -27,7 +27,7 @@ import json
 
 
 
-def run_pipeline(user_message: str) -> Dict:
+def run_pipeline(user_message: str, prompt: str = '', run_verifier=True) -> Dict:
     """
     Execute the LangGraph workflow on a single user prompt.
 
@@ -42,7 +42,8 @@ def run_pipeline(user_message: str) -> Dict:
         Final LangGraph state for inspection.
     """
     graph = build_graph()
-    state = graph.invoke({"messages": [{"role": "user", "content": user_message}]})
+    state = graph.invoke({"messages": [{"role": "user", "content": user_message}], 
+                          "prompt": prompt, 'run_verifier': run_verifier})
     return state
 
 

@@ -1043,7 +1043,7 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
               };
       
               expectoDetailHtml = `
-                <div class="muted">Expecto (tissue expression disruption)</div>
+                <div class="muted">ExpectoSC (cell-type specific expression disruption)</div>
                 ${coord ? `<div class="mono" style="margin:2px 0 6px;">${coord}</div>` : ""}
                 <div>n_tissues: ${escapeHtml(String(n_t))} • mean: ${mean} • median: ${median} • min: ${min_s} • max: ${max_s} • std: ${std_s}</div>
                 ${ex.relative_effect ? `<div style="margin-top:4px;">relative effect: ${escapeHtml(String(ex.relative_effect))}</div>` : ""}
@@ -1091,7 +1091,7 @@ const headerCols = `
   <th>Category</th>
   <th>Mapped gene</th>
   ${hasSeiCol ? '<th>SEI</th>' : ''}
-  ${hasExpectoCol ? '<th class="wrap">Expecto</th>' : ''}
+  ${hasExpectoCol ? '<th class="wrap">ExpectoSC</th>' : ''}
   ${hasAmCol ? '<th>AlphaMissense</th>' : ''}
   <th class="wrap">GWAS traits</th>
 `;

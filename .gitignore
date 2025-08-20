@@ -8,3 +8,4 @@ images/video_demo
 benchmarks_generation/results/
 benchmarks_generation/*.csv
 benchmarks_generation/*/*.csv
+benchmarks_generation/*/*.parquet

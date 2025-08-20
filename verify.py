@@ -29,6 +29,12 @@ def verify_evidence_node(state: "State") -> "State":
     """
     if DEBUG:
         print("[verify_evidence_node] preparing verification...")
+        
+    # check that run_verifier is not False
+    if not state.get("run_verifier", True):
+        if DEBUG:
+            print("[verify_evidence_node] run_verifier is False, skipping verification.")
+        return {"messages": [], "verification": "pass"}
 
     reply: Dict[str, Any] = state["llm_json"]
     context: str = state["context_block"]

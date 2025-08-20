@@ -138,14 +138,17 @@ def conditioned_claude_node(state: "State") -> "State":
     
     # Generate Claude response
     user_question = state["messages"][-1]["content"]
-    system_msg = (
-        "You are a biology data analyst. Answer strictly with facts you can "
-        "point to inside CONTEXT. Respond only with JSON with keys answer and evidence. Ensure proper JSON format. "
-        "Produce raw json output. I don't want markdown. "
-        "The 'evidence' field must always be a list of short strings, and always reference the entity to which you are referring. "
-        "If the CONTEXT contains trait-based associations (query_type: 'trait_based'), focus on the genetic associations "
-        "with the queried trait/disease, including related genes, variants, and their biological significance."
-    )
+    system_msg = state.get('prompt', '')    
+    
+    if len(system_msg)<2:
+        system_msg = (
+            "You are a biology data analyst. Answer strictly with facts you can "
+            "point to inside CONTEXT. Respond only with JSON with keys answer and evidence. Ensure proper JSON format. "
+            "Produce raw json output. I don't want markdown. "
+            "The 'evidence' field must always be a list of short strings, and always reference the entity to which you are referring. "
+            "If the CONTEXT contains trait-based associations (query_type: 'trait_based'), focus on the genetic associations "
+            "with the queried trait/disease, including related genes, variants, and their biological significance."
+        )
     
     if DEBUG:
         print(f"[conditioned_claude_node] system message: {system_msg}")
@@ -168,6 +171,15 @@ def conditioned_claude_node(state: "State") -> "State":
         llm_resp = re.sub(r"^```(?:json)?\s*|\s*```$", "", llm_resp.strip(), flags=re.DOTALL).strip()
 
     
+    # if we did not run verifier there is no json, just one letter
+    if state.get("run_verifier", True) is False:
+        if DEBUG:
+            print("[conditioned_claude_node] Skipping JSON parsing due to run_verifier=False")
+        return {
+            "messages": [{"role": "assistant", "content": llm_resp}],
+            "context_block": context_block,
+            "llm_json": {'answer':llm_resp, 'evidence': None}
+        }
     try:
         parsed_resp = json.loads(llm_resp) if isinstance(llm_resp, str) else llm_resp
     except Exception as exc:
