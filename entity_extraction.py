@@ -213,7 +213,8 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
     all_traits = traits + flair_result["traits"]
     merged_traits = list(dict.fromkeys(all_traits))  # Remove duplicates while preserving order
     
-    # Hack: If there's a comma in the merged genes, split them into separate genes
+    # Gene filtering
+    # Condition 1: If there's a comma in the merged genes, split them into separate genes
     for gene in merged_genes:
         if "," in gene:
             genes = gene.split(",")
@@ -225,6 +226,15 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
             traits = trait.split(",")
             merged_traits.remove(trait)
             merged_traits.extend(traits)
+            
+    # Condition 2: if a gene has "no gene" in it, remove it
+    merged_genes = [gene for gene in merged_genes if "no gene" not in gene]
+    
+    # Condition 3: if a gene is >20 characters, remove it
+    merged_genes = [gene for gene in merged_genes if len(gene) <= 20]
+    
+    # Condition 4: if gene == "miRNA", remove it
+    merged_genes = [gene for gene in merged_genes if gene != "miRNA"]
     
     if DEBUG:
         print(f"[_extract_entities_merged] Claude genes: {claude_genes}")
