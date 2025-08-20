@@ -38,7 +38,7 @@ def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
         ("gene_ontology_terms_of_interacting_genes", "biogrid_summarized_go"),
         ("Interacting genes based on BioGRID curated database", "biogrid_predictions"),
         ("Associated Reactome pathways (curated biological pathways which describe how molecules interact within a cell to carry out different biological processes)", "reactome_pathways"),
-        #("gwas_associations", "gwas_associations"),
+        ("Contains GWAS associations and their statistical significance (to traits, protein levels etc.) for the gene and its variants. Returns associations that are high-risk or high-signifiance or both.", "gwas_associations"),
         ("uniprot_entries_base", "uniprot_entries_base", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
         ("uniprot_entries_gwas", "uniprot_entries_gwas", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
         ("Regulatory activity role for the regions where variants were found. Defined computationally through Sei, a deep learning model that predicts transcription factors, histone marks and dnase, though clustering prediction over the genome and then assinging values. Reperesents role of the region", "sei_predictions"),
@@ -109,7 +109,7 @@ def conditioned_claude_node(state: "State") -> "State":
     # Build gene-based context
     gene_list = list(set(state.get("genes", [])))
     context_payload = [_extract_gene_data(state, gene) for gene in gene_list]
-    
+
     if DEBUG:
         print(f"[conditioned_claude_node] genes to summarize: {gene_list}")
     
