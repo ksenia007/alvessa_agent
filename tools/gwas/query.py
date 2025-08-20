@@ -306,7 +306,7 @@ class GWASQueryEngine:
                          is_gene_query: bool) -> Dict:
         gene_scores, trait_scores, snp_scores = {}, {}, {}
         proteins = set()
-        raw_variants = {}  # Dictionary to store raw variant information
+        variant_annotations = {}  # Dictionary to store raw variant information
         
         for study in studies:
             study_risk = study.get('max_risk', 0)
@@ -316,7 +316,7 @@ class GWASQueryEngine:
             self._collect_scores(study['disease_traits'], trait_scores, study_risk, study_pval)
             self._extract_proteins_from_traits(study['disease_traits'], proteins)
             self._collect_snp_scores(study['risk_alleles'], snp_scores)
-            self._collect_raw_variants(study['risk_alleles'], raw_variants)
+            self._collect_variant_annotations(study['risk_alleles'], variant_annotations)
         
         sorted_genes = self._sort_by_scores(gene_scores, sort_by_risk)
         sorted_traits = self._sort_by_scores(trait_scores, sort_by_risk)
@@ -332,7 +332,7 @@ class GWASQueryEngine:
                 sorted_genes = [sorted_genes[i] for i in fps_indices]
         
         summary = self._format_summary(sorted_genes, sorted_snps, sorted(proteins), sorted_traits, is_gene_query)
-        summary["variant_annotations"] = raw_variants  # Include raw variant data
+        summary["variant_annotations"] = variant_annotations  # Include raw variant data
         return summary
     
     def _collect_scores(self, items: List[str], scores_dict: Dict, study_risk: float, study_pval: float):
@@ -373,14 +373,18 @@ class GWASQueryEngine:
         sort_key = (lambda x: scores_dict[x]['risk_score']) if sort_by_risk else (lambda x: scores_dict[x]['best_pvalue'])
         return sorted(scores_dict.keys(), key=sort_key, reverse=sort_by_risk)
     
-    def _collect_raw_variants(self, risk_alleles: List[Dict], raw_variants: Dict):
+    def _collect_variant_annotations(self, risk_alleles: List[Dict], variant_annotations: Dict):
         """Collect raw variant information keyed by variant ID for downstream processing."""
         for variant in risk_alleles:
             variant_id = variant.get('snp')
             if not variant_id:
                 continue
                 
-            # Create comprehensive variant record
+            disease_trait = variant.get('disease_trait')
+            if not disease_trait:
+                continue
+                
+            # Create comprehensive variant record with new nested format
             variant_record = {
                 'chromosome': variant.get('chromosome'),
                 'position': variant.get('position'),
@@ -391,19 +395,20 @@ class GWASQueryEngine:
                 'risk_allele': variant.get('risk_allele'),
                 'risk_allele_frequency': variant.get('risk_allele_frequency'),
                 'mapped_gene': variant.get('mapped_gene'),
-                'p_value': variant.get('p_value'),
-                'risk_score': variant.get('risk_score'),
-                'associated_disease_trait': variant.get('disease_trait')
+                'associated_disease_trait': {
+                    disease_trait: {
+                        'p_value': variant.get('p_value'),
+                        'risk_score': variant.get('risk_score')
+                    }
+                }
             }
             
-            # If variant already exists, keep the one with better risk score
-            if variant_id in raw_variants:
-                existing_risk = raw_variants[variant_id].get('risk_score', 0)
-                new_risk = variant_record.get('risk_score', 0)
-                if new_risk > existing_risk:
-                    raw_variants[variant_id] = variant_record
+            # If variant already exists, merge all disease traits
+            if variant_id in variant_annotations:
+                new_trait_data = variant_record['associated_disease_trait']
+                variant_annotations[variant_id]['associated_disease_trait'].update(new_trait_data)
             else:
-                raw_variants[variant_id] = variant_record
+                variant_annotations[variant_id] = variant_record
     
     def _format_summary(self, genes: List[str], snps: List[str], proteins: List[str], 
                        traits: List[str], is_gene_query: bool) -> Dict:
@@ -478,7 +483,7 @@ if __name__ == "__main__":
     print(f"Gene {gene}: Found={results['found']}, Associations={results['total_associations']}")
     
     if results['found']:
-        raw_variants = results['summary_by_high_risk_alleles']['raw_variants']
+        raw_variants = results['summary_by_high_risk_alleles']['variant_annotations']
         print(f"  Raw variants collected: {len(raw_variants)}")
         
         # Show sample raw variant records
@@ -487,7 +492,11 @@ if __name__ == "__main__":
             print(f"  Variant {variant_id}:")
             print(f"    Location: chr{variant_data['chromosome']}:{variant_data['position']}")
             print(f"    Context: {variant_data['context']} ({variant_data['variant_category']})")
-            print(f"    Risk allele: {variant_data['risk_allele']}, Score: {variant_data['risk_score']:.2f}")
+            print(f"    Risk allele: {variant_data['risk_allele']}")
+            trait_count = len(variant_data['associated_disease_trait'])
+            print(f"    Associated disease traits ({trait_count} total):")
+            for trait, trait_data in variant_data['associated_disease_trait'].items():
+                print(f"      {trait}: p_value={trait_data['p_value']}, risk_score={trait_data['risk_score']}")
     
     print("\n" + "="*50)
     
@@ -497,7 +506,7 @@ if __name__ == "__main__":
     print(f"Trait '{trait}': Found={trait_results['found']}, Associations={trait_results['total_associations']}")
     
     if trait_results['found']:
-        raw_variants = trait_results['summary_by_high_risk_alleles']['raw_variants']
+        raw_variants = trait_results['summary_by_high_risk_alleles']['variant_annotations']
         print(f"  Raw variants collected: {len(raw_variants)}")
         
         # Show variant categories distribution
@@ -507,12 +516,22 @@ if __name__ == "__main__":
             categories[cat] = categories.get(cat, 0) + 1
         print(f"  Category distribution: {categories}")
         
-        # Show sample high-risk variants
+        # Show sample high-risk variants - need to get max risk score from disease traits
+        def get_max_risk_score(variant_data):
+            max_risk = 0
+            for trait_data in variant_data.get('associated_disease_trait', {}).values():
+                max_risk = max(max_risk, trait_data.get('risk_score', 0) or 0)
+            return max_risk
+        
         high_risk_variants = sorted(raw_variants.items(), 
-                                  key=lambda x: x[1]['risk_score'] or 0, reverse=True)[:3]
+                                  key=lambda x: get_max_risk_score(x[1]), reverse=True)[:3]
         print(f"  Top risk variants:")
         for variant_id, variant_data in high_risk_variants:
+            trait_count = len(variant_data['associated_disease_trait'])
             print(f"    {variant_id}: chr{variant_data['chromosome']}:{variant_data['position']}")
-            print(f"      {variant_data['context']}, Risk: {variant_data['risk_score']:.2f}")
+            print(f"      {variant_data['context']}, Max Risk: {get_max_risk_score(variant_data):.2f}")
+            print(f"      Associated with {trait_count} disease traits:")
+            for trait, trait_data in variant_data['associated_disease_trait'].items():
+                print(f"        {trait}: risk_score={trait_data['risk_score']:.2f}, p_value={trait_data['p_value']}")
     
     print(f"\n  Raw variant structure (keys): {list(raw_variants[list(raw_variants.keys())[0]].keys()) if raw_variants else 'No variants'}")
