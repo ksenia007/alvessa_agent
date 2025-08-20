@@ -64,6 +64,65 @@ def _create_frequency_summary(allele_frequencies: List[Dict[str, Any]]) -> str:
             f"{bottom1} and {bottom2}, to as high as {top1} and {top2}.")
 
 
+
+def _create_af_summary_sorted_by_counts(allele_frequencies: List[Dict[str, Any]]) -> str:
+    """
+    Generates a summary of allele frequencies from studies that are first sorted
+    by their sample size (total_count). This highlights the frequencies observed
+    in the smallest and largest available cohorts.
+    """
+    if not allele_frequencies:
+        return "No allele frequency data is available."
+
+    # Filter for valid entries that have all required keys for sorting and reporting
+    valid_data = [
+        f for f in allele_frequencies
+        if ('total_count' in f) and ('study_name' in f) and ('allele_frequency' in f)
+    ]
+    
+    if not valid_data:
+        return "No studies with complete allele frequency and total count data were found."
+        
+    # Sort all valid observations by total_count (sample size)
+    sorted_by_counts = sorted(valid_data, key=lambda x: x['total_count'])
+    count = len(sorted_by_counts)
+    
+    # Helper function to format the output string
+    # It reports the allele frequency but includes the sample size for context
+    def format_obs(entry):
+        af = entry['allele_frequency']
+        study = entry.get('study_name', 'N/A')
+        n = entry['total_count']
+        return f"{af:.4f} in {study} (n={n:,})"
+
+    # Handle cases with few observations
+    if count == 1:
+        return f"The only available study reports a frequency of {format_obs(sorted_by_counts[0])}."
+    if count == 2:
+        # sorted_by_counts[0] is the smaller cohort, [1] is the larger
+        return (f"The allele frequency is {format_obs(sorted_by_counts[0])} in the smaller cohort and "
+                f"{format_obs(sorted_by_counts[1])} in the larger one.")
+    if count == 3:
+        return (f"From three cohorts sorted by size, the reported allele frequencies are "
+                f"{format_obs(sorted_by_counts[0])} (smallest), "
+                f"{format_obs(sorted_by_counts[1])} (medium), and "
+                f"{format_obs(sorted_by_counts[2])} (largest).")
+
+    # Handle the main case for 4 or more observations
+    # Get the studies with the two smallest sample sizes
+    bottom1 = format_obs(sorted_by_counts[0])
+    bottom2 = format_obs(sorted_by_counts[1])
+    # Get the studies with the two largest sample sizes
+    top1 = format_obs(sorted_by_counts[-2])
+    top2 = format_obs(sorted_by_counts[-1])
+    
+    num_unique_studies = len(set(f.get("study_name") for f in sorted_by_counts))
+    
+    return (f"From {count} observations across {num_unique_studies} studies sorted by sample size, "
+            f"the reported allele frequencies range from {bottom1} and {bottom2} in the smallest cohorts, "
+            f"to {top1} and {top2} in the largest cohorts.")
+    
+
 def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
     """
     LangGraph node that annotates SNPs with dbSNP variant information.
@@ -157,11 +216,12 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
             
             coord_summary = _create_coordinate_summary(rsid, data.get("coordinates", []))
             freq_summary = _create_frequency_summary(data.get("allele_frequencies", []))
+            freq_summary_sorted_by_counts = _create_af_summary_sorted_by_counts(data.get("allele_frequencies", []))
             
             # Combine into a final summary object for this variant
             dbsnp_summaries[gene][rsid] = {
                 "rsid": rsid,
-                "summary": f"{coord_summary}. {freq_summary}"
+                "summary": f"{coord_summary}. {freq_summary} {freq_summary_sorted_by_counts}"
             }
     # Pop allele frequencies from variants
     for gene, gene_variants in variants.items():
