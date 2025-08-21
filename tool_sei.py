@@ -44,7 +44,7 @@ def sei_predictions_agent(state: "State") -> "State":
             seq_class_names = [line.strip() for line in f]
     except Exception as e:
         warnings.warn(f"Failed to load required files: {e}. Cannot run SEI predictions.")
-        return {**state, "sei_predictions": preds}
+        return {"sei_predictions": preds}
 
     state_all_snps = {}
 
@@ -63,9 +63,7 @@ def sei_predictions_agent(state: "State") -> "State":
 
                         if 'GRCh38' in assembly:
                             if all(x is not None for x in [chrom, pos]):
-                                print(var)
-                                print(chrom)
-                                print(pos)
+                                print("[SEI] Running for " + var + " in " + gene, "with coordinates: " + chrom + ":" + str(pos))
                                 state_all_snps[gene][var] = [chrom, pos]
                                 print(state_all_snps[gene][var])
                                 break
@@ -121,7 +119,7 @@ def sei_predictions_agent(state: "State") -> "State":
                 warnings.warn(f"Failed to process prediction for {gene} variant {var_id}: {e}")
                 preds[gene][var_id] = None
 
-    print(preds)
+    print("[SEI] Predictions: ", preds)
     time.sleep(0.3)  # courteous pause
 
     return {

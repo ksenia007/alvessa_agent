@@ -123,7 +123,7 @@ def _create_af_summary_sorted_by_counts(allele_frequencies: List[Dict[str, Any]]
             f"to {top1} and {top2} in the largest cohorts.")
     
 
-def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
+def dbsnp_variants_agent(state: "State", assembly: str = None, include_population_summaries: bool = False) -> "State":
     """
     LangGraph node that annotates SNPs with dbSNP variant information.
     Extracts rsIDs from GWAS associations and queries dbSNP for each variant.
@@ -140,19 +140,7 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
         print(f"[dbSNP] Found {sum(len(v) for v in rsids.values())} total rsIDs to query across genes.")
     
     for gene, gene_rsids in rsids.items():
-        if gene in variants:
-            if DEBUG:
-                print(f"[dbSNP] Skipping {gene} - already processed")
-            continue
-
-        variants[gene] = {}
-        
         for rsid in gene_rsids:
-            if rsid in variants[gene]:
-                if DEBUG:
-                    print(f"[dbSNP] Skipping {rsid} - already processed")
-                continue
-
             if DEBUG:
                 print(f"[dbSNP] Querying variant information for: {rsid}")
 
@@ -161,7 +149,8 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
                 allele_frequencies = result.get("allele_frequencies", [])
                 coordinates = result.get("coordinates", [])
                 
-                variants[gene][rsid] = {
+                # Merge with existing variant data (preserve GWAS data)
+                variants[gene][rsid].update({
                     "rsid": result.get("rsid", rsid),
                     "found": True,
                     "coordinates": coordinates,
@@ -171,7 +160,7 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
                     "frequency_study_count": len(allele_frequencies),
                     "frequency_studies": [freq.get("study_name", "Unknown") for freq in allele_frequencies],
                     "assembly_filter": result.get("assembly_filter", assembly)
-                }
+                })
                 
                 if DEBUG:
                     print(f"[dbSNP] {rsid}: {len(coordinates)} coords, {len(allele_frequencies)} studies")
@@ -195,15 +184,16 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
             except Exception as exc:
                 if DEBUG:
                     print(f"[dbSNP] Error querying {rsid}: {exc}")
-                variants[gene][rsid] = {
+                # Merge error info with existing variant data
+                variants[gene][rsid].update({
                     "rsid": rsid, "found": False, "coordinates": [], "coordinate_count": 0,
                     "chromosomes": [], "allele_frequencies": [], "frequency_study_count": 0,
                     "frequency_studies": [], "error": str(exc)
-                }
+                })
             time.sleep(0.1)
 
     # Generate new, improved per-variant summaries from the detailed variant data
-    dbsnp_summaries = {}
+    dbsnp_summaries = state.get("dbsnp_summaries", {}).copy()
     for gene, gene_variants in variants.items():
         if not gene_variants:
             continue
@@ -223,6 +213,7 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
                 "rsid": rsid,
                 "summary": f"{coord_summary}. {freq_summary} {freq_summary_sorted_by_counts}"
             }
+
     # Pop allele frequencies from variants
     for gene, gene_variants in variants.items():
         for rsid, data in gene_variants.items():
@@ -230,19 +221,32 @@ def dbsnp_variants_agent(state: "State", assembly: str = None) -> "State":
             data.pop("frequency_study_count", None)
             data.pop("frequency_studies", None)
 
-    return {"dbsnp_variants": variants, "dbsnp_summaries": dbsnp_summaries}
+    if include_population_summaries:
+        return {"dbsnp_variants": variants, "dbsnp_summaries": dbsnp_summaries}
+    else:
+        return {"dbsnp_variants": variants}
+
 
 
 def _extract_rsids_from_gwas(state: "State") -> Dict[str, Set[str]]:
-    """Extracts unique rsIDs from GWAS associations in the state, grouped by gene."""
+    """Extracts unique rsIDs from GWAS variant data in the state, grouped by gene."""
     rsids_by_gene = {}
-    associations = state.get("gwas_associations", {})
     
+    # Get rsIDs directly from the dbsnp_variants structure populated by GWAS
+    dbsnp_variants = state.get("dbsnp_variants", {})
+    for gene, variants in dbsnp_variants.items():
+        if variants:  # If there are variants for this gene
+            gene_rsids = set(variants.keys())  # rsIDs are the keys
+            if gene_rsids:
+                rsids_by_gene[gene] = gene_rsids
+    
+    # Extract rsIDs from text in GWAS summaries if needed –– likely redundant
+    associations = state.get("gwas_associations", {})
     for gene, data in associations.items():
         if not data.get("found", False):
             continue
         
-        gene_rsids = set()
+        gene_rsids = rsids_by_gene.get(gene, set())
         for summary_key in ["summary_by_high_risk_alleles", "summary_by_significance"]:
             summary = data.get(summary_key, {})
             snps = summary.get("high_risk_snps", [])
