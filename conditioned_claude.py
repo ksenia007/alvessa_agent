@@ -22,6 +22,7 @@ import re
 # Data aggregation helpers
 def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
     """Extract all data for a single gene from state."""
+
     gene_info = {"gene": gene}
     
     # Define data sources with their state keys and optional processing
@@ -29,7 +30,9 @@ def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
         ("diseases", "gene_disease_traits"),
         ("functions", "humanbase_predictions", lambda hits: [hit["term"] for hit in hits if "term" in hit][:30]),
         ("gene_ontology_terms_of_interacting_genes", "biogrid_summarized_go"),
-        ("Interacting genes based on BioGRID curated database", "biogrid_predictions"),
+        # ("Interacting genes based on BioGRID curated database", "biogrid_predictions"),
+        ("Interacting human genes based on BioGRID curated database, organized by experimental system", "biogrid_interaction_groups"),
+        ("Interacting nonhuman genes based on BioGRID curated database, organized by experimental system", "biogrid_interactions_select_nonhuman"),
         ("Associated Reactome pathways (curated biological pathways which describe how molecules interact within a cell to carry out different biological processes)", "reactome_pathways"),
         ("gwas_associations", "gwas_associations"),
         ("uniprot_entries_base", "uniprot_entries_base", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
@@ -47,12 +50,13 @@ def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
         processor = source[2] if len(source) > 2 else None
         
         data = state.get(state_key, {}).get(gene)
+        
         if data:
             if processor:
                 data = processor(data)
             if data:  # Only add if data exists after processing
                 gene_info[field_name] = data
-                if DEBUG and state_key in ['biogrid_summarized_go', 'biogrid_predictions', 'reactome_pathways']:
+                if DEBUG and state_key in ['biogrid_summarized_go', 'biogrid_predictions','reactome_pathways']:
                     print(f'[conditioned_claude_node] Found {state_key} for {gene}: {data}')
     
     return gene_info
