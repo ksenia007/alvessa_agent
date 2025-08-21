@@ -24,17 +24,6 @@ import pandas as pd
 
 from run import run_pipeline
 
-BASE_DIR = "benchmarks_generation"
-RESULTS_DIR = os.path.join(BASE_DIR, "results")
-os.makedirs(RESULTS_DIR, exist_ok=True)
-
-system_msg = (
-    "You are a multiple-choice answering system. "
-    "You must only reply with one of the following single capital letters: A, B, C, or D. "
-    "Do not add any words, punctuation, or explanation. "
-    "Example valid output: 'C'. "
-    "Example invalid outputs: 'Answer: C', 'C because...', 'Option C'."
-)
 
 def normalize_answer(x: Any) -> str:
     """Lowercase, strip; if text contains A-D inside backticks or JSON, try to extract."""
@@ -86,11 +75,7 @@ def load_existing(file_save: Optional[str]) -> Tuple[pd.DataFrame, set[Tuple[str
         else:
             existing["method"] = "unknown"
 
-    done = set(
-        (str(q), str(m))
-        for q, m in zip(existing["question"].astype(str).fillna(""), existing["method"].astype(str).fillna(""))
-        if str(q)
-    )
+    done = set(existing["question"].astype(str)) # Set of unique questions
     print(f"[resume] Loaded {len(existing)} rows, {len(done)} unique (question, method) pairs.")
     return existing, done
 
@@ -197,7 +182,7 @@ def run_benchmark(
     else:
         method_impl = method_fn
 
-    existing_df, done_pairs = load_existing(file_save)
+    existing_df, done_questions = load_existing(file_save)
     results_rows = []
 
     for i, row in df.iterrows():
@@ -207,7 +192,7 @@ def run_benchmark(
             continue
 
         # Skip if already done for this method
-        if (q, method) in done_pairs:
+        if q in done_questions:
             print(f"[skip] Already answered: ({q[:100]!r}, method={method})")
             continue
 
@@ -273,65 +258,9 @@ def run_baseline_unified(file_path: str, system_msg: str, **kwargs) -> pd.DataFr
 
 
 if __name__ == "__main__":
-    # run_eval_crawler(BASE_DIR, RESULTS_DIR, system_msg)
-    # print("Evaluation completed.")
+
     
-    # One-off run for a specific file
-        
-    # ALVESSA ON BIOGRID
-    # file_path =  "benchmarks_generation/biogrid/set2.csv"
-    # LOC_SAVE_PATH = "benchmarks_generation/results/biogrid/alvessa"
-    # os.makedirs(LOC_SAVE_PATH, exist_ok=True)
-    # results_df = run_pipeline_alvessa(file_path, system_msg, max_rows = 50, 
-    #                                   file_save = os.path.join(LOC_SAVE_PATH, "set2.csv"))
-    # results_df.to_csv(os.path.join(LOC_SAVE_PATH, "set2.csv"), index=False)
-    
-    
-    # # CLAUDE on BIOGRID
-    # file_path =  "benchmarks_generation/biogrid/set2.csv"
-    # LOC_SAVE_PATH = "benchmarks_generation/results/biogrid/claude"
-    # os.makedirs(LOC_SAVE_PATH, exist_ok=True)
-    # results_df = run_one_file(file_path, system_msg, max_rows = 50)
-    # results_df.to_csv(os.path.join(LOC_SAVE_PATH, "set2.csv"), index=False)
-    
-    # CLAUDE on Reactome
-    # file_path =  "benchmarks_generation/reactome/set1.csv"
-    # LOC_SAVE_PATH = "benchmarks_generation/results/reactome/claude"
-    # os.makedirs(LOC_SAVE_PATH, exist_ok=True)
-    # results_df = run_one_file(file_path, system_msg, max_rows = 50)
-    # results_df.to_csv(os.path.join(LOC_SAVE_PATH, "set1.csv"), index=False)
-    
-    # Alvessa on Reactome
-    # file_path =  "benchmarks_generation/reactome/set1.csv"
-    # LOC_SAVE_PATH = "benchmarks_generation/results/reactome/alvessa"
-    # os.makedirs(LOC_SAVE_PATH, exist_ok=True)
-    # results_df = run_pipeline_alvessa(file_path, system_msg, max_rows = 50, 
-    #                                    file_save = os.path.join(LOC_SAVE_PATH, "set1.csv"))
-    # results_df.to_csv(os.path.join(LOC_SAVE_PATH, "set1.csv"), index=False)
-    
-    
-    
-    # file_path = LOC_PATH + "litqa_mc.csv"
-    # results_df = run_one_file(file_path, system_msg, max_rows = 50)
-    # # save files into new results folder: benchmarks_generation/results/labbench/claude
-    # LOC_SAVE_PATH = "benchmarks_generation/results/labbench/claude"
-    # os.makedirs(LOC_SAVE_PATH, exist_ok=True)
-    # results_df.to_csv(os.path.join(LOC_SAVE_PATH, "litqa_mc_results_subset.csv"), index=False)
-    
-    # LOC_PATH = "benchmarks_generation/labbench/"
-    # file_path = LOC_PATH + "dbqa_mc.csv"
-    # results_df = run_one_file(file_path, system_msg, max_rows = 50)
-    # # save files into new results folder: benchmarks_generation/results/labbench/claude
-    # LOC_SAVE_PATH = "benchmarks_generation/results/labbench/claude"
-    # os.makedirs(LOC_SAVE_PATH, exist_ok=True)
-    # results_df.to_csv(os.path.join(LOC_SAVE_PATH, "dbqa_mc_results_subset.csv"), index=False)
-    
-    # run_baseline_unified('benchmarks_generation/labbench/dbqa_mc.csv', 
-    #                      system_msg=system_msg, 
-    #                      max_rows = 100,
-    #                     file_save="benchmarks_generation/results/labbench/claude/dbqa_mc_results_subset.csv")
-    
-    subfolders = ['gwas_easy', 'biogrid', 'reactome']
+    subfolders = ['gwas_variants'] #, 'gwas_easy', 'biogrid', 'reactome']
     main_path = "benchmarks_generation/"
     
     for subfolder in subfolders:
@@ -345,6 +274,21 @@ if __name__ == "__main__":
                                      system_msg=system_msg, 
                                      max_rows = -1,
                                      file_save=os.path.join("benchmarks_generation/results", subfolder, "claude", file_name))
+                
+                
+    # subfolders = ['gwas_variants', 'gwas_easy', 'biogrid', 'reactome']
+    # main_path = "benchmarks_generation/"
+    # for subfolder in subfolders:
+    #     subfolder_path = os.path.join(main_path, subfolder)
+    #     for file_name in os.listdir(subfolder_path):
+    #         if file_name.endswith('.csv'):
+    #             file_path = os.path.join(subfolder_path, file_name)
+    #             print(f"Running Alvessa on {file_path}")
+    #             run_pipeline_alvessa_unified(file_path, 
+    #                                  system_msg=system_msg, 
+    #                                  max_rows = 3,
+    #                                  file_save=os.path.join("benchmarks_generation/results", subfolder, "alvessa", file_name))
+    
     
     
     
