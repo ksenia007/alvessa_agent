@@ -134,6 +134,7 @@ def gwas_associations_agent(state: "State") -> "State":
         Updated state with "gwas_associations" field
     """
     associations = state.get("gwas_associations", {}).copy()
+    variants = state.get("dbsnp_variants", {}).copy()
     gene_list = list(set(state.get("genes", [])))
     
     for gene in gene_list:
@@ -171,7 +172,7 @@ def gwas_associations_agent(state: "State") -> "State":
                 all_variants = {}
                 all_variants.update(risk_variants)
                 all_variants.update(sig_variants)
-                associations[gene]["variant_annotations"] = all_variants
+                variants[gene] = all_variants
                 
                 # Pop out the variant annotations from summary_by_high_risk_alleles, and from summary_by_significance
                 associations[gene]["summary_by_high_risk_alleles"].pop("variant_annotations", None)
@@ -193,7 +194,7 @@ def gwas_associations_agent(state: "State") -> "State":
         # Rate limiting
         time.sleep(0.1)
 
-    return {"gwas_associations": associations}
+    return {"gwas_associations": associations, "dbsnp_variants": variants}
 
 
 def query_by_trait_agent(state: "State") -> "State":
