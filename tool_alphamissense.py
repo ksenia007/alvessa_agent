@@ -33,7 +33,7 @@ def alphamissense_predictions_agent(state: "State") -> "State":
         
     """
 
-    print(f"started... {datetime.now()}")
+    print(f"[AlphaMissense] started... {datetime.now()}")
     preds = state.get("alphamissense_predictions", {}).copy()
     variants = state.get("dbsnp_variants", {}).copy()
 
@@ -44,7 +44,7 @@ def alphamissense_predictions_agent(state: "State") -> "State":
         warnings.warn(f"Failed to load required files: {e}. Cannot run AlphaMissense predictions.")
         return {**state, "alphamissense_predictions": preds}
     
-    print(f"loaded am file... {datetime.now()}")
+    print(f"[AlphaMissense] loaded am file... {datetime.now()}")
     
     snp_records = []
     for gene, gene_vars in variants.items():
@@ -72,7 +72,7 @@ def alphamissense_predictions_agent(state: "State") -> "State":
 
     snps_df = pd.DataFrame(snp_records)
 
-    print(f"finished aggregating snps... {datetime.now()}")
+    print(f"[AlphaMissense] finished aggregating snps... {datetime.now()}")
 
     merged = snps_df.merge(
     pathogenicity_class_df_hg38[['chrom', 'pos', 'ref', 'alt', 'am_class']],
@@ -80,7 +80,7 @@ def alphamissense_predictions_agent(state: "State") -> "State":
     how='left'
     )
 
-    print(f"finished merging... {datetime.now()}")
+    print(f"[AlphaMissense] finished merging... {datetime.now()}")
 
     for (gene, var_id), group in merged.groupby(["gene", "var_id"]):
         preds.setdefault(gene, {})
@@ -89,9 +89,9 @@ def alphamissense_predictions_agent(state: "State") -> "State":
             for row in group.itertuples()
         }
 
-    print(f"done... {datetime.now()}")
+    print(f"[AlphaMissense] done... {datetime.now()}")
 
-    print(preds)
+    print("[AlphaMissense] Predictions: ", preds)
     time.sleep(0.3)  # courteous pause
 
     return {
