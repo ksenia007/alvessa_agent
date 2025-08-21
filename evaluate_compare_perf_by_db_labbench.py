@@ -50,17 +50,11 @@ def ensure_is_correct(df: pd.DataFrame) -> pd.Series:
     ma = df.get("model_answer", "").astype(str).str.strip().str.lower()
     return (ca == ma)
 
-def accuracy_table(df_typed: pd.DataFrame, multi: bool) -> pd.DataFrame:
+def accuracy_table(df_typed: pd.DataFrame) -> pd.DataFrame:
     base = df_typed.copy()
     base["is_correct"] = ensure_is_correct(base)
-
-    if multi:
-        base["source_tag_list"] = base["source_tag_list"].apply(lambda lst: lst if lst else ["other"])
-        exp = base.explode("source_tag_list", ignore_index=True)
-        exp["source"] = exp["source_tag_list"].fillna("other")
-    else:
-        exp = base.copy()
-        exp["source"] = exp["source_tag"].fillna("other")
+    exp = base.copy()
+    exp["source"] = exp["source_tag"].fillna("other")
 
     exp["source"] = exp["source"].replace("", "other").fillna("other")
 
@@ -121,8 +115,6 @@ def main():
     ap.add_argument("-i", "--input", default=DEFAULT_INPUT, help="Input CSV")
     ap.add_argument("-o", "--output", default=None, help="Output typed CSV (default: *_typed.csv)")
     ap.add_argument("--question-col", default="question", help="Question text column")
-    ap.add_argument("--single-label", action="store_true",
-                    help="Assign only the first matching source (priority order) instead of all matches")
     ap.add_argument("--plot", default=None,
                     help="Where to save the plot (default: next to output, *_accuracy.png)")
     args = ap.parse_args()
@@ -135,12 +127,12 @@ def main():
         raise ValueError(f"Column '{args.question_col}' not in CSV. Columns: {list(df.columns)}")
 
     # Tag
-    tags = df[args.question_col].apply(lambda q: tag_sources(q, multi=not args.single_label))
+    tags = df[args.question_col].apply(lambda q: tag_sources(q))
     df["source_tag_list"] = tags
     df["source_tag"] = tags.apply(lambda lst: "; ".join(lst) if lst else "other")
 
     # Table & print
-    tbl = accuracy_table(df, multi=not args.single_label)
+    tbl = accuracy_table(df)
     print("\nAccuracy by source:")
     print(tbl.to_string(index=False, formatters={"accuracy": "{:.3f}".format}))
 
