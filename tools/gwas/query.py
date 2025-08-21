@@ -386,6 +386,9 @@ class GWASQueryEngine:
                 
             # Create comprehensive variant record with new nested format
             variant_record = {
+                'mapped_gene': variant.get('mapped_gene'),
+                'context': variant.get('context'),
+                'variant_category': variant.get('variant_category'),
                 'associated_disease_trait': {
                     disease_trait: {
                         'p_value': variant.get('p_value'),
