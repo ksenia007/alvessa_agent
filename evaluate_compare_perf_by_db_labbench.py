@@ -1,4 +1,16 @@
 # %%
+"""
+Author: Ksenia Sokolova <sokolova@princeton.edu>
+Contributors: 
+Created: 2025-08-21
+Updated: 2025-08-21
+
+
+Description: 
+
+File to compare performance by the LabBench dataset. Uses direct match. Uses DEFAULT_INPUT for quick check. 
+Not required for any other scripts."""
+
 import re
 import os
 import argparse
@@ -12,7 +24,7 @@ DEFAULT_INPUT = "benchmarks_generation/results/labbench/claude/dbqa_mc_results_s
 SOURCE_PATTERNS = {
     "miRDB": re.compile(r"\bmiRDB\b", re.IGNORECASE),
     "OMIM": re.compile(r"\bOMIM\b", re.IGNORECASE),
-    "DisGeNet": re.compile(r"\bDisGeN?et\b", re.IGNORECASE),  # DisGeNet / DisGeNET
+    "DisGeNet": re.compile(r"\bDisGeN?et\b", re.IGNORECASE),  
     "Gene Transcription Regulation Database": re.compile(
         r"\bGene\s+Transcription\s+Regulation\s+Database\b|\bGTRD\b", re.IGNORECASE
     ),
@@ -132,7 +144,7 @@ def main():
     print("\nAccuracy by source:")
     print(tbl.to_string(index=False, formatters={"accuracy": "{:.3f}".format}))
 
-    plot_title = "Claude Accuracy by Source (LabBench: dbqa_mc_results_subset)"
+    plot_title = "Claude Accuracy by db for LabBench"
     plot_accuracy_by_source(tbl, plot_title)
 
 if __name__ == "__main__":
