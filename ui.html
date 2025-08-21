@@ -444,6 +444,11 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
     },
   
     extractContext(v){
+      // Try to get context from coordinates if available
+      if (v?.coordinates && Array.isArray(v.coordinates) && v.coordinates.length > 0) {
+        const coord = v.coordinates[0];
+        return coord?.context || coord?.region || "";
+      }
       return v?.context || v?.variant_category || v?.functional_annotation || v?.consequence || "";
     },
   
@@ -496,7 +501,13 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
   
     normalizeGeneData(obj){
       // 1) merge all annotations everywhere
-      const ann = this.collectVariantAnnotations(obj);
+      let ann = this.collectVariantAnnotations(obj);
+      
+      // If obj is already a variant dictionary (from dbsnp_variants), use it directly
+      if (obj && typeof obj === "object" && !obj.variant_annotations && !obj.summary_by_high_risk_alleles && !obj.total_associations) {
+        // This looks like it's already a variant dictionary (rsid -> variant_data)
+        ann = obj;
+      }
   
       // 2) possible fallback IDs
       const fallbackIDs = this.deepCollectStringArray(obj, ["high_risk_snps","gwas_high_risk_snps","snps"]);
@@ -710,6 +721,7 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
   
   function renderGWAS(st){
     const gw = st?.gwas_associations;
+    const dbsnp = st?.dbsnp_variants;
     if (!gw || typeof gw !== 'object') return hide("gwasCard");
     window.__GWAS_RAW = gw;
   
@@ -724,7 +736,9 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
   
     for (const [rawGene, obj] of Object.entries(gw)){
       const safe = rawGene.replace(/[^a-z0-9_-]/gi, '_');
-      GWAS.ensureStateForGene(safe, obj, rawGene);
+      // Use dbsnp_variants data if available, otherwise fall back to gwas_associations
+      const variantData = dbsnp?.[rawGene] || obj;
+      GWAS.ensureStateForGene(safe, variantData, rawGene);
       GWAS.renderGene(safe);
     }
   }
@@ -831,6 +845,7 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
   const am     = st?.alphamissense_predictions || {};
   const dbsum  = st?.dbsnp_summaries || {};
   const gwas   = st?.gwas_associations || {};
+  const dbsnp  = st?.dbsnp_variants || {};
   const exVar  = st?.expression_preds_variant_table || {}; // gene -> rsid -> metrics
 
   // ---- helpers ----
@@ -877,6 +892,9 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
       seen.add(x);
       if (x.variant_annotations && typeof x.variant_annotations === "object" && !Array.isArray(x.variant_annotations)){
         Object.assign(out, x.variant_annotations);
+      }
+      if (x.dbsnp_variants && typeof x.dbsnp_variants === "object" && !Array.isArray(x.dbsnp_variants)){
+        Object.assign(out, x.dbsnp_variants);
       }
       for (const v of Object.values(x)) walk(v);
     })(obj || {});
@@ -956,11 +974,26 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
     const geneAm  = am[gene]  || {};
     const geneDb  = dbsum[gene] || {};
     const gwasObj = gwas[gene] || {};
+    const dbsnpObj = dbsnp[gene] || {};
+    const combinedDataForGene = { gwas: gwasObj, dbsnp: dbsnpObj };
     const geneEx  = exVar[gene] || {}; // rsid -> metrics
 
     // Prefer per-gene annotations, but if empty due to nesting, fall back to global scan
-    let ann = collectVariantAnnotations(gwasObj);
-    if (!Object.keys(ann).length) ann = collectVariantAnnotations(gwas);
+    const gwasAnnotations = collectVariantAnnotations(gwas[gene] || {});
+
+    // Get variants directly from dbSNP (which does not use the nested key)
+    const dbsnpAnnotations = dbsnp[gene] || {};
+
+    // Merge them together. Data from dbSNP will overwrite GWAS data for any overlapping variants.
+    let ann = { ...gwasAnnotations, ...dbsnpAnnotations };
+
+    // Fallback logic to scan all genes if the current gene yielded nothing
+    if (Object.keys(ann).length === 0) {
+      const globalGwasAnn = collectVariantAnnotations(gwas);
+      // For dbSNP, we need to merge the variant objects from all genes
+      const globalDbsnpAnn = Object.values(dbsnp || {}).reduce((acc, geneData) => ({...acc, ...geneData}), {});
+      ann = { ...globalGwasAnn, ...globalDbsnpAnn };
+    }
 
     // rsids for this gene
     const rsids = new Set([
@@ -1198,6 +1231,7 @@ function toggleExpectoDetails(geneKey, rsSafe, colspan){
       "humanbase_expecto",
       "tissue_expression_preds_variant_text_description",
       "dbsnp_variants",
+      "dbsnp_summaries",
       "sei_predictions",
       "alphamissense_predictions",
       "biogrid_summarized_go"
