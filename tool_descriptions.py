@@ -19,13 +19,13 @@ from tool_annotate_gencode import gencode_gene_node
 EXAMPLE_TOOL_SELECTION = """EXAMPLE PIPELINES (pay attention to dependencies):
 
 1. Variant regulatory activity (e.g. SEI):
-   extract_entities → gwas → dbsnp → sei
+   extract_entities → gwas → variant_annotations → sei
 
 2. Variant pathogenicity (e.g. AlphaMissense):
-   extract_entities → gwas → dbsnp → alphamissense
+   extract_entities → gwas → variant_annotations → alphamissense
 
 3. HumanBase Expecto variant annotation:
-   extract_entities → humanbase_expecto → gwas → dbsnp → humanbase_tissue_expecto_annotate_variants
+   extract_entities → humanbase_expecto → gwas → variant_annotations → humanbase_tissue_expecto_annotate_variants
 
 4. Gene-level functional annotation:
    extract_entities → gencode_gene_node → (humanbase_functions, uniprot_base, reactome, BioGRID) → Summarize_bioGRID_GO (if BioGRID run) → uniprot_gwas (if gwas run)
@@ -41,18 +41,17 @@ TOOL_CATALOG = {
     "humanbase_functions": "Fetch per-gene functional predictions from HumanBase tissue-specific networks. Provides expanded list of functions.",
     "uniprot_base":  "Queries UniProt for functional annotations and disease links.",
     "query_gwas_by_gene":  "Retrieves genome-wide association study (GWAS) results for a given gene. It collects traits and diseases associated with genetic variants linked to that gene, along with the specific variants",
-    "query_gwas_extensive": "This is a more comprehensive version of the query_gwas_by_gene tool, and it is used to retrieve more detailed information about the GWAS results. It collects an extensive list of traits/diseases associated with an extensive list of genetic variants linked to that gene. This is useful when answering questions that require a deeper understanding of the genetic variants and traits associated with a gene. Not to be used for getting a general overview of the gene.",
+    "query_gwas_extensive": "This is a more comprehensive version of the query_gwas_by_gene tool, and it is used to retrieve more detailed information about the GWAS results. It collects an extensive list of traits/diseases associated with an extensive list of genetic variants linked to that gene. Use this tool *ONLY* if the question is very specific that requires what is equivalent to an extensive database search, not to general characterisation of the gene.",
     "uniprot_gwas":   "Runs UniProt query again on genes identified via GWAS associations. Helps to expand the base annotations with related genes.",
     "BioGRID": "Fetches gene interactions from BioGRID and their functional annotations for the input genes. Provides a curated context-specific list of protein-protein, genetic and chemical interactions.",
     "reactome": "Fetches Reactome pathways associated with the input genes. Provides a curated collection of biological pathways which describe how molecules interact within a cell to carry out different biological processes.",
     "Summarize_bioGRID_GO": "Required for BioGrid. Summarizes BioGRID GO terms for the input genes. Provides a compact list of GO terms for the input genes.",
     "variant_annotations": "Fetches dbSNP data about the identified variants. This requires gwas to be run first. This is to be used only when the variant needs to be annotated with its **coordinates** and **chromosome number** and similar details. This tool is also a prerequisite to run humanbase, sei, alphamissense, etc. Reason based on the user's question if sequence models need to be run, and if so, this tool is a prerequisite to run them.",
     "variant_population_summaries": "Fetches population-wide summaries of allele frequencies for the identified variants across studies. Useful for characterizing the frequency of variants in the population. This requires gwas to be run first.",
-    "sei": "Fetches predictions of the sequence regulatory activity for given variants. This requires dbsnp to be run first.", 
+    "sei": "Fetches predictions of the sequence regulatory activity for given variants. This requires variant_annotations to be run first.", 
     "humanbase_expecto": "Fetches Expecto, gene expression disruption predictions from HumanBase per variant. Pulls all precomputed predictions for the input genes.",
-    "humanbase_tissue_expecto_annotate_variants": "Annotates variants with tissue-specific expression disruption predictions from HumanBase. Requires humanbase_expecto and dbsnp to be run first.",
-    "alphamissense": "Fetches Alphamissense predicted pathogenicity classes for given variants. This requires dbsnp to be run first.",
-
+    "humanbase_tissue_expecto_annotate_variants": "Annotates variants with tissue-specific expression disruption predictions from HumanBase. Requires humanbase_expecto and variant_annotations to be run first.",
+    "alphamissense": "Fetches Alphamissense predicted pathogenicity classes for given variants. This requires variant_annotations to be run first.",
 }
 
 
