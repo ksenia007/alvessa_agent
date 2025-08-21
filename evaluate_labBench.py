@@ -7,7 +7,7 @@ Updated: 2025-08-21
 
 Description: 
 
-Run AlvessaBench & save results."""
+Run labBench & save results."""
 
 import argparse
 import os
@@ -18,7 +18,7 @@ from evaluate_benchmarks_general import (
     run_pipeline_alvessa_unified,
 )
 
-SUBFOLDERS = ['gwas_variants', 'gwas_easy', 'biogrid', 'reactome']
+SUBFOLDERS = ['labbench']
 MAIN_PATH = Path("benchmarks_generation")
 MAX_ROWS = 3  # -1 means all
 

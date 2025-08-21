@@ -1,13 +1,13 @@
 """
 Author: Ksenia Sokolova <sokolova@princeton.edu>
 Contributors: 
-Created: 2025-08-18
-Updated: 2025-08-18
+Created: 2025-08-21
+Updated: 2025-08-21
 
 
 Description: 
 
-Code to evaluate the base model performance."""
+Main code to run MC evaluation; supports Alvessa and Claude. To addd more baselines reference `method_baseline`."""
 
 from __future__ import annotations
 import json
@@ -256,42 +256,4 @@ def run_baseline_unified(file_path: str, system_msg: str, **kwargs) -> pd.DataFr
     return run_benchmark(file_path, system_msg, method="baseline", **kwargs)
 
 
-
-if __name__ == "__main__":
-
-    
-    subfolders = ['gwas_variants'] #, 'gwas_easy', 'biogrid', 'reactome']
-    main_path = "benchmarks_generation/"
-    
-    for subfolder in subfolders:
-    # Run Claude on all files in the subfolder
-        subfolder_path = os.path.join(main_path, subfolder)
-        for file_name in os.listdir(subfolder_path):
-            if file_name.endswith('.csv'):
-                file_path = os.path.join(subfolder_path, file_name)
-                print(f"Running Claude on {file_path}")
-                run_baseline_unified(file_path, 
-                                     system_msg=system_msg, 
-                                     max_rows = -1,
-                                     file_save=os.path.join("benchmarks_generation/results", subfolder, "claude", file_name))
-                
-                
-    # subfolders = ['gwas_variants', 'gwas_easy', 'biogrid', 'reactome']
-    # main_path = "benchmarks_generation/"
-    # for subfolder in subfolders:
-    #     subfolder_path = os.path.join(main_path, subfolder)
-    #     for file_name in os.listdir(subfolder_path):
-    #         if file_name.endswith('.csv'):
-    #             file_path = os.path.join(subfolder_path, file_name)
-    #             print(f"Running Alvessa on {file_path}")
-    #             run_pipeline_alvessa_unified(file_path, 
-    #                                  system_msg=system_msg, 
-    #                                  max_rows = 3,
-    #                                  file_save=os.path.join("benchmarks_generation/results", subfolder, "alvessa", file_name))
-    
-    
-    
-    
-   
-    
 

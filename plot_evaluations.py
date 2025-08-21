@@ -47,7 +47,7 @@ def plot_by_testset(df, save_path=None):
         "claude": "Claude",
         "anthropic": "Claude"
     }
-    df["model_norm"] = df["model"].str.lower().map(name_map).fillna(df["model"])
+    df.loc[:, "model_norm"] = df["model"].str.lower().map(name_map).fillna(df["model"])
     model_order = ["Alvessa", "Claude"]
 
     # Aggregate in case multiple files exist per (dataset, test_set, model)
@@ -59,7 +59,7 @@ def plot_by_testset(df, save_path=None):
     def short_label(r):
         ds = r["dataset"].replace("_"," ")
         ts = r["test_set"].replace("_"," ")
-        return f"{ds} – {ts}"
+        return f"{ds}, {ts}"
     g["label"] = g.apply(short_label, axis=1)
 
     # Pivot to [labels x models] accuracy, and parallel pivot for n
@@ -81,13 +81,13 @@ def plot_by_testset(df, save_path=None):
     plt.rcParams.update({
         "axes.titlesize": 22,
         "axes.labelsize": 18,
-        "xtick.labelsize": 18,   
+        "xtick.labelsize": 14,   
         "ytick.labelsize": 16,   
         "legend.fontsize": 16
     })
 
     labels = acc.index.tolist()
-    labels_wrapped = [textwrap.fill(lbl, width=28) for lbl in labels]
+    labels_wrapped = [textwrap.fill(lbl, width=18) for lbl in labels]
 
     x = np.arange(len(labels))
     width = 0.36
@@ -111,7 +111,7 @@ def plot_by_testset(df, save_path=None):
     ax.set_ylim(0, 1.1)
     ax.set_ylabel("Accuracy")
     ax.set_xlabel("")   
-    ax.set_title("Accuracy by Model and Test Set", pad=16)
+    ax.set_title("Accuracy by Model and Question Set", pad=16)
     ax.set_xticks(x)
     ax.set_xticklabels(labels_wrapped, rotation=0, ha="center")
     ax.yaxis.grid(True, linestyle="--", alpha=0.35)
@@ -146,19 +146,25 @@ def plot_split(results, save_prefix="accuracy"):
         print("No results to plot.")
         return
     
+    if not os.path.exists("figures"):
+        os.makedirs("figures")
+    
+    # Plot all together
+    print("Plotting all results...")
+    plot_by_testset(results, save_path=f"figures/{save_prefix}_all.png")
+    
+    
     # Split
     lab_df = results[results["dataset"].str.lower().str.contains("labbench")]
     other_df = results[~results["dataset"].str.lower().str.contains("labbench")]
-    
-    
 
     if not other_df.empty:
         print("Plotting non-LabBench...")
-        plot_by_testset(other_df, save_path=f"{save_prefix}_nonlabbench.png")
+        plot_by_testset(other_df, save_path=f"figures/{save_prefix}_nonlabbench.png")
 
     if not lab_df.empty:
         print("Plotting LabBench...")
-        plot_by_testset(lab_df, save_path=f"{save_prefix}_labbench.png")
+        plot_by_testset(lab_df, save_path=f"figures/{save_prefix}_labbench.png")
         
 if __name__ == "__main__":
     results = collect_results()
