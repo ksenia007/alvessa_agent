@@ -42,7 +42,7 @@ def entity_set1(count):
     output_df = pd.DataFrame()
     new_questions = []
 
-    while len(chosen_gene_idxs)<count:
+    while len(new_questions)<count:
         curr_case_type_idx = len(chosen_gene_idxs)%4
 
         available_values = list(set(range(all_genes_count)) - set(chosen_gene_idxs))
@@ -74,7 +74,7 @@ def entity_set2(count):
     output_df = pd.DataFrame()
     new_questions = []
 
-    while len(chosen_gene_idxs)<(count*3):
+    while len(new_questions)<count:
         available_values = list(set(range(all_genes_count)) - set(chosen_gene_idxs))
         random_gene_idxs = random.sample(available_values, 3)
 
@@ -101,7 +101,7 @@ def entity_set3(count):
     output_df = pd.DataFrame()
     new_questions = []
 
-    while len(chosen_gene_idxs)<count:
+    while len(new_questions)<count:
         curr_case_type_idx = len(chosen_gene_idxs)%4
 
         available_values = list(set(range(all_genes_count)) - set(chosen_gene_idxs))
@@ -133,7 +133,7 @@ def entity_set4(count):
     output_df = pd.DataFrame()
     new_questions = []
 
-    while len(chosen_gene_idxs)<(count*2):
+    while len(new_questions)<count:
         available_values = list(set(range(all_genes_count)) - set(chosen_gene_idxs))
         random_gene_idxs = random.sample(available_values, 2)
 
@@ -160,7 +160,7 @@ def entity_set5(count):
     output_df = pd.DataFrame()
     new_questions = []
 
-    while len(chosen_gene_idxs)<count:
+    while len(new_questions)<count:
         curr_case_type_idx = len(chosen_gene_idxs)%4
 
         available_values = list(set(range(all_genes_count)) - set(chosen_gene_idxs))
@@ -192,7 +192,7 @@ def entity_set6(count):
     output_df = pd.DataFrame()
     new_questions = []
 
-    while len(chosen_gene_idxs)<(count*3):
+    while len(new_questions)<count:
         available_values = list(set(range(all_genes_count)) - set(chosen_gene_idxs))
         random_gene_idxs = random.sample(available_values, 3)
 
@@ -219,7 +219,7 @@ def entity_set7(count):
     output_df = pd.DataFrame()
     new_questions = []
 
-    while len(chosen_gene_idxs)<(count*3):
+    while len(new_questions)<count:
         available_values = list(set(range(all_genes_count)) - set(chosen_gene_idxs))
         random_gene_idxs = random.sample(available_values, 3)
 

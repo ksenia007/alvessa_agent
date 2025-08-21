@@ -18,7 +18,7 @@ def reactome_set1(count):
     all_pathways_list = list(set(reactome_df['pathway_name'].values))
     all_pathways_count = len(all_pathways_list)
 
-    while len(chosen_gene_idxs)<count:
+    while len(new_questions)<count:
         available_values = list(set(range(all_genes_count)) - set(chosen_gene_idxs))
         random_gene_idx = random.sample(available_values, 1)[0]
         curr_gene = gene_list[random_gene_idx]
