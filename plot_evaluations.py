@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 
 RESULTS_ROOT = "benchmarks_generation/results"
 
-# --------- discovery ----------
 def collect_results(root=RESULTS_ROOT):
     rows = []
     for dataset in os.listdir(root):
@@ -37,7 +36,6 @@ def collect_results(root=RESULTS_ROOT):
                     print(f"[warn] {fpath}: {e}")
     return pd.DataFrame(rows)
 
-# --------- plotting ----------
 def plot_by_testset(df, save_path=None):
     if df.empty:
         print("No results found."); return
@@ -83,8 +81,8 @@ def plot_by_testset(df, save_path=None):
     plt.rcParams.update({
         "axes.titlesize": 22,
         "axes.labelsize": 18,
-        "xtick.labelsize": 18,   # ⬅ bumped up from 14
-        "ytick.labelsize": 16,   # ⬅ slightly larger too
+        "xtick.labelsize": 18,   
+        "ytick.labelsize": 16,   
         "legend.fontsize": 16
     })
 
@@ -112,7 +110,7 @@ def plot_by_testset(df, save_path=None):
     # Grid & axes
     ax.set_ylim(0, 1.1)
     ax.set_ylabel("Accuracy")
-    ax.set_xlabel("")   # ⬅ dropped the x-axis label
+    ax.set_xlabel("")   
     ax.set_title("Accuracy by Model and Test Set", pad=16)
     ax.set_xticks(x)
     ax.set_xticklabels(labels_wrapped, rotation=0, ha="center")

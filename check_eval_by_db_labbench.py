@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 
 DEFAULT_INPUT = "benchmarks_generation/results/labbench/claude/dbqa_mc_results_subset.csv"
 
-# --- patterns (priority order if --single-label is used) ---
 SOURCE_PATTERNS = {
     "miRDB": re.compile(r"\bmiRDB\b", re.IGNORECASE),
     "OMIM": re.compile(r"\bOMIM\b", re.IGNORECASE),
@@ -31,23 +30,20 @@ def tag_sources(text: str, multi: bool = True):
     return hits if multi else [hits[0]]
 
 def ensure_is_correct(df: pd.DataFrame) -> pd.Series:
-    """Derive is_correct if missing, using case-insensitive, trimmed string equality."""
+    """Always return boolean is_correct column."""
     if "is_correct" in df.columns:
-        return df["is_correct"].astype(float) if df["is_correct"].dtype != bool else df["is_correct"]
+        return df["is_correct"].astype(bool)
+
     ca = df.get("correct_answer", "").astype(str).str.strip().str.lower()
     ma = df.get("model_answer", "").astype(str).str.strip().str.lower()
     return (ca == ma)
 
 def accuracy_table(df_typed: pd.DataFrame, multi: bool) -> pd.DataFrame:
-    """
-    Build per-source accuracy table.
-    If multi=True, explode rows so a question can count for multiple sources.
-    """
     base = df_typed.copy()
-    base["is_correct"] = ensure_is_correct(base).astype(float)
+    base["is_correct"] = ensure_is_correct(base)
 
     if multi:
-        # explode for one‑to‑many mapping
+        base["source_tag_list"] = base["source_tag_list"].apply(lambda lst: lst if lst else ["other"])
         exp = base.explode("source_tag_list", ignore_index=True)
         exp["source"] = exp["source_tag_list"].fillna("other")
     else:
@@ -57,7 +53,7 @@ def accuracy_table(df_typed: pd.DataFrame, multi: bool) -> pd.DataFrame:
     exp["source"] = exp["source"].replace("", "other").fillna("other")
 
     grp = (exp.groupby("source", dropna=False)
-             .agg(n=("is_correct", "count"),
+             .agg(n=("is_correct", "size"),
                   accuracy=("is_correct", "mean"))
              .reset_index()
              .sort_values(["accuracy", "n"], ascending=[False, False]))
@@ -71,7 +67,7 @@ def plot_accuracy_by_source(table: pd.DataFrame, title: str, save_path = None):
     plt.rcParams.update({
         "axes.titlesize": 22,
         "axes.labelsize": 18,
-        "xtick.labelsize": 18,  # bigger x ticks per your request
+        "xtick.labelsize": 18,  
         "ytick.labelsize": 16,
         "legend.fontsize": 16,
     })
@@ -131,26 +127,13 @@ def main():
     df["source_tag_list"] = tags
     df["source_tag"] = tags.apply(lambda lst: "; ".join(lst) if lst else "other")
 
-    # Output path defaults
-    # if args.output is None:
-    #     root, ext = os.path.splitext(args.input)
-    #     args.output = f"{root}_typed{ext}"
-    # df.to_csv(args.output, index=False)
-    # print(f"Wrote typed CSV: {args.output}")
-
     # Table & print
     tbl = accuracy_table(df, multi=not args.single_label)
     print("\nAccuracy by source:")
     print(tbl.to_string(index=False, formatters={"accuracy": "{:.3f}".format}))
 
-    # Plot
-    # if args.plot is None:
-    #     plot_path = os.path.splitext(args.output)[0] + "_accuracy.png"
-    # else:
-    #     plot_path = args.plot
-
     plot_title = "Claude Accuracy by Source (LabBench: dbqa_mc_results_subset)"
-    plot_accuracy_by_source(tbl, plot_title) #, plot_path)
+    plot_accuracy_by_source(tbl, plot_title)
 
 if __name__ == "__main__":
     main()
