@@ -25,16 +25,12 @@ import pandas as pd
 from run import run_pipeline
 
 
+
 def normalize_answer(x: Any) -> str:
     """Lowercase, strip; if text contains A-D inside backticks or JSON, try to extract."""
     if x is None:
         return ""
     s = str(x).strip()
-    # Pull single-letter multiple-choice answers if embedded in text
-    m = re.search(r"\b([ABCD])\b", s)
-    if m:
-        return m.group(1).strip()
-    # Fallback raw
     return s
 
 def compute_is_correct(correct: Any, model_answer: Any) -> bool:
@@ -146,12 +142,12 @@ def method_baseline(question: str, system_msg: str) -> Dict[str, Any]:
         "method": "Claude",
     }
 
+
+
 METHODS: dict[str, Callable[[str, str], Dict[str, Any]]] = {
     "alvessa": method_alvessa,
-    "baseline": method_baseline,
+    "claude": method_baseline,
 }
-
-
 def run_benchmark(
     file_path: str,
     system_msg: str,
@@ -246,14 +242,6 @@ def run_benchmark(
 
     return final_df
 
-
-def run_pipeline_alvessa_unified(file_path: str, system_msg: str, **kwargs) -> pd.DataFrame:
-    """Backwards-friendly wrapper: same behavior as your prior Alvessa run, but via unified engine."""
-    return run_benchmark(file_path, system_msg, method="alvessa", **kwargs)
-
-def run_baseline_unified(file_path: str, system_msg: str, **kwargs) -> pd.DataFrame:
-    """Baseline via the unified engine."""
-    return run_benchmark(file_path, system_msg, method="baseline", **kwargs)
 
 
 

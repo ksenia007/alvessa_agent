@@ -13,11 +13,7 @@ import argparse
 import os
 from pathlib import Path
 
-from evaluate_benchmarks_general import (
-    run_baseline_unified,
-    run_pipeline_alvessa_unified,
-)
-
+from evaluate_benchmarks_general import run_benchmark
 SUBFOLDERS = ['labbench']
 MAIN_PATH = Path("benchmarks_generation")
 MAX_ROWS = 3  # -1 means all
@@ -55,19 +51,21 @@ def main():
 
             if args.runner == "claude":
                 print(f"Running Claude on {in_path}")
-                run_baseline_unified(
+                run_benchmark(
                     str(in_path),
                     system_msg=SYSTEM_MSG,
                     max_rows=MAX_ROWS,
                     file_save=str(out_path),
+                    method='claude'
                 )
             else:  # alvessa
                 print(f"Running Alvessa on {in_path}")
-                run_pipeline_alvessa_unified(
+                run_benchmark(
                     str(in_path),
                     system_msg=SYSTEM_MSG,
                     max_rows=MAX_ROWS,
                     file_save=str(out_path),
+                    method='alvessa'
                 )
 
 if __name__ == "__main__":
