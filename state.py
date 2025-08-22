@@ -20,6 +20,9 @@ class State(TypedDict, total=False):
     # Conversation
     messages: Annotated[List[Dict[str, str]], operator.add]
     genes: Annotated[List[str], operator.add]
+    traits: Annotated[List[str], operator.add]
+    variants: Annotated[List[str], operator.add]
+    chr_pos_variants: Annotated[List[str], operator.add]
     gene_level_gencode: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     prompt: Annotated[str, operator.add]
     run_verifier: Annotated[bool, operator.and_]
