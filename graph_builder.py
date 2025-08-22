@@ -37,7 +37,7 @@ def run_async_sync(fn: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
-def build_graph() -> Callable[[State], State]:
+def build_graph(run_verifier: bool = True) -> Callable[[State], State]:
     """Return a compiled LangGraph ready for invocation (diagram export is best‑effort)."""
     g = StateGraph(State)
 
@@ -49,16 +49,21 @@ def build_graph() -> Callable[[State], State]:
     # Edges
     g.set_entry_point("select_tools")
     g.add_edge("select_tools", "claude")
-    g.add_edge("claude", "verify")
-    g.add_conditional_edges(
-        "verify",
-        lambda s: (
-            "retry"
-            if s.get("verification") == "fail" and s.get("verify_attempts", 0) < MAX_ATTEMPTS
-            else "done"
-        ),
-        {"retry": "claude", "done": END},
-    )
+    if run_verifier:
+        # If verification is enabled, add the verification step
+        g.add_edge("claude", "verify")
+        g.add_conditional_edges(
+            "verify",
+            lambda s: (
+                "retry"
+                if s.get("verification") == "fail" and s.get("verify_attempts", 0) < MAX_ATTEMPTS
+                else "done"
+            ),
+            {"retry": "claude", "done": END},
+        )
+    else:
+        # If verification is not enabled, skip it
+        g.add_edge("claude", END)
 
     compiled = g.compile()
 

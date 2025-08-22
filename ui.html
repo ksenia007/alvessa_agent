@@ -121,9 +121,87 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
   max-width: 620px;         /* a bit wider for wordy cells */
 }
 
+/* === Light theme (activated by: <body class="light">) === */
+  body.light {
+    background: #ffffff;
+    color: #0b1020;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Cards / containers */
+  body.light .card { background:#ffffff; border-color:#d8dce6; color:#0b1020; box-shadow: 0 6px 24px rgba(0,0,0,0.06); }
+  body.light .brand-header { background: transparent; }
+  body.light .brand-title { color:#0b1020; }
+
+  /* Inputs & buttons */
+  body.light input[type="text"] { background:#ffffff; color:#0b1020; border:1px solid #c8cfe0; }
+  body.light button { background:#f3f5fb; color:#0b1020; border:1px solid #c8cfe0; }
+  body.light button.mini { background:#eef2ff; border-color:#cdd6f3; color:#0b1020; }
+
+  /* Muted / status text */
+  body.light .muted, 
+  body.light .statusline, 
+  body.light .gwas-meta { color:#6b7280; }
+
+  /* Pills (traits, tools, evidence) */
+  body.light .pill { 
+    background:#eef1f7; 
+    border:1px solid #d6d9e6; 
+    color:#0b1020;
+  }
+  body.light .pill.clickable.selected { 
+    background:#e5eaf6; 
+    border-color:#cbd5e1;
+  }
+
+  /* GWAS tabs, list panels */
+  body.light .gwas-tabs button { background:#f0f3fb; border:1px solid #cbd5e1; color:#0b1020; }
+  body.light .gwas-tabs button.active { background:#e5eaf6; }
+  body.light .gwas-detail { background:#f7f9ff; border:1px solid #d5dbea; }
+
+  /* Tables (GWAS + Variant Summary) */
+  body.light .gwas-table th, 
+  body.light .gwas-table td { border-bottom:1px solid #e5e7eb; }
+  body.light .vs-table { border-color:#e5e7eb; }
+  body.light .vs-table th, 
+  body.light .vs-table td { border-bottom:1px solid #e5e7eb; }
+  body.light .vs-table thead th { background:#f5f7fb; color:#0b1020; }
+
+  /* Expecto detail box */
+  body.light .exp-detail-box { background:#f7f9ff; border:1px solid #d5dbea; }
+
+  /* Histograms (GENCODE) */
+  body.light .hist-axis { fill:#6b7280; }
+  body.light .hist-bar { fill:#94a3b8; }           /* neutral slate */
+  body.light .hist-baseline { stroke:#cbd5e1; }
+
+  /* Misc dark backgrounds you used elsewhere */
+  body.light .json pre,
+  body.light .scroll,
+  body.light .gwas-list { background:#ffffff; color:#0b1020; }
+
+  /* Spinner ring */
+  body.light .spinner { border-color:#cbd5e1; border-top-color: transparent; }
+
+  /* Variant Summary table tweaks */
+  .vs-table td.am, .vs-table th.am {
+    white-space: normal;     /* allow wrapping */
+    max-width: 240px;        /* constrain AlphaMissense column */
+  }
+  .vs-table td.traits, .vs-table th.traits {
+    white-space: normal;     /* let GWAS traits pills wrap */
+    min-width: 260px;        /* give it more breathing room */
+    max-width: 620px;        /* keep consistent with your earlier design */
+  }
+
 </style>
 <body>
 <div class="wrap">
+  <!-- Theme toggle button -->
+  <button id="themeToggle" style="position:fixed;top:12px;right:12px;z-index:999;">
+    Toggle Theme
+  </button>
 
   <!-- Centered start screen -->
   <div id="hero">
@@ -367,7 +445,6 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
     if (blocks.trim()) { setHTML("uniprot", blocks); show("uniprotCard"); } else hide("uniprotCard");
   }
 
-  <!-- ---------------- GWAS interactive renderer (drop-in) ---------------- -->
   const GWAS = {
     state: {},
   
@@ -428,7 +505,7 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
       const pushOne = s => { if (s && typeof s === "string") out.add(s); };
       const pushMany = a => { if (Array.isArray(a)) a.forEach(pushOne); };
   
-      // Handle new nested format: associated_disease_trait: { trait_name: { p_value, risk_score } }
+      // Handle nested format: associated_disease_trait: { trait_name: { p_value, risk_score } }
       if (v?.associated_disease_trait && typeof v.associated_disease_trait === "object") {
         Object.keys(v.associated_disease_trait).forEach(pushOne);
       }
@@ -444,6 +521,11 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
     },
   
     extractContext(v){
+      // Try to get context from coordinates if available
+      if (v?.coordinates && Array.isArray(v.coordinates) && v.coordinates.length > 0) {
+        const coord = v.coordinates[0];
+        return coord?.context || coord?.region || "";
+      }
       return v?.context || v?.variant_category || v?.functional_annotation || v?.consequence || "";
     },
   
@@ -496,7 +578,13 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
   
     normalizeGeneData(obj){
       // 1) merge all annotations everywhere
-      const ann = this.collectVariantAnnotations(obj);
+      let ann = this.collectVariantAnnotations(obj);
+      
+      // If obj is already a variant dictionary (from dbsnp_variants), use it directly
+      if (obj && typeof obj === "object" && !obj.variant_annotations && !obj.summary_by_high_risk_alleles && !obj.total_associations) {
+        // This looks like it's already a variant dictionary (rsid -> variant_data)
+        ann = obj;
+      }
   
       // 2) possible fallback IDs
       const fallbackIDs = this.deepCollectStringArray(obj, ["high_risk_snps","gwas_high_risk_snps","snps"]);
@@ -710,6 +798,7 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
   
   function renderGWAS(st){
     const gw = st?.gwas_associations;
+    const dbsnp = st?.dbsnp_variants;
     if (!gw || typeof gw !== 'object') return hide("gwasCard");
     window.__GWAS_RAW = gw;
   
@@ -724,7 +813,9 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
   
     for (const [rawGene, obj] of Object.entries(gw)){
       const safe = rawGene.replace(/[^a-z0-9_-]/gi, '_');
-      GWAS.ensureStateForGene(safe, obj, rawGene);
+      // Use dbsnp_variants data if available, otherwise fall back to gwas_associations
+      const variantData = dbsnp?.[rawGene] || obj;
+      GWAS.ensureStateForGene(safe, variantData, rawGene);
       GWAS.renderGene(safe);
     }
   }
@@ -831,6 +922,7 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
   const am     = st?.alphamissense_predictions || {};
   const dbsum  = st?.dbsnp_summaries || {};
   const gwas   = st?.gwas_associations || {};
+  const dbsnp  = st?.dbsnp_variants || {};
   const exVar  = st?.expression_preds_variant_table || {}; // gene -> rsid -> metrics
 
   // ---- helpers ----
@@ -877,6 +969,9 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
       seen.add(x);
       if (x.variant_annotations && typeof x.variant_annotations === "object" && !Array.isArray(x.variant_annotations)){
         Object.assign(out, x.variant_annotations);
+      }
+      if (x.dbsnp_variants && typeof x.dbsnp_variants === "object" && !Array.isArray(x.dbsnp_variants)){
+        Object.assign(out, x.dbsnp_variants);
       }
       for (const v of Object.values(x)) walk(v);
     })(obj || {});
@@ -956,11 +1051,26 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
     const geneAm  = am[gene]  || {};
     const geneDb  = dbsum[gene] || {};
     const gwasObj = gwas[gene] || {};
+    const dbsnpObj = dbsnp[gene] || {};
+    const combinedDataForGene = { gwas: gwasObj, dbsnp: dbsnpObj };
     const geneEx  = exVar[gene] || {}; // rsid -> metrics
 
     // Prefer per-gene annotations, but if empty due to nesting, fall back to global scan
-    let ann = collectVariantAnnotations(gwasObj);
-    if (!Object.keys(ann).length) ann = collectVariantAnnotations(gwas);
+    const gwasAnnotations = collectVariantAnnotations(gwas[gene] || {});
+
+    // Get variants directly from dbSNP (which does not use the nested key)
+    const dbsnpAnnotations = dbsnp[gene] || {};
+
+    // Merge them together. Data from dbSNP will overwrite GWAS data for any overlapping variants.
+    let ann = { ...gwasAnnotations, ...dbsnpAnnotations };
+
+    // Fallback logic to scan all genes if the current gene yielded nothing
+    if (Object.keys(ann).length === 0) {
+      const globalGwasAnn = collectVariantAnnotations(gwas);
+      // For dbSNP, we need to merge the variant objects from all genes
+      const globalDbsnpAnn = Object.values(dbsnp || {}).reduce((acc, geneData) => ({...acc, ...geneData}), {});
+      ann = { ...globalGwasAnn, ...globalDbsnpAnn };
+    }
 
     // rsids for this gene
     const rsids = new Set([
@@ -1043,7 +1153,7 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
               };
       
               expectoDetailHtml = `
-                <div class="muted">Expecto (tissue expression disruption)</div>
+                <div class="muted">ExpectoSC (cell-type specific expression disruption)</div>
                 ${coord ? `<div class="mono" style="margin:2px 0 6px;">${coord}</div>` : ""}
                 <div>n_tissues: ${escapeHtml(String(n_t))} • mean: ${mean} • median: ${median} • min: ${min_s} • max: ${max_s} • std: ${std_s}</div>
                 ${ex.relative_effect ? `<div style="margin-top:4px;">relative effect: ${escapeHtml(String(ex.relative_effect))}</div>` : ""}
@@ -1091,9 +1201,9 @@ const headerCols = `
   <th>Category</th>
   <th>Mapped gene</th>
   ${hasSeiCol ? '<th>SEI</th>' : ''}
-  ${hasExpectoCol ? '<th class="wrap">Expecto</th>' : ''}
-  ${hasAmCol ? '<th>AlphaMissense</th>' : ''}
-  <th class="wrap">GWAS traits</th>
+  ${hasExpectoCol ? '<th class="wrap">ExpectoSC</th>' : ''}
+  ${hasAmCol ? '<th class="am">AlphaMissense</th>' : ''}
+  <th class="traits">GWAS traits</th>
 `;
 
     // Prepare detail store for this gene
@@ -1120,17 +1230,19 @@ const headerCols = `
         ? `<td class="expecto wrap">${r.expectoHtml || 'N/A'}${hasDetail ? ` <button class="mini" onclick="toggleExpectoDetails('${gkey}','${rsSafe}', ${colspan})">Details</button>` : ""}</td>`
         : "";
 
-      const mainRow = `<tr>
-        <td class="mono">${escapeHtml(r.rs)}</td>
-        <td>${escapeHtml(r.freq)}</td>
-        <td>${escapeHtml(r.context || "N/A")}</td>
-        <td>${escapeHtml(r.category || "N/A")}</td>
-        <td>${escapeHtml(r.mapped_gene || "N/A")}</td>
-        ${hasSeiCol ? `<td>${escapeHtml(r.sei)}</td>` : ""}
-        ${expectoCell}
-        ${hasAmCol ? `<td>${amHtml || 'N/A'}</td>` : ""}
-        <td class="traits wrap">${traitsHtml || '<span class="muted">N/A</span>'}</td>
-      </tr>`;
+        const mainRow = `
+        <tr>
+          <td class="mono">${escapeHtml(r.rs)}</td>
+          <td>${escapeHtml(r.freq)}</td>
+          <td>${escapeHtml(r.context || "N/A")}</td>
+          <td>${escapeHtml(r.category || "N/A")}</td>
+          <td>${escapeHtml(r.mapped_gene || "N/A")}</td>
+          ${hasSeiCol ? `<td>${escapeHtml(r.sei)}</td>` : ""}
+          ${expectoCell}
+          ${hasAmCol ? `<td class="am">${amHtml || 'N/A'}</td>` : ""}
+          <td class="traits">${traitsHtml || '<span class="muted">N/A</span>'}</td>
+        </tr>
+      `;
 
       const expandedSet = (window.__EXPECTO_EXPANDED[gkey] ||= new Set());
       const isOpen = expandedSet.has(rsSafe);
@@ -1198,6 +1310,7 @@ function toggleExpectoDetails(geneKey, rsSafe, colspan){
       "humanbase_expecto",
       "tissue_expression_preds_variant_text_description",
       "dbsnp_variants",
+      "dbsnp_summaries",
       "sei_predictions",
       "alphamissense_predictions",
       "biogrid_summarized_go"
@@ -1282,6 +1395,11 @@ function toggleExpectoDetails(geneKey, rsSafe, colspan){
 
     const input2 = document.getElementById('q2');
     input2?.addEventListener('keydown', (e) => { if (e.key === 'Enter') runFrom('q2'); });
+  });
+
+
+  document.getElementById("themeToggle").addEventListener("click", () => {
+    document.body.classList.toggle("light");
   });
 </script>
 </body>

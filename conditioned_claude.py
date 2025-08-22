@@ -22,8 +22,9 @@ import re
 def _process_dbsnp_variants(state: "State") -> "State":
     """Process dbSNP variants to remove the `matches` field that is populated by gencode which is too verbose."""
     for variant_id in state.keys():
-        for annotation_i in state[variant_id]["annotations"]:
-            annotation_i.pop("matches")
+        if "annotations" in state[variant_id]:
+            for annotation_i in state[variant_id]["annotations"]:
+                annotation_i.pop("matches")
     return state
 
 # Data aggregation helpers
@@ -49,7 +50,7 @@ def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
         ("Per variant gene expression modulation predictions, linked to variants of interest. Note that it is z-scored to 1000Genomes, so values below 1 are a fairly small effect:", "tissue_expression_preds_variant_text_description", lambda txt: txt if isinstance(txt, str) and txt.strip() else None),
         ("Pathogenicity predictions for each missense variant of interest. Computed through AlphaMissense, which predicts the likelihood that missense variants (genetic mutations where a single amino acid in a protein is changed) can cause disease", "alphamissense_predictions"),
         ("dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)", "dbsnp_variants", _process_dbsnp_variants),
-        ("dbSNP variant summary (rare vs common variants, chromosomes, assembly info)", "dbsnp_summaries"),
+        ("dbSNP variant summary (rare vs common variants, chromosomes, assembly info)", "dbsnp_summaries", _process_dbsnp_variants),
         ("List of all computationally predicted gene targets of microRNAs from the miRDB database.", "mirDB_targets")
     ]
     
@@ -66,7 +67,6 @@ def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
                 gene_info[field_name] = data
                 if DEBUG and state_key in ['biogrid_summarized_go', 'biogrid_predictions','reactome_pathways']:
                     print(f'[conditioned_claude_node] Found {state_key} for {gene}: {data}')
-    
     return gene_info
 
 
@@ -139,14 +139,17 @@ def conditioned_claude_node(state: "State") -> "State":
     
     # Generate Claude response
     user_question = state["messages"][-1]["content"]
-    system_msg = (
-        "You are a biology data analyst. Answer strictly with facts you can "
-        "point to inside CONTEXT. Respond only with JSON with keys answer and evidence. Ensure proper JSON format. "
-        "Produce raw json output. I don't want markdown. "
-        "The 'evidence' field must always be a list of short strings, and always reference the entity to which you are referring. "
-        "If the CONTEXT contains trait-based associations (query_type: 'trait_based'), focus on the genetic associations "
-        "with the queried trait/disease, including related genes, variants, and their biological significance."
-    )
+    system_msg = state.get('prompt', '')    
+    
+    if len(system_msg)<2:
+        system_msg = (
+            "You are a biology data analyst. Answer strictly with facts you can "
+            "point to inside CONTEXT. Respond only with JSON with keys answer and evidence. Ensure proper JSON format. "
+            "Produce raw json output. I don't want markdown. "
+            "The 'evidence' field must always be a list of short strings, and always reference the entity to which you are referring. "
+            "If the CONTEXT contains trait-based associations (query_type: 'trait_based'), focus on the genetic associations "
+            "with the queried trait/disease, including related genes, variants, and their biological significance."
+        )
     
     if DEBUG:
         print(f"[conditioned_claude_node] system message: {system_msg}")
@@ -162,13 +165,15 @@ def conditioned_claude_node(state: "State") -> "State":
         messages=[{"role": "user", "content": f"User asked: {user_question}\n\nCONTEXT:\n{context_block}"}],
     )
     
+    if DEBUG:
+        print("[conditioned_claude_node] raw response from Claude:", raw)
+
     # Parse Claude response
     llm_resp = raw.content[0].text.strip() if hasattr(raw.content[0], "text") else raw.content[0]
     
     if llm_resp.startswith("```"):
         llm_resp = re.sub(r"^```(?:json)?\s*|\s*```$", "", llm_resp.strip(), flags=re.DOTALL).strip()
 
-    
     try:
         parsed_resp = json.loads(llm_resp) if isinstance(llm_resp, str) else llm_resp
     except Exception as exc:
