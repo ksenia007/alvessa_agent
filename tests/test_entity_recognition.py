@@ -18,7 +18,10 @@ def test_variant_extraction_node_rsids():
             'rs123': {'rsid': 'rs123'},
             'rs456': {'rsid': 'rs456'}
         },
-        'chr_pos_variants': {}
+        'chr_pos_variants': {},
+        "ensembl_genes": [],
+        "ensembl_proteins": [],
+        "ensembl_transcripts": []
     }
     
     result = entity_extraction.variant_extraction_node(initial_state)
@@ -28,7 +31,7 @@ def test_variant_extraction_node_rsids():
 def test_variant_extraction_node_chr_pos():
     """Tests the variant_extraction_node for chr:pos:ref>alt format."""
     input_text = "Variants include chr7:55249071:C>T and chrX:1000:A>G. Also a duplicate chr7:55249071:C>T."
-    initial_state = {"messages": [{"content": input_text}]}
+    initial_state = {"messages": [{"content": inputtext}]}
     
     expected_output = {
         'variants': {},
@@ -39,7 +42,10 @@ def test_variant_extraction_node_chr_pos():
             'chrX:1000:A>G': {
                 'coordinates': {'chrom': 'X', 'pos': 1000, 'ref': 'A', 'alt': 'G', 'assembly': 'GRCh38.p14'}
             }
-        }
+        },
+        "ensembl_genes": [],
+        "ensembl_proteins": [],
+        "ensembl_transcripts": []
     }
     
     result = entity_extraction.variant_extraction_node(initial_state)
@@ -58,7 +64,10 @@ def test_variant_extraction_node_mixed_and_invalid():
             'chr1:12345:A>T': {
                 'coordinates': {'chrom': '1', 'pos': 12345, 'ref': 'A', 'alt': 'T', 'assembly': 'GRCh38.p14'}
             }
-        }
+        },
+        "ensembl_genes": [],
+        "ensembl_proteins": [],
+        "ensembl_transcripts": []
     }
     
     result = entity_extraction.variant_extraction_node(initial_state)
@@ -69,25 +78,46 @@ def test_variant_extraction_node_no_variants():
     input_text = "This text discusses genes like BRCA1 but has no genetic variants."
     initial_state = {"messages": [{"content": input_text}]}
     
-    expected_output = {'variants': {}, 'chr_pos_variants': {}}
+    expected_output = {'variants': {}, 'chr_pos_variants': {}, "ensembl_genes": [], "ensembl_proteins": [], "ensembl_transcripts": []}
     
     result = entity_extraction.variant_extraction_node(initial_state)
     assert result == expected_output
+
+def test_variant_extraction_node_ensembl_ids():
+    """Tests the variant_extraction_node for various Ensembl ID formats."""
+    input_text = "Gene ENSG00000157764, protein ENSP00000288602, transcript ENST00000288602. Duplicate ensg00000157764 and another gene ENSG00000243485."
+    initial_state = {"messages": [{"content": input_text}]}
+    
+    expected_output = {
+        'variants': {},
+        'chr_pos_variants': {},
+        'ensembl_genes': ['ENSG00000157764', 'ENSG00000243485'],
+        'ensembl_proteins': ['ENSP00000288602'],
+        'ensembl_transcripts': ['ENST00000288602']
+    }
+    
+    result = entity_extraction.variant_extraction_node(initial_state)
+
+    # Compare dictionaries and sorted lists to ensure order-agnostic comparison
+    assert result['variants'] == expected_output['variants']
+    assert result['chr_pos_variants'] == expected_output['chr_pos_variants']
+    assert sorted(result['ensembl_genes']) == sorted(expected_output['ensembl_genes'])
+    assert sorted(result['ensembl_proteins']) == sorted(expected_output['ensembl_proteins'])
+    assert sorted(result['ensembl_transcripts']) == sorted(expected_output['ensembl_transcripts'])
 
 # --- Test Post-Processing Logic ---
 
 def test_post_processing():
     """Tests the _post_process_entities helper function."""
-    raw_genes = ["BRCA1, TP53", "EGFR ", " short ", "a", "miRNA", "a_very_long_gene_name_that_is_invalid"]
+    raw_genes = ["BRCA1, TP53", "EGFR ", " short ", "a", "miRNA", "a_very_long_gene_name_that_is_invalid", "ENSG00000157764"]
     raw_traits = ["cancer, disease", " short ", "hf"]
 
     expected = {
-        "genes": ["BRCA1", "TP53", "EGFR", "short"],
+        "genes": ["BRCA1", "TP53", "EGFR", "short", "ENSG00000157764"],
         "traits": ["cancer", "disease", "short"]
     }
     
     result = entity_extraction._post_process_entities(raw_genes, raw_traits)
-    # Using sorted() is a standard way to compare lists when order doesn't matter
     assert sorted(result["genes"]) == sorted(expected["genes"])
     assert sorted(result["traits"]) == sorted(expected["traits"])
 
@@ -108,7 +138,7 @@ def test_claude_entity_extraction_node(mock_claude_call):
 
 @patch('entity_extraction._get_gliner_model')
 def test_gliner_entity_extraction_node(mock_get_gliner):
-    """Tests the GLiNER node by mocking the model loader."""
+    """Tests the GLiNER node, checking for separate gene/protein extraction."""
     mock_model = MagicMock()
     mock_model.predict_entities.return_value = [
         {'text': 'BRCA1', 'label': 'gene'},
@@ -120,24 +150,22 @@ def test_gliner_entity_extraction_node(mock_get_gliner):
     initial_state = {"messages": [{"content": "Some text for GLiNER."}]}
     result = entity_extraction.gliner_entity_extraction_node(initial_state)
 
-    assert sorted(result["genes"]) == sorted(["BRCA1", "TP53"])
-    assert sorted(result["traits"]) == sorted(["breast cancer"])
+    assert result["genes"] == ["BRCA1"]
+    assert result["proteins"] == ["TP53"]
+    assert result["traits"] == ["breast cancer"]
 
 @patch('entity_extraction._get_flair_model')
 def test_flair_entity_extraction_node(mock_get_flair):
-    """Tests the Flair node by mocking the model loader."""
+    """Tests the Flair node, checking for separate gene/protein extraction."""
     mock_model = MagicMock()
     
     def mock_predict(sentence):
-        mock_label_gene = MagicMock()
-        mock_label_gene.data_point.text = "CFTR"
-        mock_label_gene.value = "Gene"
+        # Mock labels for gene, protein, and disease
+        mock_label_gene = MagicMock(value="Gene", data_point=MagicMock(text="CFTR"))
+        mock_label_protein = MagicMock(value="Protein", data_point=MagicMock(text="AKT1"))
+        mock_label_trait = MagicMock(value="Disease", data_point=MagicMock(text="cystic fibrosis"))
         
-        mock_label_trait = MagicMock()
-        mock_label_trait.data_point.text = "cystic fibrosis"
-        mock_label_trait.value = "Disease"
-        
-        sentence.get_labels.return_value = [mock_label_gene, mock_label_trait]
+        sentence.get_labels.return_value = [mock_label_gene, mock_label_protein, mock_label_trait]
 
     mock_model.predict.side_effect = mock_predict
     mock_get_flair.return_value = mock_model
@@ -149,8 +177,9 @@ def test_flair_entity_extraction_node(mock_get_flair):
         initial_state = {"messages": [{"content": "Some text for Flair."}]}
         result = entity_extraction.flair_entity_extraction_node(initial_state)
         
-        assert sorted(result["genes"]) == sorted(["CFTR"])
-        assert sorted(result["traits"]) == sorted(["cystic fibrosis"])
+        assert result["genes"] == ["CFTR"]
+        assert result["proteins"] == ["AKT1"]
+        assert result["traits"] == ["cystic fibrosis"]
 
 # --- Test Merged Node ---
 
@@ -158,12 +187,12 @@ def test_flair_entity_extraction_node(mock_get_flair):
 @patch('entity_extraction._extract_entities_with_flair')
 @patch('entity_extraction._extract_entities_with_claude')
 def test_entity_extraction_node_merged(mock_claude, mock_flair, mock_gliner):
-    """Tests the main merged node, ensuring results are combined and deduplicated."""
+    """Tests the main merged node, ensuring results are combined and deduplicated correctly."""
     mock_claude.return_value = {"genes": ["BRCA1", "TP53"], "traits": []}
-    mock_flair.return_value = {"genes": ["TP53"], "traits": ["hereditary breast cancer", "cancer"]}
-    mock_gliner.return_value = {"genes": ["BRCA2"], "traits": ["cancer"]}
+    mock_flair.return_value = {"genes": ["TP53"], "proteins": ["AKT1"], "traits": ["hereditary breast cancer", "cancer"]}
+    mock_gliner.return_value = {"genes": ["BRCA2"], "proteins": ["AKT1", "P53"], "traits": ["cancer"]}
 
-    input_text = "Discussion on BRCA1, TP53, BRCA2 and cancer risk, mentioning rs12345 and chr1:123:A>G."
+    input_text = "Discussion on genes, proteins, cancer risk, rs12345, chr1:123:A>G, and ENSG00000157764."
     initial_state = {"messages": [{"content": input_text}]}
 
     result = entity_extraction.entity_extraction_node(initial_state)
@@ -173,32 +202,40 @@ def test_entity_extraction_node_merged(mock_claude, mock_flair, mock_gliner):
         'chr1:123:A>G': {'coordinates': {'chrom': '1', 'pos': 123, 'ref': 'A', 'alt': 'G', 'assembly': 'GRCh38.p14'}}
     }
 
-    assert sorted(result['genes']) == sorted(['BRCA1', 'TP53', 'BRCA2'])
+    assert sorted(result['genes']) == sorted(['BRCA1', 'TP53', 'BRCA2', 'ENSG00000157764'])
     assert sorted(result['traits']) == sorted(['hereditary breast cancer', 'cancer'])
+    assert sorted(result['proteins']) == sorted(['AKT1', 'P53'])
+    assert result['transcripts'] == [] # No transcripts in the input text
     assert result['variants'] == expected_variants
     assert result['chr_pos_variants'] == expected_chr_pos
 
 # --- Test Edge Condition Helpers using @pytest.mark.parametrize ---
 
-# Define states once to be reused in the parameterized test
-state_with_all = {"genes": ["BRCA1"], "traits": ["cancer"], "variants": {"rs123": {}}}
-state_with_genes_only = {"genes": ["BRCA1"], "traits": [], "variants": {}}
-state_with_nothing = {"genes": [], "traits": [], "variants": {}}
+state_with_all = {"genes": ["BRCA1"], "traits": ["cancer"], "variants": {"rs123": {}}, "proteins": ["P53"], "transcripts": ["ENST123"]}
+state_with_genes_only = {"genes": ["BRCA1"], "traits": [], "variants": {}, "proteins": [], "transcripts": []}
+state_with_nothing = {"genes": [], "traits": [], "variants": {}, "proteins": [], "transcripts": []}
 
 @pytest.mark.parametrize("func, state, expected_result", [
-    # Test cases for has_genes
     (entity_extraction.has_genes, state_with_all, True),
     (entity_extraction.has_genes, state_with_genes_only, True),
     (entity_extraction.has_genes, state_with_nothing, False),
-    # Test cases for has_traits
+    
     (entity_extraction.has_traits, state_with_all, True),
     (entity_extraction.has_traits, state_with_genes_only, False),
     (entity_extraction.has_traits, state_with_nothing, False),
-    # Test cases for has_variants
+
     (entity_extraction.has_variants, state_with_all, True),
     (entity_extraction.has_variants, state_with_genes_only, False),
     (entity_extraction.has_variants, state_with_nothing, False),
+    
+    (entity_extraction.has_proteins, state_with_all, True),
+    (entity_extraction.has_proteins, state_with_genes_only, False),
+    (entity_extraction.has_proteins, state_with_nothing, False),
+
+    (entity_extraction.has_transcripts, state_with_all, True),
+    (entity_extraction.has_transcripts, state_with_genes_only, False),
+    (entity_extraction.has_transcripts, state_with_nothing, False),
 ])
 def test_has_entities_conditions(func, state, expected_result):
-    """Tests the edge condition helpers (has_genes, has_traits, has_variants)."""
+    """Tests the edge condition helpers for all entity types."""
     assert func(state) is expected_result
