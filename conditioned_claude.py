@@ -164,22 +164,15 @@ def conditioned_claude_node(state: "State") -> "State":
         messages=[{"role": "user", "content": f"User asked: {user_question}\n\nCONTEXT:\n{context_block}"}],
     )
     
+    if DEBUG:
+        print("[conditioned_claude_node] raw response from Claude:", raw)
+
     # Parse Claude response
     llm_resp = raw.content[0].text.strip() if hasattr(raw.content[0], "text") else raw.content[0]
     
     if llm_resp.startswith("```"):
         llm_resp = re.sub(r"^```(?:json)?\s*|\s*```$", "", llm_resp.strip(), flags=re.DOTALL).strip()
 
-    
-    # if we did not run verifier there is no json, just one letter
-    if state.get("run_verifier", True) is False:
-        if DEBUG:
-            print("[conditioned_claude_node] Skipping JSON parsing due to run_verifier=False")
-        return {
-            "messages": [{"role": "assistant", "content": llm_resp}],
-            "context_block": context_block,
-            "llm_json": {'answer':llm_resp, 'evidence': None}
-        }
     try:
         parsed_resp = json.loads(llm_resp) if isinstance(llm_resp, str) else llm_resp
     except Exception as exc:
