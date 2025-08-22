@@ -17,6 +17,10 @@ export BioGRID_API_KEY=[..your key here..]
 python -m serve_ui
 ```
 
+To run tests:
+```
+pytest tests/test_entity_recognition.py
+```
 
 The structure of the code is as follows:
 
