@@ -46,7 +46,7 @@ def format_state_for_prompt(state: State) -> str:
 
     catalog = "\n".join(f"- {name}: {desc}" for name, desc in TOOL_CATALOG.items())
     
-    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" Extracted gene symbols: {genes_str} Available tools: {catalog}.\n. \n Examples workflows: {EXAMPLE_TOOL_SELECTION} \n Which tools should be called, and in what order? Respond ONLY with a Python list of tool names. Example: ["query_by_trait", "humanbase_functions", "uniprot_base"] or ["humanbase_functions", "uniprot_base", "gwas"] or ["query_by_trait", "gwas", "BioGRID"]"""
+    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" \n\n Available tools: {catalog}.\n\n Examples workflows: {EXAMPLE_TOOL_SELECTION} \n Which tools should be called, and in what order? Respond *ONLY* with a Python list of tool names. Example: ["humanbase_functions", "uniprot_base"] or ["humanbase_functions", "uniprot_base", "query_gwas_by_gene"] or ["query_gwas_by_gene", "BioGRID"]"""
 
 def select_tools_and_run_dynamic(state: State) -> State:
     
