@@ -21,6 +21,8 @@ class State(TypedDict, total=False):
     messages: Annotated[List[Dict[str, str]], operator.add]
     genes: Annotated[List[str], operator.add]
     traits: Annotated[List[str], operator.add]
+    proteins: Annotated[List[str], operator.add]
+    transcripts: Annotated[List[str], operator.add]
     variants: Annotated[Dict[str, Dict[str, Dict[str, Any]]], operator.or_]
     chr_pos_variants: Annotated[Dict[str, Dict[str, Dict[str, Any]]], operator.or_]
     gene_level_gencode: Annotated[Dict[str, Dict[str, Any]], operator.or_]
