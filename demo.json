@@ -10,7 +10,7 @@
     },
     {
       "role": "assistant",
-      "content": "{\n  \"answer\": \"Based on the available data, NUCKS1's role in cancer and viral infections can be inferred from its molecular functions and interactions, though direct evidence for viral infection roles is limited in this context. NUCKS1 is a chromatin-associated protein involved in DNA repair through homologous recombination, which is crucial for maintaining genomic stability - a key factor in cancer prevention. The protein interacts with numerous cancer-related genes including tumor suppressors (MDM2, PARP1), DNA repair proteins (XRCC5, MRE11A, RAD51AP1), and chromatin remodeling complexes (SMARCA4, EZH2). NUCKS1 variants show significant associations with multiple traits including Parkinson's disease, atrial fibrillation, and various metabolic parameters. The overlap between cancer and viral infection roles likely centers on DNA repair mechanisms, as both cancer development and viral replication can cause DNA damage that requires homologous recombination repair pathways.\",\n  \"evidence\": [\n    \"NUCKS1 is a chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR)\",\n    \"NUCKS1 binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures\",\n    \"NUCKS1 interacts with MDM2 through Biochemical Activity\",\n    \"NUCKS1 interacts with DNA repair proteins PARP1, XRCC5, MRE11A through Affinity Capture-MS\",\n    \"NUCKS1 interacts with RAD51AP1 through Reconstituted Complex\",\n    \"NUCKS1 interacts with chromatin remodeling proteins SMARCA4, EZH2 through Affinity Capture-MS\",\n    \"NUCKS1 variants show significant associations with Parkinson's disease (rs3805, p_value 4e-11)\",\n    \"NUCKS1 variants show significant associations with atrial fibrillation (rs951366, p_value 8e-17)\"\n  ]\n}"
+      "content": "{\n  \"answer\": \"NUCKS1 plays important roles in both cancer and viral infections through its function as a chromatin-associated protein involved in DNA repair via homologous recombination. In cancer, NUCKS1 interacts with numerous cancer-related proteins including tumor suppressors (MDM2, PARP1), oncogenes (KRAS), DNA repair proteins (BRCA-associated proteins like RBBP4, RBBP5), and chromatin remodeling complexes (SMARCA4, SMARCA5). It shows genetic associations with various cancer-related traits and metabolic factors. In viral infections, NUCKS1 interacts with viral proteins like BRD4 (involved in viral transcription) and TRIM24 (antiviral response), and shows proximity to innate immune signaling proteins (TBK1, RNF8). The overlap between these roles centers on DNA damage response and chromatin regulation - both cancer development and viral infections involve DNA damage and require chromatin modifications for viral replication or oncogenic transformation. NUCKS1's core function in homologous recombination DNA repair makes it a critical factor in both contexts.\",\n  \"evidence\": [\n    \"NUCKS1 function: Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR)\",\n    \"NUCKS1 cancer interactions: MDM2, KRAS, PARP1, RBBP4, RBBP5, SMARCA4, SMARCA5\",\n    \"NUCKS1 viral-related interactions: BRD4, TRIM24, TBK1, RNF8\",\n    \"NUCKS1 genetic associations: Parkinson's disease, atrial fibrillation, various metabolic traits\",\n    \"NUCKS1 DNA binding: Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures\"\n  ]\n}"
     }
   ],
   "genes": [
@@ -60,236 +60,236 @@
   "expression_preds_variant_table": {},
   "biogrid_predictions": {
     "NUCKS1": [
-      "KMT2A",
-      "ATRX",
-      "PRKACG",
-      "EEF1A1",
-      "H3F3A",
-      "TIMELESS",
-      "Htt",
-      "KPNA2",
-      "HMG20A",
-      "HIST2H3A",
-      "MME",
-      "CC2D1B",
-      "HIST1H1C",
-      "H1F0",
-      "RNF8",
-      "RAI1",
-      "ZNF22",
-      "BRCC3",
-      "HMGN2",
-      "PPP4R2",
-      "KAT7",
-      "BRD7",
-      "RBM42",
-      "TOP2A",
-      "H2AFZ",
-      "SLC30A5",
-      "RBBP7",
-      "CHAMP1",
-      "MTF2",
-      "COPS2",
-      "TCF20",
-      "INTS3",
-      "UBB",
-      "HIST1H1D",
-      "DOCK9",
-      "RBMX",
-      "CDC26",
-      "NELFE",
-      "RPL32",
-      "MMS19",
-      "SPTAN1",
-      "CSNK2A1",
-      "RPA1",
-      "RBBP5",
-      "RBM25",
-      "RPA2",
-      "TERF2IP",
-      "RNF169",
-      "DSP",
-      "Prcp",
-      "RAB3GAP2",
-      "TNIP1",
-      "CDK11A",
-      "GLP1R",
-      "BAZ1B",
-      "AK5",
-      "HUWE1",
-      "BRD4",
-      "AZGP1",
-      "BAZ1A",
-      "TXN",
-      "SRSF1",
-      "SERBP1",
-      "TOPBP1",
-      "ANAPC7",
-      "PBRM1",
-      "CEBPA",
-      "RPL22",
-      "RFC5",
-      "EWSR1",
-      "PHAX",
-      "SMARCA5",
-      "ZNF512",
-      "H2AFY2",
-      "RPS3",
-      "TNIP2",
-      "vpr",
-      "PHIP",
-      "MTA1",
-      "N",
-      "ARHGAP31",
-      "MTA2",
-      "OR6C6",
       "CUL4A",
-      "HDAC1",
-      "RPL36",
-      "PRPF40A",
-      "MDC1",
-      "WNT5A",
-      "TIMP2",
-      "PRNP",
-      "POGZ",
-      "C11orf16",
-      "KDM3B",
-      "CBX3",
-      "PARP1",
-      "MCM6",
-      "ZRANB1",
-      "CNDP2",
-      "SMARCE1",
-      "SRRT",
-      "POLB",
-      "PRKRIP1",
-      "nsp3",
-      "nsp9",
-      "MRE11A",
-      "ERICH6",
-      "RBBP4",
-      "CDC14B",
-      "USP14",
-      "KAT6A",
-      "PHF14",
-      "HIST1H3A",
-      "SMEK1",
-      "RSF1",
-      "CECR2",
-      "WHSC1",
-      "PYCR2",
-      "KDM5B",
-      "PRDX3",
       "PDLIM5",
-      "EP300",
-      "RCOR1",
-      "CSNK2A2",
+      "Tmem173",
+      "DSP",
+      "EEF1A1",
+      "SERBP1",
+      "MTF2",
+      "HIST1H2AC",
+      "ELAVL1",
+      "RPL32",
+      "ZNF512",
+      "SMARCB1",
+      "CHRAC1",
+      "SMARCC1",
+      "BASP1",
+      "C11orf30",
+      "Cebpb",
+      "RPA1",
+      "TIMP2",
+      "RNF8",
       "ORC2",
-      "RFC1",
-      "H1FX",
-      "PHLPP1",
-      "NAA40",
-      "PAWR",
-      "CDC27",
-      "SUZ12",
-      "COL17A1",
-      "BRPF1",
-      "INIP",
-      "PRPF4B",
-      "DRAP1",
-      "DDB1",
-      "PSMA1",
-      "CHMP4C",
-      "MCM4",
-      "HIST1H4A",
-      "CAP1",
-      "KIF20A",
-      "BANF1",
+      "HNRNPH1",
+      "PRKACG",
+      "CBX5",
+      "PRDX3",
+      "REPS1",
+      "HIST2H2AB",
+      "TOPBP1",
+      "PHF14",
+      "SLC30A5",
+      "NEDD8-MDP1",
+      "RPA2",
+      "DIDO1",
+      "ZRANB1",
+      "ARID1A",
+      "MSX2",
+      "PBRM1",
+      "SLCO2B1",
+      "SMEK1",
+      "TCF20",
+      "ZNF280C",
+      "SMARCA1",
+      "EZH2",
+      "EWSR1",
+      "Prcp",
+      "MECP2",
+      "ING5",
+      "HEXIM1",
+      "WDR5",
+      "Hdac4",
+      "CDK11A",
+      "RBMX",
+      "SMARCE1",
       "NUMA1",
       "KRAS",
-      "TRIM24",
-      "PRKDC",
-      "MDM2",
-      "RIF1",
-      "MSN",
-      "NUCKS1",
-      "Cebpb",
-      "HSPA1A",
-      "BAP1",
-      "CAPRIN1",
-      "SMARCB1",
-      "ZMYM4",
-      "XRCC5",
-      "SRCAP",
-      "HEXIM1",
-      "ING5",
-      "ACLY",
-      "ELAVL1",
-      "ILF3",
-      "EZH2",
-      "CDK11B",
-      "CBX5",
-      "RIPK4",
-      "CHRAC1",
-      "HIST1H2BG",
-      "H2AFY",
-      "UBE2H",
-      "MECP2",
-      "WDR5",
-      "PUF60",
-      "Tmem173",
-      "CBX1",
-      "ARID1A",
-      "TBK1",
-      "HP1BP3",
-      "CSNK2A3",
-      "HIST2H2BE",
-      "DIDO1",
-      "LIG3",
-      "UHRF1",
-      "SMARCC1",
-      "LCOR",
-      "CDCA8",
-      "TRIM67",
-      "MSX2",
-      "NEDD8-MDP1",
-      "BIRC3",
-      "SMARCA4",
-      "EML6",
-      "ACTC1",
-      "Hdac4",
-      "REPS1",
-      "HMGB3",
-      "RAD51AP1",
-      "BASP1",
-      "MCM7",
-      "PSIP1",
-      "MSL1",
-      "MSH6",
-      "HIST2H2AB",
-      "CPOX",
-      "GIT1",
-      "TOP2B",
+      "CAP1",
+      "INIP",
       "DCK",
-      "SMARCA1",
+      "MTA1",
+      "ASH2L",
+      "ERICH6",
+      "CSNK2A3",
+      "RBBP5",
+      "ARHGAP31",
+      "H1F0",
+      "TBK1",
+      "BRPF1",
+      "NUCKS1",
+      "N",
+      "LCOR",
+      "INTS3",
+      "POLB",
+      "Htt",
+      "BRD4",
+      "HIST2H3A",
+      "ZMYM4",
+      "TXN",
+      "UBE2H",
+      "BANF1",
+      "CPOX",
+      "HMGN2",
+      "KAT6A",
+      "MTA2",
+      "MSL1",
+      "RNF169",
+      "POLE3",
+      "KAT7",
+      "MME",
+      "RFC5",
+      "WHSC1",
+      "PSMA1",
+      "BAZ1B",
+      "PHIP",
+      "CC2D1B",
+      "COPS2",
+      "HIST2H2BE",
+      "BRCC3",
+      "BAZ1A",
+      "PAWR",
+      "TRIM67",
+      "CDC26",
+      "CSNK2A2",
+      "AK5",
+      "UHRF1",
+      "MCM4",
+      "WNT5A",
       "PPIA",
-      "EED",
-      "HNRNPH1",
+      "MDM2",
+      "PRPF4B",
+      "ACTC1",
+      "TERF2IP",
+      "ZMYM3",
+      "RPS3",
+      "PHAX",
+      "PARP1",
+      "ANAPC7",
+      "HSPA8",
+      "KMT2A",
+      "nsp9",
+      "MCM6",
       "EGFR",
+      "RIF1",
+      "RAB3GAP2",
+      "BAP1",
+      "CDC14B",
+      "BIRC3",
+      "H3F3A",
+      "RBM25",
+      "CNDP2",
+      "GLP1R",
+      "H2AFY2",
+      "KDM5B",
+      "CHAMP1",
       "nsp15",
+      "SMARCA5",
+      "RIPK4",
+      "CDC27",
+      "TRIM24",
+      "DOCK9",
+      "HMGB3",
+      "PSIP1",
+      "PRKDC",
+      "PHLPP1",
+      "TNIP1",
+      "MMS19",
+      "KDM3B",
+      "POGZ",
+      "RBM42",
+      "SPTAN1",
+      "PYCR2",
+      "RBBP7",
+      "CHMP4C",
+      "EP300",
+      "CUL4B",
+      "DRAP1",
+      "USP14",
+      "PUF60",
+      "GIT1",
+      "CDCA8",
+      "PPP4R2",
+      "C11orf16",
+      "RBBP4",
+      "RPA3",
+      "RPL36",
+      "SRCAP",
+      "MSH6",
+      "RCOR1",
+      "NAA40",
+      "RAI1",
+      "HIST2H2AA3",
+      "ZNF22",
+      "TOP2A",
+      "OR6C6",
+      "SRSF1",
+      "ILF3",
+      "SMARCA4",
+      "UBB",
+      "RPL22",
+      "MSN",
+      "TOP2B",
+      "SRRT",
+      "CEBPA",
+      "HIST1H2BG",
+      "PRKRIP1",
+      "HUWE1",
+      "H2AFY",
+      "RAD51AP1",
+      "MDC1",
+      "DDB1",
+      "COL17A1",
+      "H2AFZ",
+      "AZGP1",
+      "PRNP",
+      "RFC1",
+      "BRD7",
+      "NELFE",
+      "HIST1H1D",
+      "HDAC1",
+      "nsp3",
       "PRCP",
       "AHCY",
-      "HIST1H2AC",
-      "ZNF280C",
-      "RPA3",
-      "C11orf30",
-      "ZMYM3",
-      "HSPA8",
-      "SLCO2B1",
-      "CUL4B",
-      "POLE3",
-      "HIST2H2AA3",
-      "ASH2L"
+      "MRE11A",
+      "TIMELESS",
+      "RSF1",
+      "vpr",
+      "HIST1H1C",
+      "CSNK2A1",
+      "KPNA2",
+      "CDK11B",
+      "MCM7",
+      "SUZ12",
+      "TNIP2",
+      "H1FX",
+      "CBX1",
+      "KIF20A",
+      "HIST1H3A",
+      "ATRX",
+      "LIG3",
+      "HSPA1A",
+      "HIST1H4A",
+      "HMG20A",
+      "EML6",
+      "XRCC5",
+      "EED",
+      "CBX3",
+      "CECR2",
+      "CAPRIN1",
+      "PRPF40A",
+      "HP1BP3",
+      "ACLY"
     ]
   },
   "biogrid_interaction_groups": {
@@ -561,7 +561,214 @@
     "NUCKS1": []
   },
   "biogrid_summarized_go": {},
-  "dbsnp_variants": {},
+  "dbsnp_variants": {
+    "NUCKS1": {
+      "rs150111028": {
+        "mapped_gene": "NUCKS1",
+        "context": "3_prime_UTR_variant",
+        "variant_category": "other",
+        "associated_disease_trait": {
+          "PM20D1 protein levels": {
+            "p_value": 1.0000000000000001e-29,
+            "risk_score": 0.7494922
+          }
+        }
+      },
+      "rs149515685": {
+        "mapped_gene": "NUCKS1",
+        "context": "3_prime_UTR_variant",
+        "variant_category": "other",
+        "associated_disease_trait": {
+          "PM20D1 protein levels": {
+            "p_value": 9e-133,
+            "risk_score": 0.69633335
+          }
+        }
+      },
+      "rs114715101": {
+        "mapped_gene": "NUCKS1",
+        "context": "intron_variant",
+        "variant_category": "intronic",
+        "associated_disease_trait": {
+          "PM20D1 protein levels": {
+            "p_value": 1.0000000000000001e-66,
+            "risk_score": 0.45861802
+          }
+        }
+      },
+      "rs7545345": {
+        "mapped_gene": "NUCKS1",
+        "context": "intron_variant",
+        "variant_category": "intronic",
+        "associated_disease_trait": {
+          "IGF 1 (UKB data field 30770)": {
+            "p_value": 1e-13,
+            "risk_score": 0.02008364
+          },
+          "Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction": {
+            "p_value": 3e-08,
+            "risk_score": 2.51
+          }
+        }
+      },
+      "rs823094": {
+        "mapped_gene": "NUCKS1",
+        "context": "intron_variant",
+        "variant_category": "intronic",
+        "associated_disease_trait": {
+          "Monocyte percentage (UKB data field 30190)": {
+            "p_value": 8.000000000000001e-24,
+            "risk_score": 0.01899985
+          }
+        }
+      },
+      "rs951366": {
+        "mapped_gene": "NUCKS1",
+        "context": "3_prime_UTR_variant",
+        "variant_category": "other",
+        "associated_disease_trait": {
+          "Atrial fibrillation": {
+            "p_value": 8e-17,
+            "risk_score": 1.04
+          },
+          "Body surface area": {
+            "p_value": 2e-15,
+            "risk_score": 0.00326056
+          },
+          "Height": {
+            "p_value": 3e-11,
+            "risk_score": 0.02301
+          },
+          "Posterior thalamic nuclei volume": {
+            "p_value": 2e-09,
+            "risk_score": 0.0500651
+          }
+        }
+      },
+      "rs34305872": {
+        "mapped_gene": "NUCKS1",
+        "context": "3_prime_UTR_variant",
+        "variant_category": "other",
+        "associated_disease_trait": {
+          "Hand grip strength right (UKB data field 47)": {
+            "p_value": 4e-14,
+            "risk_score": 0.010807201
+          },
+          "Hand grip strength left (UKB data field 46)": {
+            "p_value": 1e-12,
+            "risk_score": 0.010127832
+          }
+        }
+      },
+      "rs4951258": {
+        "mapped_gene": "NUCKS1",
+        "context": "intron_variant",
+        "variant_category": "intronic",
+        "associated_disease_trait": {
+          "Atrial fibrillation": {
+            "p_value": 2e-09,
+            "risk_score": 0.0353
+          }
+        }
+      },
+      "rs823130": {
+        "mapped_gene": "NUCKS1",
+        "context": "intron_variant",
+        "variant_category": "intronic",
+        "associated_disease_trait": {
+          "QRS duration": {
+            "p_value": 3e-09,
+            "risk_score": 0.0188
+          },
+          "Kidney stone disease": {
+            "p_value": 6e-09,
+            "risk_score": 1.07
+          }
+        }
+      },
+      "rs4951261": {
+        "mapped_gene": "NUCKS1",
+        "context": "intron_variant",
+        "variant_category": "intronic",
+        "associated_disease_trait": {
+          "Atrial fibrillation": {
+            "p_value": 1e-09,
+            "risk_score": 1.05
+          }
+        }
+      },
+      "rs3747973": {
+        "mapped_gene": "Metazoa_SRP - NUCKS1",
+        "context": "intergenic_variant",
+        "variant_category": "intergenic",
+        "associated_disease_trait": {
+          "Apolipoprotein A1 levels": {
+            "p_value": 1e-13,
+            "risk_score": 0.014824
+          },
+          "HDL cholesterol levels": {
+            "p_value": 3e-13,
+            "risk_score": 0.0141432
+          }
+        }
+      },
+      "rs12046305": {
+        "mapped_gene": "NUCKS1",
+        "context": "intron_variant",
+        "variant_category": "intronic",
+        "associated_disease_trait": {
+          "Serum alkaline phosphatase levels": {
+            "p_value": 5e-12,
+            "risk_score": 6.91
+          }
+        }
+      },
+      "rs3805": {
+        "mapped_gene": "NUCKS1",
+        "context": "3_prime_UTR_variant",
+        "variant_category": "other",
+        "associated_disease_trait": {
+          "Parkinson's disease": {
+            "p_value": 4e-11,
+            "risk_score": 0.132
+          }
+        }
+      },
+      "rs7536483": {
+        "mapped_gene": "NUCKS1",
+        "context": "intron_variant",
+        "variant_category": "intronic",
+        "associated_disease_trait": {
+          "Appendicular lean mass": {
+            "p_value": 7e-33,
+            "risk_score": 0.0226
+          }
+        }
+      },
+      "rs823118": {
+        "mapped_gene": "NUCKS1 - RAB29",
+        "context": "intergenic_variant",
+        "variant_category": "intergenic",
+        "associated_disease_trait": {
+          "Parkinson's disease or first degree relation to individual with Parkinson's disease": {
+            "p_value": 1.0000000000000001e-29,
+            "risk_score": 0.1066
+          }
+        }
+      },
+      "rs55737937": {
+        "mapped_gene": "NUCKS1",
+        "context": "intron_variant",
+        "variant_category": "intronic",
+        "associated_disease_trait": {
+          "Serum alkaline phosphatase levels": {
+            "p_value": 8e-14,
+            "risk_score": 0.0192
+          }
+        }
+      }
+    }
+  },
   "dbsnp_summaries": {},
   "sei_predictions": {},
   "alphamissense_predictions": {},
@@ -640,325 +847,21 @@
           "Parkinson's disease",
           "Posterior thalamic nuclei volume"
         ]
-      },
-      "variant_annotations": {
-        "rs150111028": {
-          "chromosome": "1",
-          "position": 205715978,
-          "region": "1q32.1",
-          "context": "3_prime_UTR_variant",
-          "variant_category": "other",
-          "is_intergenic": false,
-          "risk_allele": "rs150111028-A",
-          "risk_allele_frequency": "0.00203549999999996",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "PM20D1 protein levels": {
-              "p_value": 1.0000000000000001e-29,
-              "risk_score": 0.7494922
-            }
-          }
-        },
-        "rs149515685": {
-          "chromosome": "1",
-          "position": 205717137,
-          "region": "1q32.1",
-          "context": "3_prime_UTR_variant",
-          "variant_category": "other",
-          "is_intergenic": false,
-          "risk_allele": "rs149515685-C",
-          "risk_allele_frequency": "0.0101322",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "PM20D1 protein levels": {
-              "p_value": 9e-133,
-              "risk_score": 0.69633335
-            }
-          }
-        },
-        "rs114715101": {
-          "chromosome": "1",
-          "position": 205726298,
-          "region": "1q32.1",
-          "context": "intron_variant",
-          "variant_category": "intronic",
-          "is_intergenic": false,
-          "risk_allele": "rs114715101-A",
-          "risk_allele_frequency": "0.0118781999999999",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "PM20D1 protein levels": {
-              "p_value": 1.0000000000000001e-66,
-              "risk_score": 0.45861802
-            }
-          }
-        },
-        "rs7545345": {
-          "chromosome": "1",
-          "position": 205721813,
-          "region": "1q32.1",
-          "context": "intron_variant",
-          "variant_category": "intronic",
-          "is_intergenic": false,
-          "risk_allele": "rs7545345-C",
-          "risk_allele_frequency": "0.1315231",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "IGF 1 (UKB data field 30770)": {
-              "p_value": 1e-13,
-              "risk_score": 0.02008364
-            },
-            "Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction": {
-              "p_value": 3e-08,
-              "risk_score": 2.51
-            }
-          }
-        },
-        "rs823094": {
-          "chromosome": "1",
-          "position": 205720679,
-          "region": "1q32.1",
-          "context": "intron_variant",
-          "variant_category": "intronic",
-          "is_intergenic": false,
-          "risk_allele": "rs823094-G",
-          "risk_allele_frequency": "0.4259383",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "Monocyte percentage (UKB data field 30190)": {
-              "p_value": 8.000000000000001e-24,
-              "risk_score": 0.01899985
-            }
-          }
-        },
-        "rs951366": {
-          "chromosome": "1",
-          "position": 205716224,
-          "region": "1q32.1",
-          "context": "3_prime_UTR_variant",
-          "variant_category": "other",
-          "is_intergenic": false,
-          "risk_allele": "rs951366-C",
-          "risk_allele_frequency": "0.392",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "Atrial fibrillation": {
-              "p_value": 8e-17,
-              "risk_score": 1.04
-            },
-            "Body surface area": {
-              "p_value": 2e-15,
-              "risk_score": 0.00326056
-            },
-            "Height": {
-              "p_value": 3e-11,
-              "risk_score": 0.02301
-            },
-            "Posterior thalamic nuclei volume": {
-              "p_value": 2e-09,
-              "risk_score": 0.0500651
-            }
-          }
-        },
-        "rs34305872": {
-          "chromosome": "1",
-          "position": 205717396,
-          "region": "1q32.1",
-          "context": "3_prime_UTR_variant",
-          "variant_category": "other",
-          "is_intergenic": false,
-          "risk_allele": "rs34305872-GT",
-          "risk_allele_frequency": "0.4305607",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "Hand grip strength right (UKB data field 47)": {
-              "p_value": 4e-14,
-              "risk_score": 0.010807201
-            },
-            "Hand grip strength left (UKB data field 46)": {
-              "p_value": 1e-12,
-              "risk_score": 0.010127832
-            }
-          }
-        },
-        "rs4951258": {
-          "chromosome": "1",
-          "position": 205722188,
-          "region": "1q32.1",
-          "context": "intron_variant",
-          "variant_category": "intronic",
-          "is_intergenic": false,
-          "risk_allele": "rs4951258-A",
-          "risk_allele_frequency": "0.4039",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "Atrial fibrillation": {
-              "p_value": 2e-09,
-              "risk_score": 0.0353
-            }
-          }
-        },
-        "rs823130": {
-          "chromosome": "1",
-          "position": 205745244,
-          "region": "1q32.1",
-          "context": "intron_variant",
-          "variant_category": "intronic",
-          "is_intergenic": false,
-          "risk_allele": "rs823130-T",
-          "risk_allele_frequency": "0.4096",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "QRS duration": {
-              "p_value": 3e-09,
-              "risk_score": 0.0188
-            },
-            "Kidney stone disease": {
-              "p_value": 6e-09,
-              "risk_score": 1.07
-            }
-          }
-        },
-        "rs4951261": {
-          "chromosome": "1",
-          "position": 205748695,
-          "region": "1q32.1",
-          "context": "intron_variant",
-          "variant_category": "intronic",
-          "is_intergenic": false,
-          "risk_allele": "rs4951261-C",
-          "risk_allele_frequency": "0.38",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "Atrial fibrillation": {
-              "p_value": 1e-09,
-              "risk_score": 1.05
-            }
-          }
-        },
-        "rs3747973": {
-          "chromosome": "1",
-          "position": 205708020,
-          "region": "1q32.1",
-          "context": "intergenic_variant",
-          "variant_category": "intergenic",
-          "is_intergenic": true,
-          "risk_allele": "rs3747973-A",
-          "risk_allele_frequency": "0.407445",
-          "mapped_gene": "Metazoa_SRP - NUCKS1",
-          "associated_disease_trait": {
-            "Apolipoprotein A1 levels": {
-              "p_value": 1e-13,
-              "risk_score": 0.014824
-            },
-            "HDL cholesterol levels": {
-              "p_value": 3e-13,
-              "risk_score": 0.0141432
-            }
-          }
-        },
-        "rs12046305": {
-          "chromosome": "1",
-          "position": 205745350,
-          "region": "1q32.1",
-          "context": "intron_variant",
-          "variant_category": "intronic",
-          "is_intergenic": false,
-          "risk_allele": "rs12046305-A",
-          "risk_allele_frequency": "0.26",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "Serum alkaline phosphatase levels": {
-              "p_value": 5e-12,
-              "risk_score": 6.91
-            }
-          }
-        },
-        "rs3805": {
-          "chromosome": "1",
-          "position": 205714227,
-          "region": "1q32.1",
-          "context": "3_prime_UTR_variant",
-          "variant_category": "other",
-          "is_intergenic": false,
-          "risk_allele": "rs3805-T",
-          "risk_allele_frequency": "NR",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "Parkinson's disease": {
-              "p_value": 4e-11,
-              "risk_score": 0.132
-            }
-          }
-        },
-        "rs7536483": {
-          "chromosome": "1",
-          "position": 205749730,
-          "region": "1q32.1",
-          "context": "intron_variant",
-          "variant_category": "intronic",
-          "is_intergenic": false,
-          "risk_allele": "rs7536483-A",
-          "risk_allele_frequency": "0.5726",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "Appendicular lean mass": {
-              "p_value": 7e-33,
-              "risk_score": 0.0226
-            }
-          }
-        },
-        "rs823118": {
-          "chromosome": "1",
-          "position": 205754444,
-          "region": "1q32.1",
-          "context": "intergenic_variant",
-          "variant_category": "intergenic",
-          "is_intergenic": true,
-          "risk_allele": "rs823118-T",
-          "risk_allele_frequency": "0.566",
-          "mapped_gene": "NUCKS1 - RAB29",
-          "associated_disease_trait": {
-            "Parkinson's disease or first degree relation to individual with Parkinson's disease": {
-              "p_value": 1.0000000000000001e-29,
-              "risk_score": 0.1066
-            }
-          }
-        },
-        "rs55737937": {
-          "chromosome": "1",
-          "position": 205745489,
-          "region": "1q32.1",
-          "context": "intron_variant",
-          "variant_category": "intronic",
-          "is_intergenic": false,
-          "risk_allele": "rs55737937-C",
-          "risk_allele_frequency": "NR",
-          "mapped_gene": "NUCKS1",
-          "associated_disease_trait": {
-            "Serum alkaline phosphatase levels": {
-              "p_value": 8e-14,
-              "risk_score": 0.0192
-            }
-          }
-        }
       }
     }
   },
-  "context_block": "[{\"gene\":\"NUCKS1\",\"Interacting human genes based on BioGRID curated database, organized by experimental system\":{\"Two-hybrid\":[\"AK5\",\"DOCK9\"],\"Affinity Capture-MS\":[\"MME\",\"EGFR\",\"TNIP2\",\"USP14\",\"BIRC3\",\"CHMP4C\",\"PRNP\",\"BRD4\",\"TRIM24\",\"EP300\",\"MTA2\",\"H2AFY\",\"BANF1\",\"PSIP1\",\"KIF20A\",\"H1F0\",\"POLB\",\"WHSC1\",\"SMARCA5\",\"RPL22\",\"RFC1\",\"RFC5\",\"MCM7\",\"LIG3\",\"MECP2\",\"SMARCA4\",\"ATRX\",\"CBX5\",\"XRCC5\",\"TOP2A\",\"HIST1H1D\",\"PARP1\",\"UBB\",\"H2AFZ\",\"HIST1H1C\",\"PSMA1\",\"AZGP1\",\"RPS3\",\"ZNF22\",\"CSNK2A2\",\"CBX1\",\"ZMYM3\",\"CECR2\",\"CHRAC1\",\"SMARCA1\",\"SRCAP\",\"PYCR2\",\"UHRF1\",\"MCM4\",\"KAT6A\",\"PHF14\",\"CDC27\",\"ZNF512\",\"CUL4B\",\"MSL1\",\"SUZ12\",\"EED\",\"C11orf30\",\"KAT7\",\"MTA1\",\"ING5\",\"RBBP7\",\"NEDD8-MDP1\",\"RPL32\",\"MRE11A\",\"ASH2L\",\"RSF1\",\"H1FX\",\"SMARCE1\",\"HIST1H2AC\",\"SMARCC1\",\"PHIP\",\"LCOR\",\"CHAMP1\",\"ANAPC7\",\"RCOR1\",\"BAZ1B\",\"MTF2\",\"RPL36\",\"INIP\",\"BAZ1A\",\"POLE3\",\"BRD7\",\"HMG20A\",\"TCF20\",\"KDM5B\",\"H2AFY2\",\"SMARCB1\",\"CBX3\",\"KMT2A\",\"TOP2B\",\"RBBP4\",\"MDC1\",\"MCM6\",\"NUMA1\",\"CUL4A\",\"BRPF1\",\"CSNK2A1\",\"PRKDC\",\"WDR5\",\"HIST1H4A\",\"RAI1\",\"POGZ\",\"KDM3B\",\"PBRM1\",\"HIST2H3A\",\"HIST2H2AB\",\"RNF169\",\"CDC26\",\"ZNF280C\",\"CDCA8\",\"RBBP5\",\"HIST2H2BE\",\"DDB1\",\"EZH2\",\"ZMYM4\",\"RIF1\",\"HIST2H2AA3\",\"INTS3\",\"HP1BP3\",\"SLC30A5\",\"MSX2\",\"BAP1\",\"ZRANB1\",\"HSPA1A\",\"HSPA8\",\"PRKACG\",\"RIPK4\",\"TRIM67\",\"TNIP1\",\"CDK11A\",\"CDK11B\",\"CSNK2A1\",\"CSNK2A2\",\"CSNK2A3\",\"UBE2H\",\"MECP2\",\"NELFE\",\"H3F3A\",\"KRAS\"],\"Affinity Capture-RNA\":[\"ELAVL1\",\"HNRNPH1\"],\"Co-fractionation\":[\"ORC2\",\"RBM42\",\"RBMX\",\"ILF3\",\"PRCP\",\"COPS2\",\"HEXIM1\",\"HUWE1\",\"HMGB3\",\"PHAX\",\"ARID1A\",\"PRPF40A\",\"TXN\",\"HSPA8\",\"DSP\",\"AHCY\",\"MSN\",\"DCK\",\"PRDX3\",\"CPOX\",\"BRCC3\",\"RBM25\",\"SMARCA4\",\"KPNA2\",\"MSH6\",\"ACLY\",\"EEF1A1\",\"BASP1\",\"CAP1\",\"TOP2B\",\"SRSF1\",\"PRPF4B\",\"HDAC1\",\"SPTAN1\",\"CAPRIN1\",\"DRAP1\",\"RBBP5\",\"CC2D1B\",\"SMEK1\",\"REPS1\",\"PDLIM5\",\"PAWR\",\"CNDP2\",\"MMS19\",\"SRRT\",\"RAB3GAP2\",\"PRKRIP1\",\"PPP4R2\",\"PUF60\",\"RCOR1\",\"TIMELESS\",\"GIT1\"],\"PCA\":[\"GLP1R\"],\"Affinity Capture-Western\":[\"GLP1R\",\"ATRX\"],\"Proximity Label-MS\":[\"EWSR1\",\"CDC14B\",\"ACTC1\",\"WHSC1\",\"HIST1H2BG\",\"TERF2IP\",\"NAA40\",\"PHLPP1\",\"HSPA1A\",\"TBK1\",\"RPA1\",\"RPA2\",\"RPA3\",\"TIMP2\",\"PPIA\",\"RNF8\",\"TOPBP1\"],\"Biochemical Activity\":[\"MDM2\"],\"Reconstituted Complex\":[\"ATRX\",\"ATRX\",\"RAD51AP1\"],\"Cross-Linking-MS (XL-MS)\":[\"HIST1H1C\",\"HIST1H3A\",\"SERBP1\",\"HMGN2\",\"HIST2H3A\",\"WNT5A\",\"COL17A1\",\"DIDO1\",\"ARHGAP31\",\"OR6C6\",\"EML6\",\"ERICH6\",\"SLCO2B1\",\"C11orf16\",\"NUCKS1\"],\"Protein-peptide\":[\"CEBPA\"]},\"Contains GWAS associations and their statistical significance (to traits, protein levels etc.) for the gene and its variants. Returns associations that are high-risk or high-signifiance or both.\":{\"gene\":\"NUCKS1\",\"found\":true,\"total_associations\":45,\"total_significant_associations\":35,\"total_studies_analyzed\":23,\"summary_by_high_risk_alleles\":{\"related_genes\":[\"NUCKS1\",\"SLC41A1\",\"METAZOA_SRP - NUCKS1\"],\"high_risk_snps\":[\"rs12046305\",\"rs7545345\",\"rs823130\",\"rs951366\",\"rs4951261\",\"rs4951258\",\"rs150111028\",\"rs149515685\",\"rs114715101\",\"rs3805\",\"rs823094\",\"rs3747973\",\"rs34305872\"],\"affected_protein_levels\":[\"PM20D1\"],\"associated_disease_traits\":[\"Serum alkaline phosphatase levels\",\"Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction\",\"Kidney stone disease\",\"Atrial fibrillation\",\"Hand grip strength left (UKB data field 46)\",\"Hand grip strength right (UKB data field 47)\",\"IGF 1 (UKB data field 30770)\",\"Monocyte percentage (UKB data field 30190)\",\"PM20D1 protein levels\",\"Weight (UKB data field 21002)\",\"Whole body water mass (UKB data field 23102)\",\"Parkinson's disease\",\"QRS duration\",\"QT interval\",\"Apolipoprotein A1 levels\",\"HDL cholesterol levels\"]},\"summary_by_significance\":{\"related_genes\":[\"NUCKS1\",\"NUCKS1 - RAB29\"],\"high_risk_snps\":[\"rs7536483\",\"rs823118\",\"rs951366\",\"rs55737937\",\"rs12046305\",\"rs3805\",\"rs4951258\"],\"affected_protein_levels\":[],\"associated_disease_traits\":[\"Appendicular lean mass\",\"Parkinson's disease or first degree relation to individual with Parkinson's disease\",\"Atrial fibrillation\",\"Body surface area\",\"Serum alkaline phosphatase levels\",\"Height\",\"Parkinson's disease\",\"Posterior thalamic nuclei volume\"]},\"variant_annotations\":{\"rs150111028\":{\"chromosome\":\"1\",\"position\":205715978,\"region\":\"1q32.1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"is_intergenic\":false,\"risk_allele\":\"rs150111028-A\",\"risk_allele_frequency\":\"0.00203549999999996\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"PM20D1 protein levels\":{\"p_value\":1.0000000000000001e-29,\"risk_score\":0.7494922}}},\"rs149515685\":{\"chromosome\":\"1\",\"position\":205717137,\"region\":\"1q32.1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"is_intergenic\":false,\"risk_allele\":\"rs149515685-C\",\"risk_allele_frequency\":\"0.0101322\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"PM20D1 protein levels\":{\"p_value\":9e-133,\"risk_score\":0.69633335}}},\"rs114715101\":{\"chromosome\":\"1\",\"position\":205726298,\"region\":\"1q32.1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"is_intergenic\":false,\"risk_allele\":\"rs114715101-A\",\"risk_allele_frequency\":\"0.0118781999999999\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"PM20D1 protein levels\":{\"p_value\":1.0000000000000001e-66,\"risk_score\":0.45861802}}},\"rs7545345\":{\"chromosome\":\"1\",\"position\":205721813,\"region\":\"1q32.1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"is_intergenic\":false,\"risk_allele\":\"rs7545345-C\",\"risk_allele_frequency\":\"0.1315231\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"IGF 1 (UKB data field 30770)\":{\"p_value\":1e-13,\"risk_score\":0.02008364},\"Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction\":{\"p_value\":3e-08,\"risk_score\":2.51}}},\"rs823094\":{\"chromosome\":\"1\",\"position\":205720679,\"region\":\"1q32.1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"is_intergenic\":false,\"risk_allele\":\"rs823094-G\",\"risk_allele_frequency\":\"0.4259383\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"Monocyte percentage (UKB data field 30190)\":{\"p_value\":8.000000000000001e-24,\"risk_score\":0.01899985}}},\"rs951366\":{\"chromosome\":\"1\",\"position\":205716224,\"region\":\"1q32.1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"is_intergenic\":false,\"risk_allele\":\"rs951366-C\",\"risk_allele_frequency\":\"0.392\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"Atrial fibrillation\":{\"p_value\":8e-17,\"risk_score\":1.04},\"Body surface area\":{\"p_value\":2e-15,\"risk_score\":0.00326056},\"Height\":{\"p_value\":3e-11,\"risk_score\":0.02301},\"Posterior thalamic nuclei volume\":{\"p_value\":2e-09,\"risk_score\":0.0500651}}},\"rs34305872\":{\"chromosome\":\"1\",\"position\":205717396,\"region\":\"1q32.1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"is_intergenic\":false,\"risk_allele\":\"rs34305872-GT\",\"risk_allele_frequency\":\"0.4305607\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"Hand grip strength right (UKB data field 47)\":{\"p_value\":4e-14,\"risk_score\":0.010807201},\"Hand grip strength left (UKB data field 46)\":{\"p_value\":1e-12,\"risk_score\":0.010127832}}},\"rs4951258\":{\"chromosome\":\"1\",\"position\":205722188,\"region\":\"1q32.1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"is_intergenic\":false,\"risk_allele\":\"rs4951258-A\",\"risk_allele_frequency\":\"0.4039\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"Atrial fibrillation\":{\"p_value\":2e-09,\"risk_score\":0.0353}}},\"rs823130\":{\"chromosome\":\"1\",\"position\":205745244,\"region\":\"1q32.1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"is_intergenic\":false,\"risk_allele\":\"rs823130-T\",\"risk_allele_frequency\":\"0.4096\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"QRS duration\":{\"p_value\":3e-09,\"risk_score\":0.0188},\"Kidney stone disease\":{\"p_value\":6e-09,\"risk_score\":1.07}}},\"rs4951261\":{\"chromosome\":\"1\",\"position\":205748695,\"region\":\"1q32.1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"is_intergenic\":false,\"risk_allele\":\"rs4951261-C\",\"risk_allele_frequency\":\"0.38\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"Atrial fibrillation\":{\"p_value\":1e-09,\"risk_score\":1.05}}},\"rs3747973\":{\"chromosome\":\"1\",\"position\":205708020,\"region\":\"1q32.1\",\"context\":\"intergenic_variant\",\"variant_category\":\"intergenic\",\"is_intergenic\":true,\"risk_allele\":\"rs3747973-A\",\"risk_allele_frequency\":\"0.407445\",\"mapped_gene\":\"Metazoa_SRP - NUCKS1\",\"associated_disease_trait\":{\"Apolipoprotein A1 levels\":{\"p_value\":1e-13,\"risk_score\":0.014824},\"HDL cholesterol levels\":{\"p_value\":3e-13,\"risk_score\":0.0141432}}},\"rs12046305\":{\"chromosome\":\"1\",\"position\":205745350,\"region\":\"1q32.1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"is_intergenic\":false,\"risk_allele\":\"rs12046305-A\",\"risk_allele_frequency\":\"0.26\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"Serum alkaline phosphatase levels\":{\"p_value\":5e-12,\"risk_score\":6.91}}},\"rs3805\":{\"chromosome\":\"1\",\"position\":205714227,\"region\":\"1q32.1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"is_intergenic\":false,\"risk_allele\":\"rs3805-T\",\"risk_allele_frequency\":\"NR\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"Parkinson's disease\":{\"p_value\":4e-11,\"risk_score\":0.132}}},\"rs7536483\":{\"chromosome\":\"1\",\"position\":205749730,\"region\":\"1q32.1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"is_intergenic\":false,\"risk_allele\":\"rs7536483-A\",\"risk_allele_frequency\":\"0.5726\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"Appendicular lean mass\":{\"p_value\":7e-33,\"risk_score\":0.0226}}},\"rs823118\":{\"chromosome\":\"1\",\"position\":205754444,\"region\":\"1q32.1\",\"context\":\"intergenic_variant\",\"variant_category\":\"intergenic\",\"is_intergenic\":true,\"risk_allele\":\"rs823118-T\",\"risk_allele_frequency\":\"0.566\",\"mapped_gene\":\"NUCKS1 - RAB29\",\"associated_disease_trait\":{\"Parkinson's disease or first degree relation to individual with Parkinson's disease\":{\"p_value\":1.0000000000000001e-29,\"risk_score\":0.1066}}},\"rs55737937\":{\"chromosome\":\"1\",\"position\":205745489,\"region\":\"1q32.1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"is_intergenic\":false,\"risk_allele\":\"rs55737937-C\",\"risk_allele_frequency\":\"NR\",\"mapped_gene\":\"NUCKS1\",\"associated_disease_trait\":{\"Serum alkaline phosphatase levels\":{\"p_value\":8e-14,\"risk_score\":0.0192}}}}},\"uniprot_entries_base\":{\"function\":\"Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR) . Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures, but with less affinity than RAD51AP1\"},\"uniprot_entries_gwas\":{\"function\":\"Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR) . Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures, but with less affinity than RAD51AP1\"}}]",
+  "context_block": "[{\"gene\":\"NUCKS1\",\"Interacting human genes based on BioGRID curated database, organized by experimental system\":{\"Two-hybrid\":[\"AK5\",\"DOCK9\"],\"Affinity Capture-MS\":[\"MME\",\"EGFR\",\"TNIP2\",\"USP14\",\"BIRC3\",\"CHMP4C\",\"PRNP\",\"BRD4\",\"TRIM24\",\"EP300\",\"MTA2\",\"H2AFY\",\"BANF1\",\"PSIP1\",\"KIF20A\",\"H1F0\",\"POLB\",\"WHSC1\",\"SMARCA5\",\"RPL22\",\"RFC1\",\"RFC5\",\"MCM7\",\"LIG3\",\"MECP2\",\"SMARCA4\",\"ATRX\",\"CBX5\",\"XRCC5\",\"TOP2A\",\"HIST1H1D\",\"PARP1\",\"UBB\",\"H2AFZ\",\"HIST1H1C\",\"PSMA1\",\"AZGP1\",\"RPS3\",\"ZNF22\",\"CSNK2A2\",\"CBX1\",\"ZMYM3\",\"CECR2\",\"CHRAC1\",\"SMARCA1\",\"SRCAP\",\"PYCR2\",\"UHRF1\",\"MCM4\",\"KAT6A\",\"PHF14\",\"CDC27\",\"ZNF512\",\"CUL4B\",\"MSL1\",\"SUZ12\",\"EED\",\"C11orf30\",\"KAT7\",\"MTA1\",\"ING5\",\"RBBP7\",\"NEDD8-MDP1\",\"RPL32\",\"MRE11A\",\"ASH2L\",\"RSF1\",\"H1FX\",\"SMARCE1\",\"HIST1H2AC\",\"SMARCC1\",\"PHIP\",\"LCOR\",\"CHAMP1\",\"ANAPC7\",\"RCOR1\",\"BAZ1B\",\"MTF2\",\"RPL36\",\"INIP\",\"BAZ1A\",\"POLE3\",\"BRD7\",\"HMG20A\",\"TCF20\",\"KDM5B\",\"H2AFY2\",\"SMARCB1\",\"CBX3\",\"KMT2A\",\"TOP2B\",\"RBBP4\",\"MDC1\",\"MCM6\",\"NUMA1\",\"CUL4A\",\"BRPF1\",\"CSNK2A1\",\"PRKDC\",\"WDR5\",\"HIST1H4A\",\"RAI1\",\"POGZ\",\"KDM3B\",\"PBRM1\",\"HIST2H3A\",\"HIST2H2AB\",\"RNF169\",\"CDC26\",\"ZNF280C\",\"CDCA8\",\"RBBP5\",\"HIST2H2BE\",\"DDB1\",\"EZH2\",\"ZMYM4\",\"RIF1\",\"HIST2H2AA3\",\"INTS3\",\"HP1BP3\",\"SLC30A5\",\"MSX2\",\"BAP1\",\"ZRANB1\",\"HSPA1A\",\"HSPA8\",\"PRKACG\",\"RIPK4\",\"TRIM67\",\"TNIP1\",\"CDK11A\",\"CDK11B\",\"CSNK2A1\",\"CSNK2A2\",\"CSNK2A3\",\"UBE2H\",\"MECP2\",\"NELFE\",\"H3F3A\",\"KRAS\"],\"Affinity Capture-RNA\":[\"ELAVL1\",\"HNRNPH1\"],\"Co-fractionation\":[\"ORC2\",\"RBM42\",\"RBMX\",\"ILF3\",\"PRCP\",\"COPS2\",\"HEXIM1\",\"HUWE1\",\"HMGB3\",\"PHAX\",\"ARID1A\",\"PRPF40A\",\"TXN\",\"HSPA8\",\"DSP\",\"AHCY\",\"MSN\",\"DCK\",\"PRDX3\",\"CPOX\",\"BRCC3\",\"RBM25\",\"SMARCA4\",\"KPNA2\",\"MSH6\",\"ACLY\",\"EEF1A1\",\"BASP1\",\"CAP1\",\"TOP2B\",\"SRSF1\",\"PRPF4B\",\"HDAC1\",\"SPTAN1\",\"CAPRIN1\",\"DRAP1\",\"RBBP5\",\"CC2D1B\",\"SMEK1\",\"REPS1\",\"PDLIM5\",\"PAWR\",\"CNDP2\",\"MMS19\",\"SRRT\",\"RAB3GAP2\",\"PRKRIP1\",\"PPP4R2\",\"PUF60\",\"RCOR1\",\"TIMELESS\",\"GIT1\"],\"PCA\":[\"GLP1R\"],\"Affinity Capture-Western\":[\"GLP1R\",\"ATRX\"],\"Proximity Label-MS\":[\"EWSR1\",\"CDC14B\",\"ACTC1\",\"WHSC1\",\"HIST1H2BG\",\"TERF2IP\",\"NAA40\",\"PHLPP1\",\"HSPA1A\",\"TBK1\",\"RPA1\",\"RPA2\",\"RPA3\",\"TIMP2\",\"PPIA\",\"RNF8\",\"TOPBP1\"],\"Biochemical Activity\":[\"MDM2\"],\"Reconstituted Complex\":[\"ATRX\",\"ATRX\",\"RAD51AP1\"],\"Cross-Linking-MS (XL-MS)\":[\"HIST1H1C\",\"HIST1H3A\",\"SERBP1\",\"HMGN2\",\"HIST2H3A\",\"WNT5A\",\"COL17A1\",\"DIDO1\",\"ARHGAP31\",\"OR6C6\",\"EML6\",\"ERICH6\",\"SLCO2B1\",\"C11orf16\",\"NUCKS1\"],\"Protein-peptide\":[\"CEBPA\"]},\"Contains GWAS associations and their statistical significance (to traits, protein levels etc.) for the gene and its variants. Returns associations that are high-risk or high-signifiance or both.\":{\"gene\":\"NUCKS1\",\"found\":true,\"total_associations\":45,\"total_significant_associations\":35,\"total_studies_analyzed\":23,\"summary_by_high_risk_alleles\":{\"related_genes\":[\"NUCKS1\",\"SLC41A1\",\"METAZOA_SRP - NUCKS1\"],\"high_risk_snps\":[\"rs12046305\",\"rs7545345\",\"rs823130\",\"rs951366\",\"rs4951261\",\"rs4951258\",\"rs150111028\",\"rs149515685\",\"rs114715101\",\"rs3805\",\"rs823094\",\"rs3747973\",\"rs34305872\"],\"affected_protein_levels\":[\"PM20D1\"],\"associated_disease_traits\":[\"Serum alkaline phosphatase levels\",\"Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction\",\"Kidney stone disease\",\"Atrial fibrillation\",\"Hand grip strength left (UKB data field 46)\",\"Hand grip strength right (UKB data field 47)\",\"IGF 1 (UKB data field 30770)\",\"Monocyte percentage (UKB data field 30190)\",\"PM20D1 protein levels\",\"Weight (UKB data field 21002)\",\"Whole body water mass (UKB data field 23102)\",\"Parkinson's disease\",\"QRS duration\",\"QT interval\",\"Apolipoprotein A1 levels\",\"HDL cholesterol levels\"]},\"summary_by_significance\":{\"related_genes\":[\"NUCKS1\",\"NUCKS1 - RAB29\"],\"high_risk_snps\":[\"rs7536483\",\"rs823118\",\"rs951366\",\"rs55737937\",\"rs12046305\",\"rs3805\",\"rs4951258\"],\"affected_protein_levels\":[],\"associated_disease_traits\":[\"Appendicular lean mass\",\"Parkinson's disease or first degree relation to individual with Parkinson's disease\",\"Atrial fibrillation\",\"Body surface area\",\"Serum alkaline phosphatase levels\",\"Height\",\"Parkinson's disease\",\"Posterior thalamic nuclei volume\"]}},\"uniprot_entries_base\":{\"function\":\"Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR) . Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures, but with less affinity than RAD51AP1\"},\"uniprot_entries_gwas\":{\"function\":\"Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR) . Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures, but with less affinity than RAD51AP1\"},\"dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)\":{\"rs150111028\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"PM20D1 protein levels\":{\"p_value\":1.0000000000000001e-29,\"risk_score\":0.7494922}}},\"rs149515685\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"PM20D1 protein levels\":{\"p_value\":9e-133,\"risk_score\":0.69633335}}},\"rs114715101\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"PM20D1 protein levels\":{\"p_value\":1.0000000000000001e-66,\"risk_score\":0.45861802}}},\"rs7545345\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"IGF 1 (UKB data field 30770)\":{\"p_value\":1e-13,\"risk_score\":0.02008364},\"Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction\":{\"p_value\":3e-08,\"risk_score\":2.51}}},\"rs823094\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Monocyte percentage (UKB data field 30190)\":{\"p_value\":8.000000000000001e-24,\"risk_score\":0.01899985}}},\"rs951366\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"Atrial fibrillation\":{\"p_value\":8e-17,\"risk_score\":1.04},\"Body surface area\":{\"p_value\":2e-15,\"risk_score\":0.00326056},\"Height\":{\"p_value\":3e-11,\"risk_score\":0.02301},\"Posterior thalamic nuclei volume\":{\"p_value\":2e-09,\"risk_score\":0.0500651}}},\"rs34305872\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"Hand grip strength right (UKB data field 47)\":{\"p_value\":4e-14,\"risk_score\":0.010807201},\"Hand grip strength left (UKB data field 46)\":{\"p_value\":1e-12,\"risk_score\":0.010127832}}},\"rs4951258\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Atrial fibrillation\":{\"p_value\":2e-09,\"risk_score\":0.0353}}},\"rs823130\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"QRS duration\":{\"p_value\":3e-09,\"risk_score\":0.0188},\"Kidney stone disease\":{\"p_value\":6e-09,\"risk_score\":1.07}}},\"rs4951261\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Atrial fibrillation\":{\"p_value\":1e-09,\"risk_score\":1.05}}},\"rs3747973\":{\"mapped_gene\":\"Metazoa_SRP - NUCKS1\",\"context\":\"intergenic_variant\",\"variant_category\":\"intergenic\",\"associated_disease_trait\":{\"Apolipoprotein A1 levels\":{\"p_value\":1e-13,\"risk_score\":0.014824},\"HDL cholesterol levels\":{\"p_value\":3e-13,\"risk_score\":0.0141432}}},\"rs12046305\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Serum alkaline phosphatase levels\":{\"p_value\":5e-12,\"risk_score\":6.91}}},\"rs3805\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"Parkinson's disease\":{\"p_value\":4e-11,\"risk_score\":0.132}}},\"rs7536483\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Appendicular lean mass\":{\"p_value\":7e-33,\"risk_score\":0.0226}}},\"rs823118\":{\"mapped_gene\":\"NUCKS1 - RAB29\",\"context\":\"intergenic_variant\",\"variant_category\":\"intergenic\",\"associated_disease_trait\":{\"Parkinson's disease or first degree relation to individual with Parkinson's disease\":{\"p_value\":1.0000000000000001e-29,\"risk_score\":0.1066}}},\"rs55737937\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Serum alkaline phosphatase levels\":{\"p_value\":8e-14,\"risk_score\":0.0192}}}}}]",
   "llm_json": {
-    "answer": "Based on the available data, NUCKS1's role in cancer and viral infections can be inferred from its molecular functions and interactions, though direct evidence for viral infection roles is limited in this context. NUCKS1 is a chromatin-associated protein involved in DNA repair through homologous recombination, which is crucial for maintaining genomic stability - a key factor in cancer prevention. The protein interacts with numerous cancer-related genes including tumor suppressors (MDM2, PARP1), DNA repair proteins (XRCC5, MRE11A, RAD51AP1), and chromatin remodeling complexes (SMARCA4, EZH2). NUCKS1 variants show significant associations with multiple traits including Parkinson's disease, atrial fibrillation, and various metabolic parameters. The overlap between cancer and viral infection roles likely centers on DNA repair mechanisms, as both cancer development and viral replication can cause DNA damage that requires homologous recombination repair pathways.",
+    "answer": "NUCKS1 plays important roles in both cancer and viral infections through its function as a chromatin-associated protein involved in DNA repair via homologous recombination. In cancer, NUCKS1 interacts with numerous cancer-related proteins including tumor suppressors (MDM2, PARP1), oncogenes (KRAS), DNA repair proteins (BRCA-associated proteins like RBBP4, RBBP5), and chromatin remodeling complexes (SMARCA4, SMARCA5). It shows genetic associations with various cancer-related traits and metabolic factors. In viral infections, NUCKS1 interacts with viral proteins like BRD4 (involved in viral transcription) and TRIM24 (antiviral response), and shows proximity to innate immune signaling proteins (TBK1, RNF8). The overlap between these roles centers on DNA damage response and chromatin regulation - both cancer development and viral infections involve DNA damage and require chromatin modifications for viral replication or oncogenic transformation. NUCKS1's core function in homologous recombination DNA repair makes it a critical factor in both contexts.",
     "evidence": [
-      "NUCKS1 is a chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR)",
-      "NUCKS1 binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures",
-      "NUCKS1 interacts with MDM2 through Biochemical Activity",
-      "NUCKS1 interacts with DNA repair proteins PARP1, XRCC5, MRE11A through Affinity Capture-MS",
-      "NUCKS1 interacts with RAD51AP1 through Reconstituted Complex",
-      "NUCKS1 interacts with chromatin remodeling proteins SMARCA4, EZH2 through Affinity Capture-MS",
-      "NUCKS1 variants show significant associations with Parkinson's disease (rs3805, p_value 4e-11)",
-      "NUCKS1 variants show significant associations with atrial fibrillation (rs951366, p_value 8e-17)"
+      "NUCKS1 function: Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR)",
+      "NUCKS1 cancer interactions: MDM2, KRAS, PARP1, RBBP4, RBBP5, SMARCA4, SMARCA5",
+      "NUCKS1 viral-related interactions: BRD4, TRIM24, TBK1, RNF8",
+      "NUCKS1 genetic associations: Parkinson's disease, atrial fibrillation, various metabolic traits",
+      "NUCKS1 DNA binding: Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures"
     ]
   },
+  "verification": "pass",
   "used_tools": [
     "extract_entities",
     "gencode_gene_node",
@@ -967,7 +870,7 @@
     "reactome",
     "BioGRID",
     "Summarize_bioGRID_GO",
-    "gwas",
+    "query_gwas_by_gene",
     "uniprot_gwas"
   ],
   "ui": {}
