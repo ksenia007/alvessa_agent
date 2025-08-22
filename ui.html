@@ -109,6 +109,10 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
 .xnum { font-weight:800; font-size:1.12em; padding:0 6px; border-radius:6px; background:#0e1430; border:1px solid #2a3a72; display:inline-block; }
 .xpct { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; opacity:0.9; }
 .xtissue { font-weight:600; }
+
+.biogrid-group { margin-bottom: 8px; }
+.biogrid-group .pill { margin: 2px 6px 2px 0; }
+
   
 .vs-table{
   font-size: 13px;         
@@ -120,6 +124,27 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
 .vs-table td.traits, .vs-table td.expecto{
   max-width: 620px;         /* a bit wider for wordy cells */
 }
+
+/* Outline pill for non-human interactions */
+.pill.nh {
+  background: transparent;
+  border: 1px dashed #2a3a72;   /* distinct + subtle */
+  color: #aab4d6;
+}
+/* light theme override */
+body.light .pill.nh {
+  border-color: #94a3b8;
+  color: #475569;
+}
+
+.biogrid-section-title { 
+  font-size: 12px; 
+  color: #aab4d6; 
+  margin: 8px 0 4px; 
+  font-weight: 600; 
+  letter-spacing: .2px;
+}
+body.light .biogrid-section-title { color: #6b7280; }
 
 /* === Light theme (activated by: <body class="light">) === */
   body.light {
@@ -251,7 +276,7 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
 
     <div class="card full">
       <div class="title" id="questionTitle">Question</div>
-      <div id="question" style="font-size:18px; font-weight:600;"></div>
+      <div id="question" style="font-size:18px;"></div>
     </div>
 
     <div id="entitiesCard" class="card" data-section style="display:none;">
@@ -389,35 +414,100 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
     if (ev.length) { setHTML("evidence", ev.map(e=>`<div class="pill">${escapeHtml(e)}</div>`).join("")); show("evidenceCard"); }
     else hide("evidenceCard");
   }
-  function renderBioGRID(st){
-    const bg = st?.biogrid_predictions;
-    if (!bg || typeof bg !== 'object') return hide("biogridCard");
+  function renderBioGRID(st) {
+    const preds   = st?.biogrid_predictions;
+    const groups  = st?.biogrid_interaction_groups;
+    const nonhum  = st?.biogrid_interactions_select_nonhuman;
   
-    const entries = Object.entries(bg);
-    if (!entries.length) {
+    const hasObj = (o) => o && typeof o === "object" && Object.keys(o).length;
+  
+    let htmlMain = "";
+  
+    // ----- MAIN: prefer grouped; else predictions -----
+    if (hasObj(groups)) {
+      htmlMain = Object.entries(groups).map(([gene, methods]) => {
+        if (!methods || typeof methods !== "object") return "";
+        const methodHtml = Object.entries(methods).map(([method, partners]) => {
+          const list = Array.isArray(partners) ? [...new Set(partners)].filter(Boolean) : [];
+          const pills = list.length ? asPills(list) : '<span class="muted">none</span>';
+          return `
+            <div class="biogrid-group" style="margin-top:4px;">
+              <div class="muted" style="margin-bottom:2px;">${escapeHtml(method)}</div>
+              <div class="scroll">${pills}</div>
+            </div>
+          `;
+        }).join("");
+  
+        return `
+          <div style="margin-bottom:12px;">
+            <strong>${escapeHtml(uc(gene))}</strong>
+            ${methodHtml || '<div class="muted" style="margin-top:4px;">no interactions returned</div>'}
+          </div>
+        `;
+      }).join("");
+    } else if (hasObj(preds)) {
+      htmlMain = Object.entries(preds).map(([gene, arr]) => {
+        const list = Array.isArray(arr) ? [...new Set(arr)].filter(Boolean) : [];
+        const n = list.length;
+        if (!n) {
+          return `<div style="margin-bottom:10px;">
+            <strong>${escapeHtml(uc(gene))}:</strong> 0 genes
+            <div class="muted">no interactions returned</div>
+          </div>`;
+        }
+        return `<div style="margin-bottom:10px;">
+          <strong>${escapeHtml(uc(gene))}:</strong> ${n} gene${n===1?'':'s'}
+          <div class="scroll" style="margin-top:6px;">${asPills(list)}</div>
+        </div>`;
+      }).join("");
+    }
+  
+    // If we have nothing so far and also no nonhuman → hide
+    if (!htmlMain.trim() && !hasObj(nonhum)) {
       setHTML("biogrid", `<div class="muted">no interactions returned</div>`);
       return hide("biogridCard");
     }
   
-    const html = entries.map(([gene, arr]) => {
-      const list = Array.isArray(arr) ? [...new Set(arr)].filter(Boolean) : [];
-      const n = list.length;
-      if (!n) {
-        return `<div style="margin-bottom:10px;">
-          <strong>${escapeHtml(uc(gene))}:</strong> 0 genes
-          <div class="muted">no interactions returned</div>
-        </div>`;
-      }
-      return `<div style="margin-bottom:10px;">
-        <strong>${escapeHtml(uc(gene))}:</strong> ${n} gene${n===1?'':'s'}
-        <div class="scroll" style="margin-top:6px;">${asPills(list)}</div>
-      </div>`;
-    }).join("");
+    // ----- APPEND: Selected non-human interactions (outline pills) -----
+    let htmlNH = "";
+    if (hasObj(nonhum)) {
+      const section = Object.entries(nonhum).map(([gene, methods]) => {
+        if (!methods || typeof methods !== "object") return "";
+        const methodHtml = Object.entries(methods).map(([method, partners]) => {
+          const list = Array.isArray(partners) ? [...new Set(partners)].filter(Boolean) : [];
+          const pills = list.length
+            ? list.map(x => `<span class="pill nh">${escapeHtml(x)}</span>`).join(" ")
+            : '<span class="muted">none</span>';
+          return `
+            <div class="biogrid-group" style="margin-top:4px;">
+              <div class="muted" style="margin-bottom:2px;">${escapeHtml(method)}</div>
+              <div class="scroll">${pills}</div>
+            </div>
+          `;
+        }).join("");
   
-    setHTML("biogrid", html);
+        return `
+          <div style="margin-bottom:12px;">
+            <strong>${escapeHtml(uc(gene))}</strong>
+            ${methodHtml || '<div class="muted" style="margin-top:4px;">none</div>'}
+          </div>
+        `;
+      }).join("");
+  
+      if (section.trim()) {
+        htmlNH = `
+          <div style="border-top:1px solid rgba(90,110,160,0.35); margin-top:8px; padding-top:8px;">
+            <div class="biogrid-section-title">Selected non‑human interactions</div>
+            ${section}
+          </div>
+        `;
+      }
+    }
+  
+    setHTML("biogrid", (htmlMain + htmlNH) || `<div class="muted">no interactions returned</div>`);
     show("biogridCard");
   }
-
+  
   function renderReactome(st){
     const rx = st?.reactome_pathways;
     if (!rx || typeof rx !== 'object') return hide("reactomeCard");
@@ -438,8 +528,9 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
       if (!diseases && !func) return "";
       return `<div style="margin-bottom:12px;">
         <div><strong>${escapeHtml(uc(gene))}</strong></div>
-        ${diseases ? `<div class="muted" style="margin-top:4px;">Diseases</div><div class="scroll mono">${escapeHtml(diseases)}</div>` : ""}
-        ${func ? `<div class="muted" style="margin-top:6px;">Function</div><div class="scroll mono">${escapeHtml(func)}</div>` : ""}
+       ${diseases ? `<div class="muted" style="margin-top:4px;">Diseases</div><div class="scroll">${escapeHtml(diseases)}</div>` : ""}
+      ${func ? `<div class="muted" style="margin-top:6px;">Function</div><div class="scroll">${escapeHtml(func)}</div>` : ""}
+
       </div>`;
     }).join("");
     if (blocks.trim()) { setHTML("uniprot", blocks); show("uniprotCard"); } else hide("uniprotCard");
@@ -1180,7 +1271,8 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
     });
 
     // Sort rows by frequency bucket, p-value asc, then rsid
-    const freqOrder = {"Rare (<1%)":0, "Common (1–15%)":1, "Very common (>15%)":2, "N/A":3};
+    const freqOrder = {"Rare (<1%)":0, "Common (1–15%)":1, "Very common (over 15%)":2, "N/A":3};
+
     rows.sort((a,b)=>{
       const fa = (freqOrder[a.freq] ?? 9), fb = (freqOrder[b.freq] ?? 9);
       if (fa !== fb) return fa - fb;
@@ -1363,6 +1455,7 @@ function toggleExpectoDetails(geneKey, rsSafe, colspan){
 
     // Clear previous sections; keep layout
     hideAllSections();
+    setText("question", "");  
     setStatus("(waiting for output…)");
     showRunStatus();
 
