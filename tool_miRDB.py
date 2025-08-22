@@ -7,7 +7,7 @@ Updated: 2025-08-21
 
 Description: 
 
-Tool to query mrRDB with a list of miRNAs"""
+Tool to query miRDB with a list of miRNAs"""
 
 from __future__ import annotations
 from state import State 
