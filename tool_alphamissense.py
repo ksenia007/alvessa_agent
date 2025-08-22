@@ -14,8 +14,22 @@ import time
 from state import State 
 import warnings
 from datetime import datetime
+import requests
 
 DEBUG=True
+
+def _symbol_to_uniprot(gene):
+
+    all_symbols = []
+    try:
+        r = requests.get(f'https://mygene.info/v3/query?q={gene}&fields=uniprot')
+        r.raise_for_status()
+        hits = r.json().get("hits", [])
+        all_symbols.extend(hit.get('uniprot').get('Swiss-Prot') for hit in hits if (('uniprot' in hit) and ('Swiss-Prot' in hit.get('uniprot'))))
+    except Exception as e:
+        print(e)
+
+    return all_symbols
 
 def alphamissense_predictions_agent(state: "State") -> "State":
     """
@@ -57,6 +71,7 @@ def alphamissense_predictions_agent(state: "State") -> "State":
                     if None not in (chrom, pos, ref, alt):
                         snp_records.append({
                             "gene": gene,
+                            "uniprot_IDs": _symbol_to_uniprot(gene),
                             "var_id": var_id,
                             "snp_key": f"SNP:{ref}->{alt}",
                             "chrom": f"chr{chrom}",
@@ -73,21 +88,26 @@ def alphamissense_predictions_agent(state: "State") -> "State":
     snps_df = pd.DataFrame(snp_records)
 
     print(f"[AlphaMissense] finished aggregating snps... {datetime.now()}")
-
-    merged = snps_df.merge(
-    pathogenicity_class_df_hg38[['chrom', 'pos', 'ref', 'alt', 'am_class']],
-    on=['chrom', 'pos', 'ref', 'alt'],
-    how='left'
+    
+    snps_exploded = snps_df.explode("uniprot_IDs")
+    merged = snps_exploded.merge(
+        pathogenicity_class_df_hg38[['chrom', 'pos', 'ref', 'alt', 'uniprot_id', 'am_class']],
+        left_on=['chrom', 'pos', 'ref', 'alt', 'uniprot_IDs'],
+        right_on=['chrom', 'pos', 'ref', 'alt', 'uniprot_id'],
+        how='left'
     )
 
     print(f"[AlphaMissense] finished merging... {datetime.now()}")
 
-    for (gene, var_id), group in merged.groupby(["gene", "var_id"]):
+    grouped = merged.groupby(['gene', 'var_id', 'snp_key'], as_index=False).agg({
+        'am_class': lambda x: next(iter(set(filter(pd.notna, x))), None)
+    })
+
+    for row in grouped.itertuples(index=False):
+        gene, var_id, snp_key, am_class = row
         preds.setdefault(gene, {})
-        preds[gene][var_id] = {
-            row.snp_key: row.am_class if not pd.isna(row.am_class) else None
-            for row in group.itertuples()
-        }
+        preds[gene].setdefault(var_id, {})
+        preds[gene][var_id][snp_key] = am_class
 
     print(f"[AlphaMissense] done... {datetime.now()}")
 
