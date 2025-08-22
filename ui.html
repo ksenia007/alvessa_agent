@@ -445,7 +445,6 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
     if (blocks.trim()) { setHTML("uniprot", blocks); show("uniprotCard"); } else hide("uniprotCard");
   }
 
-  <!-- ---------------- GWAS interactive renderer (drop-in) ---------------- -->
   const GWAS = {
     state: {},
   
@@ -506,7 +505,7 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
       const pushOne = s => { if (s && typeof s === "string") out.add(s); };
       const pushMany = a => { if (Array.isArray(a)) a.forEach(pushOne); };
   
-      // Handle new nested format: associated_disease_trait: { trait_name: { p_value, risk_score } }
+      // Handle nested format: associated_disease_trait: { trait_name: { p_value, risk_score } }
       if (v?.associated_disease_trait && typeof v.associated_disease_trait === "object") {
         Object.keys(v.associated_disease_trait).forEach(pushOne);
       }
