@@ -43,6 +43,7 @@ class State(TypedDict, total=False):
     dbsnp_summaries: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     sei_predictions: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     alphamissense_predictions: Annotated[Dict[str, Dict[str, Any]], operator.or_]
+    mirDB_targets: Annotated[Dict[str, List[str]], operator.or_]
     
     
     # GWAS associations
