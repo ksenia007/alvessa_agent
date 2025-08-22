@@ -2,15 +2,15 @@
   "messages": [
     {
       "role": "user",
-      "content": "How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?"
+      "content": "Can you find me diseased associated variants in the human gene NUCKS1 that may alter its interactions with known NUCKS1 interaction partners involved in DNA repair or that might alter its ability to bind to nucleic acids?"
     },
     {
       "role": "user",
-      "content": "How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?"
+      "content": "Can you find me diseased associated variants in the human gene NUCKS1 that may alter its interactions with known NUCKS1 interaction partners involved in DNA repair or that might alter its ability to bind to nucleic acids?"
     },
     {
       "role": "assistant",
-      "content": "{\n  \"answer\": \"NUCKS1 plays important roles in both cancer and viral infections through its function as a chromatin-associated protein involved in DNA repair via homologous recombination. In cancer, NUCKS1 interacts with numerous cancer-related proteins including tumor suppressors (MDM2, PARP1), oncogenes (KRAS), DNA repair proteins (BRCA-associated proteins like RBBP4, RBBP5), and chromatin remodeling complexes (SMARCA4, SMARCA5). It shows genetic associations with various cancer-related traits and metabolic factors. In viral infections, NUCKS1 interacts with viral proteins like BRD4 (involved in viral transcription) and TRIM24 (antiviral response), and shows proximity to innate immune signaling proteins (TBK1, RNF8). The overlap between these roles centers on DNA damage response and chromatin regulation - both cancer development and viral infections involve DNA damage and require chromatin modifications for viral replication or oncogenic transformation. NUCKS1's core function in homologous recombination DNA repair makes it a critical factor in both contexts.\",\n  \"evidence\": [\n    \"NUCKS1 function: Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR)\",\n    \"NUCKS1 cancer interactions: MDM2, KRAS, PARP1, RBBP4, RBBP5, SMARCA4, SMARCA5\",\n    \"NUCKS1 viral-related interactions: BRD4, TRIM24, TBK1, RNF8\",\n    \"NUCKS1 genetic associations: Parkinson's disease, atrial fibrillation, various metabolic traits\",\n    \"NUCKS1 DNA binding: Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures\"\n  ]\n}"
+      "content": "{\n  \"answer\": \"Based on the GWAS data, I found 17 disease-associated variants in the NUCKS1 gene region. Several of these variants could potentially alter NUCKS1's interactions with DNA repair partners or nucleic acid binding ability. Key variants include: rs3805 (3' UTR variant associated with Parkinson's disease), rs951366 (3' UTR variant associated with atrial fibrillation and multiple traits), rs34305872 (3' UTR variant associated with muscle strength traits), rs150111028 and rs149515685 (both 3' UTR variants affecting PM20D1 protein levels), and rs823114 (transcription factor binding site variant associated with BMI). The 3' UTR variants are particularly relevant as they could affect mRNA stability and protein expression levels, potentially impacting NUCKS1's ability to interact with its DNA repair partners like PARP1, XRCC5, MRE11A, MDC1, PRKDC, and others identified in the interaction data.\",\n  \"evidence\": [\n    \"rs3805 is a 3_prime_UTR_variant in NUCKS1 associated with Parkinson's disease (p_value: 4e-11, risk_score: 0.132)\",\n    \"rs951366 is a 3_prime_UTR_variant in NUCKS1 associated with atrial fibrillation (p_value: 8e-09, risk_score: 1.05)\",\n    \"rs34305872 is a 3_prime_UTR_variant in NUCKS1 associated with hand grip strength (p_value: 1e-12, risk_score: 0.010127832)\",\n    \"rs150111028 is a 3_prime_UTR_variant in NUCKS1 associated with PM20D1 protein levels (p_value: 1e-29, risk_score: 0.7494922)\",\n    \"rs149515685 is a 3_prime_UTR_variant in NUCKS1 associated with PM20D1 protein levels (p_value: 9e-133, risk_score: 0.69633335)\",\n    \"rs823114 is a TF_binding_site_variant in NUCKS1-RAB29 region associated with body mass index (p_value: 4e-08, risk_score: 0.013)\",\n    \"NUCKS1 interacts with DNA repair proteins including PARP1, XRCC5, MRE11A, MDC1, PRKDC, LIG3, RFC1, RFC5, MCM7, MCM4, MCM6, POLB, TOP2A, TOP2B via Affinity Capture-MS\",\n    \"NUCKS1 interacts with chromatin remodeling complexes including SMARCA4, SMARCA5, SMARCA1, SMARCE1, SMARCC1, SMARCB1 via Affinity Capture-MS\",\n    \"NUCKS1 shows Proximity Label-MS interactions with RPA1, RPA2, RPA3, TOPBP1, RNF8 which are involved in DNA repair and replication\"\n  ]\n}"
     }
   ],
   "genes": [
@@ -23,273 +23,261 @@
       "exons_per_transcript": {
         "ENST00000367142.5": 7
       },
-      "min_transcript_span_bp": "37361",
-      "max_transcript_span_bp": "37361",
+      "min_transcript_span_bp": 37361,
+      "max_transcript_span_bp": 37361,
       "transcript_ids": [
         "ENST00000367142.5"
       ],
       "gene_span_bp": [
-        "205712822",
-        "205750182"
+        205712822,
+        205750182
       ]
     },
     "assembly": "GRCh38"
   },
   "prompt": "",
   "run_verifier": false,
-  "uniprot_entries_base": {
-    "NUCKS1": {
-      "function": "Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR) . Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures, but with less affinity than RAD51AP1",
-      "go_terms": "C:chromatin, C:cytoplasm, C:nucleolus, C:nucleoplasm, C:nucleus, F:DNA-binding transcription factor binding, F:RNA binding, F:chromatin binding, F:double-stranded DNA binding, F:single-stranded DNA binding, F:transcription coactivator activity, P:cellular response to X-ray, P:chromatin organization, P:double-strand break repair via homologous recombination, P:gene conversion, P:interstrand cross-link repair, P:intracellular glucose homeostasis, P:modulation by host of viral genome replication, P:positive regulation by host of viral genome replication, P:positive regulation by host of viral transcription, P:positive regulation of insulin receptor signaling pathway, P:positive regulation of transcription by RNA polymerase II, P:regulation of DNA replication, P:regulation of DNA strand elongation, P:regulation of insulin receptor signaling pathway, P:replication fork processing"
-    }
-  },
-  "uniprot_entries_gwas": {
-    "NUCKS1": {
-      "function": "Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR) . Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures, but with less affinity than RAD51AP1",
-      "go_terms": "C:chromatin, C:cytoplasm, C:nucleolus, C:nucleoplasm, C:nucleus, F:DNA-binding transcription factor binding, F:RNA binding, F:chromatin binding, F:double-stranded DNA binding, F:single-stranded DNA binding, F:transcription coactivator activity, P:cellular response to X-ray, P:chromatin organization, P:double-strand break repair via homologous recombination, P:gene conversion, P:interstrand cross-link repair, P:intracellular glucose homeostasis, P:modulation by host of viral genome replication, P:positive regulation by host of viral genome replication, P:positive regulation by host of viral transcription, P:positive regulation of insulin receptor signaling pathway, P:positive regulation of transcription by RNA polymerase II, P:regulation of DNA replication, P:regulation of DNA strand elongation, P:regulation of insulin receptor signaling pathway, P:replication fork processing"
-    }
-  },
+  "uniprot_entries_base": {},
+  "uniprot_entries_gwas": {},
   "gene_disease_traits": {},
   "gene_function_traits": {},
   "gene_GO_traits": {},
-  "humanbase_predictions": {
-    "NUCKS1": []
-  },
+  "humanbase_predictions": {},
   "humanbase_expecto": {},
   "tissue_expression_preds_variant_text_description": {},
   "expression_preds_variant_table": {},
   "biogrid_predictions": {
     "NUCKS1": [
-      "CUL4A",
-      "PDLIM5",
-      "Tmem173",
+      "HSPA1A",
+      "HIST1H3A",
+      "BAZ1B",
+      "TNIP2",
+      "ARID1A",
+      "CDC27",
+      "PPIA",
+      "H2AFY",
+      "PHLPP1",
+      "CAP1",
+      "POGZ",
+      "CBX3",
+      "MDM2",
       "DSP",
+      "TRIM24",
+      "BRPF1",
+      "RBM42",
+      "RPS3",
+      "COL17A1",
+      "PHAX",
+      "HIST2H2BE",
+      "EP300",
+      "KRAS",
+      "HUWE1",
+      "SMARCA1",
+      "KAT7",
+      "RBM25",
+      "HIST1H2AC",
+      "SMARCB1",
+      "DRAP1",
+      "SMARCE1",
+      "ARHGAP31",
+      "ING5",
+      "MSX2",
+      "SMARCA5",
+      "CSNK2A3",
+      "ACTC1",
+      "CBX1",
+      "PYCR2",
+      "XRCC5",
+      "HIST1H1C",
+      "ORC2",
+      "KMT2A",
+      "CUL4A",
+      "ZMYM3",
+      "Tmem173",
+      "RPA1",
+      "LIG3",
+      "CSNK2A2",
+      "SMEK1",
+      "ERICH6",
+      "HIST1H1D",
+      "INIP",
+      "AHCY",
+      "LCOR",
+      "POLB",
+      "RPL22",
+      "PDLIM5",
+      "nsp3",
+      "ELAVL1",
+      "AZGP1",
+      "GIT1",
+      "MSL1",
+      "PSIP1",
+      "CBX5",
+      "KDM3B",
+      "PRDX3",
+      "HIST2H2AA3",
+      "RBBP5",
+      "Cebpb",
+      "TNIP1",
+      "HSPA8",
+      "BRCC3",
+      "DCK",
+      "TRIM67",
+      "ZNF512",
+      "MCM7",
+      "EML6",
+      "vpr",
+      "CDK11B",
+      "CAPRIN1",
+      "TOP2B",
+      "ZNF280C",
+      "HDAC1",
+      "SLC30A5",
+      "PRKACG",
+      "CHAMP1",
+      "Htt",
+      "RBMX",
+      "PRNP",
+      "PHIP",
+      "RBBP4",
+      "CECR2",
+      "EGFR",
+      "RPA3",
+      "RIPK4",
+      "TOP2A",
+      "UBE2H",
+      "HIST1H4A",
+      "RPA2",
+      "Prcp",
+      "RFC5",
+      "TBK1",
+      "MSN",
+      "H3F3A",
+      "C11orf30",
+      "MCM6",
+      "SRCAP",
+      "TIMP2",
+      "MTA1",
+      "ACLY",
+      "CDK11A",
+      "OR6C6",
+      "HMG20A",
+      "CDC26",
+      "DDB1",
+      "COPS2",
+      "SPTAN1",
+      "PRKRIP1",
+      "TERF2IP",
+      "CHMP4C",
+      "RSF1",
+      "PRCP",
+      "BIRC3",
+      "KAT6A",
+      "WNT5A",
+      "UHRF1",
+      "C11orf16",
+      "CDCA8",
+      "PRPF40A",
+      "H1FX",
+      "ATRX",
+      "MDC1",
+      "EWSR1",
+      "UBB",
+      "HIST2H2AB",
+      "BANF1",
+      "CSNK2A1",
+      "BRD4",
+      "MRE11A",
+      "BASP1",
+      "PUF60",
+      "PHF14",
+      "NUMA1",
+      "RCOR1",
+      "KDM5B",
+      "nsp15",
+      "CUL4B",
+      "PBRM1",
+      "RNF8",
+      "CC2D1B",
+      "USP14",
+      "HIST1H2BG",
+      "NELFE",
+      "BRD7",
+      "MECP2",
+      "SRSF1",
+      "RAI1",
+      "SMARCC1",
+      "EED",
+      "SUZ12",
+      "NUCKS1",
+      "NEDD8-MDP1",
+      "SLCO2B1",
+      "TOPBP1",
+      "PPP4R2",
+      "MTA2",
       "EEF1A1",
+      "H2AFY2",
+      "HMGB3",
+      "MSH6",
+      "NAA40",
+      "POLE3",
+      "GLP1R",
+      "ZRANB1",
+      "MMS19",
+      "HEXIM1",
+      "CEBPA",
+      "INTS3",
+      "ANAPC7",
+      "SMARCA4",
+      "WHSC1",
+      "Hdac4",
+      "PSMA1",
+      "RIF1",
+      "DIDO1",
+      "KPNA2",
+      "REPS1",
+      "nsp9",
+      "AK5",
+      "PRPF4B",
+      "TCF20",
+      "H2AFZ",
+      "MCM4",
+      "EZH2",
+      "HIST2H3A",
+      "ILF3",
+      "ZNF22",
+      "RBBP7",
+      "N",
+      "KIF20A",
+      "BAZ1A",
+      "PRKDC",
+      "TXN",
+      "SRRT",
+      "PARP1",
+      "BAP1",
+      "WDR5",
+      "RAB3GAP2",
+      "CHRAC1",
+      "RPL36",
+      "PAWR",
+      "H1F0",
+      "HP1BP3",
+      "RPL32",
+      "ASH2L",
+      "CNDP2",
+      "RAD51AP1",
+      "CPOX",
+      "RNF169",
+      "CDC14B",
       "SERBP1",
       "MTF2",
-      "HIST1H2AC",
-      "ELAVL1",
-      "RPL32",
-      "ZNF512",
-      "SMARCB1",
-      "CHRAC1",
-      "SMARCC1",
-      "BASP1",
-      "C11orf30",
-      "Cebpb",
-      "RPA1",
-      "TIMP2",
-      "RNF8",
-      "ORC2",
-      "HNRNPH1",
-      "PRKACG",
-      "CBX5",
-      "PRDX3",
-      "REPS1",
-      "HIST2H2AB",
-      "TOPBP1",
-      "PHF14",
-      "SLC30A5",
-      "NEDD8-MDP1",
-      "RPA2",
-      "DIDO1",
-      "ZRANB1",
-      "ARID1A",
-      "MSX2",
-      "PBRM1",
-      "SLCO2B1",
-      "SMEK1",
-      "TCF20",
-      "ZNF280C",
-      "SMARCA1",
-      "EZH2",
-      "EWSR1",
-      "Prcp",
-      "MECP2",
-      "ING5",
-      "HEXIM1",
-      "WDR5",
-      "Hdac4",
-      "CDK11A",
-      "RBMX",
-      "SMARCE1",
-      "NUMA1",
-      "KRAS",
-      "CAP1",
-      "INIP",
-      "DCK",
-      "MTA1",
-      "ASH2L",
-      "ERICH6",
-      "CSNK2A3",
-      "RBBP5",
-      "ARHGAP31",
-      "H1F0",
-      "TBK1",
-      "BRPF1",
-      "NUCKS1",
-      "N",
-      "LCOR",
-      "INTS3",
-      "POLB",
-      "Htt",
-      "BRD4",
-      "HIST2H3A",
-      "ZMYM4",
-      "TXN",
-      "UBE2H",
-      "BANF1",
-      "CPOX",
-      "HMGN2",
-      "KAT6A",
-      "MTA2",
-      "MSL1",
-      "RNF169",
-      "POLE3",
-      "KAT7",
       "MME",
-      "RFC5",
-      "WHSC1",
-      "PSMA1",
-      "BAZ1B",
-      "PHIP",
-      "CC2D1B",
-      "COPS2",
-      "HIST2H2BE",
-      "BRCC3",
-      "BAZ1A",
-      "PAWR",
-      "TRIM67",
-      "CDC26",
-      "CSNK2A2",
-      "AK5",
-      "UHRF1",
-      "MCM4",
-      "WNT5A",
-      "PPIA",
-      "MDM2",
-      "PRPF4B",
-      "ACTC1",
-      "TERF2IP",
-      "ZMYM3",
-      "RPS3",
-      "PHAX",
-      "PARP1",
-      "ANAPC7",
-      "HSPA8",
-      "KMT2A",
-      "nsp9",
-      "MCM6",
-      "EGFR",
-      "RIF1",
-      "RAB3GAP2",
-      "BAP1",
-      "CDC14B",
-      "BIRC3",
-      "H3F3A",
-      "RBM25",
-      "CNDP2",
-      "GLP1R",
-      "H2AFY2",
-      "KDM5B",
-      "CHAMP1",
-      "nsp15",
-      "SMARCA5",
-      "RIPK4",
-      "CDC27",
-      "TRIM24",
-      "DOCK9",
-      "HMGB3",
-      "PSIP1",
-      "PRKDC",
-      "PHLPP1",
-      "TNIP1",
-      "MMS19",
-      "KDM3B",
-      "POGZ",
-      "RBM42",
-      "SPTAN1",
-      "PYCR2",
-      "RBBP7",
-      "CHMP4C",
-      "EP300",
-      "CUL4B",
-      "DRAP1",
-      "USP14",
-      "PUF60",
-      "GIT1",
-      "CDCA8",
-      "PPP4R2",
-      "C11orf16",
-      "RBBP4",
-      "RPA3",
-      "RPL36",
-      "SRCAP",
-      "MSH6",
-      "RCOR1",
-      "NAA40",
-      "RAI1",
-      "HIST2H2AA3",
-      "ZNF22",
-      "TOP2A",
-      "OR6C6",
-      "SRSF1",
-      "ILF3",
-      "SMARCA4",
-      "UBB",
-      "RPL22",
-      "MSN",
-      "TOP2B",
-      "SRRT",
-      "CEBPA",
-      "HIST1H2BG",
-      "PRKRIP1",
-      "HUWE1",
-      "H2AFY",
-      "RAD51AP1",
-      "MDC1",
-      "DDB1",
-      "COL17A1",
-      "H2AFZ",
-      "AZGP1",
-      "PRNP",
-      "RFC1",
-      "BRD7",
-      "NELFE",
-      "HIST1H1D",
-      "HDAC1",
-      "nsp3",
-      "PRCP",
-      "AHCY",
-      "MRE11A",
       "TIMELESS",
-      "RSF1",
-      "vpr",
-      "HIST1H1C",
-      "CSNK2A1",
-      "KPNA2",
-      "CDK11B",
-      "MCM7",
-      "SUZ12",
-      "TNIP2",
-      "H1FX",
-      "CBX1",
-      "KIF20A",
-      "HIST1H3A",
-      "ATRX",
-      "LIG3",
-      "HSPA1A",
-      "HIST1H4A",
-      "HMG20A",
-      "EML6",
-      "XRCC5",
-      "EED",
-      "CBX3",
-      "CECR2",
-      "CAPRIN1",
-      "PRPF40A",
-      "HP1BP3",
-      "ACLY"
+      "DOCK9",
+      "HNRNPH1",
+      "RFC1",
+      "HMGN2",
+      "ZMYM4"
     ]
   },
   "biogrid_interaction_groups": {
@@ -557,9 +545,7 @@
   "biogrid_interactions_select_nonhuman": {
     "NUCKS1": {}
   },
-  "reactome_pathways": {
-    "NUCKS1": []
-  },
+  "reactome_pathways": {},
   "biogrid_summarized_go": {},
   "dbsnp_variants": {
     "NUCKS1": {
@@ -572,7 +558,65 @@
             "p_value": 1.0000000000000001e-29,
             "risk_score": 0.7494922
           }
-        }
+        },
+        "rsid": "rs150111028",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205715978,
+            "ref": "G",
+            "alt": "A",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205685106,
+            "ref": "G",
+            "alt": "A",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 2,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205715978,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": true,
+              "CDS": false,
+              "UTR": true,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [
+                "NUCKS1"
+              ],
+              "CDS_genes": [],
+              "UTR_genes": [
+                "NUCKS1"
+              ],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs149515685": {
         "mapped_gene": "NUCKS1",
@@ -583,7 +627,79 @@
             "p_value": 9e-133,
             "risk_score": 0.69633335
           }
-        }
+        },
+        "rsid": "rs149515685",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205717137,
+            "ref": "T",
+            "alt": "A",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205717137,
+            "ref": "T",
+            "alt": "C",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205686265,
+            "ref": "T",
+            "alt": "A",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205686265,
+            "ref": "T",
+            "alt": "C",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 4,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205717137,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": true,
+              "CDS": false,
+              "UTR": true,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [
+                "NUCKS1"
+              ],
+              "CDS_genes": [],
+              "UTR_genes": [
+                "NUCKS1"
+              ],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs114715101": {
         "mapped_gene": "NUCKS1",
@@ -594,22 +710,144 @@
             "p_value": 1.0000000000000001e-66,
             "risk_score": 0.45861802
           }
-        }
+        },
+        "rsid": "rs114715101",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205726298,
+            "ref": "T",
+            "alt": "A",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205726298,
+            "ref": "T",
+            "alt": "C",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205695426,
+            "ref": "T",
+            "alt": "A",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205695426,
+            "ref": "T",
+            "alt": "C",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 4,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205726298,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": false,
+              "CDS": false,
+              "UTR": false,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [],
+              "CDS_genes": [],
+              "UTR_genes": [],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs7545345": {
         "mapped_gene": "NUCKS1",
         "context": "intron_variant",
         "variant_category": "intronic",
         "associated_disease_trait": {
-          "IGF 1 (UKB data field 30770)": {
-            "p_value": 1e-13,
-            "risk_score": 0.02008364
-          },
           "Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction": {
             "p_value": 3e-08,
             "risk_score": 2.51
+          },
+          "IGF 1 (UKB data field 30770)": {
+            "p_value": 1e-13,
+            "risk_score": 0.02008364
           }
-        }
+        },
+        "rsid": "rs7545345",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205721813,
+            "ref": "T",
+            "alt": "C",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205690941,
+            "ref": "T",
+            "alt": "C",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 2,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205721813,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": false,
+              "CDS": false,
+              "UTR": false,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [],
+              "CDS_genes": [],
+              "UTR_genes": [],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs823094": {
         "mapped_gene": "NUCKS1",
@@ -620,7 +858,89 @@
             "p_value": 8.000000000000001e-24,
             "risk_score": 0.01899985
           }
-        }
+        },
+        "rsid": "rs823094",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205720679,
+            "ref": "T",
+            "alt": "A",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205720679,
+            "ref": "T",
+            "alt": "C",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205720679,
+            "ref": "T",
+            "alt": "G",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205689807,
+            "ref": "T",
+            "alt": "A",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205689807,
+            "ref": "T",
+            "alt": "C",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205689807,
+            "ref": "T",
+            "alt": "G",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 6,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205720679,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": false,
+              "CDS": false,
+              "UTR": false,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [],
+              "CDS_genes": [],
+              "UTR_genes": [],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs951366": {
         "mapped_gene": "NUCKS1",
@@ -628,8 +948,8 @@
         "variant_category": "other",
         "associated_disease_trait": {
           "Atrial fibrillation": {
-            "p_value": 8e-17,
-            "risk_score": 1.04
+            "p_value": 8e-09,
+            "risk_score": 1.05
           },
           "Body surface area": {
             "p_value": 2e-15,
@@ -642,14 +962,92 @@
           "Posterior thalamic nuclei volume": {
             "p_value": 2e-09,
             "risk_score": 0.0500651
+          },
+          "Menarche (age at onset)": {
+            "p_value": 2e-08,
+            "risk_score": 0.03
+          },
+          "Atrial fibrillation (MTAG)": {
+            "p_value": 4e-08,
+            "risk_score": 0.007903297
+          },
+          "Weight (UKB data field 21002)": {
+            "p_value": 6e-13,
+            "risk_score": 0.011847435
+          },
+          "Whole body water mass (UKB data field 23102)": {
+            "p_value": 2.0000000000000002e-23,
+            "risk_score": 0.011391548
           }
-        }
+        },
+        "rsid": "rs951366",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205716224,
+            "ref": "T",
+            "alt": "C",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205685352,
+            "ref": "T",
+            "alt": "C",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 2,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205716224,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": true,
+              "CDS": false,
+              "UTR": true,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [
+                "NUCKS1"
+              ],
+              "CDS_genes": [],
+              "UTR_genes": [
+                "NUCKS1"
+              ],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs34305872": {
         "mapped_gene": "NUCKS1",
         "context": "3_prime_UTR_variant",
         "variant_category": "other",
         "associated_disease_trait": {
+          "Appendicular lean mass": {
+            "p_value": 2e-08,
+            "risk_score": 0.0560632
+          },
           "Hand grip strength right (UKB data field 47)": {
             "p_value": 4e-14,
             "risk_score": 0.010807201
@@ -658,7 +1056,163 @@
             "p_value": 1e-12,
             "risk_score": 0.010127832
           }
-        }
+        },
+        "rsid": "rs34305872",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205717396,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTT",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205717396,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTT",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205717396,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTTT",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205717396,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTTTT",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205717396,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTTTTTT",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205717396,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTTTTTTT",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205717396,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTTTTTTTT",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205717396,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTTTTTTTTT",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205686524,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTT",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205686524,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTT",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205686524,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTTT",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205686524,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTTTT",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205686524,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTTTTTT",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205686524,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTTTTTTT",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205686524,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTTTTTTTT",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205686524,
+            "ref": "TTTTTTTTTTTTT",
+            "alt": "TTTTTTTTTTTTTTTTT",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 16,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205717396,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": true,
+              "CDS": false,
+              "UTR": true,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [
+                "NUCKS1"
+              ],
+              "CDS_genes": [],
+              "UTR_genes": [
+                "NUCKS1"
+              ],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs4951258": {
         "mapped_gene": "NUCKS1",
@@ -666,25 +1220,179 @@
         "variant_category": "intronic",
         "associated_disease_trait": {
           "Atrial fibrillation": {
-            "p_value": 2e-09,
-            "risk_score": 0.0353
+            "p_value": 2e-08,
+            "risk_score": 1.04
+          },
+          "QT interval": {
+            "p_value": 3e-23,
+            "risk_score": 0.029
           }
-        }
+        },
+        "rsid": "rs4951258",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205722188,
+            "ref": "G",
+            "alt": "A",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205722188,
+            "ref": "G",
+            "alt": "T",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205691316,
+            "ref": "G",
+            "alt": "A",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205691316,
+            "ref": "G",
+            "alt": "T",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 4,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205722188,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": false,
+              "CDS": false,
+              "UTR": false,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [],
+              "CDS_genes": [],
+              "UTR_genes": [],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs823130": {
         "mapped_gene": "NUCKS1",
         "context": "intron_variant",
         "variant_category": "intronic",
         "associated_disease_trait": {
-          "QRS duration": {
-            "p_value": 3e-09,
-            "risk_score": 0.0188
-          },
           "Kidney stone disease": {
             "p_value": 6e-09,
             "risk_score": 1.07
+          },
+          "QRS duration": {
+            "p_value": 3e-09,
+            "risk_score": 0.0188
           }
-        }
+        },
+        "rsid": "rs823130",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205745244,
+            "ref": "C",
+            "alt": "A",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205745244,
+            "ref": "C",
+            "alt": "G",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205745244,
+            "ref": "C",
+            "alt": "T",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205714372,
+            "ref": "C",
+            "alt": "A",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205714372,
+            "ref": "C",
+            "alt": "G",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205714372,
+            "ref": "C",
+            "alt": "T",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 6,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205745244,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": false,
+              "CDS": false,
+              "UTR": false,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [],
+              "CDS_genes": [],
+              "UTR_genes": [],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs4951261": {
         "mapped_gene": "NUCKS1",
@@ -695,7 +1403,61 @@
             "p_value": 1e-09,
             "risk_score": 1.05
           }
-        }
+        },
+        "rsid": "rs4951261",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205748695,
+            "ref": "A",
+            "alt": "C",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205717823,
+            "ref": "A",
+            "alt": "C",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 2,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205748695,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": false,
+              "CDS": false,
+              "UTR": false,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [],
+              "CDS_genes": [],
+              "UTR_genes": [],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs3747973": {
         "mapped_gene": "Metazoa_SRP - NUCKS1",
@@ -710,7 +1472,59 @@
             "p_value": 3e-13,
             "risk_score": 0.0141432
           }
-        }
+        },
+        "rsid": "rs3747973",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205708020,
+            "ref": "A",
+            "alt": "C",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205708020,
+            "ref": "A",
+            "alt": "G",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205708020,
+            "ref": "A",
+            "alt": "T",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205677148,
+            "ref": "A",
+            "alt": "C",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205677148,
+            "ref": "A",
+            "alt": "G",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205677148,
+            "ref": "A",
+            "alt": "T",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 6,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": []
       },
       "rs12046305": {
         "mapped_gene": "NUCKS1",
@@ -721,7 +1535,61 @@
             "p_value": 5e-12,
             "risk_score": 6.91
           }
-        }
+        },
+        "rsid": "rs12046305",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205745350,
+            "ref": "G",
+            "alt": "A",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205714478,
+            "ref": "G",
+            "alt": "A",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 2,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205745350,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": false,
+              "CDS": false,
+              "UTR": false,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [],
+              "CDS_genes": [],
+              "UTR_genes": [],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs3805": {
         "mapped_gene": "NUCKS1",
@@ -732,18 +1600,79 @@
             "p_value": 4e-11,
             "risk_score": 0.132
           }
-        }
-      },
-      "rs7536483": {
-        "mapped_gene": "NUCKS1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Appendicular lean mass": {
-            "p_value": 7e-33,
-            "risk_score": 0.0226
+        },
+        "rsid": "rs3805",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205714227,
+            "ref": "T",
+            "alt": "A",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205714227,
+            "ref": "T",
+            "alt": "G",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205683355,
+            "ref": "T",
+            "alt": "A",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205683355,
+            "ref": "T",
+            "alt": "G",
+            "assembly": "GRCh37.p13"
           }
-        }
+        ],
+        "coordinate_count": 4,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205714227,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": true,
+              "CDS": false,
+              "UTR": true,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [
+                "NUCKS1"
+              ],
+              "CDS_genes": [],
+              "UTR_genes": [
+                "NUCKS1"
+              ],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs823118": {
         "mapped_gene": "NUCKS1 - RAB29",
@@ -754,7 +1683,124 @@
             "p_value": 1.0000000000000001e-29,
             "risk_score": 0.1066
           }
-        }
+        },
+        "rsid": "rs823118",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205754444,
+            "ref": "C",
+            "alt": "A",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205754444,
+            "ref": "C",
+            "alt": "T",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205723572,
+            "ref": "C",
+            "alt": "A",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205723572,
+            "ref": "C",
+            "alt": "T",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 4,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": []
+      },
+      "rs7536483": {
+        "mapped_gene": "NUCKS1",
+        "context": "intron_variant",
+        "variant_category": "intronic",
+        "associated_disease_trait": {
+          "Appendicular lean mass": {
+            "p_value": 7e-33,
+            "risk_score": 0.0226
+          }
+        },
+        "rsid": "rs7536483",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205749730,
+            "ref": "A",
+            "alt": "G",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205749730,
+            "ref": "A",
+            "alt": "T",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205718858,
+            "ref": "A",
+            "alt": "G",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205718858,
+            "ref": "A",
+            "alt": "T",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 4,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205749730,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": false,
+              "CDS": false,
+              "UTR": false,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [],
+              "CDS_genes": [],
+              "UTR_genes": [],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
       },
       "rs55737937": {
         "mapped_gene": "NUCKS1",
@@ -765,13 +1811,225 @@
             "p_value": 8e-14,
             "risk_score": 0.0192
           }
-        }
+        },
+        "rsid": "rs55737937",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205745489,
+            "ref": "AAAAAAAAAAA",
+            "alt": "AAAAAAAAA",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205745489,
+            "ref": "AAAAAAAAAAA",
+            "alt": "AAAAAAAAAA",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205745489,
+            "ref": "AAAAAAAAAAA",
+            "alt": "AAAAAAAAAAAA",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205714617,
+            "ref": "AAAAAAAAAAA",
+            "alt": "AAAAAAAAA",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205714617,
+            "ref": "AAAAAAAAAAA",
+            "alt": "AAAAAAAAAA",
+            "assembly": "GRCh37.p13"
+          },
+          {
+            "chrom": "1",
+            "pos": 205714617,
+            "ref": "AAAAAAAAAAA",
+            "alt": "AAAAAAAAAAAA",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 6,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": [
+          {
+            "chrom": "chr1",
+            "pos": 205745489,
+            "feature_flags": {
+              "gene": true,
+              "transcript": true,
+              "exon": false,
+              "CDS": false,
+              "UTR": false,
+              "start_codon": false,
+              "stop_codon": false
+            },
+            "feature_gene_lists": {
+              "gene_genes": [
+                "NUCKS1"
+              ],
+              "transcript_genes": [
+                "NUCKS1"
+              ],
+              "exon_genes": [],
+              "CDS_genes": [],
+              "UTR_genes": [],
+              "start_codon_genes": [],
+              "stop_codon_genes": []
+            },
+            "genes_related_to": [
+              "NUCKS1"
+            ]
+          }
+        ]
+      },
+      "rs823114": {
+        "mapped_gene": "NUCKS1 - RAB29",
+        "context": "TF_binding_site_variant",
+        "variant_category": "other",
+        "associated_disease_trait": {
+          "Body mass index": {
+            "p_value": 4e-08,
+            "risk_score": 0.013
+          }
+        },
+        "rsid": "rs823114",
+        "found": true,
+        "coordinates": [
+          {
+            "chrom": "1",
+            "pos": 205750404,
+            "ref": "G",
+            "alt": "A",
+            "assembly": "GRCh38.p14"
+          },
+          {
+            "chrom": "1",
+            "pos": 205719532,
+            "ref": "G",
+            "alt": "A",
+            "assembly": "GRCh37.p13"
+          }
+        ],
+        "coordinate_count": 2,
+        "chromosomes": [
+          "1"
+        ],
+        "assembly_filter": "all",
+        "annotations": []
       }
     }
   },
   "dbsnp_summaries": {},
-  "sei_predictions": {},
-  "alphamissense_predictions": {},
+  "sei_predictions": {
+    "NUCKS1": {
+      "rs150111028": "E5 B-cell-like",
+      "rs149515685": "E5 B-cell-like",
+      "rs114715101": "TN1 Transcription",
+      "rs7545345": "TN4 Transcription",
+      "rs823094": "E5 B-cell-like",
+      "rs951366": "E5 B-cell-like",
+      "rs34305872": "TN1 Transcription",
+      "rs4951258": "TN4 Transcription",
+      "rs823130": "TN3 Transcription",
+      "rs4951261": "P Promoter",
+      "rs3747973": "L5 Low signal",
+      "rs12046305": "TN3 Transcription",
+      "rs3805": "TN3 Transcription",
+      "rs823118": "TN3 Transcription",
+      "rs7536483": "P Promoter",
+      "rs55737937": "TN3 Transcription",
+      "rs823114": "P Promoter"
+    }
+  },
+  "alphamissense_predictions": {
+    "NUCKS1": {
+      "rs114715101": {
+        "SNP:T->A": null,
+        "SNP:T->C": null
+      },
+      "rs12046305": {
+        "SNP:G->A": null
+      },
+      "rs149515685": {
+        "SNP:T->A": null,
+        "SNP:T->C": null
+      },
+      "rs150111028": {
+        "SNP:G->A": null
+      },
+      "rs34305872": {
+        "SNP:TTTTTTTTTTTTT->TTTTTTTTT": null,
+        "SNP:TTTTTTTTTTTTT->TTTTTTTTTT": null,
+        "SNP:TTTTTTTTTTTTT->TTTTTTTTTTT": null,
+        "SNP:TTTTTTTTTTTTT->TTTTTTTTTTTT": null,
+        "SNP:TTTTTTTTTTTTT->TTTTTTTTTTTTTT": null,
+        "SNP:TTTTTTTTTTTTT->TTTTTTTTTTTTTTT": null,
+        "SNP:TTTTTTTTTTTTT->TTTTTTTTTTTTTTTT": null,
+        "SNP:TTTTTTTTTTTTT->TTTTTTTTTTTTTTTTT": null
+      },
+      "rs3747973": {
+        "SNP:A->C": null,
+        "SNP:A->G": null,
+        "SNP:A->T": null
+      },
+      "rs3805": {
+        "SNP:T->A": null,
+        "SNP:T->G": null
+      },
+      "rs4951258": {
+        "SNP:G->A": null,
+        "SNP:G->T": null
+      },
+      "rs4951261": {
+        "SNP:A->C": null
+      },
+      "rs55737937": {
+        "SNP:AAAAAAAAAAA->AAAAAAAAA": null,
+        "SNP:AAAAAAAAAAA->AAAAAAAAAA": null,
+        "SNP:AAAAAAAAAAA->AAAAAAAAAAAA": null
+      },
+      "rs7536483": {
+        "SNP:A->G": null,
+        "SNP:A->T": null
+      },
+      "rs7545345": {
+        "SNP:T->C": null
+      },
+      "rs823094": {
+        "SNP:T->A": null,
+        "SNP:T->C": null,
+        "SNP:T->G": null
+      },
+      "rs823114": {
+        "SNP:G->A": null
+      },
+      "rs823118": {
+        "SNP:C->A": null,
+        "SNP:C->T": null
+      },
+      "rs823130": {
+        "SNP:C->A": null,
+        "SNP:C->G": null,
+        "SNP:C->T": null
+      },
+      "rs951366": {
+        "SNP:T->C": null
+      }
+    }
+  },
   "gwas_associations": {
     "NUCKS1": {
       "gene": "NUCKS1",
@@ -783,6 +2041,8 @@
         "related_genes": [
           "NUCKS1",
           "SLC41A1",
+          "NUCKS1 - RAB29",
+          "RAB7L1",
           "METAZOA_SRP - NUCKS1"
         ],
         "high_risk_snps": [
@@ -796,9 +2056,13 @@
           "rs149515685",
           "rs114715101",
           "rs3805",
+          "rs823118",
+          "rs34305872",
+          "rs7536483",
+          "rs55737937",
           "rs823094",
           "rs3747973",
-          "rs34305872"
+          "rs823114"
         ],
         "affected_protein_levels": [
           "PM20D1"
@@ -816,62 +2080,108 @@
           "Weight (UKB data field 21002)",
           "Whole body water mass (UKB data field 23102)",
           "Parkinson's disease",
+          "Parkinson's disease or first degree relation to individual with Parkinson's disease",
+          "Appendicular lean mass",
+          "Posterior thalamic nuclei volume",
+          "Menarche (age at onset)",
           "QRS duration",
           "QT interval",
+          "Height",
           "Apolipoprotein A1 levels",
-          "HDL cholesterol levels"
+          "HDL cholesterol levels",
+          "Body mass index",
+          "Atrial fibrillation (MTAG)",
+          "Body surface area",
+          "Multi-trait sex score",
+          "FEV1/FVC or peptic ulcer disease (pleiotropy)"
         ]
       },
       "summary_by_significance": {
         "related_genes": [
           "NUCKS1",
-          "NUCKS1 - RAB29"
+          "NUCKS1 - RAB29",
+          "METAZOA_SRP - NUCKS1",
+          "RAB7L1",
+          "SLC41A1"
         ],
         "high_risk_snps": [
+          "rs149515685",
+          "rs114715101",
           "rs7536483",
           "rs823118",
+          "rs150111028",
+          "rs823094",
           "rs951366",
+          "rs4951258",
+          "rs34305872",
           "rs55737937",
+          "rs7545345",
+          "rs3747973",
           "rs12046305",
           "rs3805",
-          "rs4951258"
+          "rs823130",
+          "rs4951261",
+          "rs823114"
         ],
-        "affected_protein_levels": [],
+        "affected_protein_levels": [
+          "PM20D1"
+        ],
         "associated_disease_traits": [
+          "Hand grip strength left (UKB data field 46)",
+          "Hand grip strength right (UKB data field 47)",
+          "IGF 1 (UKB data field 30770)",
+          "Monocyte percentage (UKB data field 30190)",
+          "PM20D1 protein levels",
+          "Weight (UKB data field 21002)",
+          "Whole body water mass (UKB data field 23102)",
           "Appendicular lean mass",
           "Parkinson's disease or first degree relation to individual with Parkinson's disease",
+          "QRS duration",
+          "QT interval",
           "Atrial fibrillation",
           "Body surface area",
           "Serum alkaline phosphatase levels",
+          "Apolipoprotein A1 levels",
+          "HDL cholesterol levels",
           "Height",
           "Parkinson's disease",
-          "Posterior thalamic nuclei volume"
+          "Posterior thalamic nuclei volume",
+          "Multi-trait sex score",
+          "Kidney stone disease",
+          "Menarche (age at onset)",
+          "FEV1/FVC or peptic ulcer disease (pleiotropy)",
+          "Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction",
+          "Body mass index",
+          "Atrial fibrillation (MTAG)"
         ]
       }
     }
   },
-  "context_block": "[{\"gene\":\"NUCKS1\",\"Interacting human genes based on BioGRID curated database, organized by experimental system\":{\"Two-hybrid\":[\"AK5\",\"DOCK9\"],\"Affinity Capture-MS\":[\"MME\",\"EGFR\",\"TNIP2\",\"USP14\",\"BIRC3\",\"CHMP4C\",\"PRNP\",\"BRD4\",\"TRIM24\",\"EP300\",\"MTA2\",\"H2AFY\",\"BANF1\",\"PSIP1\",\"KIF20A\",\"H1F0\",\"POLB\",\"WHSC1\",\"SMARCA5\",\"RPL22\",\"RFC1\",\"RFC5\",\"MCM7\",\"LIG3\",\"MECP2\",\"SMARCA4\",\"ATRX\",\"CBX5\",\"XRCC5\",\"TOP2A\",\"HIST1H1D\",\"PARP1\",\"UBB\",\"H2AFZ\",\"HIST1H1C\",\"PSMA1\",\"AZGP1\",\"RPS3\",\"ZNF22\",\"CSNK2A2\",\"CBX1\",\"ZMYM3\",\"CECR2\",\"CHRAC1\",\"SMARCA1\",\"SRCAP\",\"PYCR2\",\"UHRF1\",\"MCM4\",\"KAT6A\",\"PHF14\",\"CDC27\",\"ZNF512\",\"CUL4B\",\"MSL1\",\"SUZ12\",\"EED\",\"C11orf30\",\"KAT7\",\"MTA1\",\"ING5\",\"RBBP7\",\"NEDD8-MDP1\",\"RPL32\",\"MRE11A\",\"ASH2L\",\"RSF1\",\"H1FX\",\"SMARCE1\",\"HIST1H2AC\",\"SMARCC1\",\"PHIP\",\"LCOR\",\"CHAMP1\",\"ANAPC7\",\"RCOR1\",\"BAZ1B\",\"MTF2\",\"RPL36\",\"INIP\",\"BAZ1A\",\"POLE3\",\"BRD7\",\"HMG20A\",\"TCF20\",\"KDM5B\",\"H2AFY2\",\"SMARCB1\",\"CBX3\",\"KMT2A\",\"TOP2B\",\"RBBP4\",\"MDC1\",\"MCM6\",\"NUMA1\",\"CUL4A\",\"BRPF1\",\"CSNK2A1\",\"PRKDC\",\"WDR5\",\"HIST1H4A\",\"RAI1\",\"POGZ\",\"KDM3B\",\"PBRM1\",\"HIST2H3A\",\"HIST2H2AB\",\"RNF169\",\"CDC26\",\"ZNF280C\",\"CDCA8\",\"RBBP5\",\"HIST2H2BE\",\"DDB1\",\"EZH2\",\"ZMYM4\",\"RIF1\",\"HIST2H2AA3\",\"INTS3\",\"HP1BP3\",\"SLC30A5\",\"MSX2\",\"BAP1\",\"ZRANB1\",\"HSPA1A\",\"HSPA8\",\"PRKACG\",\"RIPK4\",\"TRIM67\",\"TNIP1\",\"CDK11A\",\"CDK11B\",\"CSNK2A1\",\"CSNK2A2\",\"CSNK2A3\",\"UBE2H\",\"MECP2\",\"NELFE\",\"H3F3A\",\"KRAS\"],\"Affinity Capture-RNA\":[\"ELAVL1\",\"HNRNPH1\"],\"Co-fractionation\":[\"ORC2\",\"RBM42\",\"RBMX\",\"ILF3\",\"PRCP\",\"COPS2\",\"HEXIM1\",\"HUWE1\",\"HMGB3\",\"PHAX\",\"ARID1A\",\"PRPF40A\",\"TXN\",\"HSPA8\",\"DSP\",\"AHCY\",\"MSN\",\"DCK\",\"PRDX3\",\"CPOX\",\"BRCC3\",\"RBM25\",\"SMARCA4\",\"KPNA2\",\"MSH6\",\"ACLY\",\"EEF1A1\",\"BASP1\",\"CAP1\",\"TOP2B\",\"SRSF1\",\"PRPF4B\",\"HDAC1\",\"SPTAN1\",\"CAPRIN1\",\"DRAP1\",\"RBBP5\",\"CC2D1B\",\"SMEK1\",\"REPS1\",\"PDLIM5\",\"PAWR\",\"CNDP2\",\"MMS19\",\"SRRT\",\"RAB3GAP2\",\"PRKRIP1\",\"PPP4R2\",\"PUF60\",\"RCOR1\",\"TIMELESS\",\"GIT1\"],\"PCA\":[\"GLP1R\"],\"Affinity Capture-Western\":[\"GLP1R\",\"ATRX\"],\"Proximity Label-MS\":[\"EWSR1\",\"CDC14B\",\"ACTC1\",\"WHSC1\",\"HIST1H2BG\",\"TERF2IP\",\"NAA40\",\"PHLPP1\",\"HSPA1A\",\"TBK1\",\"RPA1\",\"RPA2\",\"RPA3\",\"TIMP2\",\"PPIA\",\"RNF8\",\"TOPBP1\"],\"Biochemical Activity\":[\"MDM2\"],\"Reconstituted Complex\":[\"ATRX\",\"ATRX\",\"RAD51AP1\"],\"Cross-Linking-MS (XL-MS)\":[\"HIST1H1C\",\"HIST1H3A\",\"SERBP1\",\"HMGN2\",\"HIST2H3A\",\"WNT5A\",\"COL17A1\",\"DIDO1\",\"ARHGAP31\",\"OR6C6\",\"EML6\",\"ERICH6\",\"SLCO2B1\",\"C11orf16\",\"NUCKS1\"],\"Protein-peptide\":[\"CEBPA\"]},\"Contains GWAS associations and their statistical significance (to traits, protein levels etc.) for the gene and its variants. Returns associations that are high-risk or high-signifiance or both.\":{\"gene\":\"NUCKS1\",\"found\":true,\"total_associations\":45,\"total_significant_associations\":35,\"total_studies_analyzed\":23,\"summary_by_high_risk_alleles\":{\"related_genes\":[\"NUCKS1\",\"SLC41A1\",\"METAZOA_SRP - NUCKS1\"],\"high_risk_snps\":[\"rs12046305\",\"rs7545345\",\"rs823130\",\"rs951366\",\"rs4951261\",\"rs4951258\",\"rs150111028\",\"rs149515685\",\"rs114715101\",\"rs3805\",\"rs823094\",\"rs3747973\",\"rs34305872\"],\"affected_protein_levels\":[\"PM20D1\"],\"associated_disease_traits\":[\"Serum alkaline phosphatase levels\",\"Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction\",\"Kidney stone disease\",\"Atrial fibrillation\",\"Hand grip strength left (UKB data field 46)\",\"Hand grip strength right (UKB data field 47)\",\"IGF 1 (UKB data field 30770)\",\"Monocyte percentage (UKB data field 30190)\",\"PM20D1 protein levels\",\"Weight (UKB data field 21002)\",\"Whole body water mass (UKB data field 23102)\",\"Parkinson's disease\",\"QRS duration\",\"QT interval\",\"Apolipoprotein A1 levels\",\"HDL cholesterol levels\"]},\"summary_by_significance\":{\"related_genes\":[\"NUCKS1\",\"NUCKS1 - RAB29\"],\"high_risk_snps\":[\"rs7536483\",\"rs823118\",\"rs951366\",\"rs55737937\",\"rs12046305\",\"rs3805\",\"rs4951258\"],\"affected_protein_levels\":[],\"associated_disease_traits\":[\"Appendicular lean mass\",\"Parkinson's disease or first degree relation to individual with Parkinson's disease\",\"Atrial fibrillation\",\"Body surface area\",\"Serum alkaline phosphatase levels\",\"Height\",\"Parkinson's disease\",\"Posterior thalamic nuclei volume\"]}},\"uniprot_entries_base\":{\"function\":\"Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR) . Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures, but with less affinity than RAD51AP1\"},\"uniprot_entries_gwas\":{\"function\":\"Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR) . Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures, but with less affinity than RAD51AP1\"},\"dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)\":{\"rs150111028\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"PM20D1 protein levels\":{\"p_value\":1.0000000000000001e-29,\"risk_score\":0.7494922}}},\"rs149515685\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"PM20D1 protein levels\":{\"p_value\":9e-133,\"risk_score\":0.69633335}}},\"rs114715101\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"PM20D1 protein levels\":{\"p_value\":1.0000000000000001e-66,\"risk_score\":0.45861802}}},\"rs7545345\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"IGF 1 (UKB data field 30770)\":{\"p_value\":1e-13,\"risk_score\":0.02008364},\"Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction\":{\"p_value\":3e-08,\"risk_score\":2.51}}},\"rs823094\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Monocyte percentage (UKB data field 30190)\":{\"p_value\":8.000000000000001e-24,\"risk_score\":0.01899985}}},\"rs951366\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"Atrial fibrillation\":{\"p_value\":8e-17,\"risk_score\":1.04},\"Body surface area\":{\"p_value\":2e-15,\"risk_score\":0.00326056},\"Height\":{\"p_value\":3e-11,\"risk_score\":0.02301},\"Posterior thalamic nuclei volume\":{\"p_value\":2e-09,\"risk_score\":0.0500651}}},\"rs34305872\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"Hand grip strength right (UKB data field 47)\":{\"p_value\":4e-14,\"risk_score\":0.010807201},\"Hand grip strength left (UKB data field 46)\":{\"p_value\":1e-12,\"risk_score\":0.010127832}}},\"rs4951258\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Atrial fibrillation\":{\"p_value\":2e-09,\"risk_score\":0.0353}}},\"rs823130\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"QRS duration\":{\"p_value\":3e-09,\"risk_score\":0.0188},\"Kidney stone disease\":{\"p_value\":6e-09,\"risk_score\":1.07}}},\"rs4951261\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Atrial fibrillation\":{\"p_value\":1e-09,\"risk_score\":1.05}}},\"rs3747973\":{\"mapped_gene\":\"Metazoa_SRP - NUCKS1\",\"context\":\"intergenic_variant\",\"variant_category\":\"intergenic\",\"associated_disease_trait\":{\"Apolipoprotein A1 levels\":{\"p_value\":1e-13,\"risk_score\":0.014824},\"HDL cholesterol levels\":{\"p_value\":3e-13,\"risk_score\":0.0141432}}},\"rs12046305\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Serum alkaline phosphatase levels\":{\"p_value\":5e-12,\"risk_score\":6.91}}},\"rs3805\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"Parkinson's disease\":{\"p_value\":4e-11,\"risk_score\":0.132}}},\"rs7536483\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Appendicular lean mass\":{\"p_value\":7e-33,\"risk_score\":0.0226}}},\"rs823118\":{\"mapped_gene\":\"NUCKS1 - RAB29\",\"context\":\"intergenic_variant\",\"variant_category\":\"intergenic\",\"associated_disease_trait\":{\"Parkinson's disease or first degree relation to individual with Parkinson's disease\":{\"p_value\":1.0000000000000001e-29,\"risk_score\":0.1066}}},\"rs55737937\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Serum alkaline phosphatase levels\":{\"p_value\":8e-14,\"risk_score\":0.0192}}}}}]",
+  "context_block": "[{\"gene\":\"NUCKS1\",\"Interacting human genes based on BioGRID curated database, organized by experimental system\":{\"Two-hybrid\":[\"AK5\",\"DOCK9\"],\"Affinity Capture-MS\":[\"MME\",\"EGFR\",\"TNIP2\",\"USP14\",\"BIRC3\",\"CHMP4C\",\"PRNP\",\"BRD4\",\"TRIM24\",\"EP300\",\"MTA2\",\"H2AFY\",\"BANF1\",\"PSIP1\",\"KIF20A\",\"H1F0\",\"POLB\",\"WHSC1\",\"SMARCA5\",\"RPL22\",\"RFC1\",\"RFC5\",\"MCM7\",\"LIG3\",\"MECP2\",\"SMARCA4\",\"ATRX\",\"CBX5\",\"XRCC5\",\"TOP2A\",\"HIST1H1D\",\"PARP1\",\"UBB\",\"H2AFZ\",\"HIST1H1C\",\"PSMA1\",\"AZGP1\",\"RPS3\",\"ZNF22\",\"CSNK2A2\",\"CBX1\",\"ZMYM3\",\"CECR2\",\"CHRAC1\",\"SMARCA1\",\"SRCAP\",\"PYCR2\",\"UHRF1\",\"MCM4\",\"KAT6A\",\"PHF14\",\"CDC27\",\"ZNF512\",\"CUL4B\",\"MSL1\",\"SUZ12\",\"EED\",\"C11orf30\",\"KAT7\",\"MTA1\",\"ING5\",\"RBBP7\",\"NEDD8-MDP1\",\"RPL32\",\"MRE11A\",\"ASH2L\",\"RSF1\",\"H1FX\",\"SMARCE1\",\"HIST1H2AC\",\"SMARCC1\",\"PHIP\",\"LCOR\",\"CHAMP1\",\"ANAPC7\",\"RCOR1\",\"BAZ1B\",\"MTF2\",\"RPL36\",\"INIP\",\"BAZ1A\",\"POLE3\",\"BRD7\",\"HMG20A\",\"TCF20\",\"KDM5B\",\"H2AFY2\",\"SMARCB1\",\"CBX3\",\"KMT2A\",\"TOP2B\",\"RBBP4\",\"MDC1\",\"MCM6\",\"NUMA1\",\"CUL4A\",\"BRPF1\",\"CSNK2A1\",\"PRKDC\",\"WDR5\",\"HIST1H4A\",\"RAI1\",\"POGZ\",\"KDM3B\",\"PBRM1\",\"HIST2H3A\",\"HIST2H2AB\",\"RNF169\",\"CDC26\",\"ZNF280C\",\"CDCA8\",\"RBBP5\",\"HIST2H2BE\",\"DDB1\",\"EZH2\",\"ZMYM4\",\"RIF1\",\"HIST2H2AA3\",\"INTS3\",\"HP1BP3\",\"SLC30A5\",\"MSX2\",\"BAP1\",\"ZRANB1\",\"HSPA1A\",\"HSPA8\",\"PRKACG\",\"RIPK4\",\"TRIM67\",\"TNIP1\",\"CDK11A\",\"CDK11B\",\"CSNK2A1\",\"CSNK2A2\",\"CSNK2A3\",\"UBE2H\",\"MECP2\",\"NELFE\",\"H3F3A\",\"KRAS\"],\"Affinity Capture-RNA\":[\"ELAVL1\",\"HNRNPH1\"],\"Co-fractionation\":[\"ORC2\",\"RBM42\",\"RBMX\",\"ILF3\",\"PRCP\",\"COPS2\",\"HEXIM1\",\"HUWE1\",\"HMGB3\",\"PHAX\",\"ARID1A\",\"PRPF40A\",\"TXN\",\"HSPA8\",\"DSP\",\"AHCY\",\"MSN\",\"DCK\",\"PRDX3\",\"CPOX\",\"BRCC3\",\"RBM25\",\"SMARCA4\",\"KPNA2\",\"MSH6\",\"ACLY\",\"EEF1A1\",\"BASP1\",\"CAP1\",\"TOP2B\",\"SRSF1\",\"PRPF4B\",\"HDAC1\",\"SPTAN1\",\"CAPRIN1\",\"DRAP1\",\"RBBP5\",\"CC2D1B\",\"SMEK1\",\"REPS1\",\"PDLIM5\",\"PAWR\",\"CNDP2\",\"MMS19\",\"SRRT\",\"RAB3GAP2\",\"PRKRIP1\",\"PPP4R2\",\"PUF60\",\"RCOR1\",\"TIMELESS\",\"GIT1\"],\"PCA\":[\"GLP1R\"],\"Affinity Capture-Western\":[\"GLP1R\",\"ATRX\"],\"Proximity Label-MS\":[\"EWSR1\",\"CDC14B\",\"ACTC1\",\"WHSC1\",\"HIST1H2BG\",\"TERF2IP\",\"NAA40\",\"PHLPP1\",\"HSPA1A\",\"TBK1\",\"RPA1\",\"RPA2\",\"RPA3\",\"TIMP2\",\"PPIA\",\"RNF8\",\"TOPBP1\"],\"Biochemical Activity\":[\"MDM2\"],\"Reconstituted Complex\":[\"ATRX\",\"ATRX\",\"RAD51AP1\"],\"Cross-Linking-MS (XL-MS)\":[\"HIST1H1C\",\"HIST1H3A\",\"SERBP1\",\"HMGN2\",\"HIST2H3A\",\"WNT5A\",\"COL17A1\",\"DIDO1\",\"ARHGAP31\",\"OR6C6\",\"EML6\",\"ERICH6\",\"SLCO2B1\",\"C11orf16\",\"NUCKS1\"],\"Protein-peptide\":[\"CEBPA\"]},\"Contains GWAS associations and their statistical significance (to traits, protein levels etc.) for the gene and its variants. Returns associations that are high-risk or high-signifiance or both.\":{\"gene\":\"NUCKS1\",\"found\":true,\"total_associations\":45,\"total_significant_associations\":35,\"total_studies_analyzed\":23,\"summary_by_high_risk_alleles\":{\"related_genes\":[\"NUCKS1\",\"SLC41A1\",\"NUCKS1 - RAB29\",\"RAB7L1\",\"METAZOA_SRP - NUCKS1\"],\"high_risk_snps\":[\"rs12046305\",\"rs7545345\",\"rs823130\",\"rs951366\",\"rs4951261\",\"rs4951258\",\"rs150111028\",\"rs149515685\",\"rs114715101\",\"rs3805\",\"rs823118\",\"rs34305872\",\"rs7536483\",\"rs55737937\",\"rs823094\",\"rs3747973\",\"rs823114\"],\"affected_protein_levels\":[\"PM20D1\"],\"associated_disease_traits\":[\"Serum alkaline phosphatase levels\",\"Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction\",\"Kidney stone disease\",\"Atrial fibrillation\",\"Hand grip strength left (UKB data field 46)\",\"Hand grip strength right (UKB data field 47)\",\"IGF 1 (UKB data field 30770)\",\"Monocyte percentage (UKB data field 30190)\",\"PM20D1 protein levels\",\"Weight (UKB data field 21002)\",\"Whole body water mass (UKB data field 23102)\",\"Parkinson's disease\",\"Parkinson's disease or first degree relation to individual with Parkinson's disease\",\"Appendicular lean mass\",\"Posterior thalamic nuclei volume\",\"Menarche (age at onset)\",\"QRS duration\",\"QT interval\",\"Height\",\"Apolipoprotein A1 levels\",\"HDL cholesterol levels\",\"Body mass index\",\"Atrial fibrillation (MTAG)\",\"Body surface area\",\"Multi-trait sex score\",\"FEV1/FVC or peptic ulcer disease (pleiotropy)\"]},\"summary_by_significance\":{\"related_genes\":[\"NUCKS1\",\"NUCKS1 - RAB29\",\"METAZOA_SRP - NUCKS1\",\"RAB7L1\",\"SLC41A1\"],\"high_risk_snps\":[\"rs149515685\",\"rs114715101\",\"rs7536483\",\"rs823118\",\"rs150111028\",\"rs823094\",\"rs951366\",\"rs4951258\",\"rs34305872\",\"rs55737937\",\"rs7545345\",\"rs3747973\",\"rs12046305\",\"rs3805\",\"rs823130\",\"rs4951261\",\"rs823114\"],\"affected_protein_levels\":[\"PM20D1\"],\"associated_disease_traits\":[\"Hand grip strength left (UKB data field 46)\",\"Hand grip strength right (UKB data field 47)\",\"IGF 1 (UKB data field 30770)\",\"Monocyte percentage (UKB data field 30190)\",\"PM20D1 protein levels\",\"Weight (UKB data field 21002)\",\"Whole body water mass (UKB data field 23102)\",\"Appendicular lean mass\",\"Parkinson's disease or first degree relation to individual with Parkinson's disease\",\"QRS duration\",\"QT interval\",\"Atrial fibrillation\",\"Body surface area\",\"Serum alkaline phosphatase levels\",\"Apolipoprotein A1 levels\",\"HDL cholesterol levels\",\"Height\",\"Parkinson's disease\",\"Posterior thalamic nuclei volume\",\"Multi-trait sex score\",\"Kidney stone disease\",\"Menarche (age at onset)\",\"FEV1/FVC or peptic ulcer disease (pleiotropy)\",\"Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction\",\"Body mass index\",\"Atrial fibrillation (MTAG)\"]}},\"Regulatory activity role for the regions where variants were found. Defined computationally through Sei, a deep learning model that predicts transcription factors, histone marks and dnase, though clustering prediction over the genome and then assinging values. Reperesents role of the region\":{\"rs150111028\":\"E5 B-cell-like\",\"rs149515685\":\"E5 B-cell-like\",\"rs114715101\":\"TN1 Transcription\",\"rs7545345\":\"TN4 Transcription\",\"rs823094\":\"E5 B-cell-like\",\"rs951366\":\"E5 B-cell-like\",\"rs34305872\":\"TN1 Transcription\",\"rs4951258\":\"TN4 Transcription\",\"rs823130\":\"TN3 Transcription\",\"rs4951261\":\"P Promoter\",\"rs3747973\":\"L5 Low signal\",\"rs12046305\":\"TN3 Transcription\",\"rs3805\":\"TN3 Transcription\",\"rs823118\":\"TN3 Transcription\",\"rs7536483\":\"P Promoter\",\"rs55737937\":\"TN3 Transcription\",\"rs823114\":\"P Promoter\"},\"Pathogenicity predictions for each missense variant of interest. Computed through AlphaMissense, which predicts the likelihood that missense variants (genetic mutations where a single amino acid in a protein is changed) can cause disease\":{\"rs114715101\":{\"SNP:T->A\":null,\"SNP:T->C\":null},\"rs12046305\":{\"SNP:G->A\":null},\"rs149515685\":{\"SNP:T->A\":null,\"SNP:T->C\":null},\"rs150111028\":{\"SNP:G->A\":null},\"rs34305872\":{\"SNP:TTTTTTTTTTTTT->TTTTTTTTT\":null,\"SNP:TTTTTTTTTTTTT->TTTTTTTTTT\":null,\"SNP:TTTTTTTTTTTTT->TTTTTTTTTTT\":null,\"SNP:TTTTTTTTTTTTT->TTTTTTTTTTTT\":null,\"SNP:TTTTTTTTTTTTT->TTTTTTTTTTTTTT\":null,\"SNP:TTTTTTTTTTTTT->TTTTTTTTTTTTTTT\":null,\"SNP:TTTTTTTTTTTTT->TTTTTTTTTTTTTTTT\":null,\"SNP:TTTTTTTTTTTTT->TTTTTTTTTTTTTTTTT\":null},\"rs3747973\":{\"SNP:A->C\":null,\"SNP:A->G\":null,\"SNP:A->T\":null},\"rs3805\":{\"SNP:T->A\":null,\"SNP:T->G\":null},\"rs4951258\":{\"SNP:G->A\":null,\"SNP:G->T\":null},\"rs4951261\":{\"SNP:A->C\":null},\"rs55737937\":{\"SNP:AAAAAAAAAAA->AAAAAAAAA\":null,\"SNP:AAAAAAAAAAA->AAAAAAAAAA\":null,\"SNP:AAAAAAAAAAA->AAAAAAAAAAAA\":null},\"rs7536483\":{\"SNP:A->G\":null,\"SNP:A->T\":null},\"rs7545345\":{\"SNP:T->C\":null},\"rs823094\":{\"SNP:T->A\":null,\"SNP:T->C\":null,\"SNP:T->G\":null},\"rs823114\":{\"SNP:G->A\":null},\"rs823118\":{\"SNP:C->A\":null,\"SNP:C->T\":null},\"rs823130\":{\"SNP:C->A\":null,\"SNP:C->G\":null,\"SNP:C->T\":null},\"rs951366\":{\"SNP:T->C\":null}},\"dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)\":{\"rs150111028\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"PM20D1 protein levels\":{\"p_value\":1.0000000000000001e-29,\"risk_score\":0.7494922}},\"rsid\":\"rs150111028\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205715978,\"ref\":\"G\",\"alt\":\"A\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205685106,\"ref\":\"G\",\"alt\":\"A\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":2,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205715978,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":true,\"CDS\":false,\"UTR\":true,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[\"NUCKS1\"],\"CDS_genes\":[],\"UTR_genes\":[\"NUCKS1\"],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs149515685\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"PM20D1 protein levels\":{\"p_value\":9e-133,\"risk_score\":0.69633335}},\"rsid\":\"rs149515685\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205717137,\"ref\":\"T\",\"alt\":\"A\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205717137,\"ref\":\"T\",\"alt\":\"C\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205686265,\"ref\":\"T\",\"alt\":\"A\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205686265,\"ref\":\"T\",\"alt\":\"C\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":4,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205717137,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":true,\"CDS\":false,\"UTR\":true,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[\"NUCKS1\"],\"CDS_genes\":[],\"UTR_genes\":[\"NUCKS1\"],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs114715101\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"PM20D1 protein levels\":{\"p_value\":1.0000000000000001e-66,\"risk_score\":0.45861802}},\"rsid\":\"rs114715101\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205726298,\"ref\":\"T\",\"alt\":\"A\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205726298,\"ref\":\"T\",\"alt\":\"C\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205695426,\"ref\":\"T\",\"alt\":\"A\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205695426,\"ref\":\"T\",\"alt\":\"C\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":4,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205726298,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":false,\"CDS\":false,\"UTR\":false,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[],\"CDS_genes\":[],\"UTR_genes\":[],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs7545345\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Gut microbiome abundance (class Bacteroides thetaiotaomicron (at 3 months) x Household furry pet cat (3 Months) interaction\":{\"p_value\":3e-08,\"risk_score\":2.51},\"IGF 1 (UKB data field 30770)\":{\"p_value\":1e-13,\"risk_score\":0.02008364}},\"rsid\":\"rs7545345\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205721813,\"ref\":\"T\",\"alt\":\"C\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205690941,\"ref\":\"T\",\"alt\":\"C\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":2,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205721813,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":false,\"CDS\":false,\"UTR\":false,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[],\"CDS_genes\":[],\"UTR_genes\":[],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs823094\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Monocyte percentage (UKB data field 30190)\":{\"p_value\":8.000000000000001e-24,\"risk_score\":0.01899985}},\"rsid\":\"rs823094\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205720679,\"ref\":\"T\",\"alt\":\"A\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205720679,\"ref\":\"T\",\"alt\":\"C\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205720679,\"ref\":\"T\",\"alt\":\"G\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205689807,\"ref\":\"T\",\"alt\":\"A\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205689807,\"ref\":\"T\",\"alt\":\"C\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205689807,\"ref\":\"T\",\"alt\":\"G\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":6,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205720679,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":false,\"CDS\":false,\"UTR\":false,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[],\"CDS_genes\":[],\"UTR_genes\":[],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs951366\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"Atrial fibrillation\":{\"p_value\":8e-09,\"risk_score\":1.05},\"Body surface area\":{\"p_value\":2e-15,\"risk_score\":0.00326056},\"Height\":{\"p_value\":3e-11,\"risk_score\":0.02301},\"Posterior thalamic nuclei volume\":{\"p_value\":2e-09,\"risk_score\":0.0500651},\"Menarche (age at onset)\":{\"p_value\":2e-08,\"risk_score\":0.03},\"Atrial fibrillation (MTAG)\":{\"p_value\":4e-08,\"risk_score\":0.007903297},\"Weight (UKB data field 21002)\":{\"p_value\":6e-13,\"risk_score\":0.011847435},\"Whole body water mass (UKB data field 23102)\":{\"p_value\":2.0000000000000002e-23,\"risk_score\":0.011391548}},\"rsid\":\"rs951366\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205716224,\"ref\":\"T\",\"alt\":\"C\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205685352,\"ref\":\"T\",\"alt\":\"C\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":2,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205716224,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":true,\"CDS\":false,\"UTR\":true,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[\"NUCKS1\"],\"CDS_genes\":[],\"UTR_genes\":[\"NUCKS1\"],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs34305872\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"Appendicular lean mass\":{\"p_value\":2e-08,\"risk_score\":0.0560632},\"Hand grip strength right (UKB data field 47)\":{\"p_value\":4e-14,\"risk_score\":0.010807201},\"Hand grip strength left (UKB data field 46)\":{\"p_value\":1e-12,\"risk_score\":0.010127832}},\"rsid\":\"rs34305872\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205717396,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTT\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205717396,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTT\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205717396,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTTT\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205717396,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTTTT\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205717396,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTTTTTT\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205717396,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTTTTTTT\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205717396,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTTTTTTTT\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205717396,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTTTTTTTTT\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205686524,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTT\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205686524,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTT\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205686524,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTTT\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205686524,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTTTT\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205686524,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTTTTTT\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205686524,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTTTTTTT\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205686524,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTTTTTTTT\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205686524,\"ref\":\"TTTTTTTTTTTTT\",\"alt\":\"TTTTTTTTTTTTTTTTT\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":16,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205717396,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":true,\"CDS\":false,\"UTR\":true,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[\"NUCKS1\"],\"CDS_genes\":[],\"UTR_genes\":[\"NUCKS1\"],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs4951258\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Atrial fibrillation\":{\"p_value\":2e-08,\"risk_score\":1.04},\"QT interval\":{\"p_value\":3e-23,\"risk_score\":0.029}},\"rsid\":\"rs4951258\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205722188,\"ref\":\"G\",\"alt\":\"A\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205722188,\"ref\":\"G\",\"alt\":\"T\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205691316,\"ref\":\"G\",\"alt\":\"A\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205691316,\"ref\":\"G\",\"alt\":\"T\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":4,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205722188,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":false,\"CDS\":false,\"UTR\":false,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[],\"CDS_genes\":[],\"UTR_genes\":[],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs823130\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Kidney stone disease\":{\"p_value\":6e-09,\"risk_score\":1.07},\"QRS duration\":{\"p_value\":3e-09,\"risk_score\":0.0188}},\"rsid\":\"rs823130\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205745244,\"ref\":\"C\",\"alt\":\"A\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205745244,\"ref\":\"C\",\"alt\":\"G\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205745244,\"ref\":\"C\",\"alt\":\"T\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205714372,\"ref\":\"C\",\"alt\":\"A\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205714372,\"ref\":\"C\",\"alt\":\"G\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205714372,\"ref\":\"C\",\"alt\":\"T\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":6,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205745244,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":false,\"CDS\":false,\"UTR\":false,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[],\"CDS_genes\":[],\"UTR_genes\":[],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs4951261\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Atrial fibrillation\":{\"p_value\":1e-09,\"risk_score\":1.05}},\"rsid\":\"rs4951261\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205748695,\"ref\":\"A\",\"alt\":\"C\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205717823,\"ref\":\"A\",\"alt\":\"C\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":2,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205748695,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":false,\"CDS\":false,\"UTR\":false,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[],\"CDS_genes\":[],\"UTR_genes\":[],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs3747973\":{\"mapped_gene\":\"Metazoa_SRP - NUCKS1\",\"context\":\"intergenic_variant\",\"variant_category\":\"intergenic\",\"associated_disease_trait\":{\"Apolipoprotein A1 levels\":{\"p_value\":1e-13,\"risk_score\":0.014824},\"HDL cholesterol levels\":{\"p_value\":3e-13,\"risk_score\":0.0141432}},\"rsid\":\"rs3747973\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205708020,\"ref\":\"A\",\"alt\":\"C\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205708020,\"ref\":\"A\",\"alt\":\"G\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205708020,\"ref\":\"A\",\"alt\":\"T\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205677148,\"ref\":\"A\",\"alt\":\"C\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205677148,\"ref\":\"A\",\"alt\":\"G\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205677148,\"ref\":\"A\",\"alt\":\"T\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":6,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[]},\"rs12046305\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Serum alkaline phosphatase levels\":{\"p_value\":5e-12,\"risk_score\":6.91}},\"rsid\":\"rs12046305\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205745350,\"ref\":\"G\",\"alt\":\"A\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205714478,\"ref\":\"G\",\"alt\":\"A\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":2,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205745350,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":false,\"CDS\":false,\"UTR\":false,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[],\"CDS_genes\":[],\"UTR_genes\":[],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs3805\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"3_prime_UTR_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"Parkinson's disease\":{\"p_value\":4e-11,\"risk_score\":0.132}},\"rsid\":\"rs3805\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205714227,\"ref\":\"T\",\"alt\":\"A\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205714227,\"ref\":\"T\",\"alt\":\"G\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205683355,\"ref\":\"T\",\"alt\":\"A\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205683355,\"ref\":\"T\",\"alt\":\"G\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":4,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205714227,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":true,\"CDS\":false,\"UTR\":true,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[\"NUCKS1\"],\"CDS_genes\":[],\"UTR_genes\":[\"NUCKS1\"],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs823118\":{\"mapped_gene\":\"NUCKS1 - RAB29\",\"context\":\"intergenic_variant\",\"variant_category\":\"intergenic\",\"associated_disease_trait\":{\"Parkinson's disease or first degree relation to individual with Parkinson's disease\":{\"p_value\":1.0000000000000001e-29,\"risk_score\":0.1066}},\"rsid\":\"rs823118\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205754444,\"ref\":\"C\",\"alt\":\"A\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205754444,\"ref\":\"C\",\"alt\":\"T\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205723572,\"ref\":\"C\",\"alt\":\"A\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205723572,\"ref\":\"C\",\"alt\":\"T\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":4,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[]},\"rs7536483\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Appendicular lean mass\":{\"p_value\":7e-33,\"risk_score\":0.0226}},\"rsid\":\"rs7536483\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205749730,\"ref\":\"A\",\"alt\":\"G\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205749730,\"ref\":\"A\",\"alt\":\"T\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205718858,\"ref\":\"A\",\"alt\":\"G\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205718858,\"ref\":\"A\",\"alt\":\"T\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":4,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205749730,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":false,\"CDS\":false,\"UTR\":false,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[],\"CDS_genes\":[],\"UTR_genes\":[],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs55737937\":{\"mapped_gene\":\"NUCKS1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Serum alkaline phosphatase levels\":{\"p_value\":8e-14,\"risk_score\":0.0192}},\"rsid\":\"rs55737937\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205745489,\"ref\":\"AAAAAAAAAAA\",\"alt\":\"AAAAAAAAA\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205745489,\"ref\":\"AAAAAAAAAAA\",\"alt\":\"AAAAAAAAAA\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205745489,\"ref\":\"AAAAAAAAAAA\",\"alt\":\"AAAAAAAAAAAA\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205714617,\"ref\":\"AAAAAAAAAAA\",\"alt\":\"AAAAAAAAA\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205714617,\"ref\":\"AAAAAAAAAAA\",\"alt\":\"AAAAAAAAAA\",\"assembly\":\"GRCh37.p13\"},{\"chrom\":\"1\",\"pos\":205714617,\"ref\":\"AAAAAAAAAAA\",\"alt\":\"AAAAAAAAAAAA\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":6,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[{\"chrom\":\"chr1\",\"pos\":205745489,\"feature_flags\":{\"gene\":true,\"transcript\":true,\"exon\":false,\"CDS\":false,\"UTR\":false,\"start_codon\":false,\"stop_codon\":false},\"feature_gene_lists\":{\"gene_genes\":[\"NUCKS1\"],\"transcript_genes\":[\"NUCKS1\"],\"exon_genes\":[],\"CDS_genes\":[],\"UTR_genes\":[],\"start_codon_genes\":[],\"stop_codon_genes\":[]},\"genes_related_to\":[\"NUCKS1\"]}]},\"rs823114\":{\"mapped_gene\":\"NUCKS1 - RAB29\",\"context\":\"TF_binding_site_variant\",\"variant_category\":\"other\",\"associated_disease_trait\":{\"Body mass index\":{\"p_value\":4e-08,\"risk_score\":0.013}},\"rsid\":\"rs823114\",\"found\":true,\"coordinates\":[{\"chrom\":\"1\",\"pos\":205750404,\"ref\":\"G\",\"alt\":\"A\",\"assembly\":\"GRCh38.p14\"},{\"chrom\":\"1\",\"pos\":205719532,\"ref\":\"G\",\"alt\":\"A\",\"assembly\":\"GRCh37.p13\"}],\"coordinate_count\":2,\"chromosomes\":[\"1\"],\"assembly_filter\":\"all\",\"annotations\":[]}}}]",
   "llm_json": {
-    "answer": "NUCKS1 plays important roles in both cancer and viral infections through its function as a chromatin-associated protein involved in DNA repair via homologous recombination. In cancer, NUCKS1 interacts with numerous cancer-related proteins including tumor suppressors (MDM2, PARP1), oncogenes (KRAS), DNA repair proteins (BRCA-associated proteins like RBBP4, RBBP5), and chromatin remodeling complexes (SMARCA4, SMARCA5). It shows genetic associations with various cancer-related traits and metabolic factors. In viral infections, NUCKS1 interacts with viral proteins like BRD4 (involved in viral transcription) and TRIM24 (antiviral response), and shows proximity to innate immune signaling proteins (TBK1, RNF8). The overlap between these roles centers on DNA damage response and chromatin regulation - both cancer development and viral infections involve DNA damage and require chromatin modifications for viral replication or oncogenic transformation. NUCKS1's core function in homologous recombination DNA repair makes it a critical factor in both contexts.",
+    "answer": "Based on the GWAS data, I found 17 disease-associated variants in the NUCKS1 gene region. Several of these variants could potentially alter NUCKS1's interactions with DNA repair partners or nucleic acid binding ability. Key variants include: rs3805 (3' UTR variant associated with Parkinson's disease), rs951366 (3' UTR variant associated with atrial fibrillation and multiple traits), rs34305872 (3' UTR variant associated with muscle strength traits), rs150111028 and rs149515685 (both 3' UTR variants affecting PM20D1 protein levels), and rs823114 (transcription factor binding site variant associated with BMI). The 3' UTR variants are particularly relevant as they could affect mRNA stability and protein expression levels, potentially impacting NUCKS1's ability to interact with its DNA repair partners like PARP1, XRCC5, MRE11A, MDC1, PRKDC, and others identified in the interaction data.",
     "evidence": [
-      "NUCKS1 function: Chromatin-associated protein involved in DNA repair by promoting homologous recombination (HR)",
-      "NUCKS1 cancer interactions: MDM2, KRAS, PARP1, RBBP4, RBBP5, SMARCA4, SMARCA5",
-      "NUCKS1 viral-related interactions: BRD4, TRIM24, TBK1, RNF8",
-      "NUCKS1 genetic associations: Parkinson's disease, atrial fibrillation, various metabolic traits",
-      "NUCKS1 DNA binding: Binds double-stranded DNA (dsDNA) and secondary DNA structures, such as D-loop structures"
+      "rs3805 is a 3_prime_UTR_variant in NUCKS1 associated with Parkinson's disease (p_value: 4e-11, risk_score: 0.132)",
+      "rs951366 is a 3_prime_UTR_variant in NUCKS1 associated with atrial fibrillation (p_value: 8e-09, risk_score: 1.05)",
+      "rs34305872 is a 3_prime_UTR_variant in NUCKS1 associated with hand grip strength (p_value: 1e-12, risk_score: 0.010127832)",
+      "rs150111028 is a 3_prime_UTR_variant in NUCKS1 associated with PM20D1 protein levels (p_value: 1e-29, risk_score: 0.7494922)",
+      "rs149515685 is a 3_prime_UTR_variant in NUCKS1 associated with PM20D1 protein levels (p_value: 9e-133, risk_score: 0.69633335)",
+      "rs823114 is a TF_binding_site_variant in NUCKS1-RAB29 region associated with body mass index (p_value: 4e-08, risk_score: 0.013)",
+      "NUCKS1 interacts with DNA repair proteins including PARP1, XRCC5, MRE11A, MDC1, PRKDC, LIG3, RFC1, RFC5, MCM7, MCM4, MCM6, POLB, TOP2A, TOP2B via Affinity Capture-MS",
+      "NUCKS1 interacts with chromatin remodeling complexes including SMARCA4, SMARCA5, SMARCA1, SMARCE1, SMARCC1, SMARCB1 via Affinity Capture-MS",
+      "NUCKS1 shows Proximity Label-MS interactions with RPA1, RPA2, RPA3, TOPBP1, RNF8 which are involved in DNA repair and replication"
     ]
   },
   "verification": "pass",
   "used_tools": [
     "extract_entities",
     "gencode_gene_node",
-    "uniprot_base",
-    "humanbase_functions",
-    "reactome",
     "BioGRID",
     "Summarize_bioGRID_GO",
-    "query_gwas_by_gene",
-    "uniprot_gwas"
+    "query_gwas_extensive",
+    "variant_annotations",
+    "alphamissense",
+    "sei"
   ],
   "ui": {}
 }
