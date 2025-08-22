@@ -49,7 +49,8 @@ def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
         ("Per variant gene expression modulation predictions, linked to variants of interest. Note that it is z-scored to 1000Genomes, so values below 1 are a fairly small effect:", "tissue_expression_preds_variant_text_description", lambda txt: txt if isinstance(txt, str) and txt.strip() else None),
         ("Pathogenicity predictions for each missense variant of interest. Computed through AlphaMissense, which predicts the likelihood that missense variants (genetic mutations where a single amino acid in a protein is changed) can cause disease", "alphamissense_predictions"),
         ("dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)", "dbsnp_variants", _process_dbsnp_variants),
-        ("dbSNP variant summary (rare vs common variants, chromosomes, assembly info)", "dbsnp_summaries")
+        ("dbSNP variant summary (rare vs common variants, chromosomes, assembly info)", "dbsnp_summaries"),
+        ("List of all computationally predicted gene targets of microRNAs from the miRDB database.", "mirDB_targets")
     ]
     
     for source in data_sources:

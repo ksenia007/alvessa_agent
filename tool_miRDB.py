@@ -1,0 +1,106 @@
+"""
+Author: Keerthana Nallamotu <kn6412@princeton.edu>
+Contributors: 
+Created: 2024-08-21
+Updated: 2025-08-21
+
+
+Description: 
+
+Tool to query mrRDB with a list of miRNAs"""
+
+from __future__ import annotations
+from state import State 
+import pandas as pd
+import requests
+from datetime import datetime
+
+DEBUG=True
+
+def _convert_to_miRBASE(symbol):
+    components = symbol.split("_")
+
+    name = components[0]
+    if len(components)>1:
+        arm = components[1]
+    else:
+        arm = None
+
+    output = f'miR-{name[3:]}'
+    if arm:
+        output+=f'-{arm[0]}p'
+
+    return output
+
+import requests
+
+def _refseq_to_symbol(refseq_ids):
+    url = "http://mygene.info/v3/query"
+    all_symbols = []
+
+    for i in range(0, len(refseq_ids), 300):
+        chunk = refseq_ids[i:i+300]
+        query_str = " OR ".join([f"refseq:{ID}" for ID in chunk])
+        params = {
+            'q': query_str,
+            'fields': 'symbol',
+            'size': len(chunk)
+        }
+
+        try:
+            r = requests.get(url, params=params)
+            r.raise_for_status()
+            hits = r.json().get("hits", [])
+            all_symbols.extend(hit.get('symbol') for hit in hits if 'symbol' in hit)
+        except Exception as e:
+            print(e)
+
+    return all_symbols
+
+
+def miRDB_agent(state: "State") -> "State":
+    """
+    LangGraph node that annotates each miRNA with target genes.
+
+    Parameters
+    ----------
+    state
+        Current graph state.
+
+    Returns
+    -------
+    State
+        Updated state with the `"mirDB_targets"` field filled.
+        
+    """
+    preds = state.get("mirDB_targets", {}).copy()
+
+    # organism_codes = {
+    #     'cfa': 'dog',
+    #     'gga': 'chicken',
+    #     'hsa': 'human',
+    #     'mmu': 'mouse',
+    #     'rno': 'rat'
+    # }
+
+    for gene in state.get("genes", []):
+        if gene in preds or gene[:3]!='MIR':
+            continue
+        
+        mirbase_ID = _convert_to_miRBASE(gene)
+        
+        df = pd.read_csv('local_dbs/miRDB_v6.0_prediction_result.txt', sep = '\t', header = None, names = ['miRNAID', 'geneID', 'confidence'])
+        match = df[df['miRNAID'].str.contains(mirbase_ID)]
+
+        targets_entrez = match['geneID'].values
+
+        print(f"started symbol querying... {datetime.now()}")
+        targets_symbols = _refseq_to_symbol(targets_entrez)
+        print(f"finished symbol querying... {datetime.now()}")
+
+        print(targets_symbols)
+
+        preds[gene] = targets_symbols
+
+    return {
+        "mirDB_targets": preds}

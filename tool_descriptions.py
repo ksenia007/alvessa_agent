@@ -14,6 +14,7 @@ from tool_dbsnp import dbsnp_variants_agent
 from tool_sei import sei_predictions_agent
 from tool_alphamissense import alphamissense_predictions_agent
 from tool_annotate_gencode import gencode_gene_node
+from tool_miRDB import miRDB_agent
 
 
 EXAMPLE_TOOL_SELECTION = """EXAMPLE PIPELINES (pay attention to dependencies):
@@ -50,6 +51,7 @@ TOOL_CATALOG = {
     "humanbase_expecto": "Fetches Expecto, gene expression disruption predictions from HumanBase per variant. Pulls all precomputed predictions for the input genes.",
     "humanbase_tissue_expecto_annotate_variants": "Annotates variants with tissue-specific expression disruption predictions from HumanBase. Requires humanbase_expecto and dbsnp to be run first.",
     "alphamissense": "Fetches Alphamissense predicted pathogenicity classes for given variants. This requires dbsnp to be run first.",
+    "miRDB": "Fetches miRDB computationally predicted gene targets of miRNA.",
 
 }
 
@@ -70,6 +72,7 @@ TOOL_FN_MAP = {
     "dbsnp":          dbsnp_variants_agent,
     "sei":            sei_predictions_agent,
     "alphamissense":  alphamissense_predictions_agent,
-    "gencode_gene_node": gencode_gene_node
+    "gencode_gene_node": gencode_gene_node,
+    "miRDB": miRDB_agent,
 }
 
