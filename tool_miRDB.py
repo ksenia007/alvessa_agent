@@ -73,34 +73,41 @@ def miRDB_agent(state: "State") -> "State":
         Updated state with the `"mirDB_targets"` field filled.
         
     """
-    preds = state.get("mirDB_targets", {}).copy()
 
-    # organism_codes = {
-    #     'cfa': 'dog',
-    #     'gga': 'chicken',
-    #     'hsa': 'human',
-    #     'mmu': 'mouse',
-    #     'rno': 'rat'
-    # }
+    preds = state.get("mirDB_targets", {}).copy()
+    organism_codes = {
+        'cfa': 'dog',
+        'gga': 'chicken',
+        'hsa': 'human',
+        'mmu': 'mouse',
+        'rno': 'rat'
+    }
+
+    df = pd.read_csv(
+        'local_dbs/miRDB_v6.0_prediction_result.txt',
+        sep='\t',
+        header=None,
+        names=['miRNAID', 'geneID', 'confidence']
+    )
 
     for gene in state.get("genes", []):
-        if gene in preds or gene[:3]!='MIR':
+        if gene in preds or gene[:3] != 'MIR':
             continue
-        
+
         mirbase_ID = _convert_to_miRBASE(gene)
-        
-        df = pd.read_csv('local_dbs/miRDB_v6.0_prediction_result.txt', sep = '\t', header = None, names = ['miRNAID', 'geneID', 'confidence'])
-        match = df[df['miRNAID'].str.contains(mirbase_ID)]
+        preds[gene] = {}
 
-        targets_entrez = match['geneID'].values
+        for prefix, organism_name in organism_codes.items():
+            subset = df[df['miRNAID'].str.startswith(prefix) & df['miRNAID'].str.contains(mirbase_ID)]
+            if subset.empty:
+                continue
 
-        print(f"started symbol querying... {datetime.now()}")
-        targets_symbols = _refseq_to_symbol(targets_entrez)
-        print(f"finished symbol querying... {datetime.now()}")
+            targets_entrez = subset['geneID'].values
 
-        print(targets_symbols)
+            print(f"started symbol querying ({organism_name})... {datetime.now()}")
+            targets_symbols = _refseq_to_symbol(targets_entrez)
+            print(f"finished symbol querying ({organism_name})... {datetime.now()}")
 
-        preds[gene] = targets_symbols
+            preds[gene][organism_name] = targets_symbols
 
-    return {
-        "mirDB_targets": preds}
+    return {"mirDB_targets": preds}
