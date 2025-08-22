@@ -25,7 +25,15 @@ def _symbol_to_uniprot(gene):
         r = requests.get(f'https://mygene.info/v3/query?q={gene}&fields=uniprot')
         r.raise_for_status()
         hits = r.json().get("hits", [])
-        all_symbols.extend(hit.get('uniprot').get('Swiss-Prot') for hit in hits if (('uniprot' in hit) and ('Swiss-Prot' in hit.get('uniprot'))))
+        for hit in hits:
+            try:
+                uniprot = hit.get("uniprot", {})
+                if "Swiss-Prot" in uniprot:
+                    all_symbols.append(uniprot["Swiss-Prot"])
+            except Exception as inner_e:
+                warnings.warn(
+                    f"Skipping malformed UniProt entry for gene {gene}: {inner_e}"
+                )    
     except Exception as e:
         print(e)
 
@@ -88,14 +96,25 @@ def alphamissense_predictions_agent(state: "State") -> "State":
     snps_df = pd.DataFrame(snp_records)
 
     print(f"[AlphaMissense] finished aggregating snps... {datetime.now()}")
-    
-    snps_exploded = snps_df.explode("uniprot_IDs")
-    merged = snps_exploded.merge(
-        pathogenicity_class_df_hg38[['chrom', 'pos', 'ref', 'alt', 'uniprot_id', 'am_class']],
-        left_on=['chrom', 'pos', 'ref', 'alt', 'uniprot_IDs'],
-        right_on=['chrom', 'pos', 'ref', 'alt', 'uniprot_id'],
-        how='left'
-    )
+
+    if "uniprot_IDs" in snps_df.columns:
+        snps_df["uniprot_IDs"] = snps_df["uniprot_IDs"].apply(lambda x: x if x else [None])
+        snps_exploded = snps_df.explode("uniprot_IDs")
+    else:
+        warnings.warn("[AlphaMissense] No UniProt column generated.")
+        return {"alphamissense_predictions": preds}
+
+    try:
+        merged = snps_exploded.merge(
+            pathogenicity_class_df_hg38[["chrom", "pos", "ref", "alt", "uniprot_id", "am_class"]],
+            left_on=["chrom", "pos", "ref", "alt", "uniprot_IDs"],
+            right_on=["chrom", "pos", "ref", "alt", "uniprot_id"],
+            how="left",
+        )
+    except Exception as e:
+        warnings.warn(f"[AlphaMissense] Merge failed: {e}")
+        return {"alphamissense_predictions": preds}
+
 
     print(f"[AlphaMissense] finished merging... {datetime.now()}")
 
