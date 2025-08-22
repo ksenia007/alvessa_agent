@@ -121,9 +121,87 @@ button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px soli
   max-width: 620px;         /* a bit wider for wordy cells */
 }
 
+/* === Light theme (activated by: <body class="light">) === */
+  body.light {
+    background: #ffffff;
+    color: #0b1020;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Cards / containers */
+  body.light .card { background:#ffffff; border-color:#d8dce6; color:#0b1020; box-shadow: 0 6px 24px rgba(0,0,0,0.06); }
+  body.light .brand-header { background: transparent; }
+  body.light .brand-title { color:#0b1020; }
+
+  /* Inputs & buttons */
+  body.light input[type="text"] { background:#ffffff; color:#0b1020; border:1px solid #c8cfe0; }
+  body.light button { background:#f3f5fb; color:#0b1020; border:1px solid #c8cfe0; }
+  body.light button.mini { background:#eef2ff; border-color:#cdd6f3; color:#0b1020; }
+
+  /* Muted / status text */
+  body.light .muted, 
+  body.light .statusline, 
+  body.light .gwas-meta { color:#6b7280; }
+
+  /* Pills (traits, tools, evidence) */
+  body.light .pill { 
+    background:#eef1f7; 
+    border:1px solid #d6d9e6; 
+    color:#0b1020;
+  }
+  body.light .pill.clickable.selected { 
+    background:#e5eaf6; 
+    border-color:#cbd5e1;
+  }
+
+  /* GWAS tabs, list panels */
+  body.light .gwas-tabs button { background:#f0f3fb; border:1px solid #cbd5e1; color:#0b1020; }
+  body.light .gwas-tabs button.active { background:#e5eaf6; }
+  body.light .gwas-detail { background:#f7f9ff; border:1px solid #d5dbea; }
+
+  /* Tables (GWAS + Variant Summary) */
+  body.light .gwas-table th, 
+  body.light .gwas-table td { border-bottom:1px solid #e5e7eb; }
+  body.light .vs-table { border-color:#e5e7eb; }
+  body.light .vs-table th, 
+  body.light .vs-table td { border-bottom:1px solid #e5e7eb; }
+  body.light .vs-table thead th { background:#f5f7fb; color:#0b1020; }
+
+  /* Expecto detail box */
+  body.light .exp-detail-box { background:#f7f9ff; border:1px solid #d5dbea; }
+
+  /* Histograms (GENCODE) */
+  body.light .hist-axis { fill:#6b7280; }
+  body.light .hist-bar { fill:#94a3b8; }           /* neutral slate */
+  body.light .hist-baseline { stroke:#cbd5e1; }
+
+  /* Misc dark backgrounds you used elsewhere */
+  body.light .json pre,
+  body.light .scroll,
+  body.light .gwas-list { background:#ffffff; color:#0b1020; }
+
+  /* Spinner ring */
+  body.light .spinner { border-color:#cbd5e1; border-top-color: transparent; }
+
+  /* Variant Summary table tweaks */
+  .vs-table td.am, .vs-table th.am {
+    white-space: normal;     /* allow wrapping */
+    max-width: 240px;        /* constrain AlphaMissense column */
+  }
+  .vs-table td.traits, .vs-table th.traits {
+    white-space: normal;     /* let GWAS traits pills wrap */
+    min-width: 260px;        /* give it more breathing room */
+    max-width: 620px;        /* keep consistent with your earlier design */
+  }
+
 </style>
 <body>
 <div class="wrap">
+  <!-- Theme toggle button -->
+  <button id="themeToggle" style="position:fixed;top:12px;right:12px;z-index:999;">
+    Toggle Theme
+  </button>
 
   <!-- Centered start screen -->
   <div id="hero">
@@ -1125,8 +1203,8 @@ const headerCols = `
   <th>Mapped gene</th>
   ${hasSeiCol ? '<th>SEI</th>' : ''}
   ${hasExpectoCol ? '<th class="wrap">ExpectoSC</th>' : ''}
-  ${hasAmCol ? '<th>AlphaMissense</th>' : ''}
-  <th class="wrap">GWAS traits</th>
+  ${hasAmCol ? '<th class="am">AlphaMissense</th>' : ''}
+  <th class="traits">GWAS traits</th>
 `;
 
     // Prepare detail store for this gene
@@ -1153,17 +1231,19 @@ const headerCols = `
         ? `<td class="expecto wrap">${r.expectoHtml || 'N/A'}${hasDetail ? ` <button class="mini" onclick="toggleExpectoDetails('${gkey}','${rsSafe}', ${colspan})">Details</button>` : ""}</td>`
         : "";
 
-      const mainRow = `<tr>
-        <td class="mono">${escapeHtml(r.rs)}</td>
-        <td>${escapeHtml(r.freq)}</td>
-        <td>${escapeHtml(r.context || "N/A")}</td>
-        <td>${escapeHtml(r.category || "N/A")}</td>
-        <td>${escapeHtml(r.mapped_gene || "N/A")}</td>
-        ${hasSeiCol ? `<td>${escapeHtml(r.sei)}</td>` : ""}
-        ${expectoCell}
-        ${hasAmCol ? `<td>${amHtml || 'N/A'}</td>` : ""}
-        <td class="traits wrap">${traitsHtml || '<span class="muted">N/A</span>'}</td>
-      </tr>`;
+        const mainRow = `
+        <tr>
+          <td class="mono">${escapeHtml(r.rs)}</td>
+          <td>${escapeHtml(r.freq)}</td>
+          <td>${escapeHtml(r.context || "N/A")}</td>
+          <td>${escapeHtml(r.category || "N/A")}</td>
+          <td>${escapeHtml(r.mapped_gene || "N/A")}</td>
+          ${hasSeiCol ? `<td>${escapeHtml(r.sei)}</td>` : ""}
+          ${expectoCell}
+          ${hasAmCol ? `<td class="am">${amHtml || 'N/A'}</td>` : ""}
+          <td class="traits">${traitsHtml || '<span class="muted">N/A</span>'}</td>
+        </tr>
+      `;
 
       const expandedSet = (window.__EXPECTO_EXPANDED[gkey] ||= new Set());
       const isOpen = expandedSet.has(rsSafe);
@@ -1316,6 +1396,11 @@ function toggleExpectoDetails(geneKey, rsSafe, colspan){
 
     const input2 = document.getElementById('q2');
     input2?.addEventListener('keydown', (e) => { if (e.key === 'Enter') runFrom('q2'); });
+  });
+
+
+  document.getElementById("themeToggle").addEventListener("click", () => {
+    document.body.classList.toggle("light");
   });
 </script>
 </body>
