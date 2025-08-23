@@ -157,6 +157,7 @@ def gwas_associations_agent(state: "State", mode: str = "summary") -> "State":
                         fps_disease_traits=200,
                         top_studies_by_risk=100,
                         top_studies_by_significance=100,
+                        min_associations_per_study=0,
                     )
             else:
                 print(f"[GWAS] Querying associations for gene: {gene} in summary mode")

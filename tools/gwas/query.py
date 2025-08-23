@@ -9,8 +9,8 @@ warnings.filterwarnings("ignore")
 
 def query_gene_associations(gene_symbol: str, db_path: str = "local_dbs", 
                           p_value_threshold: float = 5e-8, min_associations_per_study: int = 1,
-                          top_studies_by_risk: int = 10, top_studies_by_significance: int = 10,
-                          fps_disease_traits: Optional[int] = None) -> Dict:
+                          top_studies_by_risk: int = 200, top_studies_by_significance: int = 200,
+                          fps_disease_traits: Optional[int] = 100) -> Dict:
     engine = GWASQueryEngine(db_path)
     results = engine.query_gene(gene_symbol, p_value_threshold, min_associations_per_study,
                                top_studies_by_risk, top_studies_by_significance, fps_disease_traits)
@@ -19,8 +19,8 @@ def query_gene_associations(gene_symbol: str, db_path: str = "local_dbs",
 
 def query_trait_associations(trait_term: str, db_path: str = "local_dbs",
                            p_value_threshold: float = 5e-8, min_associations_per_study: int = 1,
-                           top_studies_by_risk: int = 10, top_studies_by_significance: int = 10,
-                           fps_genes: Optional[int] = None, exact_match: bool = False) -> Dict:
+                           top_studies_by_risk: int = 200, top_studies_by_significance: int = 200,
+                           fps_genes: Optional[int] = 100, exact_match: bool = False) -> Dict:
     engine = GWASQueryEngine(db_path)
     results = engine.query_trait(trait_term, p_value_threshold, min_associations_per_study,
                                top_studies_by_risk, top_studies_by_significance, fps_genes, exact_match)
@@ -28,7 +28,7 @@ def query_trait_associations(trait_term: str, db_path: str = "local_dbs",
 
 
 class GWASQueryEngine:
-    GENE_COLUMNS = ['REPORTED GENE(S)', 'MAPPED_GENE']
+    GENE_COLUMNS = ['REPORTED GENE(S)']
     PROTEIN_KEYWORDS = ["protein level", "protein measurement", "protein concentration", "serum protein"]
     PROTEIN_REPLACEMENTS = [" protein levels", " protein level", " protein measurement", 
                            " protein concentration", " serum protein", "serum "]
@@ -54,14 +54,14 @@ class GWASQueryEngine:
         return self._associations_df
     
     def query_gene(self, gene_symbol: str, p_threshold: float = 5e-8, min_assoc: int = 1,
-                   top_risk: int = 10, top_sig: int = 10, fps_traits: Optional[int] = None) -> Dict:
+                   top_risk: int = 100, top_sig: int = 100, fps_traits: Optional[int] = 300) -> Dict:
         gene_symbol = gene_symbol.upper().strip()
         matches = self._find_gene_matches(gene_symbol)
         return self._process_matches(matches, gene_symbol, p_threshold, min_assoc, 
                                    top_risk, top_sig, fps_traits, is_gene_query=True)
     
     def query_trait(self, trait_term: str, p_threshold: float = 5e-8, min_assoc: int = 1,
-                   top_risk: int = 10, top_sig: int = 10, fps_genes: Optional[int] = None, 
+                   top_risk: int = 100, top_sig: int = 100, fps_genes: Optional[int] = 300, 
                    exact_match: bool = False) -> Dict:
         trait_term = trait_term.strip()
         matches = self._find_trait_matches(trait_term, exact_match)
@@ -240,44 +240,14 @@ class GWASQueryEngine:
     def _extract_variant_details(self, row) -> Dict:
         """Extract comprehensive variant information from a row."""
         context = self._safe_get(row, 'CONTEXT') or ''
-        chr_id = self._safe_get(row, 'CHR_ID')
-        chr_pos = self._safe_get(row, 'CHR_POS')
-        
-        # Parse chromosome position
-        try:
-            chr_pos_int = int(chr_pos) if chr_pos else None
-        except (ValueError, TypeError):
-            chr_pos_int = None
-        
         # Categorize variant context
         variant_category = self._categorize_variant_context(context)
-        
-        # Extract distance information
-        upstream_dist = self._safe_get(row, 'UPSTREAM_GENE_DISTANCE')
-        downstream_dist = self._safe_get(row, 'DOWNSTREAM_GENE_DISTANCE')
-        
-        try:
-            upstream_dist = int(upstream_dist) if upstream_dist else None
-        except (ValueError, TypeError):
-            upstream_dist = None
-            
-        try:
-            downstream_dist = int(downstream_dist) if downstream_dist else None
-        except (ValueError, TypeError):
-            downstream_dist = None
-        
+
         return {
-            "chromosome": chr_id,
-            "position": chr_pos_int,
-            "region": self._safe_get(row, 'REGION'),
             "context": context,
             "variant_category": variant_category,
             "is_intergenic": bool(self._safe_get(row, 'INTERGENIC')),
-            "risk_allele_frequency": self._safe_get(row, 'RISK ALLELE FREQUENCY'),
-            "upstream_gene_id": self._safe_get(row, 'UPSTREAM_GENE_ID'),
-            "downstream_gene_id": self._safe_get(row, 'DOWNSTREAM_GENE_ID'),
-            "upstream_distance": upstream_dist,
-            "downstream_distance": downstream_dist
+            "allele_frequency": self._safe_get(row, 'RISK ALLELE FREQUENCY'),
         }
     
     def _categorize_variant_context(self, context: str) -> str:
@@ -312,8 +282,11 @@ class GWASQueryEngine:
             study_risk = study.get('max_risk', 0)
             study_pval = study.get('best_pvalue', 1.0)
             
-            self._collect_scores(study['related_genes'], gene_scores, study_risk, study_pval)
-            self._collect_scores(study['disease_traits'], trait_scores, study_risk, study_pval)
+            if is_gene_query:
+                self._collect_scores(study['related_genes'], gene_scores, study_risk, study_pval)
+            else:
+                self._collect_scores(study['disease_traits'], trait_scores, study_risk, study_pval)
+
             self._extract_proteins_from_traits(study['disease_traits'], proteins)
             self._collect_snp_scores(study['risk_alleles'], snp_scores)
             self._collect_variant_annotations(study['risk_alleles'], variant_annotations)
@@ -323,15 +296,23 @@ class GWASQueryEngine:
         sorted_snps = self._sort_by_scores(snp_scores, sort_by_risk)
         
         # Apply FPS
-        if fps_param:
-            if is_gene_query and len(sorted_traits) > fps_param:
-                fps_indices = fps_tfidf(sorted_traits, fps_param)
-                sorted_traits = [sorted_traits[i] for i in fps_indices]
-            elif not is_gene_query and len(sorted_genes) > fps_param:
-                fps_indices = fps_tfidf(sorted_genes, fps_param)
-                sorted_genes = [sorted_genes[i] for i in fps_indices]
-        
-        summary = self._format_summary(sorted_genes, sorted_snps, sorted(proteins), sorted_traits, is_gene_query)
+        # if fps_param:
+        #     if is_gene_query and len(sorted_traits) > fps_param:
+        #         fps_indices = fps_tfidf(sorted_traits, fps_param)
+        #         sorted_traits = [sorted_traits[i] for i in fps_indices]
+ 
+        if is_gene_query:
+            summary = {
+                "high_risk_snps": sorted_snps,
+                "affected_protein_levels": sorted(proteins),
+                "associated_disease_traits": sorted_traits
+            }
+        else:
+            summary = {
+                "high_risk_snps": sorted_snps,
+                "related_genes": sorted_genes,
+            }
+
         summary["variant_annotations"] = variant_annotations  # Include raw variant data
         return summary
     
@@ -386,7 +367,7 @@ class GWASQueryEngine:
                 
             # Create comprehensive variant record with new nested format
             variant_record = {
-                'mapped_gene': variant.get('mapped_gene'),
+                'allele_frequency': variant.get('allele_frequency'),
                 'context': variant.get('context'),
                 'variant_category': variant.get('variant_category'),
                 'associated_disease_trait': {
@@ -404,17 +385,15 @@ class GWASQueryEngine:
             else:
                 variant_annotations[variant_id] = variant_record
     
-    def _format_summary(self, genes: List[str], snps: List[str], proteins: List[str], 
+    def _format_summary(self, snps: List[str], proteins: List[str], 
                        traits: List[str], is_gene_query: bool) -> Dict:
         if is_gene_query:
             return {
-                "related_genes": genes,
                 "high_risk_snps": snps,
                 "affected_protein_levels": proteins,
                 "associated_disease_traits": traits
             }
         return {
-            "related_genes": genes,
             "high_risk_snps": snps,
             "affected_protein_levels": proteins,
             "associated_disease_traits": traits
@@ -431,10 +410,6 @@ class GWASQueryEngine:
             "studies_by_high_risk_alleles", "studies_by_significance"
         ] if k in results}
         
-        filtered_results["gwas_linked_genes"] = set([
-            *results["summary_by_high_risk_alleles"]["related_genes"],
-            *results["summary_by_significance"]["related_genes"]
-        ])
         return filtered_results
     
     def _format_trait_results(self, results: Dict) -> Dict:
@@ -472,8 +447,9 @@ class GWASQueryEngine:
 
 if __name__ == "__main__":
     # Test gene search with raw variants
-    gene = "APOE"
-    results = query_gene_associations(gene, fps_disease_traits=3)
+    # gene = "APOE"
+    gene = "GATA4"
+    results = query_gene_associations(gene, fps_disease_traits=300)
     print(f"Gene {gene}: Found={results['found']}, Associations={results['total_associations']}")
     
     if results['found']:
@@ -484,9 +460,8 @@ if __name__ == "__main__":
         sample_variants = list(raw_variants.items())[:3]
         for variant_id, variant_data in sample_variants:
             print(f"  Variant {variant_id}:")
-            print(f"    Location: chr{variant_data['chromosome']}:{variant_data['position']}")
             print(f"    Context: {variant_data['context']} ({variant_data['variant_category']})")
-            print(f"    Risk allele: {variant_data['risk_allele']}")
+            print(f"    Risk allele: {variant_data['allele_frequency']}")
             trait_count = len(variant_data['associated_disease_trait'])
             print(f"    Associated disease traits ({trait_count} total):")
             for trait, trait_data in variant_data['associated_disease_trait'].items():
@@ -522,7 +497,7 @@ if __name__ == "__main__":
         print(f"  Top risk variants:")
         for variant_id, variant_data in high_risk_variants:
             trait_count = len(variant_data['associated_disease_trait'])
-            print(f"    {variant_id}: chr{variant_data['chromosome']}:{variant_data['position']}")
+            print(f"    {variant_id}")
             print(f"      {variant_data['context']}, Max Risk: {get_max_risk_score(variant_data):.2f}")
             print(f"      Associated with {trait_count} disease traits:")
             for trait, trait_data in variant_data['associated_disease_trait'].items():

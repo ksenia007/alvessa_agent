@@ -176,11 +176,11 @@ def conditioned_claude_node(state: "State") -> "State":
         llm_resp = re.sub(r"^```(?:json)?\s*|\s*```$", "", llm_resp.strip(), flags=re.DOTALL).strip()
 
     try:
-        parsed_resp = json.loads(llm_resp) if isinstance(llm_resp, str) else llm_resp
-    except Exception as exc:
-        raise ValueError(
-            f"Failed to parse LLM response as JSON. Response was:\n{llm_resp}\nError: {exc}"
-        ) from exc
+        # Attempt to parse the string as JSON
+        parsed_resp = json.loads(llm_resp)
+    except json.decoder.JSONDecodeError:
+        # If it fails, keep the original string or set to a default value
+        parsed_resp = {"answer": llm_resp, "evidence": []}
     
     return {
         "messages": [{"role": "assistant", "content": llm_resp}],
