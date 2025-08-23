@@ -48,7 +48,9 @@ def format_state_for_prompt(state: State) -> str:
     
     return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" \n\n Available tools: {catalog}.\n\n Examples workflows: {EXAMPLE_TOOL_SELECTION} \n Which tools should be called, and in what order? Respond *ONLY* with a Python list of tool names. Example: ["humanbase_functions", "uniprot_base"] or ["humanbase_functions", "uniprot_base", "query_gwas_by_gene"] or ["query_gwas_by_gene", "BioGRID"]"""
 
-def select_tools_and_run_dynamic(state: State) -> State:
+def select_tools(state: State) -> State:
+    
+    """ Intent recognition and tool selection node."""
     
     updates: State = dict(state)  # start with all existing keys
     updates.setdefault("used_tools", [])
@@ -82,11 +84,23 @@ def select_tools_and_run_dynamic(state: State) -> State:
         print(f"[TOOL SELECTION ERROR] Could not parse: {tool_response}\n{e}")
         selected_tools = []
 
-    print(f"[TOOL SELECTION] Claude (Haiku) selected: {selected_tools}")
+    print(f"[TOOL SELECTION] Claude selected: {selected_tools}")
 
     state.update({'used_tools': selected_tools})  # record used tools
+
+    return state
+
+
+def tool_invoke(state: State) -> State:
+    """Invoke selected tools and agents."""
     
-    # update state
+    updates: State = dict(state)  # start with all existing keys
+    selected_tools = updates.get("used_tools", [])
+    if not selected_tools:
+        print("[TOOL INVOKE] No tools selected, skipping tool invocation.")
+        return state  # nothing to do
+    
+    # invoke selected tools in the order they were selected
     for name in selected_tools:
         fn = TOOL_FN_MAP.get(name)
         if not fn:

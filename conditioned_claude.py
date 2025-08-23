@@ -2,7 +2,7 @@
 Author: Ksenia Sokolova <sokolova@princeton.edu>
 Contributors: 
 Created: 2024-06-25
-Updated: 2025-06-26
+Updated: 2025-08-26
 
 
 Description: 
@@ -53,7 +53,7 @@ def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
     
     # Define data sources with their state keys and optional processing
     data_sources = [
-        ('Summary about the gene structure, transcripts and complexity:', 'gene_level_gencode'),
+        ('Summary about the gene structure, transcripts and complexity from GENCODE:', 'gene_level_gencode'),
         ("diseases", "gene_disease_traits"),
         ("Top 30 predicted functions", "humanbase_predictions", lambda hits: [hit["term"] for hit in hits if "term" in hit][:30]),
         ("Gene ontology (GO) summarized terms of interacting genes", "biogrid_summarized_go"),
@@ -70,7 +70,6 @@ def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
         ("dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)", "dbsnp_variants", _process_dbsnp_variants),
         ("dbSNP variant summary (rare vs common variants, chromosomes, assembly info)", "dbsnp_summaries", _process_dbsnp_variants),
         ("List of all computationally predicted gene targets of microRNAs from the miRDB database.", "mirDB_targets"),
-        ("GENCODE gene structure", "gene_level_gencode"),
     ]
     
     for source in data_sources:

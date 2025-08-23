@@ -48,7 +48,9 @@ def build_graph(run_verifier: bool = True) -> Callable[[State], State]:
 
     # Edges
     g.set_entry_point("select_tools")
-    g.add_edge("select_tools", "claude")
+    g.add_edge("select_tools", "tool_invoke")
+    g.add_edge("tool_invoke", "claude")
+    
     if run_verifier:
         # If verification is enabled, add the verification step
         g.add_edge("claude", "verify")
