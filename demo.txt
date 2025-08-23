@@ -1,19 +1,13 @@
 ================================================================================
-Q: Tell me about exons in TP53
+Q: What microRNAs regulate the cancer-related functions of TP53, and how are these connected to pathways and protein interactions?
 
 Answer:
-TP53 has 24 different transcripts with varying exon numbers. The number of exons per transcript ranges from 7 to 12 exons. The shortest transcript (ENST00000413465.6) has 7 exons, while several transcripts including ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4 have the maximum of 12 exons. The transcript spans range from 7,092 base pairs to 19,137 base pairs, and the entire TP53 gene spans from position 7,661,779 to 7,687,546 base pairs.
+The provided context does not contain specific information about microRNAs that regulate the cancer-related functions of TP53. The context focuses primarily on protein-protein interactions, pathways, and transcriptional regulation of TP53, but does not include data about microRNA regulation of TP53 or its cancer-related functions.
 
 Evidence:
-  - TP53 has 24 transcripts
-  - TP53 exons per transcript range from 7 to 12
-  - ENST00000413465.6 has 7 exons
-  - ENST00000420246.6 has 12 exons
-  - ENST00000455263.6 has 12 exons
-  - ENST00000610538.4 has 12 exons
-  - ENST00000622645.4 has 12 exons
-  - TP53 minimum transcript span is 7092 bp
-  - TP53 maximum transcript span is 19137 bp
-  - TP53 gene spans from 7661779 to 7687546 bp
+  - The context contains extensive protein interaction data for TP53 from BioGRID database
+  - The context includes Reactome pathway associations for TP53 including cancer-related pathways
+  - The context describes TP53 function as a tumor suppressor that induces cell cycle arrest, DNA repair or apoptosis
+  - No microRNA regulatory information is present in the provided TP53 data
 
 

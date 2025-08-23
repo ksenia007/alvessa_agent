@@ -113,6 +113,30 @@ def _build_trait_context(trait_associations: Dict[str, Any]) -> Dict[str, Any]:
     
     return trait_info
 
+def create_context_block(state: "State") -> str:
+    """Build a compact JSON context. """
+    
+    if DEBUG:
+        print("[create_context_block function] preparing context block...")
+    
+    # Build gene-based context
+    gene_list = list(set(state.get("genes", [])))
+    context_payload = [_extract_gene_data(state, gene) for gene in gene_list]
+
+    if DEBUG:
+        print(f"[create_context_block] genes to summarize: {gene_list}")
+    
+    # Add trait-based context if no genes but trait data exists
+    trait_associations = state.get("trait_associations", {})
+    if not gene_list and trait_associations.get("found", False):
+        if DEBUG:
+            print("[create_context_block] No genes found, adding trait-based associations")
+        context_payload.append(_build_trait_context(trait_associations))
+    
+    # Serialize context and handle truncation
+    context_payload = ensure_json_safe(context_payload)
+    return json.dumps(context_payload, separators=(",", ":"))
+
 
 def conditioned_claude_node(state: "State") -> "State":
     """
@@ -126,32 +150,10 @@ def conditioned_claude_node(state: "State") -> "State":
     State
         Updated state with assistant message, context block and parsed JSON.
     """
-    if DEBUG:
-        print("[conditioned_claude_node] preparing context block...")
-    
-    # Build gene-based context
-    gene_list = list(set(state.get("genes", [])))
-    context_payload = [_extract_gene_data(state, gene) for gene in gene_list]
+    context_block = create_context_block(state)
 
     if DEBUG:
-        print(f"[conditioned_claude_node] genes to summarize: {gene_list}")
-    
-    # Add trait-based context if no genes but trait data exists
-    trait_associations = state.get("trait_associations", {})
-    if not gene_list and trait_associations.get("found", False):
-        if DEBUG:
-            print("[conditioned_claude_node] No genes found, adding trait-based associations")
-        context_payload.append(_build_trait_context(trait_associations))
-    
-    # Context building is now handled by helper functions above
-
-    # Serialize context and handle truncation
-    context_payload = ensure_json_safe(context_payload)
-    context_block = json.dumps(context_payload, separators=(",", ":"))
-    if DEBUG:
-        print(f"[conditioned_claude_node] context length: {len(context_block)}")
-        if len(context_block) <= N_CHARS:
-            print(f"[conditioned_claude_node] context: {context_block}")
+        print(f"[conditioned_claude_node] context length before truncation: {len(context_block)}")
     
     if len(context_block) > N_CHARS:
         context_block = context_block[:N_CHARS] + "...<truncated>"
