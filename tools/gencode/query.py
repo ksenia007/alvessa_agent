@@ -108,16 +108,16 @@ def summarize_gene_structure(gene_name: str) -> Optional[Dict[str, Any]]:
         tx_rows = gtf_df[gtf_df["transcript_id"] == tx]
         exon_count = (tx_rows["feature"] == "exon").sum()
         exon_counts[tx] = int(exon_count)
-        spans.append(tx_rows["end"].max() - tx_rows["start"].min() + 1)
+        spans.append(int(tx_rows["end"].max() - tx_rows["start"].min() + 1))
 
-    gene_span = (gene_df["start"].min(), gene_df["end"].max())
+    gene_span = (int(gene_df["start"].min()), int(gene_df["end"].max()))
 
     return {
         "gene_name": gene_name,
         "n_transcripts": len(transcripts),
         "exons_per_transcript": exon_counts,
-        "min_transcript_span_bp": min(spans) if spans else None,
-        "max_transcript_span_bp": max(spans) if spans else None,
+        "min_transcript_span_bp": int(min(spans)) if spans else None,
+        "max_transcript_span_bp": int(max(spans)) if spans else None,
         "transcript_ids": transcripts,
         "gene_span_bp": gene_span
     }

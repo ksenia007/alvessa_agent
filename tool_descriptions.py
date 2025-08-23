@@ -20,13 +20,13 @@ from tool_miRDB import miRDB_agent
 EXAMPLE_TOOL_SELECTION = """EXAMPLE PIPELINES (pay attention to dependencies):
 
 1. Variant regulatory activity (e.g. SEI):
-   extract_entities → gwas → variant_annotations → sei
+   extract_entities → query_gwas_by_gene → variant_annotations → sei
 
 2. Variant pathogenicity (e.g. AlphaMissense):
-   extract_entities → gwas → variant_annotations → alphamissense
+   extract_entities → query_gwas_by_gene → variant_annotations → alphamissense
 
 3. HumanBase Expecto variant annotation:
-   extract_entities → humanbase_expecto → gwas → variant_annotations → humanbase_tissue_expecto_annotate_variants
+   extract_entities → humanbase_expecto → query_gwas_by_gene → variant_annotations → humanbase_tissue_expecto_annotate_variants
 
 4. Gene-level functional annotation:
    extract_entities → gencode_gene_node → (humanbase_functions, uniprot_base, reactome, BioGRID) → Summarize_bioGRID_GO (if BioGRID run) → uniprot_gwas (if gwas run)

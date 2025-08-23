@@ -59,14 +59,33 @@ def _extract_rsids(text: str) -> List[str]:
 
 def _extract_chr_allele_pos(text: str) -> List[str]:
     """Extracts variants in chr<num>:<pos>:<ref>><alt> format (e.g., chr7:55249071:C>T)."""
-    # This regex captures the specific allele change format.
-    # It looks for one of A, T, C, or G for the reference and alternate alleles.
     chr_pattern = r"chr\w+:\d+:[ATCG]>[ATCG]"
-    # findall returns the full match for patterns without capture groups
     matches = re.findall(chr_pattern, text, re.IGNORECASE)
     if DEBUG:
         print(f"[_extract_chr_allele_pos] Found: {matches}")
     return matches
+
+def _extract_ensembl_ids(text: str) -> Dict[str, List[str]]:
+    """Extracts Ensembl IDs and categorizes them by type (gene, protein, transcript)."""
+    # Define patterns for each Ensembl ID type
+    gene_pattern = r"ENSG\d+"
+    protein_pattern = r"ENSP\d+"
+    transcript_pattern = r"ENST\d+"
+
+    # Find all matches, ignoring case
+    genes = re.findall(gene_pattern, text, re.IGNORECASE)
+    proteins = re.findall(protein_pattern, text, re.IGNORECASE)
+    transcripts = re.findall(transcript_pattern, text, re.IGNORECASE)
+
+    # Normalize to uppercase and remove duplicates
+    result = {
+        "genes": sorted(list(set(g.upper() for g in genes))),
+        "proteins": sorted(list(set(p.upper() for p in proteins))),
+        "transcripts": sorted(list(set(t.upper() for t in transcripts))),
+    }
+    if DEBUG:
+        print(f"[_extract_ensembl_ids] Found: {result}")
+    return result
 
 def get_variant_coordinates(variant_string: str) -> Optional[Dict[str, Any]]:
     """
@@ -78,7 +97,6 @@ def get_variant_coordinates(variant_string: str) -> Optional[Dict[str, Any]]:
     Returns:
         A dictionary with variant coordinates or None if the format is invalid.
     """
-    # Regex to capture the components of the variant string
     pattern = r"chr(\w+):(\d+):([ATCG])>([ATCG])"
     match = re.match(pattern, variant_string, re.IGNORECASE)
     
@@ -87,44 +105,37 @@ def get_variant_coordinates(variant_string: str) -> Optional[Dict[str, Any]]:
             print(f"[get_variant_coordinates] Invalid format for: {variant_string}")
         return None
         
-    # Extract components from the matched groups
     chrom, pos, ref, alt = match.groups()
     
-    # Construct the result dictionary
     coordinates = {
         "chrom": chrom,
         "pos": int(pos),
         "ref": ref.upper(),
         "alt": alt.upper(),
-        "assembly": "GRCh38.p14"  # Hard-coded as requested
+        "assembly": "GRCh38.p14"
     }
     return coordinates
 
 
-def _extract_variants_with_regex(text: str) -> Dict[str, List[str]]:
+def _extract_entities_with_regex(text: str) -> Dict[str, Any]:
     """
-    Extracts all supported genetic variant formats using modular regex functions.
+    Extracts genetic variants and Ensembl IDs using modular regex functions.
     """
-    # Call each specific extraction function
     rsids = _extract_rsids(text)
     allele_pos_variants = _extract_chr_allele_pos(text)
-
-    # Combine all found variants into a single list and remove duplicates
-    variants = list(set(rsids))
-    chr_pos_variants = list(set(allele_pos_variants))
+    ensembl_ids = _extract_ensembl_ids(text)
     
     result = {
-        "variants": {variant: {"rsid": variant} for variant in variants}, 
+        "variants": {variant: {"rsid": variant} for variant in list(set(rsids))},
         "chr_pos_variants": {
-            chr_pos_variant: {
-                "coordinates": get_variant_coordinates(chr_pos_variant) 
-            }
-            for chr_pos_variant in chr_pos_variants
-        }
+            v: {"coordinates": get_variant_coordinates(v)} for v in list(set(allele_pos_variants))
+        },
+        "ensembl_genes": ensembl_ids.get("genes", []),
+        "ensembl_proteins": ensembl_ids.get("proteins", []),
+        "ensembl_transcripts": ensembl_ids.get("transcripts", [])
     }
     if DEBUG:
-        print(f"[_extract_variants_with_regex] Combined variants: {result}")
-        
+        print(f"[_extract_entities_with_regex] Found entities: {result}")
     return result
 
 
@@ -156,48 +167,61 @@ def _extract_entities_with_claude(text: str) -> Dict[str, List[str]]:
 
 
 def _extract_entities_with_flair(text: str) -> Dict[str, List[str]]:
-    """Extracts gene and trait entities using Flair."""
+    """Extracts gene, protein, and trait entities using Flair."""
     flair_model = _get_flair_model()
     sentence = Sentence(text)
     flair_model.predict(sentence)
 
-    genes, traits = [], []
+    genes, proteins, traits = [], [], []
     for label in sentence.get_labels():
         entity_text = label.data_point.text.strip()
         entity_type = label.value.lower()
 
-        if entity_type in ["gene", "protein"]:
+        if entity_type == "gene":
             genes.append(entity_text)
+        elif entity_type == "protein":
+            # Adding both protein and gene to genes list
+            genes.append(entity_text)
+            proteins.append(entity_text)
         elif entity_type in ["disease", "trait", "phenotype", "disorder", "syndrome", "condition"]:
             traits.append(entity_text)
             
-    result = {"genes": list(set(genes)), "traits": list(set(traits))}
+    result = {
+        "genes": list(set(genes)),
+        "proteins": list(set(proteins)),
+        "traits": list(set(traits))
+    }
     if DEBUG:
         print(f"[_extract_entities_with_flair] Found: {result}")
     return result
 
 
 def _extract_entities_with_gliner(text: str) -> Dict[str, Any]:
-    """Extracts all entities using GLiNER, returning genes and traits."""
+    """Extracts all entities using GLiNER, returning genes, proteins, and traits."""
     gliner_model = _get_gliner_model()
     entities = gliner_model.predict_entities(text, GLINER_ENTITY_LABELS, threshold=GLINER_THRESHOLD)
     
-    genes, traits = [], []
+    genes, proteins, traits = [], [], []
     for entity in entities:
-        label = entity["label"]
+        label = entity["label"].lower()
         text_entity = entity["text"].strip()
 
-        if label.lower() in ["gene", "protein"]:
+        if label == "gene":
             genes.append(text_entity)
-        elif label.lower() in ["disease", "trait", "phenotype", "disorder", "syndrome", "condition"]:
+        elif label == "protein":
+            # Adding both protein and gene to genes list
+            genes.append(text_entity)
+            proteins.append(text_entity)
+        elif label in ["disease", "trait", "phenotype", "disorder", "syndrome", "condition"]:
             traits.append(text_entity)
 
     result = {
-        "genes": list(set(genes)), 
+        "genes": list(set(genes)),
+        "proteins": list(set(proteins)),
         "traits": list(set(traits))
     }
     if DEBUG:
-        print(f"[_extract_entities_with_gliner] Found genes: {result['genes']}, traits: {result['traits']}")
+        print(f"[_extract_entities_with_gliner] Found: {result}")
     return result
 
 # --- Merging and Post-processing Logic ---
@@ -231,23 +255,40 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
     claude_result = _extract_entities_with_claude(text)
     flair_result = _extract_entities_with_flair(text)
     gliner_result = _extract_entities_with_gliner(text)
-    variant_result = _extract_variants_with_regex(text)
+    regex_result = _extract_entities_with_regex(text)
     
-    raw_genes = claude_result["genes"] + flair_result["genes"] + gliner_result["genes"]
-    raw_traits = flair_result["traits"] + gliner_result["traits"]
+    # Merge gene symbols and Ensembl Gene IDs (ENSG)
+    raw_genes = (
+        claude_result.get("genes", []) +
+        flair_result.get("genes", []) +
+        gliner_result.get("genes", []) +
+        regex_result.get("ensembl_genes", [])
+    )
+    raw_traits = flair_result.get("traits", []) + gliner_result.get("traits", [])
     
-    processed_entities = _post_process_entities(raw_genes, raw_traits)
+    # Merge protein symbols and Ensembl Protein IDs (ENSP)
+    raw_proteins = (
+        flair_result.get("proteins", []) +
+        gliner_result.get("proteins", []) +
+        regex_result.get("ensembl_proteins", [])
+    )
 
+    processed_entities = _post_process_entities(raw_genes, raw_traits)
+    
     final_result = {
         "genes": processed_entities["genes"],
         "traits": processed_entities["traits"],
-        "variants": variant_result["variants"],
-        "chr_pos_variants": variant_result["chr_pos_variants"]
+        "proteins": sorted(list(set(raw_proteins))),
+        "transcripts": sorted(list(set(regex_result.get("ensembl_transcripts", [])))),
+        "variants": regex_result.get("variants", {}),
+        "chr_pos_variants": regex_result.get("chr_pos_variants", {})
     }
     
     if DEBUG:
         print(f"[_extract_entities_merged] Final Merged Genes: {final_result['genes']}")
         print(f"[_extract_entities_merged] Final Merged Traits: {final_result['traits']}")
+        print(f"[_extract_entities_merged] Final Merged Proteins: {final_result['proteins']}")
+        print(f"[_extract_entities_merged] Final Merged Transcripts: {final_result['transcripts']}")
         print(f"[_extract_entities_merged] Final Merged Variants: {final_result['variants']}")
 
     return final_result
@@ -268,7 +309,7 @@ def claude_entity_extraction_node(state: "State") -> "State":
     """Extracts gene entities using only the Claude model."""
     user_input: str = state["messages"][-1]["content"]
     claude_result = _extract_entities_with_claude(user_input)
-    processed_result = _post_process_entities(claude_result["genes"], claude_result["traits"])
+    processed_result = _post_process_entities(claude_result.get("genes", []), claude_result.get("traits", []))
     if DEBUG:
         print(f"[claude_entity_extraction_node] Extracted: {processed_result}")
     return processed_result
@@ -278,11 +319,12 @@ def gliner_entity_extraction_node(state: "State") -> "State":
     """Extracts all entity types using only the GLiNER model."""
     user_input: str = state["messages"][-1]["content"]
     gliner_result = _extract_entities_with_gliner(user_input)
-    processed_result = _post_process_entities(gliner_result["genes"], gliner_result["traits"])
+    processed_result = _post_process_entities(gliner_result.get("genes", []), gliner_result.get("traits", []))
     
     final_output = {
         "genes": processed_result["genes"],
         "traits": processed_result["traits"],
+        "proteins": sorted(list(set(gliner_result.get("proteins", []))))
     }
     if DEBUG:
         print(f"[gliner_entity_extraction_node] Extracted: {final_output}")
@@ -290,21 +332,27 @@ def gliner_entity_extraction_node(state: "State") -> "State":
 
 
 def flair_entity_extraction_node(state: "State") -> "State":
-    """Extracts gene and trait entities using only the Flair model."""
+    """Extracts gene, protein, and trait entities using only the Flair model."""
     user_input: str = state["messages"][-1]["content"]
     flair_result = _extract_entities_with_flair(user_input)
-    processed_result = _post_process_entities(flair_result["genes"], flair_result["traits"])
+    processed_result = _post_process_entities(flair_result.get("genes", []), flair_result.get("traits", []))
+    
+    final_output = {
+        "genes": processed_result["genes"],
+        "traits": processed_result["traits"],
+        "proteins": sorted(list(set(flair_result.get("proteins", []))))
+    }
     if DEBUG:
-        print(f"[flair_entity_extraction_node] Extracted: {processed_result}")
-    return processed_result
+        print(f"[flair_entity_extraction_node] Extracted: {final_output}")
+    return final_output
 
 def variant_extraction_node(state: "State") -> "State":
-    """Extracts variant entities using only regex."""
+    """Extracts variant and Ensembl entities using only regex."""
     user_input: str = state["messages"][-1]["content"]
-    variant_result = _extract_variants_with_regex(user_input)
+    regex_result = _extract_entities_with_regex(user_input)
     if DEBUG:
-        print(f"[variant_extraction_node] Extracted: {variant_result}")
-    return variant_result
+        print(f"[variant_extraction_node] Extracted: {regex_result}")
+    return regex_result
     
 
 # --- Graph Edges ---
@@ -329,4 +377,18 @@ def has_variants(state: "State") -> bool:
     found = bool(state.get("variants"))
     if DEBUG:
         print(f"[has_variants] Variants present? {found}")
+    return found
+
+def has_proteins(state: "State") -> bool:
+    """Edge condition helper: returns `True` if any proteins were found."""
+    found = bool(state.get("proteins"))
+    if DEBUG:
+        print(f"[has_proteins] Proteins present? {found}")
+    return found
+
+def has_transcripts(state: "State") -> bool:
+    """Edge condition helper: returns `True` if any transcripts were found."""
+    found = bool(state.get("transcripts"))
+    if DEBUG:
+        print(f"[has_transcripts] Transcripts present? {found}")
     return found
