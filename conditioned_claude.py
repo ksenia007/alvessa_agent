@@ -17,7 +17,24 @@ from claude_client import claude_call
 from config import CONDITIONED_MODEL, DEBUG, N_CHARS
 from state import State
 import re
+import numpy as np
 
+def ensure_json_safe(x):
+    if isinstance(x, dict):
+        return {ensure_json_safe(k): ensure_json_safe(v) for k, v in x.items()}
+    if isinstance(x, list):
+        return [ensure_json_safe(v) for v in x]
+    if isinstance(x, tuple):
+        return [ensure_json_safe(v) for v in x]  # JSON has no tuple
+    if isinstance(x, (np.integer,)):
+        return int(x)
+    if isinstance(x, (np.floating,)):
+        return float(x)
+    if isinstance(x, (np.bool_,)):
+        return bool(x)
+    if hasattr(x, "item"):  # NumPy scalar fallback
+        return x.item()
+    return x
 
 def _process_dbsnp_variants(state: "State") -> "State":
     """Process dbSNP variants to remove the `matches` field that is populated by gencode which is too verbose."""
@@ -27,6 +44,7 @@ def _process_dbsnp_variants(state: "State") -> "State":
                 annotation_i.pop("matches")
     return state
 
+
 # Data aggregation helpers
 def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
     """Extract all data for a single gene from state."""
@@ -35,10 +53,10 @@ def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
     
     # Define data sources with their state keys and optional processing
     data_sources = [
+        ('Summary about the gene structure, transcripts and complexity:', 'gene_level_gencode'),
         ("diseases", "gene_disease_traits"),
-        ("functions", "humanbase_predictions", lambda hits: [hit["term"] for hit in hits if "term" in hit][:30]),
-        ("gene_ontology_terms_of_interacting_genes", "biogrid_summarized_go"),
-        # ("Interacting genes based on BioGRID curated database", "biogrid_predictions"),
+        ("Top 30 predicted functions", "humanbase_predictions", lambda hits: [hit["term"] for hit in hits if "term" in hit][:30]),
+        ("Gene ontology (GO) summarized terms of interacting genes", "biogrid_summarized_go"),
         ("Interacting human genes based on BioGRID curated database, organized by experimental system", "biogrid_interaction_groups"),
         ("Interacting nonhuman genes based on BioGRID curated database, organized by experimental system", "biogrid_interactions_select_nonhuman"),
         ("Associated Reactome pathways (curated biological pathways which describe how molecules interact within a cell to carry out different biological processes)", "reactome_pathways"),
@@ -129,6 +147,7 @@ def conditioned_claude_node(state: "State") -> "State":
     # Context building is now handled by helper functions above
 
     # Serialize context and handle truncation
+    context_payload = ensure_json_safe(context_payload)
     context_block = json.dumps(context_payload, separators=(",", ":"))
     if DEBUG:
         print(f"[conditioned_claude_node] context length: {len(context_block)}")
@@ -172,16 +191,19 @@ def conditioned_claude_node(state: "State") -> "State":
     # Parse Claude response
     llm_resp = raw.content[0].text.strip() if hasattr(raw.content[0], "text") else raw.content[0]
     
+    if DEBUG:
+        print("[conditioned_claude_node] processed response text:", llm_resp)
+    
     if llm_resp.startswith("```"):
         llm_resp = re.sub(r"^```(?:json)?\s*|\s*```$", "", llm_resp.strip(), flags=re.DOTALL).strip()
 
     try:
         parsed_resp = json.loads(llm_resp) if isinstance(llm_resp, str) else llm_resp
     except Exception as exc:
-        raise ValueError(
-            f"Failed to parse LLM response as JSON. Response was:\n{llm_resp}\nError: {exc}"
-        ) from exc
-    
+        parsed_resp = {
+            "answer": llm_resp, 
+            "evidence": '',
+        }
     return {
         "messages": [{"role": "assistant", "content": llm_resp}],
         "context_block": context_block,

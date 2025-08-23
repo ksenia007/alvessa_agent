@@ -19,13 +19,13 @@ MAIN_PATH = Path("benchmarks_generation")
 MAX_ROWS = 3  # -1 means all
 
 SYSTEM_MSG = (
-    "You are a multiple-choice answering system. "
-    "You must only reply with one of the following single capital letters: A, B, C, or D. "
-    "Do not add any words, punctuation, or explanation. "
-    "Example valid output: 'C'. "
-    "Example invalid outputs: 'Answer: C', 'C because...', 'Option C'."
+    """You are a multiple-choice answering system.
+You must reply with exactly one of the following letters: A, B, C, or D.
+Do not include any explanation, reasoning, or extra text.
+Your response will be parsed by a program that will fail if you output anything other than a single capital letter.
+Example valid output: C
+Example invalid outputs: Answer: C, C., Option C, B because..."""
 )
-
 
 def main():
     parser = argparse.ArgumentParser(description="Run benchmarks with a single switch.")

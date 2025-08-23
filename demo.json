@@ -2,990 +2,130 @@
   "messages": [
     {
       "role": "user",
-      "content": "How can RPS6KA1 be connected to kidney disease?"
+      "content": "Tell me about exons in TP53"
     },
     {
       "role": "user",
-      "content": "How can RPS6KA1 be connected to kidney disease?"
+      "content": "Tell me about exons in TP53"
     },
     {
       "role": "assistant",
-      "content": "{\n  \"answer\": \"RPS6KA1 can be connected to kidney disease through several potential mechanisms based on its molecular functions and genetic associations. RPS6KA1 is a serine/threonine-protein kinase that regulates mTOR signaling pathways, which are crucial for kidney function and disease development. The gene shows genetic associations with metabolic traits that are risk factors for kidney disease, including Type 2 diabetes, fasting plasma glucose levels, and triglyceride levels. Additionally, RPS6KA1 regulates cellular proliferation, survival, and differentiation through mTOR signaling modulation, and it phosphorylates key proteins like TSC2 that control mTOR activity. The mTOR pathway is well-established as playing critical roles in kidney disease progression, particularly in diabetic nephropathy and other forms of chronic kidney disease.\",\n  \"evidence\": [\n    \"RPS6KA1 is involved in the mTOR nutrient-sensing pathway by directly phosphorylating TSC2\",\n    \"RPS6KA1 mediates phosphorylation of RPTOR, which regulates mTORC1 activity\",\n    \"RPS6KA1 shows genetic association with Type 2 diabetes (rs6685701, p-value 1e-08)\",\n    \"RPS6KA1 shows genetic association with fasting plasma glucose (rs1002487, p-value 6e-11)\",\n    \"RPS6KA1 shows genetic association with triglyceride levels (rs1002487, p-value 7e-11)\",\n    \"RPS6KA1 mediates cellular proliferation, survival, and differentiation by modulating mTOR signaling\"\n  ]\n}"
+      "content": "{\n  \"answer\": \"TP53 has 24 different transcripts with varying exon numbers. The number of exons per transcript ranges from 7 to 12 exons. The shortest transcript (ENST00000413465.6) has 7 exons, while several transcripts including ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4 have the maximum of 12 exons. The transcript spans range from 7,092 base pairs to 19,137 base pairs, and the entire TP53 gene spans from position 7,661,779 to 7,687,546 base pairs.\",\n  \"evidence\": [\n    \"TP53 has 24 transcripts\",\n    \"TP53 exons per transcript range from 7 to 12\",\n    \"ENST00000413465.6 has 7 exons\",\n    \"ENST00000420246.6 has 12 exons\",\n    \"ENST00000455263.6 has 12 exons\", \n    \"ENST00000610538.4 has 12 exons\",\n    \"ENST00000622645.4 has 12 exons\",\n    \"TP53 minimum transcript span is 7092 bp\",\n    \"TP53 maximum transcript span is 19137 bp\",\n    \"TP53 gene spans from 7661779 to 7687546 bp\"\n  ]\n}"
     }
   ],
   "genes": [
-    "RPS6KA1"
+    "TP53"
   ],
+  "traits": [],
+  "variants": {},
+  "chr_pos_variants": {},
   "gene_level_gencode": {
-    "RPS6KA1": {
-      "gene_name": "RPS6KA1",
-      "n_transcripts": 5,
+    "TP53": {
+      "gene_name": "TP53",
+      "n_transcripts": 24,
       "exons_per_transcript": {
-        "ENST00000374168.7": 22,
-        "ENST00000374166.8": 22,
-        "ENST00000526792.5": 22,
-        "ENST00000530003.5": 21,
-        "ENST00000531382.5": 21
+        "ENST00000413465.6": 7,
+        "ENST00000714356.1": 10,
+        "ENST00000359597.8": 9,
+        "ENST00000504290.5": 8,
+        "ENST00000504937.5": 7,
+        "ENST00000510385.5": 8,
+        "ENST00000610623.4": 8,
+        "ENST00000618944.4": 8,
+        "ENST00000619186.4": 7,
+        "ENST00000610292.4": 10,
+        "ENST00000620739.4": 11,
+        "ENST00000420246.6": 12,
+        "ENST00000455263.6": 12,
+        "ENST00000610538.4": 12,
+        "ENST00000622645.4": 12,
+        "ENST00000714357.1": 11,
+        "ENST00000445888.6": 11,
+        "ENST00000604348.6": 11,
+        "ENST00000619485.4": 11,
+        "ENST00000269305.9": 11,
+        "ENST00000714408.1": 11,
+        "ENST00000714409.1": 10,
+        "ENST00000576024.2": 10,
+        "ENST00000714359.1": 11
       },
-      "min_transcript_span_bp": 28425,
-      "max_transcript_span_bp": 45265,
+      "min_transcript_span_bp": "7092",
+      "max_transcript_span_bp": "19137",
       "transcript_ids": [
-        "ENST00000374168.7",
-        "ENST00000374166.8",
-        "ENST00000526792.5",
-        "ENST00000530003.5",
-        "ENST00000531382.5"
+        "ENST00000413465.6",
+        "ENST00000714356.1",
+        "ENST00000359597.8",
+        "ENST00000504290.5",
+        "ENST00000504937.5",
+        "ENST00000510385.5",
+        "ENST00000610623.4",
+        "ENST00000618944.4",
+        "ENST00000619186.4",
+        "ENST00000610292.4",
+        "ENST00000620739.4",
+        "ENST00000420246.6",
+        "ENST00000455263.6",
+        "ENST00000610538.4",
+        "ENST00000622645.4",
+        "ENST00000714357.1",
+        "ENST00000445888.6",
+        "ENST00000604348.6",
+        "ENST00000619485.4",
+        "ENST00000269305.9",
+        "ENST00000714408.1",
+        "ENST00000714409.1",
+        "ENST00000576024.2",
+        "ENST00000714359.1"
       ],
       "gene_span_bp": [
-        26529761,
-        26575030
+        "7661779",
+        "7687546"
       ]
     },
     "assembly": "GRCh38"
   },
   "prompt": "",
   "run_verifier": false,
-  "uniprot_entries_base": {
-    "RPS6KA1": {
-      "function": "(Microbial infection) Promotes the late transcription and translation of viral lytic genes during Kaposi's sarcoma-associated herpesvirus/HHV-8 infection, when constitutively activated, Serine/threonine-protein kinase that acts downstream of ERK (MAPK1/ERK2 and MAPK3/ERK1) signaling and mediates mitogenic and stress-induced activation of the transcription factors CREB1, ETV1/ER81 and NR4A1/NUR77, regulates translation through RPS6 and EIF4B phosphorylation, and mediates cellular proliferation, survival, and differentiation by modulating mTOR signaling and repressing pro-apoptotic function of BAD and DAPK1 . In fibroblast, is required for EGF-stimulated phosphorylation of CREB1, which results in the subsequent transcriptional activation of several immediate-early genes . In response to mitogenic stimulation (EGF and PMA), phosphorylates and activates NR4A1/NUR77 and ETV1/ER81 transcription factors and the cofactor CREBBP . Upon insulin-derived signal, acts indirectly on the transcription regulation of several genes by phosphorylating GSK3B at 'Ser-9' and inhibiting its activity . Phosphorylates RPS6 in response to serum or EGF via an mTOR-independent mechanism and promotes translation initiation by facilitating assembly of the pre-initiation complex . In response to insulin, phosphorylates EIF4B, enhancing EIF4B affinity for the EIF3 complex and stimulating cap-dependent translation . Is involved in the mTOR nutrient-sensing pathway by directly phosphorylating TSC2 at 'Ser-1798', which potently inhibits TSC2 ability to suppress mTOR signaling, and mediates phosphorylation of RPTOR, which regulates mTORC1 activity and may promote rapamycin-sensitive signaling independently of the PI3K/AKT pathway . Also involved in feedback regulation of mTORC1 and mTORC2 by phosphorylating DEPTOR . Mediates cell survival by phosphorylating the pro-apoptotic proteins BAD and DAPK1 and suppressing their pro-apoptotic function . Promotes the survival of hepatic stellate cells by phosphorylating CEBPB in response to the hepatotoxin carbon tetrachloride (CCl4) . Mediates induction of hepatocyte prolifration by TGFA through phosphorylation of CEBPB . Is involved in cell cycle regulation by phosphorylating the CDK inhibitor CDKN1B, which promotes CDKN1B association with 14-3-3 proteins and prevents its translocation to the nucleus and inhibition of G1 progression . Phosphorylates EPHA2 at 'Ser-897', the RPS6KA-EPHA2 signaling pathway controls cell migration . In response to mTORC1 activation, phosphorylates EIF4B at 'Ser-406' and 'Ser-422' which stimulates bicarbonate cotransporter SLC4A7 mRNA translation, increasing SLC4A7 protein abundance and function",
-      "go_terms": "C:cytoplasm, C:cytosol, C:nucleoplasm, C:synapse, F:ATP binding, F:magnesium ion binding, F:protein serine kinase activity, F:protein serine/threonine kinase activity, F:protein serine/threonine/tyrosine kinase activity, F:ribosomal protein S6 kinase activity, P:TORC1 signaling, P:chemical synaptic transmission, P:hepatocyte proliferation, P:negative regulation of TOR signaling, P:negative regulation of apoptotic process, P:positive regulation of DNA-templated transcription, P:positive regulation of cell differentiation, P:positive regulation of cell growth, P:positive regulation of hepatic stellate cell activation, P:positive regulation of transcription by RNA polymerase II, P:protein phosphorylation, P:regulation of translation in response to stress, P:signal transduction"
-    }
-  },
-  "uniprot_entries_gwas": {
-    "RPS6KA1": {
-      "function": "(Microbial infection) Promotes the late transcription and translation of viral lytic genes during Kaposi's sarcoma-associated herpesvirus/HHV-8 infection, when constitutively activated, Serine/threonine-protein kinase that acts downstream of ERK (MAPK1/ERK2 and MAPK3/ERK1) signaling and mediates mitogenic and stress-induced activation of the transcription factors CREB1, ETV1/ER81 and NR4A1/NUR77, regulates translation through RPS6 and EIF4B phosphorylation, and mediates cellular proliferation, survival, and differentiation by modulating mTOR signaling and repressing pro-apoptotic function of BAD and DAPK1 . In fibroblast, is required for EGF-stimulated phosphorylation of CREB1, which results in the subsequent transcriptional activation of several immediate-early genes . In response to mitogenic stimulation (EGF and PMA), phosphorylates and activates NR4A1/NUR77 and ETV1/ER81 transcription factors and the cofactor CREBBP . Upon insulin-derived signal, acts indirectly on the transcription regulation of several genes by phosphorylating GSK3B at 'Ser-9' and inhibiting its activity . Phosphorylates RPS6 in response to serum or EGF via an mTOR-independent mechanism and promotes translation initiation by facilitating assembly of the pre-initiation complex . In response to insulin, phosphorylates EIF4B, enhancing EIF4B affinity for the EIF3 complex and stimulating cap-dependent translation . Is involved in the mTOR nutrient-sensing pathway by directly phosphorylating TSC2 at 'Ser-1798', which potently inhibits TSC2 ability to suppress mTOR signaling, and mediates phosphorylation of RPTOR, which regulates mTORC1 activity and may promote rapamycin-sensitive signaling independently of the PI3K/AKT pathway . Also involved in feedback regulation of mTORC1 and mTORC2 by phosphorylating DEPTOR . Mediates cell survival by phosphorylating the pro-apoptotic proteins BAD and DAPK1 and suppressing their pro-apoptotic function . Promotes the survival of hepatic stellate cells by phosphorylating CEBPB in response to the hepatotoxin carbon tetrachloride (CCl4) . Mediates induction of hepatocyte prolifration by TGFA through phosphorylation of CEBPB . Is involved in cell cycle regulation by phosphorylating the CDK inhibitor CDKN1B, which promotes CDKN1B association with 14-3-3 proteins and prevents its translocation to the nucleus and inhibition of G1 progression . Phosphorylates EPHA2 at 'Ser-897', the RPS6KA-EPHA2 signaling pathway controls cell migration . In response to mTORC1 activation, phosphorylates EIF4B at 'Ser-406' and 'Ser-422' which stimulates bicarbonate cotransporter SLC4A7 mRNA translation, increasing SLC4A7 protein abundance and function",
-      "go_terms": "C:cytoplasm, C:cytosol, C:nucleoplasm, C:synapse, F:ATP binding, F:magnesium ion binding, F:protein serine kinase activity, F:protein serine/threonine kinase activity, F:protein serine/threonine/tyrosine kinase activity, F:ribosomal protein S6 kinase activity, P:TORC1 signaling, P:chemical synaptic transmission, P:hepatocyte proliferation, P:negative regulation of TOR signaling, P:negative regulation of apoptotic process, P:positive regulation of DNA-templated transcription, P:positive regulation of cell differentiation, P:positive regulation of cell growth, P:positive regulation of hepatic stellate cell activation, P:positive regulation of transcription by RNA polymerase II, P:protein phosphorylation, P:regulation of translation in response to stress, P:signal transduction"
-    }
-  },
+  "uniprot_entries_base": {},
+  "uniprot_entries_gwas": {},
   "gene_disease_traits": {},
   "gene_function_traits": {},
   "gene_GO_traits": {},
-  "humanbase_predictions": {
-    "RPS6KA1": [
-      {
-        "score": 0.962,
-        "term": "blood",
-        "description": "1: The fluid that circulates in the heart, arteries, capillaries, and veins of a vertebrate animal carrying nourishment and oxygen to and bringing away waste products from all parts of the body. 2: A comparable fluid of an invertebrate.",
-        "category": "BRENDA Ontology",
-        "go_id": "BTO:0000089",
-        "annotation_count": 4560
-      },
-      {
-        "score": 0.95,
-        "term": "leukocyte",
-        "description": "Any of the blood cells that are colorless, lack hemoglobin, contain a nucleus, and include the lymphocytes, monocytes, neutrophils, eosinophils, and basophils.",
-        "category": "BRENDA Ontology",
-        "go_id": "BTO:0000751",
-        "annotation_count": 3881
-      }
-    ]
-  },
+  "humanbase_predictions": {},
   "humanbase_expecto": {},
   "tissue_expression_preds_variant_text_description": {},
   "expression_preds_variant_table": {},
-  "biogrid_predictions": {
-    "RPS6KA1": [
-      "TSC2",
-      "ORF10",
-      "Capn1",
-      "Mapk7",
-      "HSPA6",
-      "NCAPG2",
-      "DFNB31",
-      "PDZK1",
-      "SCLT1",
-      "MAST2",
-      "HDAC2",
-      "AP4B1",
-      "PDZD7",
-      "IRGC",
-      "RPA1",
-      "DTNA",
-      "CDC45",
-      "CFL1",
-      "DOCK4",
-      "TSC1",
-      "ACACA",
-      "AP2A2",
-      "PPM1F",
-      "CARHSP1",
-      "HSPA5",
-      "TAP1",
-      "Fgfr1",
-      "ORF45",
-      "GBP6",
-      "HSP90AB1",
-      "ICMT",
-      "GSR",
-      "SHROOM2",
-      "DDAH2",
-      "GORASP1",
-      "LMF2",
-      "AR",
-      "KIAA1033",
-      "FRK",
-      "HRAS",
-      "TRRAP",
-      "CAPN1",
-      "SGK2",
-      "BCAR1",
-      "SNTB2",
-      "GBP2",
-      "FAM136A",
-      "NRAS",
-      "LAGE3",
-      "MAPT",
-      "RPTOR",
-      "MORC3",
-      "HTRA1",
-      "MAGI2",
-      "S",
-      "MDM2",
-      "RAB27A",
-      "CCT4",
-      "SLC16A1",
-      "AGPAT1",
-      "C1orf189",
-      "MAPK13",
-      "Rps6ka1",
-      "PHKG1",
-      "LTN1",
-      "RPS6KA4",
-      "GRN",
-      "SNTB1",
-      "SNX27",
-      "RPS6KB1",
-      "PHAX",
-      "TELO2",
-      "MAGI3",
-      "LDHA",
-      "FGFR2",
-      "AKAP7",
-      "PEPD",
-      "GOPC",
-      "ATXN3",
-      "ARHGEF12",
-      "ALG5",
-      "FGFR1",
-      "GGA2",
-      "RPA2",
-      "IL17RA",
-      "YWHAQ",
-      "CDKN1B",
-      "LIMK2",
-      "INF2",
-      "Nras",
-      "GNS",
-      "EGFR",
-      "ATM",
-      "VPS52",
-      "AKT2",
-      "CREBBP",
-      "TUBB3",
-      "CASP7",
-      "Grin2b",
-      "SNTA1",
-      "FGFR4",
-      "TLK2",
-      "HSP90AB2P",
-      "SRSF5",
-      "RPS6KA1",
-      "EEF2",
-      "RPS6KA2",
-      "RAD21",
-      "NTRK1",
-      "MVD",
-      "SHANK3",
-      "CTTN",
-      "ORC5",
-      "GYS1",
-      "CSNK2B",
-      "MXD1",
-      "MISP",
-      "PAPOLG",
-      "GCLM",
-      "PDZRN4",
-      "COPG1",
-      "TOB1",
-      "FYN",
-      "CNDP2",
-      "PARK2",
-      "MAPK3",
-      "HSP90AA1",
-      "LDHB",
-      "ILKAP",
-      "CDC37",
-      "ERBB2IP",
-      "ARAF",
-      "RPS6KB2",
-      "UBE2T",
-      "SPPL3",
-      "DDX50",
-      "RPS6KA5",
-      "AKT3",
-      "PTPN3",
-      "EEF2K",
-      "DLG4",
-      "MAPK1",
-      "AP2M1",
-      "USP9X",
-      "HMGB2",
-      "MAST1",
-      "FLOT2",
-      "DHX40",
-      "TP53",
-      "KYNU",
-      "INS",
-      "DNAJC11",
-      "HSPA1A",
-      "TIPARP",
-      "KRAS",
-      "CREB1",
-      "MAGI1",
-      "TTK",
-      "GSK3B",
-      "GRID2IP",
-      "Grin1",
-      "NFKBIA",
-      "PPM1G",
-      "RPS6KA3",
-      "PDCD4",
-      "PICALM",
-      "HSPA8",
-      "SYNJ2BP",
-      "AKT1",
-      "NDFIP1",
-      "PARD3B",
-      "ALK",
-      "ESR1",
-      "YWHAG",
-      "SNTG2",
-      "NCLN",
-      "YWHAB",
-      "LNX1",
-      "FRS2",
-      "STAT3",
-      "GORASP2",
-      "TRIM67",
-      "BAD",
-      "PLEKHA4",
-      "MPP1",
-      "KAT7",
-      "DEPTOR",
-      "EIF4H",
-      "DLC1",
-      "MASTL",
-      "TMEM97",
-      "ZRANB1",
-      "CTBP1",
-      "ATP12A",
-      "BASP1",
-      "YWHAH",
-      "YBX1",
-      "GRASP",
-      "PDZRN3",
-      "NPEPPS",
-      "rps6ka6",
-      "SLC9A3R2",
-      "DGCR2",
-      "AP3M1",
-      "VCP",
-      "ARHGEF11",
-      "Htt",
-      "PPP1R9A",
-      "MTPAP",
-      "RPA3",
-      "UBR5",
-      "GINS2",
-      "POLDIP3",
-      "Eed",
-      "PGD",
-      "RAB4A",
-      "MAP2K7",
-      "AMHR2",
-      "MCAM"
-    ]
-  },
-  "biogrid_interaction_groups": {
-    "RPS6KA1": {
-      "Affinity Capture-Western": [
-        "MAPK3",
-        "MAPK1",
-        "YWHAB",
-        "TSC1",
-        "TSC2",
-        "TSC2",
-        "NFKBIA",
-        "NFKBIA",
-        "TOB1",
-        "TOB1",
-        "CREBBP",
-        "NFKBIA",
-        "NFKBIA",
-        "YBX1",
-        "YBX1",
-        "MAPK1",
-        "CDKN1B",
-        "MAPK1",
-        "CREBBP",
-        "FGFR1",
-        "FGFR1",
-        "UBR5",
-        "MAPK3",
-        "MAPK1",
-        "MAGI1",
-        "MDM2",
-        "MDM2"
-      ],
-      "Reconstituted Complex": [
-        "YWHAB",
-        "BAD",
-        "TSC2",
-        "TSC2",
-        "CARHSP1",
-        "EEF2K",
-        "MAPK1",
-        "TOB1",
-        "POLDIP3",
-        "MAPK1",
-        "FGFR1",
-        "MDM2",
-        "MDM2"
-      ],
-      "Biochemical Activity": [
-        "MAPK1",
-        "NFKBIA",
-        "TOB1",
-        "ESR1",
-        "NFKBIA",
-        "MXD1",
-        "YBX1",
-        "PDCD4",
-        "NFKBIA",
-        "RPTOR",
-        "MAPT",
-        "GYS1",
-        "GSK3B",
-        "CDKN1B",
-        "POLDIP3",
-        "DLC1",
-        "DEPTOR",
-        "UBE2T",
-        "UBR5",
-        "TP53",
-        "ATM",
-        "STAT3",
-        "MDM2"
-      ],
-      "Two-hybrid": [
-        "DDAH2",
-        "ATXN3",
-        "MPP1",
-        "PPM1G",
-        "TTK",
-        "GBP2",
-        "SRSF5",
-        "PHAX",
-        "VCP",
-        "CFL1",
-        "CCT4",
-        "FGFR1"
-      ],
-      "Affinity Capture-Luminescence": [
-        "HSP90AA1"
-      ],
-      "Proximity Label-MS": [
-        "CREB1",
-        "SCLT1",
-        "HRAS",
-        "KRAS",
-        "NRAS",
-        "LTN1",
-        "GOPC",
-        "COPG1",
-        "LTN1",
-        "AP2A2",
-        "AP2M1",
-        "TAP1",
-        "ARAF",
-        "SNTB2",
-        "DDX50",
-        "AKT1",
-        "DTNA",
-        "FLOT2",
-        "DOCK4",
-        "GCLM",
-        "TELO2",
-        "TMEM97",
-        "NCAPG2",
-        "RAD21",
-        "CDC45",
-        "VPS52",
-        "INF2",
-        "MAP2K7",
-        "MTPAP",
-        "NCLN",
-        "TUBB3",
-        "AGPAT1",
-        "DHX40",
-        "ALG5",
-        "FRS2",
-        "LMF2",
-        "MORC3",
-        "PPM1F",
-        "DNAJC11",
-        "SLC16A1",
-        "AP3M1",
-        "ICMT",
-        "KAT7",
-        "LAGE3",
-        "ORC5",
-        "AP4B1",
-        "GGA2",
-        "KRAS",
-        "EGFR",
-        "FGFR1",
-        "FGFR4",
-        "FGFR2",
-        "RPA1",
-        "RPA2",
-        "RPA3",
-        "MCAM",
-        "ALK"
-      ],
-      "Co-fractionation": [
-        "EIF4H",
-        "GINS2",
-        "CAPN1",
-        "CASP7",
-        "CNDP2",
-        "EEF2",
-        "GBP2",
-        "GNS",
-        "GSR",
-        "KYNU",
-        "LDHA",
-        "LDHB",
-        "MVD",
-        "NPEPPS",
-        "PEPD",
-        "PGD",
-        "ILKAP"
-      ],
-      "Affinity Capture-MS": [
-        "HSP90AA1",
-        "HSP90AB1",
-        "MAPK1",
-        "GRN",
-        "RPS6KA3",
-        "CSNK2B",
-        "ACACA",
-        "RPS6KA2",
-        "TLK2",
-        "MASTL",
-        "NTRK1",
-        "CDC37",
-        "MISP",
-        "FYN",
-        "IRGC",
-        "IL17RA",
-        "FGFR2",
-        "FAM136A",
-        "HDAC2",
-        "PTPN3",
-        "PLEKHA4",
-        "MAPK1",
-        "MAPK3",
-        "CDC37",
-        "HSPA6",
-        "HSPA8",
-        "HSP90AB1",
-        "HSPA1A",
-        "HSP90AA1",
-        "HSPA5",
-        "HSP90AB2P",
-        "USP9X",
-        "CSNK2B",
-        "DGCR2",
-        "RPS6KA1",
-        "RPS6KA2",
-        "RPS6KA3",
-        "INS",
-        "AR",
-        "PAPOLG",
-        "AMHR2",
-        "RPS6KA2",
-        "MAPK1",
-        "RAB4A",
-        "PHKG1",
-        "RAB27A",
-        "FYN",
-        "MISP",
-        "RPS6KA3",
-        "IRGC",
-        "CSNK2B",
-        "C1orf189",
-        "CTTN",
-        "CDC37",
-        "CDC37",
-        "RPS6KA3",
-        "RPS6KA4",
-        "TRRAP",
-        "PARK2",
-        "PARK2",
-        "ZRANB1",
-        "MAPK13",
-        "MAPK3",
-        "RPS6KA2",
-        "FRK",
-        "RPS6KA3",
-        "ATP12A",
-        "CSNK2B",
-        "BASP1",
-        "ACACA",
-        "NDFIP1",
-        "FGFR1",
-        "TIPARP",
-        "TRIM67",
-        "YWHAH",
-        "BCAR1",
-        "YWHAQ",
-        "YWHAB",
-        "GOPC",
-        "SNTB2",
-        "HMGB2",
-        "AKAP7",
-        "PICALM",
-        "YWHAG",
-        "GBP6",
-        "KIAA1033",
-        "CTBP1"
-      ],
-      "Protein-peptide": [
-        "ARHGEF12",
-        "MAST2",
-        "GOPC",
-        "PDZD7",
-        "GRID2IP",
-        "MAST1",
-        "PARD3B",
-        "PDZRN4",
-        "HTRA1",
-        "MAGI1",
-        "MAGI2",
-        "SNTG2",
-        "GORASP2",
-        "PDZK1",
-        "SNTA1",
-        "GRASP",
-        "MAGI3",
-        "ARHGEF11",
-        "SHANK3",
-        "SYNJ2BP",
-        "PDZRN3",
-        "DFNB31",
-        "SNTB1",
-        "SLC9A3R2",
-        "PTPN3",
-        "SHROOM2",
-        "LIMK2",
-        "GORASP1",
-        "LNX1",
-        "DLG4",
-        "ERBB2IP",
-        "PPP1R9A",
-        "SNX27"
-      ],
-      "FRET": [
-        "MAPK1",
-        "MAPK1"
-      ],
-      "Negative Genetic": [
-        "EGFR",
-        "RPS6KA3",
-        "RPS6KB1",
-        "RPS6KB2",
-        "AKT1",
-        "AKT2",
-        "RPS6KA5",
-        "SGK2",
-        "AKT3"
-      ],
-      "Positive Genetic": [
-        "SPPL3"
-      ]
-    }
-  },
-  "biogrid_interactions_select_nonhuman": {
-    "RPS6KA1": {
-      "Synthetic Lethality": [
-        "Nras"
-      ]
-    }
-  },
-  "reactome_pathways": {
-    "RPS6KA1": [
-      "MAPK targets/ Nuclear events mediated by MAP kinases",
-      "G alpha (q) signalling events",
-      "Toll-like Receptor Cascades",
-      "Toll Like Receptor TLR1:TLR2 Cascade",
-      "GPCR downstream signalling",
-      "Immune System",
-      "Cytokine Signaling in Immune system",
-      "Interleukin-17 signaling",
-      "MITF-M-regulated melanocyte development",
-      "Neurotransmitter receptors and postsynaptic signal transmission",
-      "Signaling by NTRK1 (TRKA)",
-      "Gastrin-CREB signalling pathway via PKC and MAPK",
-      "ERK/MAPK targets",
-      "MAP kinase activation",
-      "Toll Like Receptor 2 (TLR2) Cascade",
-      "Cellular Senescence",
-      "Signaling by Receptor Tyrosine Kinases",
-      "Signaling by NTRKs",
-      "CREB1 phosphorylation through NMDA receptor-mediated activation of RAS signaling",
-      "Signaling by GPCR",
-      "Activation of NMDA receptors and postsynaptic events",
-      "Transmission across Chemical Synapses",
-      "Axon guidance",
-      "L1CAM interactions",
-      "MyD88:MAL(TIRAP) cascade initiated on plasma membrane",
-      "Toll Like Receptor 4 (TLR4) Cascade",
-      "Signal Transduction",
-      "Senescence-Associated Secretory Phenotype (SASP)",
-      "Recycling pathway of L1",
-      "Neuronal System",
-      "Toll Like Receptor 10 (TLR10) Cascade",
-      "Signaling by Interleukins",
-      "Toll Like Receptor 9 (TLR9) Cascade",
-      "RSK activation",
-      "MyD88 cascade initiated on plasma membrane",
-      "Nervous system development",
-      "CREB phosphorylation",
-      "MyD88 dependent cascade initiated on endosome",
-      "Cellular responses to stress",
-      "TRIF (TICAM1)-mediated TLR4 signaling ",
-      "Toll Like Receptor 5 (TLR5) Cascade",
-      "Toll Like Receptor 7/8 (TLR7/8) Cascade",
-      "Toll Like Receptor 3 (TLR3) Cascade",
-      "Toll Like Receptor TLR6:TLR2 Cascade",
-      "TRAF6 mediated induction of NFkB and MAP kinases upon TLR7/8 or 9 activation",
-      "Cellular responses to stimuli",
-      "Developmental Biology",
-      "Transcriptional and post-translational regulation of MITF-M expression and activity",
-      "Post NMDA receptor activation events",
-      "Nuclear Events (kinase and transcription factor activation)",
-      "MyD88-independent TLR4 cascade ",
-      "Innate Immune System"
-    ]
-  },
+  "biogrid_predictions": {},
+  "biogrid_interaction_groups": {},
+  "biogrid_interactions_select_nonhuman": {},
+  "reactome_pathways": {},
   "biogrid_summarized_go": {},
-  "dbsnp_variants": {
-    "RPS6KA1": {
-      "rs17162190": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Mean corpuscular volume": {
-            "p_value": 2e-10,
-            "risk_score": 0.02795862
-          }
-        }
-      },
-      "rs414546": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "mean corpuscular hemoglobin (MCH, minimum, inv-norm transformed)": {
-            "p_value": 8e-16,
-            "risk_score": 0.02948
-          },
-          "mean corpuscular volume (MCV, minimum, inv-norm transformed)": {
-            "p_value": 6e-15,
-            "risk_score": 0.02882
-          },
-          "Mean reticulocyte volume": {
-            "p_value": 1e-15,
-            "risk_score": 0.021982666
-          }
-        }
-      },
-      "rs389548": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Hemoglobin A1c (HbA1c, maximum, inv-norm transformed)": {
-            "p_value": 8e-12,
-            "risk_score": 0.02596
-          },
-          "Hemoglobin A1c (HbA1c, mean, inv-norm transformed)": {
-            "p_value": 2e-11,
-            "risk_score": 0.02611
-          },
-          "Hemoglobin A1c (HbA1c, minimum, inv-norm transformed)": {
-            "p_value": 2e-15,
-            "risk_score": 0.02632
-          }
-        }
-      },
-      "rs11589734": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Ribosomal protein S6 kinase alpha-1 levels": {
-            "p_value": 2e-43,
-            "risk_score": 0.185
-          }
-        }
-      },
-      "rs4970485": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Mean sphered cell volume (UKB data field 30270)": {
-            "p_value": 5e-27,
-            "risk_score": 0.025198944
-          },
-          "Mean reticulocyte volume (UKB data field 30260)": {
-            "p_value": 1e-14,
-            "risk_score": 0.01823318
-          },
-          "Mean spheric corpuscular volume": {
-            "p_value": 4.0000000000000006e-34,
-            "risk_score": 0.03320932
-          },
-          "Mean corpuscular hemoglobin": {
-            "p_value": 3e-19,
-            "risk_score": 0.021383
-          }
-        }
-      },
-      "rs2229712": {
-        "mapped_gene": "RPS6KA1",
-        "context": "missense_variant",
-        "variant_category": "coding",
-        "associated_disease_trait": {
-          "Lymphocyte count (UKB data field 30120)": {
-            "p_value": 2e-19,
-            "risk_score": 0.020769417
-          },
-          "Lymphocyte count": {
-            "p_value": 8e-13,
-            "risk_score": 0.01898683
-          }
-        }
-      },
-      "rs10902750": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Glycated haemoglobin HbA1c levels (UKB data field 30750)": {
-            "p_value": 4e-15,
-            "risk_score": 0.015668496
-          }
-        }
-      },
-      "rs112750178": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "C-reactive protein levels (MTAG)": {
-            "p_value": 2e-10,
-            "risk_score": 0.01501
-          },
-          "C-reactive protein levels": {
-            "p_value": 2e-09,
-            "risk_score": 0.0143063
-          }
-        }
-      },
-      "rs4970483": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Mean corpuscular hemoglobin": {
-            "p_value": 1e-19,
-            "risk_score": 0.0203
-          }
-        }
-      },
-      "rs4970486": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Hemoglobin A1c levels": {
-            "p_value": 2e-09,
-            "risk_score": 0.0155
-          }
-        }
-      },
-      "rs1002487": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Fasting plasma glucose": {
-            "p_value": 6e-11,
-            "risk_score": 6.551
-          },
-          "Triglyceride levels": {
-            "p_value": 7e-11,
-            "risk_score": 6.517
-          }
-        }
-      },
-      "rs72651546": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Gut microbial network clusters (Turquoise (at 3 months) x Any Breastfeeding (3 Months) interaction": {
-            "p_value": 4e-09,
-            "risk_score": 0.04
-          }
-        }
-      },
-      "rs6685701": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Type 2 diabetes": {
-            "p_value": 1e-08,
-            "risk_score": 0.0296
-          }
-        }
-      },
-      "rs190737": {
-        "mapped_gene": "RPS6KA1",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Educational attainment": {
-            "p_value": 5e-09,
-            "risk_score": 0.00613196
-          }
-        }
-      }
-    }
-  },
+  "dbsnp_variants": {},
   "dbsnp_summaries": {},
   "sei_predictions": {},
   "alphamissense_predictions": {},
-  "gwas_associations": {
-    "RPS6KA1": {
-      "gene": "RPS6KA1",
-      "found": true,
-      "total_associations": 45,
-      "total_significant_associations": 43,
-      "total_studies_analyzed": 17,
-      "summary_by_high_risk_alleles": {
-        "related_genes": [
-          "RPS6KA1"
-        ],
-        "high_risk_snps": [
-          "rs1002487",
-          "rs11589734",
-          "rs72651546",
-          "rs17162190",
-          "rs414546",
-          "rs4970485",
-          "rs389548",
-          "rs6685701",
-          "rs2229712",
-          "rs4970483",
-          "rs112750178",
-          "rs10902750",
-          "rs4970486"
-        ],
-        "affected_protein_levels": [
-          "GAL"
-        ],
-        "associated_disease_traits": [
-          "Fasting plasma glucose",
-          "Triglyceride levels",
-          "Gut microbial network clusters (Turquoise (at 3 months) x Any Breastfeeding (3 Months) interaction",
-          "Hemoglobin A1c (HbA1c, maximum, inv-norm transformed)",
-          "Lymphocyte count (UKB data field 30120)",
-          "Mean reticulocyte volume",
-          "Type 2 diabetes",
-          "Ribosomal protein S6 kinase alpha-1 levels",
-          "White blood cell count",
-          "Mean corpuscular hemoglobin",
-          "mean corpuscular volume (MCV, minimum, inv-norm transformed)",
-          "Glycated haemoglobin HbA1c levels (UKB data field 30750)",
-          "Mean sphered cell volume (UKB data field 30270)",
-          "GAL protein levels",
-          "Mean spheric corpuscular volume",
-          "Hemoglobin A1c levels",
-          "Mean reticulocyte volume (UKB data field 30260)",
-          "Lymphocyte count",
-          "mean corpuscular hemoglobin (MCH, maximum, inv-norm transformed)",
-          "Hemoglobin A1c (HbA1c, minimum, inv-norm transformed)"
-        ]
-      },
-      "summary_by_significance": {
-        "related_genes": [
-          "RPS6KA1"
-        ],
-        "high_risk_snps": [
-          "rs11589734",
-          "rs1002487",
-          "rs17162190",
-          "rs112750178",
-          "rs72651546",
-          "rs190737"
-        ],
-        "affected_protein_levels": [
-          "C-reactive",
-          "C-reactive (MTAG)"
-        ],
-        "associated_disease_traits": [
-          "Ribosomal protein S6 kinase alpha-1 levels",
-          "Mean corpuscular hemoglobin",
-          "Fasting plasma glucose",
-          "Triglyceride levels",
-          "Mean corpuscular volume",
-          "C-reactive protein levels (MTAG)",
-          "Lymphocyte count",
-          "C-reactive protein levels",
-          "Gut microbial network clusters (Turquoise (at 3 months) x Any Breastfeeding (3 Months) interaction",
-          "Educational attainment"
-        ]
-      }
-    }
-  },
-  "context_block": "[{\"gene\":\"RPS6KA1\",\"functions\":[\"blood\",\"leukocyte\"],\"Interacting human genes based on BioGRID curated database, organized by experimental system\":{\"Affinity Capture-Western\":[\"MAPK3\",\"MAPK1\",\"YWHAB\",\"TSC1\",\"TSC2\",\"TSC2\",\"NFKBIA\",\"NFKBIA\",\"TOB1\",\"TOB1\",\"CREBBP\",\"NFKBIA\",\"NFKBIA\",\"YBX1\",\"YBX1\",\"MAPK1\",\"CDKN1B\",\"MAPK1\",\"CREBBP\",\"FGFR1\",\"FGFR1\",\"UBR5\",\"MAPK3\",\"MAPK1\",\"MAGI1\",\"MDM2\",\"MDM2\"],\"Reconstituted Complex\":[\"YWHAB\",\"BAD\",\"TSC2\",\"TSC2\",\"CARHSP1\",\"EEF2K\",\"MAPK1\",\"TOB1\",\"POLDIP3\",\"MAPK1\",\"FGFR1\",\"MDM2\",\"MDM2\"],\"Biochemical Activity\":[\"MAPK1\",\"NFKBIA\",\"TOB1\",\"ESR1\",\"NFKBIA\",\"MXD1\",\"YBX1\",\"PDCD4\",\"NFKBIA\",\"RPTOR\",\"MAPT\",\"GYS1\",\"GSK3B\",\"CDKN1B\",\"POLDIP3\",\"DLC1\",\"DEPTOR\",\"UBE2T\",\"UBR5\",\"TP53\",\"ATM\",\"STAT3\",\"MDM2\"],\"Two-hybrid\":[\"DDAH2\",\"ATXN3\",\"MPP1\",\"PPM1G\",\"TTK\",\"GBP2\",\"SRSF5\",\"PHAX\",\"VCP\",\"CFL1\",\"CCT4\",\"FGFR1\"],\"Affinity Capture-Luminescence\":[\"HSP90AA1\"],\"Proximity Label-MS\":[\"CREB1\",\"SCLT1\",\"HRAS\",\"KRAS\",\"NRAS\",\"LTN1\",\"GOPC\",\"COPG1\",\"LTN1\",\"AP2A2\",\"AP2M1\",\"TAP1\",\"ARAF\",\"SNTB2\",\"DDX50\",\"AKT1\",\"DTNA\",\"FLOT2\",\"DOCK4\",\"GCLM\",\"TELO2\",\"TMEM97\",\"NCAPG2\",\"RAD21\",\"CDC45\",\"VPS52\",\"INF2\",\"MAP2K7\",\"MTPAP\",\"NCLN\",\"TUBB3\",\"AGPAT1\",\"DHX40\",\"ALG5\",\"FRS2\",\"LMF2\",\"MORC3\",\"PPM1F\",\"DNAJC11\",\"SLC16A1\",\"AP3M1\",\"ICMT\",\"KAT7\",\"LAGE3\",\"ORC5\",\"AP4B1\",\"GGA2\",\"KRAS\",\"EGFR\",\"FGFR1\",\"FGFR4\",\"FGFR2\",\"RPA1\",\"RPA2\",\"RPA3\",\"MCAM\",\"ALK\"],\"Co-fractionation\":[\"EIF4H\",\"GINS2\",\"CAPN1\",\"CASP7\",\"CNDP2\",\"EEF2\",\"GBP2\",\"GNS\",\"GSR\",\"KYNU\",\"LDHA\",\"LDHB\",\"MVD\",\"NPEPPS\",\"PEPD\",\"PGD\",\"ILKAP\"],\"Affinity Capture-MS\":[\"HSP90AA1\",\"HSP90AB1\",\"MAPK1\",\"GRN\",\"RPS6KA3\",\"CSNK2B\",\"ACACA\",\"RPS6KA2\",\"TLK2\",\"MASTL\",\"NTRK1\",\"CDC37\",\"MISP\",\"FYN\",\"IRGC\",\"IL17RA\",\"FGFR2\",\"FAM136A\",\"HDAC2\",\"PTPN3\",\"PLEKHA4\",\"MAPK1\",\"MAPK3\",\"CDC37\",\"HSPA6\",\"HSPA8\",\"HSP90AB1\",\"HSPA1A\",\"HSP90AA1\",\"HSPA5\",\"HSP90AB2P\",\"USP9X\",\"CSNK2B\",\"DGCR2\",\"RPS6KA1\",\"RPS6KA2\",\"RPS6KA3\",\"INS\",\"AR\",\"PAPOLG\",\"AMHR2\",\"RPS6KA2\",\"MAPK1\",\"RAB4A\",\"PHKG1\",\"RAB27A\",\"FYN\",\"MISP\",\"RPS6KA3\",\"IRGC\",\"CSNK2B\",\"C1orf189\",\"CTTN\",\"CDC37\",\"CDC37\",\"RPS6KA3\",\"RPS6KA4\",\"TRRAP\",\"PARK2\",\"PARK2\",\"ZRANB1\",\"MAPK13\",\"MAPK3\",\"RPS6KA2\",\"FRK\",\"RPS6KA3\",\"ATP12A\",\"CSNK2B\",\"BASP1\",\"ACACA\",\"NDFIP1\",\"FGFR1\",\"TIPARP\",\"TRIM67\",\"YWHAH\",\"BCAR1\",\"YWHAQ\",\"YWHAB\",\"GOPC\",\"SNTB2\",\"HMGB2\",\"AKAP7\",\"PICALM\",\"YWHAG\",\"GBP6\",\"KIAA1033\",\"CTBP1\"],\"Protein-peptide\":[\"ARHGEF12\",\"MAST2\",\"GOPC\",\"PDZD7\",\"GRID2IP\",\"MAST1\",\"PARD3B\",\"PDZRN4\",\"HTRA1\",\"MAGI1\",\"MAGI2\",\"SNTG2\",\"GORASP2\",\"PDZK1\",\"SNTA1\",\"GRASP\",\"MAGI3\",\"ARHGEF11\",\"SHANK3\",\"SYNJ2BP\",\"PDZRN3\",\"DFNB31\",\"SNTB1\",\"SLC9A3R2\",\"PTPN3\",\"SHROOM2\",\"LIMK2\",\"GORASP1\",\"LNX1\",\"DLG4\",\"ERBB2IP\",\"PPP1R9A\",\"SNX27\"],\"FRET\":[\"MAPK1\",\"MAPK1\"],\"Negative Genetic\":[\"EGFR\",\"RPS6KA3\",\"RPS6KB1\",\"RPS6KB2\",\"AKT1\",\"AKT2\",\"RPS6KA5\",\"SGK2\",\"AKT3\"],\"Positive Genetic\":[\"SPPL3\"]},\"Interacting nonhuman genes based on BioGRID curated database, organized by experimental system\":{\"Synthetic Lethality\":[\"Nras\"]},\"Associated Reactome pathways (curated biological pathways which describe how molecules interact within a cell to carry out different biological processes)\":[\"MAPK targets/ Nuclear events mediated by MAP kinases\",\"G alpha (q) signalling events\",\"Toll-like Receptor Cascades\",\"Toll Like Receptor TLR1:TLR2 Cascade\",\"GPCR downstream signalling\",\"Immune System\",\"Cytokine Signaling in Immune system\",\"Interleukin-17 signaling\",\"MITF-M-regulated melanocyte development\",\"Neurotransmitter receptors and postsynaptic signal transmission\",\"Signaling by NTRK1 (TRKA)\",\"Gastrin-CREB signalling pathway via PKC and MAPK\",\"ERK/MAPK targets\",\"MAP kinase activation\",\"Toll Like Receptor 2 (TLR2) Cascade\",\"Cellular Senescence\",\"Signaling by Receptor Tyrosine Kinases\",\"Signaling by NTRKs\",\"CREB1 phosphorylation through NMDA receptor-mediated activation of RAS signaling\",\"Signaling by GPCR\",\"Activation of NMDA receptors and postsynaptic events\",\"Transmission across Chemical Synapses\",\"Axon guidance\",\"L1CAM interactions\",\"MyD88:MAL(TIRAP) cascade initiated on plasma membrane\",\"Toll Like Receptor 4 (TLR4) Cascade\",\"Signal Transduction\",\"Senescence-Associated Secretory Phenotype (SASP)\",\"Recycling pathway of L1\",\"Neuronal System\",\"Toll Like Receptor 10 (TLR10) Cascade\",\"Signaling by Interleukins\",\"Toll Like Receptor 9 (TLR9) Cascade\",\"RSK activation\",\"MyD88 cascade initiated on plasma membrane\",\"Nervous system development\",\"CREB phosphorylation\",\"MyD88 dependent cascade initiated on endosome\",\"Cellular responses to stress\",\"TRIF (TICAM1)-mediated TLR4 signaling \",\"Toll Like Receptor 5 (TLR5) Cascade\",\"Toll Like Receptor 7/8 (TLR7/8) Cascade\",\"Toll Like Receptor 3 (TLR3) Cascade\",\"Toll Like Receptor TLR6:TLR2 Cascade\",\"TRAF6 mediated induction of NFkB and MAP kinases upon TLR7/8 or 9 activation\",\"Cellular responses to stimuli\",\"Developmental Biology\",\"Transcriptional and post-translational regulation of MITF-M expression and activity\",\"Post NMDA receptor activation events\",\"Nuclear Events (kinase and transcription factor activation)\",\"MyD88-independent TLR4 cascade \",\"Innate Immune System\"],\"Contains GWAS associations and their statistical significance (to traits, protein levels etc.) for the gene and its variants. Returns associations that are high-risk or high-signifiance or both.\":{\"gene\":\"RPS6KA1\",\"found\":true,\"total_associations\":45,\"total_significant_associations\":43,\"total_studies_analyzed\":17,\"summary_by_high_risk_alleles\":{\"related_genes\":[\"RPS6KA1\"],\"high_risk_snps\":[\"rs1002487\",\"rs11589734\",\"rs72651546\",\"rs17162190\",\"rs414546\",\"rs4970485\",\"rs389548\",\"rs6685701\",\"rs2229712\",\"rs4970483\",\"rs112750178\",\"rs10902750\",\"rs4970486\"],\"affected_protein_levels\":[\"GAL\"],\"associated_disease_traits\":[\"Fasting plasma glucose\",\"Triglyceride levels\",\"Gut microbial network clusters (Turquoise (at 3 months) x Any Breastfeeding (3 Months) interaction\",\"Hemoglobin A1c (HbA1c, maximum, inv-norm transformed)\",\"Lymphocyte count (UKB data field 30120)\",\"Mean reticulocyte volume\",\"Type 2 diabetes\",\"Ribosomal protein S6 kinase alpha-1 levels\",\"White blood cell count\",\"Mean corpuscular hemoglobin\",\"mean corpuscular volume (MCV, minimum, inv-norm transformed)\",\"Glycated haemoglobin HbA1c levels (UKB data field 30750)\",\"Mean sphered cell volume (UKB data field 30270)\",\"GAL protein levels\",\"Mean spheric corpuscular volume\",\"Hemoglobin A1c levels\",\"Mean reticulocyte volume (UKB data field 30260)\",\"Lymphocyte count\",\"mean corpuscular hemoglobin (MCH, maximum, inv-norm transformed)\",\"Hemoglobin A1c (HbA1c, minimum, inv-norm transformed)\"]},\"summary_by_significance\":{\"related_genes\":[\"RPS6KA1\"],\"high_risk_snps\":[\"rs11589734\",\"rs1002487\",\"rs17162190\",\"rs112750178\",\"rs72651546\",\"rs190737\"],\"affected_protein_levels\":[\"C-reactive\",\"C-reactive (MTAG)\"],\"associated_disease_traits\":[\"Ribosomal protein S6 kinase alpha-1 levels\",\"Mean corpuscular hemoglobin\",\"Fasting plasma glucose\",\"Triglyceride levels\",\"Mean corpuscular volume\",\"C-reactive protein levels (MTAG)\",\"Lymphocyte count\",\"C-reactive protein levels\",\"Gut microbial network clusters (Turquoise (at 3 months) x Any Breastfeeding (3 Months) interaction\",\"Educational attainment\"]}},\"uniprot_entries_base\":{\"function\":\"(Microbial infection) Promotes the late transcription and translation of viral lytic genes during Kaposi's sarcoma-associated herpesvirus/HHV-8 infection, when constitutively activated, Serine/threonine-protein kinase that acts downstream of ERK (MAPK1/ERK2 and MAPK3/ERK1) signaling and mediates mitogenic and stress-induced activation of the transcription factors CREB1, ETV1/ER81 and NR4A1/NUR77, regulates translation through RPS6 and EIF4B phosphorylation, and mediates cellular proliferation, survival, and differentiation by modulating mTOR signaling and repressing pro-apoptotic function of BAD and DAPK1 . In fibroblast, is required for EGF-stimulated phosphorylation of CREB1, which results in the subsequent transcriptional activation of several immediate-early genes . In response to mitogenic stimulation (EGF and PMA), phosphorylates and activates NR4A1/NUR77 and ETV1/ER81 transcription factors and the cofactor CREBBP . Upon insulin-derived signal, acts indirectly on the transcription regulation of several genes by phosphorylating GSK3B at 'Ser-9' and inhibiting its activity . Phosphorylates RPS6 in response to serum or EGF via an mTOR-independent mechanism and promotes translation initiation by facilitating assembly of the pre-initiation complex . In response to insulin, phosphorylates EIF4B, enhancing EIF4B affinity for the EIF3 complex and stimulating cap-dependent translation . Is involved in the mTOR nutrient-sensing pathway by directly phosphorylating TSC2 at 'Ser-1798', which potently inhibits TSC2 ability to suppress mTOR signaling, and mediates phosphorylation of RPTOR, which regulates mTORC1 activity and may promote rapamycin-sensitive signaling independently of the PI3K/AKT pathway . Also involved in feedback regulation of mTORC1 and mTORC2 by phosphorylating DEPTOR . Mediates cell survival by phosphorylating the pro-apoptotic proteins BAD and DAPK1 and suppressing their pro-apoptotic function . Promotes the survival of hepatic stellate cells by phosphorylating CEBPB in response to the hepatotoxin carbon tetrachloride (CCl4) . Mediates induction of hepatocyte prolifration by TGFA through phosphorylation of CEBPB . Is involved in cell cycle regulation by phosphorylating the CDK inhibitor CDKN1B, which promotes CDKN1B association with 14-3-3 proteins and prevents its translocation to the nucleus and inhibition of G1 progression . Phosphorylates EPHA2 at 'Ser-897', the RPS6KA-EPHA2 signaling pathway controls cell migration . In response to mTORC1 activation, phosphorylates EIF4B at 'Ser-406' and 'Ser-422' which stimulates bicarbonate cotransporter SLC4A7 mRNA translation, increasing SLC4A7 protein abundance and function\"},\"uniprot_entries_gwas\":{\"function\":\"(Microbial infection) Promotes the late transcription and translation of viral lytic genes during Kaposi's sarcoma-associated herpesvirus/HHV-8 infection, when constitutively activated, Serine/threonine-protein kinase that acts downstream of ERK (MAPK1/ERK2 and MAPK3/ERK1) signaling and mediates mitogenic and stress-induced activation of the transcription factors CREB1, ETV1/ER81 and NR4A1/NUR77, regulates translation through RPS6 and EIF4B phosphorylation, and mediates cellular proliferation, survival, and differentiation by modulating mTOR signaling and repressing pro-apoptotic function of BAD and DAPK1 . In fibroblast, is required for EGF-stimulated phosphorylation of CREB1, which results in the subsequent transcriptional activation of several immediate-early genes . In response to mitogenic stimulation (EGF and PMA), phosphorylates and activates NR4A1/NUR77 and ETV1/ER81 transcription factors and the cofactor CREBBP . Upon insulin-derived signal, acts indirectly on the transcription regulation of several genes by phosphorylating GSK3B at 'Ser-9' and inhibiting its activity . Phosphorylates RPS6 in response to serum or EGF via an mTOR-independent mechanism and promotes translation initiation by facilitating assembly of the pre-initiation complex . In response to insulin, phosphorylates EIF4B, enhancing EIF4B affinity for the EIF3 complex and stimulating cap-dependent translation . Is involved in the mTOR nutrient-sensing pathway by directly phosphorylating TSC2 at 'Ser-1798', which potently inhibits TSC2 ability to suppress mTOR signaling, and mediates phosphorylation of RPTOR, which regulates mTORC1 activity and may promote rapamycin-sensitive signaling independently of the PI3K/AKT pathway . Also involved in feedback regulation of mTORC1 and mTORC2 by phosphorylating DEPTOR . Mediates cell survival by phosphorylating the pro-apoptotic proteins BAD and DAPK1 and suppressing their pro-apoptotic function . Promotes the survival of hepatic stellate cells by phosphorylating CEBPB in response to the hepatotoxin carbon tetrachloride (CCl4) . Mediates induction of hepatocyte prolifration by TGFA through phosphorylation of CEBPB . Is involved in cell cycle regulation by phosphorylating the CDK inhibitor CDKN1B, which promotes CDKN1B association with 14-3-3 proteins and prevents its translocation to the nucleus and inhibition of G1 progression . Phosphorylates EPHA2 at 'Ser-897', the RPS6KA-EPHA2 signaling pathway controls cell migration . In response to mTORC1 activation, phosphorylates EIF4B at 'Ser-406' and 'Ser-422' which stimulates bicarbonate cotransporter SLC4A7 mRNA translation, increasing SLC4A7 protein abundance and function\"},\"dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)\":{\"rs17162190\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Mean corpuscular volume\":{\"p_value\":2e-10,\"risk_score\":0.02795862}}},\"rs414546\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"mean corpuscular hemoglobin (MCH, minimum, inv-norm transformed)\":{\"p_value\":8e-16,\"risk_score\":0.02948},\"mean corpuscular volume (MCV, minimum, inv-norm transformed)\":{\"p_value\":6e-15,\"risk_score\":0.02882},\"Mean reticulocyte volume\":{\"p_value\":1e-15,\"risk_score\":0.021982666}}},\"rs389548\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Hemoglobin A1c (HbA1c, maximum, inv-norm transformed)\":{\"p_value\":8e-12,\"risk_score\":0.02596},\"Hemoglobin A1c (HbA1c, mean, inv-norm transformed)\":{\"p_value\":2e-11,\"risk_score\":0.02611},\"Hemoglobin A1c (HbA1c, minimum, inv-norm transformed)\":{\"p_value\":2e-15,\"risk_score\":0.02632}}},\"rs11589734\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Ribosomal protein S6 kinase alpha-1 levels\":{\"p_value\":2e-43,\"risk_score\":0.185}}},\"rs4970485\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Mean sphered cell volume (UKB data field 30270)\":{\"p_value\":5e-27,\"risk_score\":0.025198944},\"Mean reticulocyte volume (UKB data field 30260)\":{\"p_value\":1e-14,\"risk_score\":0.01823318},\"Mean spheric corpuscular volume\":{\"p_value\":4.0000000000000006e-34,\"risk_score\":0.03320932},\"Mean corpuscular hemoglobin\":{\"p_value\":3e-19,\"risk_score\":0.021383}}},\"rs2229712\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"missense_variant\",\"variant_category\":\"coding\",\"associated_disease_trait\":{\"Lymphocyte count (UKB data field 30120)\":{\"p_value\":2e-19,\"risk_score\":0.020769417},\"Lymphocyte count\":{\"p_value\":8e-13,\"risk_score\":0.01898683}}},\"rs10902750\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Glycated haemoglobin HbA1c levels (UKB data field 30750)\":{\"p_value\":4e-15,\"risk_score\":0.015668496}}},\"rs112750178\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"C-reactive protein levels (MTAG)\":{\"p_value\":2e-10,\"risk_score\":0.01501},\"C-reactive protein levels\":{\"p_value\":2e-09,\"risk_score\":0.0143063}}},\"rs4970483\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Mean corpuscular hemoglobin\":{\"p_value\":1e-19,\"risk_score\":0.0203}}},\"rs4970486\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Hemoglobin A1c levels\":{\"p_value\":2e-09,\"risk_score\":0.0155}}},\"rs1002487\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Fasting plasma glucose\":{\"p_value\":6e-11,\"risk_score\":6.551},\"Triglyceride levels\":{\"p_value\":7e-11,\"risk_score\":6.517}}},\"rs72651546\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Gut microbial network clusters (Turquoise (at 3 months) x Any Breastfeeding (3 Months) interaction\":{\"p_value\":4e-09,\"risk_score\":0.04}}},\"rs6685701\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Type 2 diabetes\":{\"p_value\":1e-08,\"risk_score\":0.0296}}},\"rs190737\":{\"mapped_gene\":\"RPS6KA1\",\"context\":\"intron_variant\",\"variant_category\":\"intronic\",\"associated_disease_trait\":{\"Educational attainment\":{\"p_value\":5e-09,\"risk_score\":0.00613196}}}}}]",
+  "mirDB_targets": {},
+  "gwas_associations": {},
+  "context_block": "[{\"gene\":\"TP53\",\"Summary about the gene structure, transcripts and complexity:\":{\"gene_name\":\"TP53\",\"n_transcripts\":24,\"exons_per_transcript\":{\"ENST00000413465.6\":7,\"ENST00000714356.1\":10,\"ENST00000359597.8\":9,\"ENST00000504290.5\":8,\"ENST00000504937.5\":7,\"ENST00000510385.5\":8,\"ENST00000610623.4\":8,\"ENST00000618944.4\":8,\"ENST00000619186.4\":7,\"ENST00000610292.4\":10,\"ENST00000620739.4\":11,\"ENST00000420246.6\":12,\"ENST00000455263.6\":12,\"ENST00000610538.4\":12,\"ENST00000622645.4\":12,\"ENST00000714357.1\":11,\"ENST00000445888.6\":11,\"ENST00000604348.6\":11,\"ENST00000619485.4\":11,\"ENST00000269305.9\":11,\"ENST00000714408.1\":11,\"ENST00000714409.1\":10,\"ENST00000576024.2\":10,\"ENST00000714359.1\":11},\"min_transcript_span_bp\":7092,\"max_transcript_span_bp\":19137,\"transcript_ids\":[\"ENST00000413465.6\",\"ENST00000714356.1\",\"ENST00000359597.8\",\"ENST00000504290.5\",\"ENST00000504937.5\",\"ENST00000510385.5\",\"ENST00000610623.4\",\"ENST00000618944.4\",\"ENST00000619186.4\",\"ENST00000610292.4\",\"ENST00000620739.4\",\"ENST00000420246.6\",\"ENST00000455263.6\",\"ENST00000610538.4\",\"ENST00000622645.4\",\"ENST00000714357.1\",\"ENST00000445888.6\",\"ENST00000604348.6\",\"ENST00000619485.4\",\"ENST00000269305.9\",\"ENST00000714408.1\",\"ENST00000714409.1\",\"ENST00000576024.2\",\"ENST00000714359.1\"],\"gene_span_bp\":[7661779,7687546]}}]",
   "llm_json": {
-    "answer": "RPS6KA1 can be connected to kidney disease through several potential mechanisms based on its molecular functions and genetic associations. RPS6KA1 is a serine/threonine-protein kinase that regulates mTOR signaling pathways, which are crucial for kidney function and disease development. The gene shows genetic associations with metabolic traits that are risk factors for kidney disease, including Type 2 diabetes, fasting plasma glucose levels, and triglyceride levels. Additionally, RPS6KA1 regulates cellular proliferation, survival, and differentiation through mTOR signaling modulation, and it phosphorylates key proteins like TSC2 that control mTOR activity. The mTOR pathway is well-established as playing critical roles in kidney disease progression, particularly in diabetic nephropathy and other forms of chronic kidney disease.",
+    "answer": "TP53 has 24 different transcripts with varying exon numbers. The number of exons per transcript ranges from 7 to 12 exons. The shortest transcript (ENST00000413465.6) has 7 exons, while several transcripts including ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4 have the maximum of 12 exons. The transcript spans range from 7,092 base pairs to 19,137 base pairs, and the entire TP53 gene spans from position 7,661,779 to 7,687,546 base pairs.",
     "evidence": [
-      "RPS6KA1 is involved in the mTOR nutrient-sensing pathway by directly phosphorylating TSC2",
-      "RPS6KA1 mediates phosphorylation of RPTOR, which regulates mTORC1 activity",
-      "RPS6KA1 shows genetic association with Type 2 diabetes (rs6685701, p-value 1e-08)",
-      "RPS6KA1 shows genetic association with fasting plasma glucose (rs1002487, p-value 6e-11)",
-      "RPS6KA1 shows genetic association with triglyceride levels (rs1002487, p-value 7e-11)",
-      "RPS6KA1 mediates cellular proliferation, survival, and differentiation by modulating mTOR signaling"
+      "TP53 has 24 transcripts",
+      "TP53 exons per transcript range from 7 to 12",
+      "ENST00000413465.6 has 7 exons",
+      "ENST00000420246.6 has 12 exons",
+      "ENST00000455263.6 has 12 exons",
+      "ENST00000610538.4 has 12 exons",
+      "ENST00000622645.4 has 12 exons",
+      "TP53 minimum transcript span is 7092 bp",
+      "TP53 maximum transcript span is 19137 bp",
+      "TP53 gene spans from 7661779 to 7687546 bp"
     ]
   },
   "verification": "pass",
   "used_tools": [
     "extract_entities",
-    "gencode_gene_node",
-    "query_gwas_by_gene",
-    "uniprot_base",
-    "humanbase_functions",
-    "reactome",
-    "BioGRID",
-    "Summarize_bioGRID_GO"
+    "gencode_gene_node"
   ],
   "ui": {}
 }
