@@ -108,7 +108,7 @@ def method_alvessa(question: str, system_msg: str) -> Dict[str, Any]:
     """
     Returns a unified record dict for the question using Alvessa (run_pipeline).
     """
-    result = run_pipeline(question, prompt=system_msg, run_verifier=False)
+    result = run_pipeline(question, prompt=system_msg, mc_setup=True)
     answer = result.get("llm_json", {}).get("answer", "")
     used = result.get("used_tools", None)
 
