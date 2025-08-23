@@ -53,10 +53,10 @@ if __name__ == "__main__":
 
     EXAMPLE_QUESTIONS: List[str] = [
         #"Do not run any of the tools, just proceed directly to the LLM.",
-        #"Tell me about variants in TP53",
+        "Tell me about exons in TP53",
         #"Which diseases and traits are associated with the genes TP53 and KRAS?",
         # "Which gene is the best drug target for virally induced cancers, KRAS or TP53?",
-         "How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
+        # "How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
         # "Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?",
         # "Through what pathways or protein interactions does viral gene E6 (or E7) modulate cellular metabolism?"
         # "Is there evidence of protein-protein interaction or functional overlaps between TP53 and KRAS?"

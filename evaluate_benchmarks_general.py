@@ -123,10 +123,11 @@ def method_baseline(question: str, system_msg: str) -> Dict[str, Any]:
     """
     Returns a unified record dict for the question using baseline claude_call.
     """
+    print('Running baseline method with Claude with system message:', system_msg)
     raw = claude_call(
         model=CONDITIONED_MODEL,
         temperature=0,
-        max_tokens=2000,
+        max_tokens=10,
         system=system_msg,
         messages=[{"role": "user", "content": f"User asked: {question}"}],
     )

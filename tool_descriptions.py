@@ -38,7 +38,7 @@ Note these are only examples, and in real life you may need to run combinations 
 TOOL_CATALOG = {
     "extract_entities": "Extracts genes and all biomedical entities from the user question for query understanding using both Claude and GLiNER models. Returns genes (Claude + GLiNER), traits, and all entity types found by GLiNER. This tool MUST be called first before running any other tool as it provides essential entity extraction for pipeline execution.",
     "expand_gene_set_by_trait": "Use this tool ONLY IF the expanded gene set by a trait is REQUIRED to answer the question. This could be used to discover more relevant genes underlying a trait, if a broader genetic context would be valuable for the analysis. Searches for genetic associations with diseases, traits, or phenotypes mentioned in the user query and expands the gene list with additional related genes found through GWAS associations. ",
-    "gencode_gene_node": "Annotates genes with GENCODE gene annotations. Provides gene-level information such as gene name, description, and genomic coordinates. Essential for many downstream analyses.",
+    "gencode_gene_node": "Annotates genes with GENCODE gene annotations such as transcripts, number exons, genomic span. Essential for many downstream analyses.",
     "humanbase_functions": "Fetch per-gene functional predictions from HumanBase tissue-specific networks. Provides expanded list of functions.",
     "uniprot_base":  "Queries UniProt for functional annotations and disease links.",
     "query_gwas_by_gene":  "Retrieves genome-wide association study (GWAS) results for a given gene. It collects traits and diseases associated with genetic variants linked to that gene, along with the specific variants",
