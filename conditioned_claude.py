@@ -171,9 +171,8 @@ def create_context_block(state: "State") -> str:
             marker = "end of entity description"
         marked_payload.append({"_marker": marker})
 
-    # Serialize context and handle truncation
     context_payload = ensure_json_safe(marked_payload)
-    return to_unquoted_top(context_payload) #json.dumps(context_payload, separators=(",", ":"))
+    return to_unquoted_top(context_payload)
 
 
 def conditioned_claude_node(state: "State") -> "State":
