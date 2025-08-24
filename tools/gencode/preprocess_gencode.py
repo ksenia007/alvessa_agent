@@ -27,7 +27,7 @@ gtf_df_expanded = pd.concat([gtf_df.drop(columns=["attributes"]), attr_df], axis
 
 # Save preprocessed version
 out_path = "../../local_dbs/gencode.v48.expanded.parquet"
-gtf_df_expanded.to_parquet(out_path, index=False)
+# gtf_df_expanded.to_parquet(out_path, index=False)
 
 print(f"Expanded GTF saved to {out_path} with {gtf_df_expanded.shape[0]} rows.")
 print("Available attribute columns:", list(attr_df.columns))
