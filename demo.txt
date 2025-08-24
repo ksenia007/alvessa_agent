@@ -7,13 +7,10 @@ C. ATP6V1B1
 D. GBP2
 
 Answer:
-None of the provided options (TMCC3, EDEM3, ATP6V1B1, GBP2) are computationally predicted human gene targets of MIR3140_5P according to miRDB v6.0.
+EDEM3
 
 Evidence:
-  - MIR3140 has a comprehensive list of computationally predicted human gene targets from miRDB database that includes genes like TSHZ1, CR1, GLS2, RBM12, OLFM3, and many others
-  - TMCC3 is not present in the list of predicted targets for MIR3140
-  - EDEM3 appears in the target list but for a different context, not specifically as a MIR3140_5P target
-  - ATP6V1B1 is not present in the list of predicted targets for MIR3140
-  - GBP2 is not present in the list of predicted targets for MIR3140
+  - MIR3140 has computationally predicted gene targets from the miRDB database that include EDEM3 in the human target list
+  - EDEM3 appears in the comprehensive list of human gene targets for MIR3140 according to miRDB v6.0
 
 

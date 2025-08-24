@@ -33,7 +33,7 @@ def format_state_for_prompt(state: State) -> str:
     question = state["messages"][-1]["content"]
     catalog = "\n".join(f"- {name}: {desc}" for name, desc in TOOL_CATALOG.items())
 
-    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" \n\n Available tools: {catalog}.\n\n Examples workflows: {EXAMPLE_TOOL_SELECTION} \n Which tools should be called, and in what order? Respond *ONLY* with a Python list of tool names. Example: ["humanbase_functions", "uniprot_base"] or ["humanbase_functions", "uniprot_base", "query_gwas_by_gene"] or ["query_gwas_by_gene", "BioGRID"]"""
+    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" \n\n If the question mentioned a database or tool and we do not have it, use the most similar available one. Available tools: {catalog}.\n\n Examples workflows: {EXAMPLE_TOOL_SELECTION} \n Which tools should be called, and in what order? Respond *ONLY* with a Python list of tool names. Example: ["humanbase_functions", "uniprot_base"] or ["humanbase_functions", "uniprot_base", "query_gwas_by_gene"] or ["query_gwas_by_gene", "BioGRID"]"""
 
 def _safe_merge(acc: dict, out: dict) -> None:
     """Merge tool output into acc without mutating caller state."""
