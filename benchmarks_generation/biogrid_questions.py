@@ -21,14 +21,21 @@ def biogrid_set1(count):
         random_gene_idx = random.sample(available_values, 1)[0]
         curr_gene = gene_list[random_gene_idx]
         try:
-            interactors = _fetch_predictions_BioGRID(curr_gene)[0]
+            all_interactors, human_interactors, nonhuman_interactors = _fetch_predictions_BioGRID(curr_gene)
 
-            max_interactor_idx = len(interactors)
+            all_human_interactors = []
+            for value_list in human_interactors.values():
+                all_human_interactors.extend(value_list)
+
+            # print("all_genes: ", all_interactors)
+            # print("human_genes: ", all_human_interactors)  
+
+            max_interactor_idx = len(all_human_interactors)
             random_interactor_idxs = random.sample(range(max_interactor_idx), 1)[0]
-            correct_choice = list(interactors)[random_interactor_idxs]
+            correct_choice = list(all_human_interactors)[random_interactor_idxs]
 
             interactors_idxs_in_gene_list = []
-            for interactor in list(interactors):
+            for interactor in list(all_interactors):
                 try:
                     interactors_idxs_in_gene_list.append(gene_list.index(interactor))
                 except:
@@ -74,25 +81,36 @@ def biogrid_set2(count):
 
         chosen_gene_idxs = []
         chosen_genes = []
-        interactors_union = []
+        all_interactors_union = []
+        human_interactors_union = []
 
         while len(chosen_genes)<2:
             random_gene_idx = random.sample(available_values, 1)[0]
             curr_gene = gene_list[random_gene_idx]
             try:
-                interactors_union.extend(_fetch_predictions_BioGRID(curr_gene)[0])
+                all_interactors, human_interactors, nonhuman_interactors = _fetch_predictions_BioGRID(curr_gene)
+                all_interactors_union.extend(all_interactors)
+
+                all_human_interactors = []
+                for value_list in human_interactors.values():
+                    all_human_interactors.extend(value_list)
+
+                # print("all_genes: ", all_interactors_union)
+                # print("human_genes: ", all_human_interactors)        
+
+                human_interactors_union.extend(all_human_interactors)
                 chosen_gene_idxs.append(random_gene_idx)
                 chosen_genes.append(curr_gene)
             except Exception as e:
                 # continue
                 print(curr_gene, e)
             
-        max_interactor_idx = len(interactors_union)
+        max_interactor_idx = len(human_interactors_union)
         random_interactor_idxs = random.sample(range(max_interactor_idx), 1)[0]
-        correct_choice = list(interactors_union)[random_interactor_idxs]
+        correct_choice = list(human_interactors_union)[random_interactor_idxs]
 
         interactors_idxs_in_gene_list = []
-        for interactor in list(interactors_union):
+        for interactor in list(all_interactors_union):
             try:
                 interactors_idxs_in_gene_list.append(gene_list.index(interactor))
             except:
@@ -136,27 +154,37 @@ def biogrid_set3(count):
         random_gene_idx = random.sample(available_values, 1)[0]
         gene_x = gene_list[random_gene_idx]
         try:
-            gene_x_interactors = _fetch_predictions_BioGRID(gene_x)[0]
+            all_gene_x_interactors, human_gene_x_interactors, nonhuman_gene_x_interactors = _fetch_predictions_BioGRID(gene_x)
+            # print("all_x: ", all_gene_x_interactors)
+            # print("human_x: ", human_gene_x_interactors)
+            all_human_gene_x_interactors = []
+            for value_list in human_gene_x_interactors.values():
+                all_human_gene_x_interactors.extend(value_list)
 
-            max_interactor_idx = len(gene_x_interactors)
+            max_interactor_idx = len(all_human_gene_x_interactors)
             gene_y_idx = random.sample(range(max_interactor_idx), 1)[0]
-            gene_y = list(gene_x_interactors)[gene_y_idx]
+            gene_y = list(all_human_gene_x_interactors)[gene_y_idx]
             while True:
                 try:
-                    gene_y_interactors = list(_fetch_predictions_BioGRID(gene_y)[0])
+                    all_gene_y_interactors, human_gene_y_interactors, nonhuman_gene_y_interactors = _fetch_predictions_BioGRID(gene_y)
                     break
-                except:
+                except Exception as e:
                     print(gene_y, e)
 
+            all_human_gene_y_interactors = []
+            for value_list in human_gene_y_interactors.values():
+                all_human_gene_y_interactors.extend(value_list)
 
-            in_y_not_in_x = [gene for gene in gene_y_interactors if gene not in gene_x_interactors]
+            # print("all_y: ", all_gene_y_interactors)
+            # print("human_y: ", human_gene_y_interactors)
+            in_y_not_in_x = [gene for gene in all_human_gene_y_interactors if gene not in all_gene_x_interactors]
 
             max_interactor_idx = len(in_y_not_in_x)
             random_interactor_idxs = random.sample(range(max_interactor_idx), 1)[0]
             correct_choice = in_y_not_in_x[random_interactor_idxs]
 
             interactors_idxs_in_gene_list = []
-            for interactor in list(in_y_not_in_x):
+            for interactor in list(all_gene_y_interactors):
                 try:
                     interactors_idxs_in_gene_list.append(gene_list.index(interactor))
                 except:
