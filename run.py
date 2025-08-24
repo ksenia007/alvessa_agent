@@ -52,7 +52,7 @@ if __name__ == "__main__":
     sys.stdout = logfile
 
     EXAMPLE_QUESTIONS: List[str] = [
-        "What microRNAs regulate the cancer-related functions of TP53, and how are these connected to pathways and protein interactions?"
+        # "What microRNAs regulate the cancer-related functions of TP53, and how are these connected to pathways and protein interactions?"
         #"Do not run any of the tools, just proceed directly to the LLM.",
         #"Tell me about exons in TP53",
         #"Which diseases and traits are associated with the genes TP53 and KRAS?",
@@ -62,6 +62,12 @@ if __name__ == "__main__":
         # "Through what pathways or protein interactions does viral gene E6 (or E7) modulate cellular metabolism?"
         # "Is there evidence of protein-protein interaction or functional overlaps between TP53 and KRAS?"
         # "Are there common patterns in regulatory activity of variants found for TP53 and KRAS in GWAS studies?"
+        """Which of the following genes is a computationally predicted human gene target of the miRNA MIR3140_5P according to miRDB v6.0? 
+
+A. TMCC3
+B. EDEM3
+C. ATP6V1B1
+D. GBP2"""
     ]
 
     with open("demo.txt", "w") as f:
