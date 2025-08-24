@@ -15,9 +15,9 @@ from pathlib import Path
 
 from evaluate_benchmarks_general import run_benchmark
 
-SUBFOLDERS = ['gencode'] #'gwas_variants', 'gwas_easy', 'biogrid', 'reactome']
+SUBFOLDERS = ['gencode', 'GWAS', 'reactome'] #'biogrid', 
 MAIN_PATH = Path("benchmarks_generation")
-MAX_ROWS = 3  # -1 means all
+MAX_ROWS = 10  # -1 means all
 
 SYSTEM_MSG = (
     """You are a multiple-choice answering system.
