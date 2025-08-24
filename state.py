@@ -27,7 +27,7 @@ class State(TypedDict, total=False):
     chr_pos_variants: Annotated[Dict[str, Dict[str, Dict[str, Any]]], operator.or_]
     gene_level_gencode: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     prompt: Annotated[str, operator.add]
-    run_verifier: Annotated[bool, operator.and_]
+    mc_setup: Annotated[bool, operator.and_]
 
     # UniProt / HumanBase look-ups
     uniprot_entries_base: Annotated[Dict[str, Dict], operator.or_]
@@ -59,7 +59,9 @@ class State(TypedDict, total=False):
     llm_json: Annotated[Dict[str, Any], operator.or_]
     verification: str
     verify_attempts: int
+    tool_updates: int
     used_tools: Annotated[List[str], operator.add]
+    use_tools: Annotated[List[str], operator.add]  # tools to use in the current run
     
     # interactive view
     ui: Annotated[Dict[str, Any], operator.or_]  # e.g., {"panels": [...]}

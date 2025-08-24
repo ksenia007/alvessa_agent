@@ -62,6 +62,7 @@ def main():
                 )
             else:  # alvessa
                 print(f"Running Alvessa on {in_path}")
+                
                 run_benchmark(
                     str(in_path),
                     system_msg=SYSTEM_MSG,

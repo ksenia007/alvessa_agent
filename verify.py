@@ -29,16 +29,11 @@ def verify_evidence_node(state: "State") -> "State":
     """
     if DEBUG:
         print("[verify_evidence_node] preparing verification...")
-        
-    # check that run_verifier is not False
-    if not state.get("run_verifier", True):
-        if DEBUG:
-            print("[verify_evidence_node] run_verifier is False, skipping verification.")
-        return {"messages": [], "verification": "pass"}
 
-    reply: Dict[str, Any] = state["llm_json"]
-    context: str = state["context_block"]
-    question: str = state["messages"][-1]["content"]
+
+    reply = state.get("llm_json", {})
+    context = state.get("context_block", "")
+    question = (state.get("messages") or [{}])[-1].get("content", "")
     answer: str = reply.get("answer", "")
     evidence_list = reply.get("evidence", [])
 
@@ -73,8 +68,8 @@ def verify_evidence_node(state: "State") -> "State":
     if DEBUG:
         print("[verify_evidence_node]", verdict, parsed.get("reason", ""))
 
-    msgs = list(state["messages"])
-    delta = []
+
     if verdict == "fail":
-        delta.append(msgs[-1])  # only the modified last message
-    return {"messages": delta, "verification": verdict}
+        return {"verification": "fail"}
+    else:
+        return {"verification": "pass"}

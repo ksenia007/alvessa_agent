@@ -2,7 +2,7 @@
 Author: Ksenia Sokolova <sokolova@princeton.edu>
 Contributors: 
 Created: 2024-06-25
-Updated: 2025-06-26
+Updated: 2025-08-26
 
 
 Description: 
@@ -53,24 +53,23 @@ def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
     
     # Define data sources with their state keys and optional processing
     data_sources = [
-        ('Summary about the gene structure, transcripts and complexity:', 'gene_level_gencode'),
-        ("diseases", "gene_disease_traits"),
-        ("Top 30 predicted functions", "humanbase_predictions", lambda hits: [hit["term"] for hit in hits if "term" in hit][:30]),
-        ("Gene ontology (GO) summarized terms of interacting genes", "biogrid_summarized_go"),
+        ('Summary about the gene structure, transcripts and complexity from GENCODE:', 'gene_level_gencode'),
+        ("Diseases associated with this gene:", "gene_disease_traits"),
+        ("Top 30 predicted gene functions (from HumanBase database):", "humanbase_predictions", lambda hits: [hit["term"] for hit in hits if "term" in hit][:30]),
+        ("Gene ontology (GO) summarized terms of interacting genes: ", "biogrid_summarized_go"),
         ("Interacting human genes based on BioGRID curated database, organized by experimental system", "biogrid_interaction_groups"),
-        ("Interacting nonhuman genes based on BioGRID curated database, organized by experimental system", "biogrid_interactions_select_nonhuman"),
+        ("Interacting non-human genes based on BioGRID curated database, organized by experimental system", "biogrid_interactions_select_nonhuman"),
         ("Associated Reactome pathways (curated biological pathways which describe how molecules interact within a cell to carry out different biological processes)", "reactome_pathways"),
-        ("Contains GWAS associations and their statistical significance (to traits, protein levels etc.) for the gene and its variants. Returns associations that are high-risk or high-signifiance or both.", "gwas_associations"),
-        ("uniprot_entries_base", "uniprot_entries_base", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
-        ("uniprot_entries_gwas", "uniprot_entries_gwas", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
+        ("GWAS-based associations and their statistical significance for the gene and its variants, for example connection to traits, protein levels etc. Returns associations that are high-risk or high-signifiance or both.", "gwas_associations"),
+        ("Uniprot-derived annotations for the given gene, diseases and functions:", "uniprot_entries_base", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
+        # ("uniprot_entries_gwas", "uniprot_entries_gwas", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
         ("Regulatory activity role for the regions where variants were found. Defined computationally through Sei, a deep learning model that predicts transcription factors, histone marks and dnase, though clustering prediction over the genome and then assinging values. Reperesents role of the region", "sei_predictions"),
         ("Gene expression context of the genes, gives context for the ranges of variants that *could* be observed in this gene:", "humanbase_expecto", lambda data: data.get('summary_text')),
         ("Per variant gene expression modulation predictions, linked to variants of interest. Note that it is z-scored to 1000Genomes, so values below 1 are a fairly small effect:", "tissue_expression_preds_variant_text_description", lambda txt: txt if isinstance(txt, str) and txt.strip() else None),
         ("Pathogenicity predictions for each missense variant of interest. Computed through AlphaMissense, which predicts the likelihood that missense variants (genetic mutations where a single amino acid in a protein is changed) can cause disease", "alphamissense_predictions"),
         ("dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)", "dbsnp_variants", _process_dbsnp_variants),
         ("dbSNP variant summary (rare vs common variants, chromosomes, assembly info)", "dbsnp_summaries", _process_dbsnp_variants),
-        ("List of all computationally predicted gene targets of microRNAs from the miRDB database.", "mirDB_targets"),
-        ("GENCODE gene structure", "gene_level_gencode"),
+        ("All computationally predicted gene targets for this miRNA (from the miRDB database):", "mirDB_targets"),
     ]
     
     for source in data_sources:
@@ -115,6 +114,67 @@ def _build_trait_context(trait_associations: Dict[str, Any]) -> Dict[str, Any]:
     return trait_info
 
 
+def _clean_str(s: str) -> str:
+    """Remove embedded newlines so they don't break the one-line-per-entry rule."""
+    s = s.replace("\r", "")
+    s = s.replace("\n", " ")   # or ", " if you want them comma-separated
+    return re.sub(r"\s{2,}", " ", s).strip()
+
+def _to_unquoted_inner(obj) -> str:
+    if obj is None: return "null"
+    if isinstance(obj, bool): return "true" if obj else "false"
+    if isinstance(obj, (int, float)): return str(obj)
+    if isinstance(obj, str): return _clean_str(obj)
+    if isinstance(obj, (list, tuple, set)):
+        return "[" + ", ".join(_to_unquoted_inner(x) for x in obj) + "]"
+    if isinstance(obj, dict):
+        return "{" + ", ".join(f"{k}: {_to_unquoted_inner(v)}" for k, v in obj.items()) + "}"
+    return _clean_str(str(obj))
+
+def to_unquoted_top(payload_list) -> str:
+    """Exactly one newline between top-level entries, no extra newlines inside."""
+    return "\n".join(_to_unquoted_inner(entry) for entry in payload_list)
+
+
+def create_context_block(state: "State") -> str:
+    """Build a compact JSON context. """
+    
+    if DEBUG:
+        print("[create_context_block function] preparing context block...")
+    
+    # Build gene-based context
+    gene_list = list(set(state.get("genes", [])))
+    context_payload = [_extract_gene_data(state, gene) for gene in gene_list]
+
+    if DEBUG:
+        print(f"[create_context_block] genes to summarize: {gene_list}")
+    
+    # Add trait-based context if no genes but trait data exists
+    trait_associations = state.get("trait_associations", {})
+    if not gene_list and trait_associations.get("found", False):
+        if DEBUG:
+            print("[create_context_block] No genes found, adding trait-based associations")
+        context_payload.append(_build_trait_context(trait_associations))
+    
+    # Serialize context and handle truncation
+    marked_payload = []
+    for entry in context_payload:
+        marked_payload.append(entry)  # keep the entry
+        if isinstance(entry, dict):
+            if "gene" in entry:
+                marker = f"end of entity {entry['gene']} description"
+            elif "trait" in entry:
+                marker = f"end of entity {entry['trait']} description"
+            else:
+                marker = "end of entity description"
+        else:
+            marker = "end of entity description"
+        marked_payload.append({"_marker": marker})
+
+    context_payload = ensure_json_safe(marked_payload)
+    return to_unquoted_top(context_payload)
+
+
 def conditioned_claude_node(state: "State") -> "State":
     """
     Build a compact JSON context and ask Claude for an answer.
@@ -127,32 +187,10 @@ def conditioned_claude_node(state: "State") -> "State":
     State
         Updated state with assistant message, context block and parsed JSON.
     """
-    if DEBUG:
-        print("[conditioned_claude_node] preparing context block...")
-    
-    # Build gene-based context
-    gene_list = list(set(state.get("genes", [])))
-    context_payload = [_extract_gene_data(state, gene) for gene in gene_list]
+    context_block = create_context_block(state)
 
     if DEBUG:
-        print(f"[conditioned_claude_node] genes to summarize: {gene_list}")
-    
-    # Add trait-based context if no genes but trait data exists
-    trait_associations = state.get("trait_associations", {})
-    if not gene_list and trait_associations.get("found", False):
-        if DEBUG:
-            print("[conditioned_claude_node] No genes found, adding trait-based associations")
-        context_payload.append(_build_trait_context(trait_associations))
-    
-    # Context building is now handled by helper functions above
-
-    # Serialize context and handle truncation
-    context_payload = ensure_json_safe(context_payload)
-    context_block = json.dumps(context_payload, separators=(",", ":"))
-    if DEBUG:
-        print(f"[conditioned_claude_node] context length: {len(context_block)}")
-        if len(context_block) <= N_CHARS:
-            print(f"[conditioned_claude_node] context: {context_block}")
+        print(f"[conditioned_claude_node] context length before truncation: {len(context_block)}")
     
     if len(context_block) > N_CHARS:
         context_block = context_block[:N_CHARS] + "...<truncated>"

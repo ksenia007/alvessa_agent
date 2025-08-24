@@ -1,19 +1,16 @@
 ================================================================================
-Q: Tell me about exons in TP53
+Q: Which diseases and traits are associated with the genes TP53 and KRAS?
 
 Answer:
-TP53 has 24 different transcripts with varying exon numbers. The number of exons per transcript ranges from 7 to 12 exons. The shortest transcript (ENST00000413465.6) has 7 exons, while several transcripts including ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4 have the maximum of 12 exons. The transcript spans range from 7,092 base pairs to 19,137 base pairs, and the entire TP53 gene spans from position 7,661,779 to 7,687,546 base pairs.
+TP53 is associated with multiple cancers including basal cell carcinoma, glioblastoma, glioma, skin cancer, colon polyp, Li-Fraumeni syndrome, lung cancer, esophageal cancer, and squamous cell carcinoma of the head and neck. It is also associated with uterine fibroids, hormone-related traits (sex hormone-binding globulin levels, testosterone levels), metabolic traits (body fat percentage, cholesterol levels, glucose levels), and blood-related parameters (hemoglobin levels, red blood cell count). KRAS is associated with various cancers including gastric cancer and leukemias, developmental syndromes (Cardiofaciocutaneous syndrome 2, Noonan syndrome 3), and metabolic traits including liver enzyme levels and sex hormone-binding globulin levels.
 
 Evidence:
-  - TP53 has 24 transcripts
-  - TP53 exons per transcript range from 7 to 12
-  - ENST00000413465.6 has 7 exons
-  - ENST00000420246.6 has 12 exons
-  - ENST00000455263.6 has 12 exons
-  - ENST00000610538.4 has 12 exons
-  - ENST00000622645.4 has 12 exons
-  - TP53 minimum transcript span is 7092 bp
-  - TP53 maximum transcript span is 19137 bp
-  - TP53 gene spans from 7661779 to 7687546 bp
+  - TP53 associated_disease_traits include Basal cell carcinoma, Glioblastoma, Glioma, Skin cancer, Colon polyp, Uterine fibroids
+  - TP53 Uniprot diseases include Li-Fraumeni syndrome, Lung cancer, Esophageal cancer, Basal cell carcinoma 7, Squamous cell carcinoma of the head and neck
+  - TP53 variants associated with Sex hormone-binding globulin levels, Testosterone levels, Body fat percentage, Low density lipoprotein cholesterol levels, Glucose levels
+  - TP53 variants associated with Mean corpuscular hemoglobin, Red blood cell count, Glycated hemoglobin levels
+  - KRAS Uniprot diseases include Gastric cancer, Leukemia acute myelogenous, Leukemia juvenile myelomonocytic, Cardiofaciocutaneous syndrome 2, Noonan syndrome 3
+  - KRAS associated_disease_traits include Liver enzyme levels (gamma-glutamyl transferase), Sex hormone-binding globulin levels
+  - KRAS variants associated with pubertal stage transition and metabolic parameters
 
 

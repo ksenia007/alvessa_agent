@@ -3,7 +3,7 @@ import json
 import random
 from typing import List
 import pandas as pd
-
+# %%
 def construct_question_mc(df: pd.Series):
     """
     Constructs a multiple-choice question from a DataFrame row.
@@ -67,6 +67,7 @@ def convert_to_csv(df: pd.DataFrame, outfile: str):
     result.to_csv(outfile, index=False)
     return result
 
+
 # file = 'dbqa.parquet' 
 # questions = pd.read_parquet(file) 
 # convert_to_csv(questions, 'dbqa_mc.csv')
@@ -75,4 +76,3 @@ questions = pd.read_parquet(file)
 convert_to_csv(questions, 'litqa_mc.csv')
 
 
-# %%

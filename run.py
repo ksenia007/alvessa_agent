@@ -27,7 +27,7 @@ import json
 
 
 
-def run_pipeline(user_message: str, prompt: str = '', run_verifier: bool = True) -> Dict:
+def run_pipeline(user_message: str, prompt: str = '', mc_setup: bool = False) -> Dict:
     """
     Execute the LangGraph workflow on a single user prompt.
 
@@ -41,7 +41,7 @@ def run_pipeline(user_message: str, prompt: str = '', run_verifier: bool = True)
     dict
         Final LangGraph state for inspection.
     """
-    graph = build_graph(run_verifier = run_verifier)
+    graph = build_graph(mc_setup = mc_setup)
     state = graph.invoke({"messages": [{"role": "user", "content": user_message}], 
                           "prompt": prompt})
     return state
@@ -52,11 +52,12 @@ if __name__ == "__main__":
     sys.stdout = logfile
 
     EXAMPLE_QUESTIONS: List[str] = [
+        # "What microRNAs regulate the cancer-related functions of TP53, and how are these connected to pathways and protein interactions?"
         #"Do not run any of the tools, just proceed directly to the LLM.",
-        "Tell me about exons in TP53",
-        #"Which diseases and traits are associated with the genes TP53 and KRAS?",
+        #"Tell me about exons in TP53",
+        "Which diseases and traits are associated with the genes TP53 and KRAS?",
         # "Which gene is the best drug target for virally induced cancers, KRAS or TP53?",
-        # "How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
+        #"How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
         # "Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?",
         # "Through what pathways or protein interactions does viral gene E6 (or E7) modulate cellular metabolism?"
         # "Is there evidence of protein-protein interaction or functional overlaps between TP53 and KRAS?"
