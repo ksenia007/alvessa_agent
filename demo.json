@@ -2,11 +2,11 @@
   "messages": [
     {
       "role": "user",
-      "content": "tell me about exons of TP53"
+      "content": "Tell me about exons in TP53"
     },
     {
       "role": "assistant",
-      "content": "{\n  \"answer\": \"TP53 is a protein-coding gene with 24 transcripts that vary in their exon composition. The number of exons per transcript ranges from 7 to 12 exons. The shortest transcript (ENST00000413465.6) has 7 exons, while several transcripts including ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4 have the maximum of 12 exons. The transcript spans range from 7,092 base pairs to 19,137 base pairs, indicating significant structural diversity in TP53 transcripts.\",\n  \"evidence\": [\n    \"TP53 has 24 transcripts\",\n    \"TP53 exons per transcript range from 7 to 12\",\n    \"TP53 transcript ENST00000413465.6 has 7 exons\",\n    \"TP53 transcripts ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4 have 12 exons\",\n    \"TP53 transcript spans range from 7,092 to 19,137 base pairs\"\n  ]\n}"
+      "content": "{\n  \"answer\": \"TP53 has 24 different transcripts with varying numbers of exons. The number of exons per transcript ranges from 7 to 12. The shortest transcripts (ENST00000413465.6, ENST00000504937.5, and ENST00000619186.4) contain 7 exons, while several transcripts (ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4) contain the maximum of 12 exons. The gene spans 25,767 base pairs on chromosome 17, with transcript spans ranging from 7,092 to 19,137 base pairs.\",\n  \"evidence\": [\n    \"TP53 has 24 transcripts\",\n    \"TP53 exons per transcript range from 7 to 12\",\n    \"TP53 transcript ENST00000413465.6 has 7 exons\",\n    \"TP53 transcript ENST00000420246.6 has 12 exons\",\n    \"TP53 gene spans from position 7661779 to 7687546 on chr17\",\n    \"TP53 transcript spans range from 7092 to 19137 base pairs\"\n  ]\n}"
     }
   ],
   "genes": [
@@ -22,6 +22,7 @@
       "gene_name": "TP53",
       "gene_type": "protein_coding",
       "gene_id": "ENSG00000141510.19",
+      "chromosome": "chr17",
       "n_transcripts": 24,
       "exons_per_transcript": {
         "ENST00000413465.6": 7,
@@ -106,15 +107,16 @@
   "alphamissense_predictions": {},
   "mirDB_targets": {},
   "gwas_associations": {},
-  "context_block": "{gene: TP53, Summary about the gene structure, transcripts and complexity from GENCODE:: {gene_name: TP53, gene_type: protein_coding, gene_id: ENSG00000141510.19, n_transcripts: 24, exons_per_transcript: {ENST00000413465.6: 7, ENST00000714356.1: 10, ENST00000359597.8: 9, ENST00000504290.5: 8, ENST00000504937.5: 7, ENST00000510385.5: 8, ENST00000610623.4: 8, ENST00000618944.4: 8, ENST00000619186.4: 7, ENST00000610292.4: 10, ENST00000620739.4: 11, ENST00000420246.6: 12, ENST00000455263.6: 12, ENST00000610538.4: 12, ENST00000622645.4: 12, ENST00000714357.1: 11, ENST00000445888.6: 11, ENST00000604348.6: 11, ENST00000619485.4: 11, ENST00000269305.9: 11, ENST00000714408.1: 11, ENST00000714409.1: 10, ENST00000576024.2: 10, ENST00000714359.1: 11}, min_transcript_span_bp: 7092, max_transcript_span_bp: 19137, transcript_ids: [ENST00000413465.6, ENST00000714356.1, ENST00000359597.8, ENST00000504290.5, ENST00000504937.5, ENST00000510385.5, ENST00000610623.4, ENST00000618944.4, ENST00000619186.4, ENST00000610292.4, ENST00000620739.4, ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, ENST00000622645.4, ENST00000714357.1, ENST00000445888.6, ENST00000604348.6, ENST00000619485.4, ENST00000269305.9, ENST00000714408.1, ENST00000714409.1, ENST00000576024.2, ENST00000714359.1], gene_span_bp: [7661779, 7687546]}}\n{_marker: end of entity TP53 description}",
+  "context_block": "{gene: TP53, Summary about the gene structure, transcripts and complexity from GENCODE:: {gene_name: TP53, gene_type: protein_coding, gene_id: ENSG00000141510.19, chromosome: chr17, n_transcripts: 24, exons_per_transcript: {ENST00000413465.6: 7, ENST00000714356.1: 10, ENST00000359597.8: 9, ENST00000504290.5: 8, ENST00000504937.5: 7, ENST00000510385.5: 8, ENST00000610623.4: 8, ENST00000618944.4: 8, ENST00000619186.4: 7, ENST00000610292.4: 10, ENST00000620739.4: 11, ENST00000420246.6: 12, ENST00000455263.6: 12, ENST00000610538.4: 12, ENST00000622645.4: 12, ENST00000714357.1: 11, ENST00000445888.6: 11, ENST00000604348.6: 11, ENST00000619485.4: 11, ENST00000269305.9: 11, ENST00000714408.1: 11, ENST00000714409.1: 10, ENST00000576024.2: 10, ENST00000714359.1: 11}, min_transcript_span_bp: 7092, max_transcript_span_bp: 19137, transcript_ids: [ENST00000413465.6, ENST00000714356.1, ENST00000359597.8, ENST00000504290.5, ENST00000504937.5, ENST00000510385.5, ENST00000610623.4, ENST00000618944.4, ENST00000619186.4, ENST00000610292.4, ENST00000620739.4, ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, ENST00000622645.4, ENST00000714357.1, ENST00000445888.6, ENST00000604348.6, ENST00000619485.4, ENST00000269305.9, ENST00000714408.1, ENST00000714409.1, ENST00000576024.2, ENST00000714359.1], gene_span_bp: [7661779, 7687546]}}\n{_marker: end of entity TP53 description}",
   "llm_json": {
-    "answer": "TP53 is a protein-coding gene with 24 transcripts that vary in their exon composition. The number of exons per transcript ranges from 7 to 12 exons. The shortest transcript (ENST00000413465.6) has 7 exons, while several transcripts including ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4 have the maximum of 12 exons. The transcript spans range from 7,092 base pairs to 19,137 base pairs, indicating significant structural diversity in TP53 transcripts.",
+    "answer": "TP53 has 24 different transcripts with varying numbers of exons. The number of exons per transcript ranges from 7 to 12. The shortest transcripts (ENST00000413465.6, ENST00000504937.5, and ENST00000619186.4) contain 7 exons, while several transcripts (ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4) contain the maximum of 12 exons. The gene spans 25,767 base pairs on chromosome 17, with transcript spans ranging from 7,092 to 19,137 base pairs.",
     "evidence": [
       "TP53 has 24 transcripts",
       "TP53 exons per transcript range from 7 to 12",
       "TP53 transcript ENST00000413465.6 has 7 exons",
-      "TP53 transcripts ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4 have 12 exons",
-      "TP53 transcript spans range from 7,092 to 19,137 base pairs"
+      "TP53 transcript ENST00000420246.6 has 12 exons",
+      "TP53 gene spans from position 7661779 to 7687546 on chr17",
+      "TP53 transcript spans range from 7092 to 19137 base pairs"
     ]
   },
   "verification": "pass",
