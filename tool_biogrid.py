@@ -108,11 +108,11 @@ def bioGRID_predictions_agent(state: "State") -> "State":
             nonhuman_select_interactions[gene] = defaultdict(list)
 
             for key, val in human_set.items():
-                human_interactions[gene][key].extend(val)
+                human_interactions[gene][key].extend(list(set(val)))
             for key, val in nonhuman_set.items():
-                nonhuman_select_interactions[gene][key].extend(val)
+                nonhuman_select_interactions[gene][key].extend(list(set(val)))
 
-            preds[gene] = list(interactions)
+            preds[gene] = list(set(interactions))
 
         time.sleep(0.3)  # courteous pause
 
