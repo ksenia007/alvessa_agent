@@ -9,3 +9,4 @@ benchmarks_generation/results/
 benchmarks_generation/*.csv
 benchmarks_generation/*/*.csv
 benchmarks_generation/*/*.parquet
+benchmarks_generation/results_checkpoint_aug23
