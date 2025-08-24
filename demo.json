@@ -2,49 +2,92 @@
   "messages": [
     {
       "role": "user",
-      "content": "Which diseases and traits are associated with the genes TP53 and KRAS?"
+      "content": "tell me about exons of TP53"
     },
     {
       "role": "assistant",
-      "content": "{\n  \"answer\": \"TP53 is associated with multiple cancers including basal cell carcinoma, glioblastoma, glioma, skin cancer, colon polyp, Li-Fraumeni syndrome, lung cancer, esophageal cancer, and squamous cell carcinoma of the head and neck. It is also associated with uterine fibroids, hormone-related traits (sex hormone-binding globulin levels, testosterone levels), metabolic traits (body fat percentage, cholesterol levels, glucose levels), and blood-related parameters (hemoglobin levels, red blood cell count). KRAS is associated with various cancers including gastric cancer and leukemias, developmental syndromes (Cardiofaciocutaneous syndrome 2, Noonan syndrome 3), and metabolic traits including liver enzyme levels and sex hormone-binding globulin levels.\",\n  \"evidence\": [\n    \"TP53 associated_disease_traits include Basal cell carcinoma, Glioblastoma, Glioma, Skin cancer, Colon polyp, Uterine fibroids\",\n    \"TP53 Uniprot diseases include Li-Fraumeni syndrome, Lung cancer, Esophageal cancer, Basal cell carcinoma 7, Squamous cell carcinoma of the head and neck\",\n    \"TP53 variants associated with Sex hormone-binding globulin levels, Testosterone levels, Body fat percentage, Low density lipoprotein cholesterol levels, Glucose levels\",\n    \"TP53 variants associated with Mean corpuscular hemoglobin, Red blood cell count, Glycated hemoglobin levels\",\n    \"KRAS Uniprot diseases include Gastric cancer, Leukemia acute myelogenous, Leukemia juvenile myelomonocytic, Cardiofaciocutaneous syndrome 2, Noonan syndrome 3\",\n    \"KRAS associated_disease_traits include Liver enzyme levels (gamma-glutamyl transferase), Sex hormone-binding globulin levels\",\n    \"KRAS variants associated with pubertal stage transition and metabolic parameters\"\n  ]\n}"
+      "content": "{\n  \"answer\": \"TP53 is a protein-coding gene with 24 transcripts that vary in their exon composition. The number of exons per transcript ranges from 7 to 12 exons. The shortest transcript (ENST00000413465.6) has 7 exons, while several transcripts including ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4 have the maximum of 12 exons. The transcript spans range from 7,092 base pairs to 19,137 base pairs, indicating significant structural diversity in TP53 transcripts.\",\n  \"evidence\": [\n    \"TP53 has 24 transcripts\",\n    \"TP53 exons per transcript range from 7 to 12\",\n    \"TP53 transcript ENST00000413465.6 has 7 exons\",\n    \"TP53 transcripts ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4 have 12 exons\",\n    \"TP53 transcript spans range from 7,092 to 19,137 base pairs\"\n  ]\n}"
     }
   ],
   "genes": [
-    "TP53",
-    "KRAS"
+    "TP53"
   ],
   "traits": [],
   "proteins": [],
   "transcripts": [],
   "variants": {},
   "chr_pos_variants": {},
-  "gene_level_gencode": {},
+  "gene_level_gencode": {
+    "TP53": {
+      "gene_name": "TP53",
+      "gene_type": "protein_coding",
+      "gene_id": "ENSG00000141510.19",
+      "n_transcripts": 24,
+      "exons_per_transcript": {
+        "ENST00000413465.6": 7,
+        "ENST00000714356.1": 10,
+        "ENST00000359597.8": 9,
+        "ENST00000504290.5": 8,
+        "ENST00000504937.5": 7,
+        "ENST00000510385.5": 8,
+        "ENST00000610623.4": 8,
+        "ENST00000618944.4": 8,
+        "ENST00000619186.4": 7,
+        "ENST00000610292.4": 10,
+        "ENST00000620739.4": 11,
+        "ENST00000420246.6": 12,
+        "ENST00000455263.6": 12,
+        "ENST00000610538.4": 12,
+        "ENST00000622645.4": 12,
+        "ENST00000714357.1": 11,
+        "ENST00000445888.6": 11,
+        "ENST00000604348.6": 11,
+        "ENST00000619485.4": 11,
+        "ENST00000269305.9": 11,
+        "ENST00000714408.1": 11,
+        "ENST00000714409.1": 10,
+        "ENST00000576024.2": 10,
+        "ENST00000714359.1": 11
+      },
+      "min_transcript_span_bp": 7092,
+      "max_transcript_span_bp": 19137,
+      "transcript_ids": [
+        "ENST00000413465.6",
+        "ENST00000714356.1",
+        "ENST00000359597.8",
+        "ENST00000504290.5",
+        "ENST00000504937.5",
+        "ENST00000510385.5",
+        "ENST00000610623.4",
+        "ENST00000618944.4",
+        "ENST00000619186.4",
+        "ENST00000610292.4",
+        "ENST00000620739.4",
+        "ENST00000420246.6",
+        "ENST00000455263.6",
+        "ENST00000610538.4",
+        "ENST00000622645.4",
+        "ENST00000714357.1",
+        "ENST00000445888.6",
+        "ENST00000604348.6",
+        "ENST00000619485.4",
+        "ENST00000269305.9",
+        "ENST00000714408.1",
+        "ENST00000714409.1",
+        "ENST00000576024.2",
+        "ENST00000714359.1"
+      ],
+      "gene_span_bp": [
+        7661779,
+        7687546
+      ]
+    },
+    "assembly": "GRCh38"
+  },
   "prompt": "",
   "mc_setup": false,
-  "uniprot_entries_base": {
-    "TP53": {
-      "diseases": "Adrenocortical carcinoma, Basal cell carcinoma 7, Bone marrow failure syndrome 5, Esophageal cancer, Li-Fraumeni syndrome, Lung cancer, Papilloma of choroid plexus, Squamous cell carcinoma of the head and neck",
-      "function": "Multifunctional transcription factor that induces cell cycle arrest, DNA repair or apoptosis upon binding to its target DNA sequence . Acts as a tumor suppressor in many tumor types; induces growth arrest or apoptosis depending on the physiological circumstances and cell type . Negatively regulates cell division by controlling expression of a set of genes required for this process . One of the activated genes is an inhibitor of cyclin-dependent kinases. Apoptosis induction seems to be mediated either by stimulation of BAX and FAS antigen expression, or by repression of Bcl-2 expression . Its pro-apoptotic activity is activated via its interaction with PPP1R13B/ASPP1 or TP53BP2/ASPP2 . However, this activity is inhibited when the interaction with PPP1R13B/ASPP1 or TP53BP2/ASPP2 is displaced by PPP1R13L/iASPP . In cooperation with mitochondrial PPIF is involved in activating oxidative stress-induced necrosis; the function is largely independent of transcription. Induces the transcription of long intergenic non-coding RNA p21 (lincRNA-p21) and lincRNA-Mkln1. LincRNA-p21 participates in TP53-dependent transcriptional repression leading to apoptosis and seems to have an effect on cell-cycle regulation. Implicated in Notch signaling cross-over. Prevents CDK7 kinase activity when associated to CAK complex in response to DNA damage, thus stopping cell cycle progression. Isoform 2 enhances the transactivation activity of isoform 1 from some but not all TP53-inducible promoters. Isoform 4 suppresses transactivation activity and impairs growth suppression mediated by isoform 1. Isoform 7 inhibits isoform 1-mediated apoptosis. Regulates the circadian clock by repressing CLOCK-BMAL1-mediated transcriptional activation of PER2",
-      "go_terms": "C:PML body, C:centrosome, C:chromatin, C:cytoplasm, C:cytosol, C:endoplasmic reticulum, C:germ cell nucleus, C:mitochondrial matrix, C:mitochondrion, C:nuclear matrix, C:nucleolus, C:nucleoplasm, C:nucleus, C:protein-containing complex, C:replication fork, C:site of double-strand break, C:transcription regulator complex, C:transcription repressor complex, F:14-3-3 protein binding, F:ATP-dependent DNA/DNA annealing activity, F:DNA binding, F:DNA-binding transcription activator activity, RNA polymerase II-specific, F:DNA-binding transcription factor activity, F:DNA-binding transcription factor activity, RNA polymerase II-specific, F:DNA-binding transcription repressor activity, RNA polymerase II-specific, F:MDM2/MDM4 family protein binding, F:RNA polymerase II cis-regulatory region sequence-specific DNA binding, F:RNA polymerase II-specific DNA-binding transcription factor binding, F:TFIID-class transcription factor complex binding, F:chromatin binding, F:cis-regulatory region sequence-specific DNA binding, F:copper ion binding, F:core promoter sequence-specific DNA binding, F:disordered domain specific binding, F:enzyme binding, F:general transcription initiation factor binding, F:histone deacetylase binding, F:histone deacetylase regulator activity, F:identical protein binding, F:mRNA 3'-UTR binding, F:molecular condensate scaffold activity, F:molecular function activator activity, F:p53 binding, F:promoter-specific chromatin binding, F:protease binding, F:protein heterodimerization activity, F:protein phosphatase 2A binding, F:protein-folding chaperone binding, F:receptor tyrosine kinase binding, F:transcription cis-regulatory region binding, F:transcription coactivator binding, F:ubiquitin protein ligase binding, F:zinc ion binding, P:B cell lineage commitment, P:DNA damage response, P:DNA damage response, signal transduction by p53 class mediator, P:ER overload response, P:Ras protein signal transduction, P:T cell differentiation in thymus, P:T cell lineage commitment, P:T cell proliferation involved in immune response, P:autophagy, P:bone marrow development, P:cardiac muscle cell apoptotic process, P:cardiac septum morphogenesis, P:cellular response to UV, P:cellular response to UV-C, P:cellular response to actinomycin D, P:cellular response to gamma radiation, P:cellular response to glucose starvation, P:cellular response to hypoxia, P:cellular response to ionizing radiation, P:cellular response to xenobiotic stimulus, P:cellular senescence, P:cerebellum development, P:chromosome organization, P:circadian behavior, P:determination of adult lifespan, P:double-strand break repair, P:embryonic organ development, P:entrainment of circadian clock by photoperiod, P:fibroblast proliferation, P:gastrulation, P:glial cell proliferation, P:glucose catabolic process to lactate via pyruvate, P:hematopoietic progenitor cell differentiation, P:hematopoietic stem cell differentiation, P:in utero embryonic development, P:intrinsic apoptotic signaling pathway, P:intrinsic apoptotic signaling pathway by p53 class mediator, P:intrinsic apoptotic signaling pathway in response to DNA damage by p53 class mediator, P:intrinsic apoptotic signaling pathway in response to endoplasmic reticulum stress, P:intrinsic apoptotic signaling pathway in response to hypoxia, P:mRNA transcription, P:mitochondrial DNA repair, P:mitophagy, P:mitotic G1 DNA damage checkpoint signaling, P:multicellular organism growth, P:necroptotic process, P:negative regulation of DNA replication, P:negative regulation of DNA-templated transcription, P:negative regulation of G1 to G0 transition, P:negative regulation of apoptotic process, P:negative regulation of cell growth, P:negative regulation of cell population proliferation, P:negative regulation of fibroblast proliferation, P:negative regulation of glial cell proliferation, P:negative regulation of glucose catabolic process to lactate via pyruvate, P:negative regulation of helicase activity, P:negative regulation of miRNA processing, P:negative regulation of mitophagy, P:negative regulation of neuroblast proliferation, P:negative regulation of pentose-phosphate shunt, P:negative regulation of proteolysis, P:negative regulation of reactive oxygen species metabolic process, P:negative regulation of stem cell proliferation, P:negative regulation of telomere maintenance via telomerase, P:negative regulation of transcription by RNA polymerase II, P:negative regulation of transforming growth factor beta receptor signaling pathway, P:neuroblast proliferation, P:neuron apoptotic process, P:nucleotide-excision repair, P:oligodendrocyte apoptotic process, P:oxidative stress-induced premature senescence, P:positive regulation of DNA-templated transcription, P:positive regulation of RNA polymerase II transcription preinitiation complex assembly, P:positive regulation of apoptotic process, P:positive regulation of cardiac muscle cell apoptotic process, P:positive regulation of cellular senescence, P:positive regulation of execution phase of apoptosis, P:positive regulation of gene expression, P:positive regulation of intrinsic apoptotic signaling pathway, P:positive regulation of miRNA transcription, P:positive regulation of mitochondrial membrane permeability, P:positive regulation of neuron apoptotic process, P:positive regulation of programmed necrotic cell death, P:positive regulation of reactive oxygen species metabolic process, P:positive regulation of release of cytochrome c from mitochondria, P:positive regulation of thymocyte apoptotic process, P:positive regulation of transcription by RNA polymerase II, P:protein import into nucleus, P:protein localization, P:protein stabilization, P:protein tetramerization, P:protein-containing complex assembly, P:rRNA transcription, P:reactive oxygen species metabolic process, P:regulation of DNA damage response, signal transduction by p53 class mediator, P:regulation of DNA-templated transcription, P:regulation of apoptotic process, P:regulation of cell cycle, P:regulation of cell cycle G2/M phase transition, P:regulation of fibroblast apoptotic process, P:regulation of intrinsic apoptotic signaling pathway by p53 class mediator, P:regulation of mitochondrial membrane permeability involved in apoptotic process, P:regulation of tissue remodeling, P:regulation of transcription by RNA polymerase II, P:release of cytochrome c from mitochondria, P:replicative senescence, P:response to X-ray, P:response to antibiotic, P:response to gamma radiation, P:response to ischemia, P:response to salt stress, P:signal transduction by p53 class mediator, P:somitogenesis, P:stem cell proliferation, P:thymocyte apoptotic process, P:transcription initiation-coupled chromatin remodeling, P:transforming growth factor beta receptor signaling pathway, P:tumor necrosis factor-mediated signaling pathway, P:type II interferon-mediated signaling pathway, P:viral process"
-    },
-    "KRAS": {
-      "diseases": "Cardiofaciocutaneous syndrome 2, Gastric cancer, Leukemia, acute myelogenous, Leukemia, juvenile myelomonocytic, Noonan syndrome 3, Oculoectodermal syndrome, Schimmelpenning-Feuerstein-Mims syndrome",
-      "function": "Ras proteins bind GDP/GTP and possess intrinsic GTPase activity . Plays an important role in the regulation of cell proliferation . Plays a role in promoting oncogenic events by inducing transcriptional silencing of tumor suppressor genes (TSGs) in colorectal cancer (CRC) cells in a ZNF304-dependent manner",
-      "go_terms": "C:Golgi membrane, C:cytoplasm, C:cytoplasmic side of plasma membrane, C:cytosol, C:endoplasmic reticulum membrane, C:focal adhesion, C:membrane, C:mitochondrial outer membrane, C:plasma membrane, F:G protein activity, F:GDP binding, F:GMP binding, F:GTP binding, F:GTPase activity, F:LRR domain binding, F:identical protein binding, F:protein-containing complex binding, F:protein-membrane adaptor activity, P:MAPK cascade, P:Rac protein signal transduction, P:Ras protein signal transduction, P:actin cytoskeleton organization, P:cardiac muscle cell proliferation, P:cytokine-mediated signaling pathway, P:epithelial tube branching involved in lung morphogenesis, P:female pregnancy, P:forebrain astrocyte development, P:gene expression, P:glial cell proliferation, P:homeostasis of number of cells within a tissue, P:liver development, P:myoblast proliferation, P:negative regulation of epithelial cell differentiation, P:negative regulation of neuron apoptotic process, P:neuron apoptotic process, P:positive regulation of Rac protein signal transduction, P:positive regulation of cellular senescence, P:positive regulation of gene expression, P:positive regulation of glial cell proliferation, P:regulation of long-term neuronal synaptic plasticity, P:regulation of synaptic transmission, GABAergic, P:response to glucocorticoid, P:response to gravity, P:response to isolation stress, P:response to mineralocorticoid, P:skeletal muscle cell differentiation, P:striated muscle cell differentiation, P:type I pneumocyte differentiation, P:visual learning"
-    }
-  },
-  "uniprot_entries_gwas": {
-    "TP53": {
-      "diseases": "Adrenocortical carcinoma, Basal cell carcinoma 7, Bone marrow failure syndrome 5, Esophageal cancer, Li-Fraumeni syndrome, Lung cancer, Papilloma of choroid plexus, Squamous cell carcinoma of the head and neck",
-      "function": "Multifunctional transcription factor that induces cell cycle arrest, DNA repair or apoptosis upon binding to its target DNA sequence . Acts as a tumor suppressor in many tumor types; induces growth arrest or apoptosis depending on the physiological circumstances and cell type . Negatively regulates cell division by controlling expression of a set of genes required for this process . One of the activated genes is an inhibitor of cyclin-dependent kinases. Apoptosis induction seems to be mediated either by stimulation of BAX and FAS antigen expression, or by repression of Bcl-2 expression . Its pro-apoptotic activity is activated via its interaction with PPP1R13B/ASPP1 or TP53BP2/ASPP2 . However, this activity is inhibited when the interaction with PPP1R13B/ASPP1 or TP53BP2/ASPP2 is displaced by PPP1R13L/iASPP . In cooperation with mitochondrial PPIF is involved in activating oxidative stress-induced necrosis; the function is largely independent of transcription. Induces the transcription of long intergenic non-coding RNA p21 (lincRNA-p21) and lincRNA-Mkln1. LincRNA-p21 participates in TP53-dependent transcriptional repression leading to apoptosis and seems to have an effect on cell-cycle regulation. Implicated in Notch signaling cross-over. Prevents CDK7 kinase activity when associated to CAK complex in response to DNA damage, thus stopping cell cycle progression. Isoform 2 enhances the transactivation activity of isoform 1 from some but not all TP53-inducible promoters. Isoform 4 suppresses transactivation activity and impairs growth suppression mediated by isoform 1. Isoform 7 inhibits isoform 1-mediated apoptosis. Regulates the circadian clock by repressing CLOCK-BMAL1-mediated transcriptional activation of PER2",
-      "go_terms": "C:PML body, C:centrosome, C:chromatin, C:cytoplasm, C:cytosol, C:endoplasmic reticulum, C:germ cell nucleus, C:mitochondrial matrix, C:mitochondrion, C:nuclear matrix, C:nucleolus, C:nucleoplasm, C:nucleus, C:protein-containing complex, C:replication fork, C:site of double-strand break, C:transcription regulator complex, C:transcription repressor complex, F:14-3-3 protein binding, F:ATP-dependent DNA/DNA annealing activity, F:DNA binding, F:DNA-binding transcription activator activity, RNA polymerase II-specific, F:DNA-binding transcription factor activity, F:DNA-binding transcription factor activity, RNA polymerase II-specific, F:DNA-binding transcription repressor activity, RNA polymerase II-specific, F:MDM2/MDM4 family protein binding, F:RNA polymerase II cis-regulatory region sequence-specific DNA binding, F:RNA polymerase II-specific DNA-binding transcription factor binding, F:TFIID-class transcription factor complex binding, F:chromatin binding, F:cis-regulatory region sequence-specific DNA binding, F:copper ion binding, F:core promoter sequence-specific DNA binding, F:disordered domain specific binding, F:enzyme binding, F:general transcription initiation factor binding, F:histone deacetylase binding, F:histone deacetylase regulator activity, F:identical protein binding, F:mRNA 3'-UTR binding, F:molecular condensate scaffold activity, F:molecular function activator activity, F:p53 binding, F:promoter-specific chromatin binding, F:protease binding, F:protein heterodimerization activity, F:protein phosphatase 2A binding, F:protein-folding chaperone binding, F:receptor tyrosine kinase binding, F:transcription cis-regulatory region binding, F:transcription coactivator binding, F:ubiquitin protein ligase binding, F:zinc ion binding, P:B cell lineage commitment, P:DNA damage response, P:DNA damage response, signal transduction by p53 class mediator, P:ER overload response, P:Ras protein signal transduction, P:T cell differentiation in thymus, P:T cell lineage commitment, P:T cell proliferation involved in immune response, P:autophagy, P:bone marrow development, P:cardiac muscle cell apoptotic process, P:cardiac septum morphogenesis, P:cellular response to UV, P:cellular response to UV-C, P:cellular response to actinomycin D, P:cellular response to gamma radiation, P:cellular response to glucose starvation, P:cellular response to hypoxia, P:cellular response to ionizing radiation, P:cellular response to xenobiotic stimulus, P:cellular senescence, P:cerebellum development, P:chromosome organization, P:circadian behavior, P:determination of adult lifespan, P:double-strand break repair, P:embryonic organ development, P:entrainment of circadian clock by photoperiod, P:fibroblast proliferation, P:gastrulation, P:glial cell proliferation, P:glucose catabolic process to lactate via pyruvate, P:hematopoietic progenitor cell differentiation, P:hematopoietic stem cell differentiation, P:in utero embryonic development, P:intrinsic apoptotic signaling pathway, P:intrinsic apoptotic signaling pathway by p53 class mediator, P:intrinsic apoptotic signaling pathway in response to DNA damage by p53 class mediator, P:intrinsic apoptotic signaling pathway in response to endoplasmic reticulum stress, P:intrinsic apoptotic signaling pathway in response to hypoxia, P:mRNA transcription, P:mitochondrial DNA repair, P:mitophagy, P:mitotic G1 DNA damage checkpoint signaling, P:multicellular organism growth, P:necroptotic process, P:negative regulation of DNA replication, P:negative regulation of DNA-templated transcription, P:negative regulation of G1 to G0 transition, P:negative regulation of apoptotic process, P:negative regulation of cell growth, P:negative regulation of cell population proliferation, P:negative regulation of fibroblast proliferation, P:negative regulation of glial cell proliferation, P:negative regulation of glucose catabolic process to lactate via pyruvate, P:negative regulation of helicase activity, P:negative regulation of miRNA processing, P:negative regulation of mitophagy, P:negative regulation of neuroblast proliferation, P:negative regulation of pentose-phosphate shunt, P:negative regulation of proteolysis, P:negative regulation of reactive oxygen species metabolic process, P:negative regulation of stem cell proliferation, P:negative regulation of telomere maintenance via telomerase, P:negative regulation of transcription by RNA polymerase II, P:negative regulation of transforming growth factor beta receptor signaling pathway, P:neuroblast proliferation, P:neuron apoptotic process, P:nucleotide-excision repair, P:oligodendrocyte apoptotic process, P:oxidative stress-induced premature senescence, P:positive regulation of DNA-templated transcription, P:positive regulation of RNA polymerase II transcription preinitiation complex assembly, P:positive regulation of apoptotic process, P:positive regulation of cardiac muscle cell apoptotic process, P:positive regulation of cellular senescence, P:positive regulation of execution phase of apoptosis, P:positive regulation of gene expression, P:positive regulation of intrinsic apoptotic signaling pathway, P:positive regulation of miRNA transcription, P:positive regulation of mitochondrial membrane permeability, P:positive regulation of neuron apoptotic process, P:positive regulation of programmed necrotic cell death, P:positive regulation of reactive oxygen species metabolic process, P:positive regulation of release of cytochrome c from mitochondria, P:positive regulation of thymocyte apoptotic process, P:positive regulation of transcription by RNA polymerase II, P:protein import into nucleus, P:protein localization, P:protein stabilization, P:protein tetramerization, P:protein-containing complex assembly, P:rRNA transcription, P:reactive oxygen species metabolic process, P:regulation of DNA damage response, signal transduction by p53 class mediator, P:regulation of DNA-templated transcription, P:regulation of apoptotic process, P:regulation of cell cycle, P:regulation of cell cycle G2/M phase transition, P:regulation of fibroblast apoptotic process, P:regulation of intrinsic apoptotic signaling pathway by p53 class mediator, P:regulation of mitochondrial membrane permeability involved in apoptotic process, P:regulation of tissue remodeling, P:regulation of transcription by RNA polymerase II, P:release of cytochrome c from mitochondria, P:replicative senescence, P:response to X-ray, P:response to antibiotic, P:response to gamma radiation, P:response to ischemia, P:response to salt stress, P:signal transduction by p53 class mediator, P:somitogenesis, P:stem cell proliferation, P:thymocyte apoptotic process, P:transcription initiation-coupled chromatin remodeling, P:transforming growth factor beta receptor signaling pathway, P:tumor necrosis factor-mediated signaling pathway, P:type II interferon-mediated signaling pathway, P:viral process"
-    },
-    "KRAS": {
-      "diseases": "Cardiofaciocutaneous syndrome 2, Gastric cancer, Leukemia, acute myelogenous, Leukemia, juvenile myelomonocytic, Noonan syndrome 3, Oculoectodermal syndrome, Schimmelpenning-Feuerstein-Mims syndrome",
-      "function": "Ras proteins bind GDP/GTP and possess intrinsic GTPase activity . Plays an important role in the regulation of cell proliferation . Plays a role in promoting oncogenic events by inducing transcriptional silencing of tumor suppressor genes (TSGs) in colorectal cancer (CRC) cells in a ZNF304-dependent manner",
-      "go_terms": "C:Golgi membrane, C:cytoplasm, C:cytoplasmic side of plasma membrane, C:cytosol, C:endoplasmic reticulum membrane, C:focal adhesion, C:membrane, C:mitochondrial outer membrane, C:plasma membrane, F:G protein activity, F:GDP binding, F:GMP binding, F:GTP binding, F:GTPase activity, F:LRR domain binding, F:identical protein binding, F:protein-containing complex binding, F:protein-membrane adaptor activity, P:MAPK cascade, P:Rac protein signal transduction, P:Ras protein signal transduction, P:actin cytoskeleton organization, P:cardiac muscle cell proliferation, P:cytokine-mediated signaling pathway, P:epithelial tube branching involved in lung morphogenesis, P:female pregnancy, P:forebrain astrocyte development, P:gene expression, P:glial cell proliferation, P:homeostasis of number of cells within a tissue, P:liver development, P:myoblast proliferation, P:negative regulation of epithelial cell differentiation, P:negative regulation of neuron apoptotic process, P:neuron apoptotic process, P:positive regulation of Rac protein signal transduction, P:positive regulation of cellular senescence, P:positive regulation of gene expression, P:positive regulation of glial cell proliferation, P:regulation of long-term neuronal synaptic plasticity, P:regulation of synaptic transmission, GABAergic, P:response to glucocorticoid, P:response to gravity, P:response to isolation stress, P:response to mineralocorticoid, P:skeletal muscle cell differentiation, P:striated muscle cell differentiation, P:type I pneumocyte differentiation, P:visual learning"
-    }
-  },
+  "uniprot_entries_base": {},
+  "uniprot_entries_gwas": {},
   "gene_disease_traits": {},
   "gene_function_traits": {},
   "gene_GO_traits": {},
@@ -57,527 +100,32 @@
   "biogrid_interactions_select_nonhuman": {},
   "reactome_pathways": {},
   "biogrid_summarized_go": {},
-  "dbsnp_variants": {
-    "TP53": {
-      "rs78378222": {
-        "mapped_gene": "TP53",
-        "context": "3_prime_UTR_variant",
-        "variant_category": "other",
-        "associated_disease_trait": {
-          "ICD10 D25: Leiomyoma of uterus": {
-            "p_value": 2e-121,
-            "risk_score": 0.55
-          },
-          "Uterine leiomyomata": {
-            "p_value": 9e-86,
-            "risk_score": 0.51
-          },
-          "Appendicular lean mass": {
-            "p_value": 5e-56,
-            "risk_score": 0.138
-          },
-          "Uterine fibroids": {
-            "p_value": 7.000000000000001e-31,
-            "risk_score": 1.54
-          },
-          "Basal cell carcinoma": {
-            "p_value": 9.999999999999999e-33,
-            "risk_score": 1.6192
-          },
-          "Whole body fat free mass (UKB data field 23101)": {
-            "p_value": 3e-32,
-            "risk_score": 0.0723926
-          },
-          "Mosaic loss of chromosome Y (Y chromosome dosage)": {
-            "p_value": 3e-28,
-            "risk_score": 0.013
-          }
-        }
-      },
-      "rs201214141": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "SAT2 protein levels": {
-            "p_value": 1e-242,
-            "risk_score": 0.5994269
-          }
-        }
-      },
-      "rs1642792": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "TNFSF13 protein levels": {
-            "p_value": 5e-23,
-            "risk_score": 0.23940623
-          },
-          "Body fat percentage (adjusted for testosterone and SHBG)": {
-            "p_value": 3e-09,
-            "risk_score": 0.57
-          }
-        }
-      },
-      "rs62062585": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "SHBG protein levels": {
-            "p_value": 2e-13,
-            "risk_score": 0.19066834
-          },
-          "Body fat percentage (adjusted for testosterone and SHBG)": {
-            "p_value": 6e-09,
-            "risk_score": 0.57
-          }
-        }
-      },
-      "rs1042522": {
-        "mapped_gene": "TP53",
-        "context": "missense_variant",
-        "variant_category": "coding",
-        "associated_disease_trait": {
-          "TP53 protein levels": {
-            "p_value": 6e-16,
-            "risk_score": 0.057622924
-          },
-          "Sex hormone-binding globulin levels": {
-            "p_value": 0.0,
-            "risk_score": 0.1868
-          },
-          "Testosterone levels": {
-            "p_value": 1e-117,
-            "risk_score": 0.0661
-          },
-          "Glycated hemoglobin levels": {
-            "p_value": 3e-18,
-            "risk_score": 0.0243
-          },
-          "Serum total protein levels": {
-            "p_value": 3e-11,
-            "risk_score": 0.019
-          },
-          "Non-albumin protein levels": {
-            "p_value": 4e-10,
-            "risk_score": 0.0178
-          },
-          "Apolipoprotein B levels": {
-            "p_value": 9e-11,
-            "risk_score": 0.0177
-          },
-          "Low density lipoprotein cholesterol levels": {
-            "p_value": 1e-10,
-            "risk_score": 0.0176
-          },
-          "Triglyceride levels": {
-            "p_value": 4e-10,
-            "risk_score": 0.0171
-          }
-        }
-      },
-      "rs2909430": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Testosterone levels (UKB data field 30850)": {
-            "p_value": 9.000000000000001e-29,
-            "risk_score": 0.024749031
-          }
-        }
-      },
-      "rs9894946": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Standing height (UKB data field 50)": {
-            "p_value": 1e-12,
-            "risk_score": 0.010429073
-          }
-        }
-      },
-      "rs17883687": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Sex hormone-binding globulin levels": {
-            "p_value": 4e-74,
-            "risk_score": 0.1936
-          },
-          "Testosterone levels": {
-            "p_value": 4e-15,
-            "risk_score": 0.0837
-          }
-        }
-      },
-      "rs1625895": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Sex hormone-binding globulin levels": {
-            "p_value": 4e-195,
-            "risk_score": 0.1107
-          },
-          "Testosterone levels": {
-            "p_value": 5.9999999999999996e-36,
-            "risk_score": 0.0467
-          },
-          "Glycated hemoglobin levels": {
-            "p_value": 3e-12,
-            "risk_score": 0.0254
-          },
-          "Total cholesterol levels": {
-            "p_value": 7e-10,
-            "risk_score": 0.0219
-          },
-          "Aspartate aminotransferase levels": {
-            "p_value": 5e-09,
-            "risk_score": 0.0208
-          }
-        }
-      },
-      "rs74351250": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Sex hormone-binding globulin levels": {
-            "p_value": 4e-22,
-            "risk_score": 2.99
-          },
-          "Non-albumin protein levels": {
-            "p_value": 2.0000000000000002e-23,
-            "risk_score": 0.0569
-          },
-          "Testosterone levels": {
-            "p_value": 1e-10,
-            "risk_score": 0.0369
-          },
-          "Total testosterone levels": {
-            "p_value": 2e-18,
-            "risk_score": 0.34
-          }
-        }
-      },
-      "rs8073498": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Sex hormone-binding globulin levels": {
-            "p_value": 8.000000000000001e-131,
-            "risk_score": 0.0624
-          },
-          "Testosterone levels": {
-            "p_value": 1.0000000000000001e-34,
-            "risk_score": 0.0315
-          }
-        }
-      },
-      "rs17882854": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Non-albumin protein levels": {
-            "p_value": 1e-14,
-            "risk_score": 0.0581
-          }
-        }
-      },
-      "rs28934576": {
-        "mapped_gene": "TP53",
-        "context": "missense_variant",
-        "variant_category": "coding",
-        "associated_disease_trait": {
-          "Body fat percentage (adjusted for testosterone and SHBG)": {
-            "p_value": 1e-08,
-            "risk_score": 3.86
-          }
-        }
-      },
-      "rs572488097": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Body fat percentage (adjusted for testosterone and SHBG)": {
-            "p_value": 3e-08,
-            "risk_score": 1.09
-          }
-        }
-      },
-      "rs17881850": {
-        "mapped_gene": "TP53",
-        "context": "3_prime_UTR_variant",
-        "variant_category": "other",
-        "associated_disease_trait": {
-          "Body fat percentage (adjusted for testosterone and SHBG)": {
-            "p_value": 3e-10,
-            "risk_score": 0.58
-          }
-        }
-      },
-      "rs138932666": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Body fat percentage (adjusted for testosterone and SHBG)": {
-            "p_value": 2e-17,
-            "risk_score": 0.47
-          }
-        }
-      },
-      "rs78496430": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Body fat percentage (adjusted for testosterone and SHBG)": {
-            "p_value": 2e-10,
-            "risk_score": 0.29
-          }
-        }
-      },
-      "rs55745760": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Body fat percentage (adjusted for testosterone and SHBG) x sex interaction": {
-            "p_value": 7e-09,
-            "risk_score": 0.17
-          }
-        }
-      },
-      "rs4968204": {
-        "mapped_gene": "TP53",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Glucose levels": {
-            "p_value": 8e-09,
-            "risk_score": 0.014
-          }
-        }
-      },
-      "rs17880847": {
-        "mapped_gene": "TP53",
-        "context": "3_prime_UTR_variant",
-        "variant_category": "other",
-        "associated_disease_trait": {
-          "Sex hormone-binding globulin levels": {
-            "p_value": 5e-33,
-            "risk_score": 4.15
-          },
-          "Total testosterone levels": {
-            "p_value": 7.999999999999999e-26,
-            "risk_score": 0.8
-          }
-        }
-      }
-    },
-    "KRAS": {
-      "rs61761075": {
-        "mapped_gene": "KRAS",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Tanner 3 to Tanner 4 pubertal stage transition (joint longitudinal BMI and survival model)": {
-            "p_value": 3e-08,
-            "risk_score": 1.3
-          }
-        }
-      },
-      "rs61759623": {
-        "mapped_gene": "KRAS",
-        "context": "intron_variant",
-        "variant_category": "intronic",
-        "associated_disease_trait": {
-          "Sex hormone-binding globulin levels": {
-            "p_value": 1e-15,
-            "risk_score": 0.0547
-          }
-        }
-      },
-      "rs12318598": {
-        "mapped_gene": "KRAS - RNU4-67P",
-        "context": "intergenic_variant",
-        "variant_category": "intergenic",
-        "associated_disease_trait": {
-          "Liver enzyme levels (gamma-glutamyl transferase)": {
-            "p_value": 4e-20,
-            "risk_score": 0.0083005
-          }
-        }
-      }
-    }
-  },
+  "dbsnp_variants": {},
   "dbsnp_summaries": {},
   "sei_predictions": {},
   "alphamissense_predictions": {},
   "mirDB_targets": {},
-  "gwas_associations": {
-    "TP53": {
-      "gene": "TP53",
-      "found": true,
-      "total_associations": 239,
-      "total_significant_associations": 235,
-      "total_studies_analyzed": 72,
-      "summary_by_high_risk_alleles": {
-        "related_genes": [
-          "TP53"
-        ],
-        "high_risk_snps": [
-          "rs17880847",
-          "rs28934576",
-          "rs78378222",
-          "rs74351250",
-          "rs572488097",
-          "rs201214141",
-          "rs17881850",
-          "rs1642792",
-          "rs62062585",
-          "rs138932666",
-          "rs78496430",
-          "rs17883687",
-          "rs1042522",
-          "rs55745760",
-          "rs1625895",
-          "rs8073498",
-          "rs17882854",
-          "rs2909430",
-          "rs4968204",
-          "rs9894946"
-        ],
-        "affected_protein_levels": [
-          "AXL",
-          "EDA2R",
-          "FLT3LG",
-          "Non-albumin",
-          "SAT2",
-          "SHBG",
-          "Serum total",
-          "TNFSF13",
-          "TP53"
-        ],
-        "associated_disease_traits": [
-          "Uterine fibroids",
-          "Sex hormone-binding globulin levels",
-          "Body fat percentage (adjusted for testosterone and SHBG)",
-          "Glioblastoma (age-stratified)",
-          "Glioma",
-          "Skin cancer",
-          "Colon polyp",
-          "Mean corpuscular hemoglobin",
-          "Pulse pressure",
-          "Red blood cell count",
-          "Weight",
-          "Actinic keratosis (PheCode 702.1)",
-          "Height (maximum, inv-normal transformed)",
-          "Basal metabolic rate (UKB data field 23105)",
-          "Low density lipoprotein cholesterol levels",
-          "Non-albumin protein levels",
-          "Elevated prostate specific antigen [PSA] (PheCode 796)",
-          "Benign neoplasm of brain and other parts of nervous system (PheCode 225)",
-          "Aspartate aminotransferase levels",
-          "Diseases of sebaceous glands (PheCode 706)"
-        ]
-      },
-      "summary_by_significance": {
-        "related_genes": [
-          "TP53",
-          "SHBG"
-        ],
-        "high_risk_snps": [
-          "rs78378222"
-        ],
-        "affected_protein_levels": [],
-        "associated_disease_traits": [
-          "ICD10 D25: Leiomyoma of uterus",
-          "Uterine leiomyomata",
-          "Appendicular lean mass",
-          "Basal cell carcinoma (MTAG)",
-          "Uterine fibroids",
-          "Basal cell carcinoma",
-          "Whole body fat free mass (UKB data field 23101)",
-          "Mosaic loss of chromosome Y (Y chromosome dosage)"
-        ]
-      }
-    },
-    "KRAS": {
-      "gene": "KRAS",
-      "found": true,
-      "total_associations": 4,
-      "total_significant_associations": 3,
-      "total_studies_analyzed": 3,
-      "summary_by_high_risk_alleles": {
-        "related_genes": [
-          "KRAS",
-          "KRAS - RNU4-67P"
-        ],
-        "high_risk_snps": [
-          "rs61761075",
-          "rs61759623",
-          "rs12318598"
-        ],
-        "affected_protein_levels": [],
-        "associated_disease_traits": [
-          "Tanner 3 to Tanner 4 pubertal stage transition (joint longitudinal BMI and survival model)",
-          "Sex hormone-binding globulin levels",
-          "Liver enzyme levels (gamma-glutamyl transferase)"
-        ]
-      },
-      "summary_by_significance": {
-        "related_genes": [
-          "KRAS",
-          "KRAS - RNU4-67P"
-        ],
-        "high_risk_snps": [
-          "rs12318598",
-          "rs61759623",
-          "rs61761075"
-        ],
-        "affected_protein_levels": [],
-        "associated_disease_traits": [
-          "Liver enzyme levels (gamma-glutamyl transferase)",
-          "Sex hormone-binding globulin levels",
-          "Tanner 3 to Tanner 4 pubertal stage transition (joint longitudinal BMI and survival model)"
-        ]
-      }
-    }
-  },
-  "context_block": "{gene: TP53, GWAS-based associations and their statistical significance for the gene and its variants, for example connection to traits, protein levels etc. Returns associations that are high-risk or high-signifiance or both.: {gene: TP53, found: true, total_associations: 239, total_significant_associations: 235, total_studies_analyzed: 72, summary_by_high_risk_alleles: {related_genes: [TP53], high_risk_snps: [rs17880847, rs28934576, rs78378222, rs74351250, rs572488097, rs201214141, rs17881850, rs1642792, rs62062585, rs138932666, rs78496430, rs17883687, rs1042522, rs55745760, rs1625895, rs8073498, rs17882854, rs2909430, rs4968204, rs9894946], affected_protein_levels: [AXL, EDA2R, FLT3LG, Non-albumin, SAT2, SHBG, Serum total, TNFSF13, TP53], associated_disease_traits: [Uterine fibroids, Sex hormone-binding globulin levels, Body fat percentage (adjusted for testosterone and SHBG), Glioblastoma (age-stratified), Glioma, Skin cancer, Colon polyp, Mean corpuscular hemoglobin, Pulse pressure, Red blood cell count, Weight, Actinic keratosis (PheCode 702.1), Height (maximum, inv-normal transformed), Basal metabolic rate (UKB data field 23105), Low density lipoprotein cholesterol levels, Non-albumin protein levels, Elevated prostate specific antigen [PSA] (PheCode 796), Benign neoplasm of brain and other parts of nervous system (PheCode 225), Aspartate aminotransferase levels, Diseases of sebaceous glands (PheCode 706)]}, summary_by_significance: {related_genes: [TP53, SHBG], high_risk_snps: [rs78378222], affected_protein_levels: [], associated_disease_traits: [ICD10 D25: Leiomyoma of uterus, Uterine leiomyomata, Appendicular lean mass, Basal cell carcinoma (MTAG), Uterine fibroids, Basal cell carcinoma, Whole body fat free mass (UKB data field 23101), Mosaic loss of chromosome Y (Y chromosome dosage)]}}, Uniprot-derived annotations for the given gene, diseases and functions:: {diseases: Adrenocortical carcinoma, Basal cell carcinoma 7, Bone marrow failure syndrome 5, Esophageal cancer, Li-Fraumeni syndrome, Lung cancer, Papilloma of choroid plexus, Squamous cell carcinoma of the head and neck, function: Multifunctional transcription factor that induces cell cycle arrest, DNA repair or apoptosis upon binding to its target DNA sequence . Acts as a tumor suppressor in many tumor types; induces growth arrest or apoptosis depending on the physiological circumstances and cell type . Negatively regulates cell division by controlling expression of a set of genes required for this process . One of the activated genes is an inhibitor of cyclin-dependent kinases. Apoptosis induction seems to be mediated either by stimulation of BAX and FAS antigen expression, or by repression of Bcl-2 expression . Its pro-apoptotic activity is activated via its interaction with PPP1R13B/ASPP1 or TP53BP2/ASPP2 . However, this activity is inhibited when the interaction with PPP1R13B/ASPP1 or TP53BP2/ASPP2 is displaced by PPP1R13L/iASPP . In cooperation with mitochondrial PPIF is involved in activating oxidative stress-induced necrosis; the function is largely independent of transcription. Induces the transcription of long intergenic non-coding RNA p21 (lincRNA-p21) and lincRNA-Mkln1. LincRNA-p21 participates in TP53-dependent transcriptional repression leading to apoptosis and seems to have an effect on cell-cycle regulation. Implicated in Notch signaling cross-over. Prevents CDK7 kinase activity when associated to CAK complex in response to DNA damage, thus stopping cell cycle progression. Isoform 2 enhances the transactivation activity of isoform 1 from some but not all TP53-inducible promoters. Isoform 4 suppresses transactivation activity and impairs growth suppression mediated by isoform 1. Isoform 7 inhibits isoform 1-mediated apoptosis. Regulates the circadian clock by repressing CLOCK-BMAL1-mediated transcriptional activation of PER2}, dbSNP variant annotations (genomic coordinates and allele frequencies from population studies): {rs78378222: {mapped_gene: TP53, context: 3_prime_UTR_variant, variant_category: other, associated_disease_trait: {ICD10 D25: Leiomyoma of uterus: {p_value: 2e-121, risk_score: 0.55}, Uterine leiomyomata: {p_value: 9e-86, risk_score: 0.51}, Appendicular lean mass: {p_value: 5e-56, risk_score: 0.138}, Uterine fibroids: {p_value: 7.000000000000001e-31, risk_score: 1.54}, Basal cell carcinoma: {p_value: 9.999999999999999e-33, risk_score: 1.6192}, Whole body fat free mass (UKB data field 23101): {p_value: 3e-32, risk_score: 0.0723926}, Mosaic loss of chromosome Y (Y chromosome dosage): {p_value: 3e-28, risk_score: 0.013}}}, rs201214141: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {SAT2 protein levels: {p_value: 1e-242, risk_score: 0.5994269}}}, rs1642792: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {TNFSF13 protein levels: {p_value: 5e-23, risk_score: 0.23940623}, Body fat percentage (adjusted for testosterone and SHBG): {p_value: 3e-09, risk_score: 0.57}}}, rs62062585: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {SHBG protein levels: {p_value: 2e-13, risk_score: 0.19066834}, Body fat percentage (adjusted for testosterone and SHBG): {p_value: 6e-09, risk_score: 0.57}}}, rs1042522: {mapped_gene: TP53, context: missense_variant, variant_category: coding, associated_disease_trait: {TP53 protein levels: {p_value: 6e-16, risk_score: 0.057622924}, Sex hormone-binding globulin levels: {p_value: 0.0, risk_score: 0.1868}, Testosterone levels: {p_value: 1e-117, risk_score: 0.0661}, Glycated hemoglobin levels: {p_value: 3e-18, risk_score: 0.0243}, Serum total protein levels: {p_value: 3e-11, risk_score: 0.019}, Non-albumin protein levels: {p_value: 4e-10, risk_score: 0.0178}, Apolipoprotein B levels: {p_value: 9e-11, risk_score: 0.0177}, Low density lipoprotein cholesterol levels: {p_value: 1e-10, risk_score: 0.0176}, Triglyceride levels: {p_value: 4e-10, risk_score: 0.0171}}}, rs2909430: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {Testosterone levels (UKB data field 30850): {p_value: 9.000000000000001e-29, risk_score: 0.024749031}}}, rs9894946: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {Standing height (UKB data field 50): {p_value: 1e-12, risk_score: 0.010429073}}}, rs17883687: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {Sex hormone-binding globulin levels: {p_value: 4e-74, risk_score: 0.1936}, Testosterone levels: {p_value: 4e-15, risk_score: 0.0837}}}, rs1625895: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {Sex hormone-binding globulin levels: {p_value: 4e-195, risk_score: 0.1107}, Testosterone levels: {p_value: 5.9999999999999996e-36, risk_score: 0.0467}, Glycated hemoglobin levels: {p_value: 3e-12, risk_score: 0.0254}, Total cholesterol levels: {p_value: 7e-10, risk_score: 0.0219}, Aspartate aminotransferase levels: {p_value: 5e-09, risk_score: 0.0208}}}, rs74351250: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {Sex hormone-binding globulin levels: {p_value: 4e-22, risk_score: 2.99}, Non-albumin protein levels: {p_value: 2.0000000000000002e-23, risk_score: 0.0569}, Testosterone levels: {p_value: 1e-10, risk_score: 0.0369}, Total testosterone levels: {p_value: 2e-18, risk_score: 0.34}}}, rs8073498: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {Sex hormone-binding globulin levels: {p_value: 8.000000000000001e-131, risk_score: 0.0624}, Testosterone levels: {p_value: 1.0000000000000001e-34, risk_score: 0.0315}}}, rs17882854: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {Non-albumin protein levels: {p_value: 1e-14, risk_score: 0.0581}}}, rs28934576: {mapped_gene: TP53, context: missense_variant, variant_category: coding, associated_disease_trait: {Body fat percentage (adjusted for testosterone and SHBG): {p_value: 1e-08, risk_score: 3.86}}}, rs572488097: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {Body fat percentage (adjusted for testosterone and SHBG): {p_value: 3e-08, risk_score: 1.09}}}, rs17881850: {mapped_gene: TP53, context: 3_prime_UTR_variant, variant_category: other, associated_disease_trait: {Body fat percentage (adjusted for testosterone and SHBG): {p_value: 3e-10, risk_score: 0.58}}}, rs138932666: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {Body fat percentage (adjusted for testosterone and SHBG): {p_value: 2e-17, risk_score: 0.47}}}, rs78496430: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {Body fat percentage (adjusted for testosterone and SHBG): {p_value: 2e-10, risk_score: 0.29}}}, rs55745760: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {Body fat percentage (adjusted for testosterone and SHBG) x sex interaction: {p_value: 7e-09, risk_score: 0.17}}}, rs4968204: {mapped_gene: TP53, context: intron_variant, variant_category: intronic, associated_disease_trait: {Glucose levels: {p_value: 8e-09, risk_score: 0.014}}}, rs17880847: {mapped_gene: TP53, context: 3_prime_UTR_variant, variant_category: other, associated_disease_trait: {Sex hormone-binding globulin levels: {p_value: 5e-33, risk_score: 4.15}, Total testosterone levels: {p_value: 7.999999999999999e-26, risk_score: 0.8}}}}}\n{_marker: end of entity TP53 description}\n{gene: KRAS, GWAS-based associations and their statistical significance for the gene and its variants, for example connection to traits, protein levels etc. Returns associations that are high-risk or high-signifiance or both.: {gene: KRAS, found: true, total_associations: 4, total_significant_associations: 3, total_studies_analyzed: 3, summary_by_high_risk_alleles: {related_genes: [KRAS, KRAS - RNU4-67P], high_risk_snps: [rs61761075, rs61759623, rs12318598], affected_protein_levels: [], associated_disease_traits: [Tanner 3 to Tanner 4 pubertal stage transition (joint longitudinal BMI and survival model), Sex hormone-binding globulin levels, Liver enzyme levels (gamma-glutamyl transferase)]}, summary_by_significance: {related_genes: [KRAS, KRAS - RNU4-67P], high_risk_snps: [rs12318598, rs61759623, rs61761075], affected_protein_levels: [], associated_disease_traits: [Liver enzyme levels (gamma-glutamyl transferase), Sex hormone-binding globulin levels, Tanner 3 to Tanner 4 pubertal stage transition (joint longitudinal BMI and survival model)]}}, Uniprot-derived annotations for the given gene, diseases and functions:: {diseases: Cardiofaciocutaneous syndrome 2, Gastric cancer, Leukemia, acute myelogenous, Leukemia, juvenile myelomonocytic, Noonan syndrome 3, Oculoectodermal syndrome, Schimmelpenning-Feuerstein-Mims syndrome, function: Ras proteins bind GDP/GTP and possess intrinsic GTPase activity . Plays an important role in the regulation of cell proliferation . Plays a role in promoting oncogenic events by inducing transcriptional silencing of tumor suppressor genes (TSGs) in colorectal cancer (CRC) cells in a ZNF304-dependent manner}, dbSNP variant annotations (genomic coordinates and allele frequencies from population studies): {rs61761075: {mapped_gene: KRAS, context: intron_variant, variant_category: intronic, associated_disease_trait: {Tanner 3 to Tanner 4 pubertal stage transition (joint longitudinal BMI and survival model): {p_value: 3e-08, risk_score: 1.3}}}, rs61759623: {mapped_gene: KRAS, context: intron_variant, variant_category: intronic, associated_disease_trait: {Sex hormone-binding globulin levels: {p_value: 1e-15, risk_score: 0.0547}}}, rs12318598: {mapped_gene: KRAS - RNU4-67P, context: intergenic_variant, variant_category: intergenic, associated_disease_trait: {Liver enzyme levels (gamma-glutamyl transferase): {p_value: 4e-20, risk_score: 0.0083005}}}}}\n{_marker: end of entity KRAS description}",
+  "gwas_associations": {},
+  "context_block": "{gene: TP53, Summary about the gene structure, transcripts and complexity from GENCODE:: {gene_name: TP53, gene_type: protein_coding, gene_id: ENSG00000141510.19, n_transcripts: 24, exons_per_transcript: {ENST00000413465.6: 7, ENST00000714356.1: 10, ENST00000359597.8: 9, ENST00000504290.5: 8, ENST00000504937.5: 7, ENST00000510385.5: 8, ENST00000610623.4: 8, ENST00000618944.4: 8, ENST00000619186.4: 7, ENST00000610292.4: 10, ENST00000620739.4: 11, ENST00000420246.6: 12, ENST00000455263.6: 12, ENST00000610538.4: 12, ENST00000622645.4: 12, ENST00000714357.1: 11, ENST00000445888.6: 11, ENST00000604348.6: 11, ENST00000619485.4: 11, ENST00000269305.9: 11, ENST00000714408.1: 11, ENST00000714409.1: 10, ENST00000576024.2: 10, ENST00000714359.1: 11}, min_transcript_span_bp: 7092, max_transcript_span_bp: 19137, transcript_ids: [ENST00000413465.6, ENST00000714356.1, ENST00000359597.8, ENST00000504290.5, ENST00000504937.5, ENST00000510385.5, ENST00000610623.4, ENST00000618944.4, ENST00000619186.4, ENST00000610292.4, ENST00000620739.4, ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, ENST00000622645.4, ENST00000714357.1, ENST00000445888.6, ENST00000604348.6, ENST00000619485.4, ENST00000269305.9, ENST00000714408.1, ENST00000714409.1, ENST00000576024.2, ENST00000714359.1], gene_span_bp: [7661779, 7687546]}}\n{_marker: end of entity TP53 description}",
   "llm_json": {
-    "answer": "TP53 is associated with multiple cancers including basal cell carcinoma, glioblastoma, glioma, skin cancer, colon polyp, Li-Fraumeni syndrome, lung cancer, esophageal cancer, and squamous cell carcinoma of the head and neck. It is also associated with uterine fibroids, hormone-related traits (sex hormone-binding globulin levels, testosterone levels), metabolic traits (body fat percentage, cholesterol levels, glucose levels), and blood-related parameters (hemoglobin levels, red blood cell count). KRAS is associated with various cancers including gastric cancer and leukemias, developmental syndromes (Cardiofaciocutaneous syndrome 2, Noonan syndrome 3), and metabolic traits including liver enzyme levels and sex hormone-binding globulin levels.",
+    "answer": "TP53 is a protein-coding gene with 24 transcripts that vary in their exon composition. The number of exons per transcript ranges from 7 to 12 exons. The shortest transcript (ENST00000413465.6) has 7 exons, while several transcripts including ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4 have the maximum of 12 exons. The transcript spans range from 7,092 base pairs to 19,137 base pairs, indicating significant structural diversity in TP53 transcripts.",
     "evidence": [
-      "TP53 associated_disease_traits include Basal cell carcinoma, Glioblastoma, Glioma, Skin cancer, Colon polyp, Uterine fibroids",
-      "TP53 Uniprot diseases include Li-Fraumeni syndrome, Lung cancer, Esophageal cancer, Basal cell carcinoma 7, Squamous cell carcinoma of the head and neck",
-      "TP53 variants associated with Sex hormone-binding globulin levels, Testosterone levels, Body fat percentage, Low density lipoprotein cholesterol levels, Glucose levels",
-      "TP53 variants associated with Mean corpuscular hemoglobin, Red blood cell count, Glycated hemoglobin levels",
-      "KRAS Uniprot diseases include Gastric cancer, Leukemia acute myelogenous, Leukemia juvenile myelomonocytic, Cardiofaciocutaneous syndrome 2, Noonan syndrome 3",
-      "KRAS associated_disease_traits include Liver enzyme levels (gamma-glutamyl transferase), Sex hormone-binding globulin levels",
-      "KRAS variants associated with pubertal stage transition and metabolic parameters"
+      "TP53 has 24 transcripts",
+      "TP53 exons per transcript range from 7 to 12",
+      "TP53 transcript ENST00000413465.6 has 7 exons",
+      "TP53 transcripts ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4 have 12 exons",
+      "TP53 transcript spans range from 7,092 to 19,137 base pairs"
     ]
   },
   "verification": "pass",
   "tool_updates": 2,
   "used_tools": [
     "extract_entities",
-    "query_gwas_by_gene",
-    "uniprot_base"
+    "gencode_gene_node"
   ],
   "use_tools": [
     "extract_entities",
-    "query_gwas_by_gene",
-    "uniprot_base"
+    "gencode_gene_node"
   ],
   "ui": {}
 }

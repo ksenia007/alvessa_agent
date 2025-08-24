@@ -204,7 +204,19 @@ def run_benchmark(
             print(f"[error] {method} failed: {e}")
             rec = {"model_answer": ""}
             model_answer = ""
-
+            
+        # is answer is not A B C or D, try to extract it - check if the last lettter is A, B, C or D and use that
+        if not re.match(r"^[A-D]$", model_answer):
+            # Try to check if the last word is A, B, C or D
+            words = model_answer.split()
+            if words and re.match(r"^[A-D]$", words[-1]):
+                print('!!!'*20)
+                print('ANSWER:', model_answer)
+                print('[info] Extracted model answer from last word:', words[-1])
+                model_answer = words[-1]
+            else:
+                print(f"[warn] Model answer '{model_answer}' does not match A/B/C/D format. Skipping.")
+                
         # Build normalized row
         correct = row.get("answer", "")
         out = {

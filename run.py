@@ -54,8 +54,8 @@ if __name__ == "__main__":
     EXAMPLE_QUESTIONS: List[str] = [
         # "What microRNAs regulate the cancer-related functions of TP53, and how are these connected to pathways and protein interactions?"
         #"Do not run any of the tools, just proceed directly to the LLM.",
-        #"Tell me about exons in TP53",
-        "Which diseases and traits are associated with the genes TP53 and KRAS?",
+        "Tell me about exons in TP53",
+        # "Which diseases and traits are associated with the genes TP53 and KRAS?",
         # "Which gene is the best drug target for virally induced cancers, KRAS or TP53?",
         #"How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
         # "Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?",
