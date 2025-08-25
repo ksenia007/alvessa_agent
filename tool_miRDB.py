@@ -108,6 +108,6 @@ def miRDB_agent(state: "State") -> "State":
             targets_symbols = _refseq_to_symbol(targets_entrez)
             print(f"finished symbol querying ({organism_name})... {datetime.now()}")
 
-            preds[gene][organism_name] = targets_symbols
+            preds[gene][organism_name] = list(set((targets_symbols)))
 
     return {"mirDB_targets": preds}
