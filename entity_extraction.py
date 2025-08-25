@@ -226,6 +226,40 @@ def _extract_entities_with_gliner(text: str) -> Dict[str, Any]:
 
 # --- Merging and Post-processing Logic ---
 
+def _expand_and_refine_gene_names(base_genes: List[str], text: str) -> List[str]:
+    """
+    Expands gene symbols by finding more complete patterns in the original text.
+
+    This function takes a list of candidate genes (e.g., "MIR") and searches the
+    original text for more complete versions (e.g., "MIR_5a", "hsa-miR-21-5p").
+    This is particularly useful for capturing full miRNA names.
+
+    **miRNA Nomenclature Handling:**
+    -   `[species]-miR-N`: e.g., `hsa-miR-N` (human), `mmu-miR-N` (mouse).
+    -   `miR-`: Mature microRNA (functional form).
+    -   `mir-`: Precursor hairpin gene (pri-/pre-miRNA).
+    -   `MIR`: The gene locus encoding the precursor.
+    -   `-5p` / `-3p`: Suffix indicating derivation from the 5' or 3' arm of the precursor.
+    """
+    expanded_genes = set(base_genes)
+    for gene in base_genes:
+        # Create a regex to find the gene and any valid following characters (e.g., _5, -5p)
+        # This pattern looks for the gene symbol followed by characters often seen in gene/miRNA names.
+        try:
+            pattern = re.escape(gene) + r"[\w-]*"
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            for match in matches:
+                expanded_genes.add(match)
+        except re.error:
+            # In case of a regex error with a specific gene symbol, skip it
+            if DEBUG:
+                print(f"[_expand_and_refine_gene_names] Regex error with gene: {gene}")
+            continue
+    if DEBUG:
+        print(f"[_expand_and_refine_gene_names] Expanded {len(base_genes)} base genes to {len(expanded_genes)}.")
+    return list(expanded_genes)
+
+
 def _post_process_entities(genes: List[str], traits: List[str]) -> Dict[str, List[str]]:
     """Cleans and filters lists of genes and traits."""
     
@@ -238,15 +272,16 @@ def _post_process_entities(genes: List[str], traits: List[str]) -> Dict[str, Lis
     processed_genes = clean_list(genes)
     processed_traits = clean_list(traits)
 
+    # Filter genes by length and for invalid content.
     processed_genes = [g for g in processed_genes if "no gene" not in g.lower()]
-    processed_genes = [g for g in processed_genes if 2 <= len(g) <= 20]
-    processed_genes = [g for g in processed_genes if g.lower() != "mirna"]
+    processed_genes = [g for g in processed_genes if 2 <= len(g) <= 30]
     
     processed_traits = [t for t in processed_traits if len(t) > 2]
     
+    # Return unique, sorted lists
     return {
-        "genes": list(dict.fromkeys(processed_genes)),
-        "traits": list(dict.fromkeys(processed_traits))
+        "genes": sorted(list(dict.fromkeys(processed_genes))),
+        "traits": sorted(list(dict.fromkeys(processed_traits)))
     }
 
 
@@ -272,8 +307,11 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
         gliner_result.get("proteins", []) +
         regex_result.get("ensembl_proteins", [])
     )
+    
+    # Does the microRNA expansion
+    expanded_genes = _expand_and_refine_gene_names(raw_genes, text)
 
-    processed_entities = _post_process_entities(raw_genes, raw_traits)
+    processed_entities = _post_process_entities(expanded_genes, raw_traits)
     
     final_result = {
         "genes": processed_entities["genes"],
@@ -309,6 +347,7 @@ def claude_entity_extraction_node(state: "State") -> "State":
     """Extracts gene entities using only the Claude model."""
     user_input: str = state["messages"][-1]["content"]
     claude_result = _extract_entities_with_claude(user_input)
+    # TODO: handle microRNA expansion in isolated nodes
     processed_result = _post_process_entities(claude_result.get("genes", []), claude_result.get("traits", []))
     if DEBUG:
         print(f"[claude_entity_extraction_node] Extracted: {processed_result}")
@@ -320,7 +359,7 @@ def gliner_entity_extraction_node(state: "State") -> "State":
     user_input: str = state["messages"][-1]["content"]
     gliner_result = _extract_entities_with_gliner(user_input)
     processed_result = _post_process_entities(gliner_result.get("genes", []), gliner_result.get("traits", []))
-    
+    # TODO: handle microRNA expansion in isolated nodes
     final_output = {
         "genes": processed_result["genes"],
         "traits": processed_result["traits"],
@@ -336,7 +375,7 @@ def flair_entity_extraction_node(state: "State") -> "State":
     user_input: str = state["messages"][-1]["content"]
     flair_result = _extract_entities_with_flair(user_input)
     processed_result = _post_process_entities(flair_result.get("genes", []), flair_result.get("traits", []))
-    
+    # TODO: handle microRNA expansion in isolated nodes
     final_output = {
         "genes": processed_result["genes"],
         "traits": processed_result["traits"],
@@ -350,6 +389,7 @@ def variant_extraction_node(state: "State") -> "State":
     """Extracts variant and Ensembl entities using only regex."""
     user_input: str = state["messages"][-1]["content"]
     regex_result = _extract_entities_with_regex(user_input)
+    # TODO: handle microRNA expansion in isolated nodes
     if DEBUG:
         print(f"[variant_extraction_node] Extracted: {regex_result}")
     return regex_result
