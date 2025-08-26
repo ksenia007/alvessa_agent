@@ -20,19 +20,22 @@ from tool_miRDB import miRDB_agent
 EXAMPLE_TOOL_SELECTION = """EXAMPLE PIPELINES (pay attention to dependencies):
 
 1. Variant regulatory activity (e.g. SEI):
-   extract_entities → query_gwas_by_gene → variant_annotations → sei
+   ["extract_entities", "query_gwas_by_gene", "variant_annotations", "sei"]
 
 2. Variant pathogenicity (e.g. AlphaMissense):
-   extract_entities → query_gwas_by_gene → variant_annotations → alphamissense
+   ["extract_entities", "query_gwas_by_gene", "variant_annotations", "alphamissense"] 
 
 3. HumanBase Expecto variant annotation:
-   extract_entities → humanbase_expecto → query_gwas_by_gene → variant_annotations → humanbase_tissue_expecto_annotate_variants
+   ["extract_entities", "humanbase_expecto", "query_gwas_by_gene", "variant_annotations", "humanbase_tissue_expecto_annotate_variants"]
 
 4. Gene-level functional annotation:
-   extract_entities → gencode_gene_node → (humanbase_functions, uniprot_base, reactome, BioGRID) → Summarize_bioGRID_GO (if BioGRID run) → uniprot_gwas (if gwas run)
+   ["extract_entities", "gencode_gene_node", "humanbase_functions", "uniprot_base", "reactome", "BioGRID", "Summarize_bioGRID_GO", "uniprot_gwas"]
 
-Note these are only examples, and in real life you may need to run combinations of these tools depending on the user intent and the entities extracted.
+Note these are only examples, and in real life you may need to run combinations of these tools **depending on the user intent and the entities extracted**.
 
+Respond *ONLY* with a Python list of tool names. Example: ["humanbase_functions", "uniprot_base"] or ["humanbase_functions", "uniprot_base", "query_gwas_by_gene"] or ["query_gwas_by_gene", "BioGRID"]
+
+IF YOU INCLUDE ANYTHING OTHER THAN A LIST OF TOOLS, YOU WILL BE CONSIDERED INVALID.
 """
 
 TOOL_CATALOG = {
