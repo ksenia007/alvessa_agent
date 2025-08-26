@@ -41,7 +41,10 @@ def _process_dbsnp_variants(state: "State") -> "State":
     for variant_id in state.keys():
         if "annotations" in state[variant_id]:
             for annotation_i in state[variant_id]["annotations"]:
-                annotation_i.pop("matches")
+                try:
+                    annotation_i.pop("matches")
+                except KeyError:
+                    pass
     return state
 
 

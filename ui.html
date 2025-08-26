@@ -220,6 +220,32 @@ body.light .biogrid-section-title { color: #6b7280; }
     max-width: 620px;        /* keep consistent with your earlier design */
   }
 
+
+  /* === BioGRID info popover === */
+.info-btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px; border-radius:50%;
+  font-size:11px; line-height:1; font-weight:700;
+  background:#0e1430; color:#c7d2fe; border:1px solid #2a3a72;
+  margin-left:6px; cursor:pointer; padding:0;
+}
+.info-btn:hover { filter: brightness(1.1); }
+.info-btn:focus { outline: 2px solid #93c5fd; outline-offset:2px; }
+
+.popover {
+  position:absolute; z-index:1000; max-width:420px;
+  background:#0e1430; color:#e6e8ef; border:1px solid #2a3a72;
+  border-radius:12px; padding:10px 12px; box-shadow:0 8px 28px rgba(0,0,0,.4);
+}
+.popover .pop-title { font-weight:700; margin-bottom:6px; }
+.popover .pop-body { font-size:13px; line-height:1.45; }
+.popover .pop-close { position:absolute; top:6px; right:8px; background:transparent; border:0; color:#aab4d6; cursor:pointer; font-size:16px; }
+
+/* light theme */
+body.light .info-btn { background:#f0f3fb; color:#1e293b; border-color:#cbd5e1; }
+body.light .popover { background:#ffffff; color:#0b1020; border-color:#e5e7eb; box-shadow:0 10px 30px rgba(0,0,0,.10); }
+body.light .popover .pop-close { color:#6b7280; }
+
 </style>
 <body>
 <div class="wrap">
@@ -348,11 +374,146 @@ body.light .biogrid-section-title { color: #6b7280; }
   const setText = (id, text) => { const el=document.getElementById(id); if (el) el.textContent = text ?? ""; };
   const setHTML = (id, html) => { const el=document.getElementById(id); if (el) el.innerHTML = html ?? ""; };
   const uc = s => (s||"").toUpperCase();
-  function escapeHtml(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;","&gt;":">","\"":"&quot;","'":"&#39;"}[m])); }
-  function asPills(arr){ return (arr||[]).map(x=>`<span class="pill">${escapeHtml(x)}</span>`).join(""); }
+  function escapeHtml(s){
+    return (s ?? "").toString().replace(/[&<>"']/g, ch => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[ch]));
+  }
+    function asPills(arr){ return (arr||[]).map(x=>`<span class="pill">${escapeHtml(x)}</span>`).join(""); }
   function hideAllSections(){ document.querySelectorAll('[data-section]').forEach(el => el.style.display='none'); }
   function setStatus(text){ const el=document.getElementById('statusLine'); if (el){ el.textContent = text || ""; el.title = text || ""; } }
 
+  const BIOGRID_INFO = {
+    "Experimental System": "BioGRID Experimental Systems used to classify interactions",
+    "Affinity Capture-Luminescence": "An interaction is inferred when a bait protein, tagged with luciferase, is enzymatically detected in immunoprecipitates of the prey protein as light emission. The prey protein is affinity captured from cell extracts by either polyclonal antibody or epitope tag.",
+    "Affinity Capture-MS": "An interaction is inferred when a bait protein is affinity captured from cell extracts by either polyclonal antibody or epitope tag and the associated interaction partner is identified by mass spectrometric methods.",
+    "Affinity Capture-RNA": "An interaction is inferred when a bait protein is affinity captured from cell extracts by either polyclonal antibody or epitope tag and associated RNA species identified by Northern blot, RT-PCR, affinity labeling, sequencing, or microarray analysis.",
+    "Affinity Capture-Western": "An interaction is inferred when a bait protein is affinity captured from cell extracts by either polyclonal antibody or epitope tag and the associated interaction partner identified by Western blot with a specific polyclonal antibody or second epitope tag. This category is also used if an interacting protein is visualized directly by dye stain or radioactivity. Note that this differs from any co-purification experiment involving affinity capture in that the co-purification experiment involves at least one extra purification step to get rid of potential contaminating proteins.",
+    "Co-fractionation": "Interaction inferred from the presence of two or more protein subunits in a partially purified protein preparation. If co-fractionation is demonstrated between 3 or more proteins, then add them as a complex.",
+    "Co-localization": "Interaction inferred from two proteins that co-localize in the cell by indirect immunofluorescence only when in addition, if one gene is deleted, the other protein becomes mis-localized. Also includes co-dependent association of proteins with promoter DNA in chromatin immunoprecipitation experiments.",
+    "Co-purification": "An interaction is inferred from the identification of two or more protein subunits in a purified protein complex, as obtained by classical biochemical fractionation or affinity purification and one or more additional fractionation steps.",
+    "FRET": "An interaction is inferred when close proximity of interaction partners is detected by fluorescence resonance energy transfer between pairs of fluorophore-labeled molecules, such as occurs between CFP (donor) and YFP (acceptor) fusion proteins.",
+    "PCA": "A Protein-Fragment Complementation Assay (PCA) is a protein-protein interaction assay in which a bait protein is expressed as fusion to one of the either N- or C- terminal peptide fragments of a reporter protein and prey protein is expressed as fusion to the complementary N- or C- terminal fragment of the same reporter protein. Interaction of bait and prey proteins bring together complementary fragments, which can then fold into an active reporter, e.g. the split-ubiquitin assay.",
+    "Two-hybrid": "Bait protein expressed as a DNA binding domain (DBD) fusion and prey expressed as a transcriptional activation domain (TAD) fusion and interaction measured by reporter gene activation.",
+    "Biochemical Activity": "An interaction is inferred from the biochemical effect of one protein upon another, for example, GTP-GDP exchange activity or phosphorylation of a substrate by a kinase. The bait protein executes the activity on the substrate hit protein. A Modification value is recorded for interactions of this type with the possible values Phosphorylation, Ubiquitination, Sumoylation, Dephosphorylation, Methylation, Prenylation, Acetylation, Deubiquitination, Proteolytic Processing, Glucosylation, Nedd(Rub1)ylation, Deacetylation, No Modification, Demethylation.",
+    "Co-crystal Structure": "Interaction directly demonstrated at the atomic level by X-ray crystallography. Also used for NMR or Electron Microscopy (EM) structures. If there is no obvious bait-hit directionality to the interaction involving 3 or more proteins, then the co-crystallized proteins should be listed as a complex.",
+    "Far Western": "An interaction is detected between a protein immobilized on a membrane and a purified protein probe.",
+    "Protein-peptide": "An interaction is detected between a protein and a peptide derived from an interaction partner. This includes phage display experiments.",
+    "Protein-RNA": "An interaction is detected between and protein and an RNA in vitro.", 
+    "Reconstituted Complex": "An interaction is detected between purified proteins in vitro.",
+    "Dosage Growth Defect": "A genetic interaction is inferred when over expression or increased dosage of one gene causes a growth defect in a strain that is mutated or deleted for another gene.",
+    "Dosage Lethality": "A genetic interaction is inferred when over expression or increased dosage of one gene causes lethality in a strain that is mutated or deleted for another gene.",
+    "Dosage Rescue": "A genetic interaction is inferred when over expression or increased dosage of one gene rescues the lethality or growth defect of a strain that is mutated or deleted for another gene.",
+    "Negative Genetic": "Mutations/deletions in separate genes, each of which alone causes a minimal phenotype, but when combined in the same cell results in a more severe fitness defect or lethality under a given condition. This term is reserved for high or low throughput studies with scores.",
+    "Phenotypic Enhancement": "A genetic interaction is inferred when mutation or overexpression of one gene results in enhancement of any phenotype (other than lethality/growth defect) associated with mutation or over expression of another gene.",
+    "Phenotypic Suppression": "A genetic interaction is inferred when mutation or over expression of one gene results in suppression of any phenotype (other than lethality/growth defect) associated with mutation or over expression of another gene.",
+    "Positive Genetic": "Mutations/deletions in separate genes, each of which alone causes a minimal phenotype, but when combined in the same cell results in a less severe fitness defect than expected under a given condition. This term is reserved for high or low throughput studies with scores.", 
+    "Synthetic Growth Defect": "A genetic interaction is inferred when mutations in separate genes, each of which alone causes a minimal phenotype, result in a significant growth defect under a given condition when combined in the same cell.",
+    "Synthetic Haploinsufficiency": "A genetic interaction is inferred when mutations or deletions in separate genes, at least one of which is hemizygous, cause a minimal phenotype alone but result in lethality when combined in the same cell under a given condition.",
+    "Synthetic Lethality": "A genetic interaction is inferred when mutations or deletions in separate genes, each of which alone causes a minimal phenotype, result in lethality when combined in the same cell under a given condition.",
+    "Synthetic Rescue": "A genetic interaction is inferred when mutations or deletions of one gene rescues the lethality or growth defect of a strain mutated or deleted for another gene.",
+    "Epistatic MiniArray Profile": "An observed double mutant colony's sizes are compared to those that would be expected from a distribution of typical double mutant colonies of each strain. Each interaction is assigned a score which indicated the magnitude of the difference from the expected value and the certainty of the score. A negative (or aggravating) score < -3 would imply synthetic sick/lethal interaction and a positive (alleviating) score >+3 would imply suppressor interaction.",
+    "Proximity Label-MS": "An interaction is inferred when a bait-enzyme fusion protein selectively modifies a vicinal protein with a diffusible reactive product, followed by affinity capture of the modified protein and identification by mass spectrometric methods."
+  };
+  // Normalize some common variants users/tools might emit
+  const BIOGRID_ALIASES = {
+    "Affinity Capt-Luminescence":"Affinity Capture-Luminescence",
+    "Affinity Capt-MS":"Affinity Capture-MS",
+    "Affinity Capt-RNA":"Affinity Capture-RNA",
+    "Affinity Capt-Western":"Affinity Capture-Western",
+    "Protein–peptide":"Protein-peptide",
+    "Invivo":"In Vivo",
+    "Invitro":"In Vitro", 
+    "In vivo":"In Vivo",
+    "In vitro":"In Vitro"
+  };
+  function resolveBioGridTerm(term){
+    return BIOGRID_INFO[term] || BIOGRID_INFO[BIOGRID_ALIASES[term]] || null;
+  }
+  // === Lightweight popover manager (click to open, click-outside/Escape to close) ===
+let __bioPop = null;
+
+function closeBioPopover(){
+  if (__bioPop && __bioPop.parentNode) __bioPop.parentNode.removeChild(__bioPop);
+  __bioPop = null;
+}
+
+function openBioPopover(anchorEl, term){
+  const def = resolveBioGridTerm(term);
+  if (!def) return;
+  closeBioPopover();
+
+  const pop = document.createElement("div");
+  pop.className = "popover";
+  pop.innerHTML = `
+    <button class="pop-close" aria-label="Close" title="Close">×</button>
+    <div class="pop-title">${anchorEl.getAttribute("data-title") || term}</div>
+    <div class="pop-body">${def}</div>
+  `;
+  document.body.appendChild(pop);
+  __bioPop = pop;
+
+  // position: right/top of the icon, staying in viewport
+  const r = anchorEl.getBoundingClientRect();
+  const pad = 8;
+  const pw = Math.min(420, Math.max(260, window.innerWidth * 0.6));
+  pop.style.maxWidth = pw + "px";
+  // compute preferred x/y
+  let x = window.scrollX + r.right + pad;
+  let y = window.scrollY + r.top - 4;
+  // if overflowing right edge, place above/below
+  const rect = () => pop.getBoundingClientRect();
+  pop.style.left = x + "px";
+  pop.style.top  = y + "px";
+
+  // reflow, then adjust if off-screen
+  requestAnimationFrame(()=>{
+    const pr = rect();
+    if (pr.right > window.innerWidth - 8){
+      x = window.scrollX + Math.max(8, r.left - pr.width - pad);
+      pop.style.left = x + "px";
+    }
+    if (pr.bottom > window.scrollY + window.innerHeight - 8){
+      y = window.scrollY + Math.max(8, r.bottom - pr.height - pad);
+      pop.style.top = y + "px";
+    }
+  });
+
+  pop.querySelector(".pop-close")?.addEventListener("click", closeBioPopover, { once:true });
+}
+
+// Global handlers (delegated)
+document.addEventListener("click", (e)=>{
+  const btn = e.target.closest(".biogrid-info");
+  if (btn){
+    e.stopPropagation();
+    const term = btn.getAttribute("data-term");
+    if (!term) return;
+    // toggle if the same button
+    if (__bioPop){
+      closeBioPopover();
+      // small delay to feel like a toggle
+      requestAnimationFrame(()=>openBioPopover(btn, term));
+    } else {
+      openBioPopover(btn, term);
+    }
+  } else {
+    // click-outside closes
+    if (__bioPop && !e.target.closest(".popover")) closeBioPopover();
+  }
+});
+document.addEventListener("keydown", (e)=>{ if (e.key === "Escape") closeBioPopover(); });
+
+// Helper to render the ⓘ button next to a method name (used in renderBioGRID)
+function infoButtonHtml(label){
+  if (!resolveBioGridTerm(label)) return "";
+  const safe = label.replace(/"/g, '&quot;');
+  return `<button class="info-btn biogrid-info" data-term="${safe}" data-title="${safe}" aria-label="About ${safe}" title="About ${safe}">i</button>`;
+}
   // Log polling (latest line only)
   let logPos = 0, isPolling = false;
   function showRunStatus(){ show('runStatusCard'); }
@@ -432,8 +593,9 @@ body.light .biogrid-section-title { color: #6b7280; }
           const pills = list.length ? asPills(list) : '<span class="muted">none</span>';
           return `
             <div class="biogrid-group" style="margin-top:4px;">
-              <div class="muted" style="margin-bottom:2px;">${escapeHtml(method)}</div>
-              <div class="scroll">${pills}</div>
+<div class="muted" style="margin-bottom:2px;">
+  ${escapeHtml(method)} ${infoButtonHtml(method)}
+</div>              <div class="scroll">${pills}</div>
             </div>
           `;
         }).join("");
@@ -480,8 +642,9 @@ body.light .biogrid-section-title { color: #6b7280; }
             : '<span class="muted">none</span>';
           return `
             <div class="biogrid-group" style="margin-top:4px;">
-              <div class="muted" style="margin-bottom:2px;">${escapeHtml(method)}</div>
-              <div class="scroll">${pills}</div>
+<div class="muted" style="margin-bottom:2px;">
+  ${escapeHtml(method)} ${infoButtonHtml(method)}
+</div>              <div class="scroll">${pills}</div>
             </div>
           `;
         }).join("");

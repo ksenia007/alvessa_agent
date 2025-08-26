@@ -5,6 +5,7 @@ local_dbs/*
 **/__pycache__/
 scratch.py
 images/video_demo
+figures/*.pdf
 benchmarks_generation/results/
 benchmarks_generation/*.csv
 benchmarks_generation/*/*.csv
