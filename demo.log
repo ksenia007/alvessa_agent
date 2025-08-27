@@ -1,4 +1,5 @@
-=== START: Why would having a BMI increasing variant in FTO (and high BMI at age 10) lead to lower breast cancer risk in adulthood? ===
+
+START: Why would having a BMI increasing variant in FTO (and high BMI at age 10) lead to lower breast cancer risk in adulthood? 
 [TOOL SELECTION PROMPT] You are an assistant deciding which tools to use to answer a biomedical question. User question: """Why would having a BMI increasing variant in FTO (and high BMI at age 10) lead to lower breast cancer risk in adulthood?""" 
 
  If the question mentioned a database or tool and we do not have it, use the most similar available one. Available tools: - extract_entities: Extracts genes and all biomedical entities from the user question for query understanding using both Claude and GLiNER models. Returns genes (Claude + GLiNER), traits, and all entity types found by GLiNER. This tool MUST be called first before running any other tool as it provides essential entity extraction for pipeline execution.
@@ -163,6 +164,7 @@ Current context block:
     "FTO functions as RNA demethylase that mediates oxidative demethylation and acts as regulator of fat mass, adipogenesis and energy homeostasis",
     "FTO involved in regulation of thermogenesis and control of adipocyte differentiation into brown or white fat cells",
     "FTO regulates activity of dopaminergic midbrain circuitry via m6A demethylation in mRNAs"
+
   ]
 }
 ```

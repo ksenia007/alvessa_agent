@@ -89,7 +89,7 @@ def biogrid_set2(count):
             curr_gene = gene_list[random_gene_idx]
             try:
                 all_interactors, human_interactors, nonhuman_interactors = _fetch_predictions_BioGRID(curr_gene)
-                all_interactors_union.extend(all_interactors)
+                all_interactors_union.append(list(all_interactors))
 
                 all_human_interactors = []
                 for value_list in human_interactors.values():
@@ -98,19 +98,24 @@ def biogrid_set2(count):
                 # print("all_genes: ", all_interactors_union)
                 # print("human_genes: ", all_human_interactors)        
 
-                human_interactors_union.extend(all_human_interactors)
+                human_interactors_union.append(all_human_interactors)
                 chosen_gene_idxs.append(random_gene_idx)
                 chosen_genes.append(curr_gene)
             except Exception as e:
                 # continue
                 print(curr_gene, e)
-            
-        max_interactor_idx = len(human_interactors_union)
+        
+        human_intersection_list = list(set(human_interactors_union[0]) & set(human_interactors_union[1]))
+        all_intersection_list = list(set(all_interactors_union[0]) & set(all_interactors_union[1]))
+        if len(human_intersection_list)==0:
+            continue
+        
+        max_interactor_idx = len(human_intersection_list)
         random_interactor_idxs = random.sample(range(max_interactor_idx), 1)[0]
-        correct_choice = list(human_interactors_union)[random_interactor_idxs]
+        correct_choice = list(human_intersection_list)[random_interactor_idxs]
 
         interactors_idxs_in_gene_list = []
-        for interactor in list(all_interactors_union):
+        for interactor in list(all_intersection_list):
             try:
                 interactors_idxs_in_gene_list.append(gene_list.index(interactor))
             except:
@@ -222,12 +227,12 @@ def biogrid_set3(count):
 
 if __name__ == "__main__":
     num_questions = 20
-    print("=== Generating BioGRID Question Set 1 ===")
-    biogrid_set1(num_questions)
+    # print("=== Generating BioGRID Question Set 1 ===")
+    # biogrid_set1(num_questions)
     print("=== Generating BioGRID Question Set 2 ===")
     biogrid_set2(num_questions)
-    print("=== Generating BioGRID Question Set 3 ===")
-    biogrid_set3(num_questions)
+    # print("=== Generating BioGRID Question Set 3 ===")
+    # biogrid_set3(num_questions)
     
 
     

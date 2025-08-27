@@ -72,6 +72,10 @@
       "go_terms": "C:cytoplasm, C:cytosol, C:intracellular membrane-bounded organelle, C:nuclear speck, C:nucleoplasm, C:nucleus, F:broad specificity oxidative DNA demethylase activity, F:ferrous iron binding, F:mRNA N6-methyladenosine dioxygenase activity, F:oxidative RNA demethylase activity, F:tRNA demethylase activity, F:transferase activity, P:DNA alkylation repair, P:RNA repair, P:adipose tissue development, P:mRNA destabilization, P:regulation of brown fat cell differentiation, P:regulation of lipid storage, P:regulation of multicellular organism growth, P:regulation of respiratory system process, P:regulation of white fat cell proliferation, P:snRNA processing, P:temperature homeostasis"
     }
   },
+  "prompt": "",
+  "mc_setup": false,
+  "uniprot_entries_base": {},
+  "uniprot_entries_gwas": {},
   "gene_disease_traits": {},
   "gene_function_traits": {},
   "gene_GO_traits": {},
@@ -2201,6 +2205,7 @@
   "sei_predictions": {},
   "alphamissense_predictions": {},
   "mirDB_targets": {},
+
   "gwas_associations": {
     "FTO": {
       "gene": "FTO",
