@@ -385,6 +385,96 @@ def flair_entity_extraction_node(state: "State") -> "State":
         print(f"[flair_entity_extraction_node] Extracted: {final_output}")
     return final_output
 
+def gliner_claude_entity_extraction_node(state: "State") -> "State":
+    """Extracts entities using a combination of GLiNER and Claude models."""
+    user_input: str = state["messages"][-1]["content"]
+    
+    # Run both models
+    gliner_result = _extract_entities_with_gliner(user_input)
+    claude_result = _extract_entities_with_claude(user_input)
+    
+    # Merge raw results
+    raw_genes = gliner_result.get("genes", []) + claude_result.get("genes", [])
+    raw_traits = gliner_result.get("traits", []) + claude_result.get("traits", [])
+    raw_proteins = gliner_result.get("proteins", [])  # Claude does not extract proteins
+    
+    # Expand and post-process
+    expanded_genes = _expand_and_refine_gene_names(raw_genes, user_input)
+    processed_entities = _post_process_entities(expanded_genes, raw_traits)
+    
+    # Compile final result
+    final_output = {
+        "genes": processed_entities["genes"],
+        "traits": processed_entities["traits"],
+        "proteins": sorted(list(set(raw_proteins)))
+    }
+    
+    if DEBUG:
+        print(f"[gliner_claude_entity_extraction_node] Extracted: {final_output}")
+        
+    return final_output
+
+
+def gliner_flair_entity_extraction_node(state: "State") -> "State":
+    """Extracts entities using a combination of GLiNER and Flair models."""
+    user_input: str = state["messages"][-1]["content"]
+    
+    # Run both models
+    gliner_result = _extract_entities_with_gliner(user_input)
+    flair_result = _extract_entities_with_flair(user_input)
+    
+    # Merge raw results
+    raw_genes = gliner_result.get("genes", []) + flair_result.get("genes", [])
+    raw_traits = gliner_result.get("traits", []) + flair_result.get("traits", [])
+    raw_proteins = gliner_result.get("proteins", []) + flair_result.get("proteins", [])
+    
+    # Expand and post-process
+    expanded_genes = _expand_and_refine_gene_names(raw_genes, user_input)
+    processed_entities = _post_process_entities(expanded_genes, raw_traits)
+    
+    # Compile final result
+    final_output = {
+        "genes": processed_entities["genes"],
+        "traits": processed_entities["traits"],
+        "proteins": sorted(list(set(raw_proteins)))
+    }
+    
+    if DEBUG:
+        print(f"[gliner_flair_entity_extraction_node] Extracted: {final_output}")
+        
+    return final_output
+
+
+def claude_flair_entity_extraction_node(state: "State") -> "State":
+    """Extracts entities using a combination of Claude and Flair models."""
+    user_input: str = state["messages"][-1]["content"]
+    
+    # Run both models
+    claude_result = _extract_entities_with_claude(user_input)
+    flair_result = _extract_entities_with_flair(user_input)
+    
+    # Merge raw results
+    raw_genes = claude_result.get("genes", []) + flair_result.get("genes", [])
+    raw_traits = claude_result.get("traits", []) + flair_result.get("traits", [])
+    raw_proteins = flair_result.get("proteins", []) # Claude does not extract proteins
+    
+    # Expand and post-process
+    expanded_genes = _expand_and_refine_gene_names(raw_genes, user_input)
+    processed_entities = _post_process_entities(expanded_genes, raw_traits)
+    
+    # Compile final result
+    final_output = {
+        "genes": processed_entities["genes"],
+        "traits": processed_entities["traits"],
+        "proteins": sorted(list(set(raw_proteins)))
+    }
+    
+    if DEBUG:
+        print(f"[claude_flair_entity_extraction_node] Extracted: {final_output}")
+        
+    return final_output
+
+
 def variant_extraction_node(state: "State") -> "State":
     """Extracts variant and Ensembl entities using only regex."""
     user_input: str = state["messages"][-1]["content"]
