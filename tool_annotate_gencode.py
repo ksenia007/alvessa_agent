@@ -33,21 +33,31 @@ def gencode_gene_node(state: "State") -> "State":
     State
         Updated state with the `gene_structure` field filled.
     """
-    genes = state.get("genes", [])
+    gene_objects = state.get("gene_entities", [])
+    gene_list = list(gene_objects.keys())
     
     if DEBUG:
-        print("[gencode_gene_node] Annotating genes with GENCODE features:", genes)
+        print("[gencode_gene_node] Annotating genes with GENCODE features:", gene_list)
 
     gene_structure = {}
     
-    for gene in genes:
+    for gene in gene_list:
         if gene:
+            gene_obj = gene_objects[gene]
             try:
                 structure = summarize_gene_structure(gene)
-                gene_structure[gene] = structure
+                gene_obj.set_gene_type(structure.get("gene_type", "unknown"))
+                gene_obj.set_gene_ids(entrez_id = structure.get("gene_id", ""))
+                gene_obj.set_chrom_location(chrom = structure.get("chromosome", ""),
+                                            gene_span=structure.get("gene_span_bp", (0,0)))
+                print('structure.get("transcript_ids", [])', structure.get("transcript_ids", []))
+                for i in structure.get("transcript_ids", []):
+                    gene_obj.add_transcript(i, n_exons=structure.get("exons_per_transcript", {}).get(i, 0))
+                    
+                gene_obj.add_tool("gencode_gene_node")
             except Exception as e:
                 print(f"[gencode_gene_node] Error annotating gene {gene}: {e}")
-    
+                    
     gene_structure['assembly'] = "GRCh38"  # Gencode uses GRCh38 as the default assembly
     if DEBUG:
         print("[gencode_gene_node] Gene structure summary:", gene_structure)

@@ -134,10 +134,7 @@ def summarize_gene_structure(gene_name: str) -> Optional[Dict[str, Any]]:
         "gene_type": gene_type,
         'gene_id': gene_id,
         "chromosome": chromosome,
-        "n_transcripts": len(transcripts),
         "exons_per_transcript": exon_counts,
-        "min_transcript_span_bp": int(min(spans)) if spans else None,
-        "max_transcript_span_bp": int(max(spans)) if spans else None,
         "transcript_ids": transcripts,
         "gene_span_bp": gene_span
     }

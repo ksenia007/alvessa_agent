@@ -15,11 +15,14 @@ import textwrap
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-RESULTS_ROOT = "benchmarks_generation/results"
+RESULTS_ROOT = "benchmarks_generation"
 
-def collect_results(root=RESULTS_ROOT):
+def collect_results(root_base=RESULTS_ROOT):
     rows = []
+    full_df = pd.DataFrame()
+    root = root_base+'/results'
     for dataset in os.listdir(root):
         dpath = os.path.join(root, dataset)
         if not os.path.isdir(dpath):
@@ -34,6 +37,7 @@ def collect_results(root=RESULTS_ROOT):
                 fpath = os.path.join(mpath, fname)
                 try:
                     df = pd.read_csv(fpath)
+                                
                     if "is_correct" not in df.columns:
                         continue
                     rows.append({
@@ -43,12 +47,19 @@ def collect_results(root=RESULTS_ROOT):
                         "n": len(df),
                         "accuracy": float(df["is_correct"].mean())
                     })
+                    df['model'] = model
+                    df['dataset'] = dataset
+                    df['test_set'] = fname.replace(".csv","")
+                    
+                    # reference main file w/ models needed
+                    ref = pd.read_csv(os.path.join(root_base, dataset, fname))
+                    df['need_tool'] = ref.iloc[0]['tool']
+                    
+                    full_df = pd.concat([full_df, df], ignore_index=True)
                 except Exception as e:
                     print(f"[warn] {fpath}: {e}")
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows), full_df
 
-import numpy as np
-import matplotlib.pyplot as plt
 import textwrap
 from matplotlib.transforms import blended_transform_factory
 
@@ -68,10 +79,7 @@ def plot_by_testset(df, save_path=None):
     model_order = ["Alvessa", "Claude"]
 
     # --- Aggregate in case multiple files exist per (dataset, test_set, model)
-    g = (df.groupby(["dataset", "test_set", "model_norm"])
-            .agg(accuracy=("accuracy", "mean"), n=("n", "sum"))
-            .reset_index())
-
+    g = df
     # --- Clean names: dataset = "name", set = "set"
     # Special-case labbench (treat as single-set dataset with empty set label)
     g["dataset_clean"] = g["dataset"].fillna("").astype(str)
@@ -193,10 +201,12 @@ def plot_by_testset(df, save_path=None):
     
     map_names = {
         'GWAS': 'GWAS',
+        'GWAS_AM': 'Variant pathogenicity',
         'labbench': 'LabBench',
         'reactome' : 'Reactome',
         'gencode': 'Gencode',
         'biogrid': 'BioGRID',
+        'mirDB': 'miRNA targets',
     }
 
     for ds, i0, i1 in dataset_runs:
@@ -245,10 +255,287 @@ def plot_split(results, save_prefix="accuracy"):
     if not lab_df.empty:
         print("Plotting LabBench...")
         plot_by_testset(lab_df, save_path=f"figures/{save_prefix}_labbench.png")
+
+
+def plot_by_dataset(df, save_path=None, figure_size=(9,6), max_y=1):
+    if df.empty:
+        print("No results found.")
+        return
+
+    # --- Normalize model names
+    name_map = {
+        "alvessa": "Alvessa",
+        "alvessa_pipeline": "Alvessa",
+        "claude": "Claude",
+        "anthropic": "Claude",
+    }
+    df = df.copy()
+    df["model_norm"] = df["model"].str.lower().map(name_map).fillna(df["model"])
+    model_order = ["Alvessa", "Claude"]
+
+    # --- Aggregate mean accuracy per dataset/model
+    g = (df.groupby(["dataset", "model_norm"])
+            .agg(accuracy=("accuracy", "mean"), n=("n", "sum"))
+            .reset_index())
+
+    # --- Pivot to dataset x model table
+    acc = g.pivot(index="dataset", columns="model_norm", values="accuracy")
+    for m in model_order:
+        if m not in acc.columns:
+            acc[m] = np.nan
+    acc = acc[model_order]
+
+    # --- Compute gain and sort datasets
+    acc["gain"] = acc["Alvessa"] - acc["Claude"]
+    acc = acc.sort_values("gain", ascending=False)
+
+    # --- Map dataset names to nicer labels
+    map_names = {
+        'GWAS': 'Trait\nassociation',
+        'GWAS_AM': 'Variant\nannotation',
+        'labbench': 'dbQA LabBench',
+        'reactome': 'Pathways',
+        'gencode': 'Gene\nannotations',
+        'biogrid': 'Interactions',
+        'mirDB': 'miRNA\ntargets',
+    }
+    acc.index = acc.index.map(lambda d: map_names.get(d, d))
+
+    # --- Plot
+    plt.rcParams.update({
+        "axes.titlesize": 18,
+        "axes.labelsize": 15,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 13,
+        "legend.fontsize": 12,
+    })
+
+    x = np.arange(len(acc))
+    width = 0.35
+    fig, ax = plt.subplots(figsize=figure_size)
+
+    colors = {"Alvessa": "darkorange", "Claude": "grey"}
+
+    for i, m in enumerate(model_order):
+        ax.bar(x + (i - 0.5) * width, acc[m], width,
+               label=m, color=colors.get(m, "steelblue"))
+
+    ax.set_ylim(0, max_y+0.1)
+    ax.set_ylabel("Accuracy")
+    ax.set_title("", pad=14)
+    ax.set_xticks(x)
+    ax.set_xticklabels(acc.index, rotation=0, ha="center")
+    # ax.legend(title="Model", frameon=False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=220, bbox_inches="tight")
+        print(f"Plot saved to {save_path}")
+    else:
+        plt.show()
+
+def convert_full_accuracy(full_df, group_by_set=False):
+    
+    if full_df.empty or "is_correct" not in full_df.columns:
+        print("No valid results to convert.")
+        return pd.DataFrame()
+
+    df = full_df.copy()
+    df["model_norm"] = df["model"].str.lower().map({
+        "alvessa": "Alvessa",
+        "alvessa_pipeline": "Alvessa",
+        "claude": "Claude",
+        "anthropic": "Claude",
+    }).fillna(df["model"])
+
+
+    if group_by_set:
+        group_cols = ["dataset", "test_set", "model"]
+    else:
+        group_cols = ["dataset", "model"]
         
+    agg_df = (
+        df.groupby(group_cols, dropna=False)
+          .agg(
+              n=("is_correct", "size"),          # N questions
+              accuracy=("is_correct", "mean")    # mean correctness
+          )
+          .reset_index()
+          .sort_values(group_cols)
+          .reset_index(drop=True)
+    )
+    return agg_df
+      
+def plot_heatmap_by_set(df):
+    # --- Manual descriptionss
+    desc_map = {
+        ("GWAS","set1"): "GWAS set",
+        ("GWAS","set2"): "GWAS set2",
+        ("GWAS","set3"): "GWAS set3",
+        ("GWAS_AM","set1"): "Variant pathogenicity, set1",
+    }
+
+    df["desc"] = df.apply(lambda r: desc_map.get((r["dataset"], r["test_set"]), 
+                                                f"{r['dataset']}:{r['test_set']}"), axis=1)
+
+    # --- Pivot to desc × model
+    pivot = df.pivot(index="desc", columns="model", values="accuracy")
+
+    # --- Heatmap
+    plt.figure(figsize=(6,4))
+    sns.heatmap(pivot, annot=True, fmt=".2f", cmap="YlOrRd", cbar_kws={"label": "Accuracy"})
+    plt.title("Accuracy Heatmap by Dataset/Set and Model")
+    plt.xlabel("Model")
+    plt.ylabel("Dataset + Set")
+    plt.tight_layout()
+    plt.show()
+
+def tool_selection(df):
+    # --- Check if the needed tool was called
+    print(df[['need_tool', 'used_models']])
+    
+    tool_selection_results = {}
+    
+    mapping_tool_names_acceptable = {
+        'GWAS': ['query_gwas_extensive', 'query_gwas_by_gene'],
+        'query_gwas_extensive': ['query_gwas_by_gene']
+    }
+    
+    for i, row in df[['need_tool', 'used_models']].iterrows():
+        
+        # convert need_tool and used_models into lists, [' and splitting
+        need_list = [x.strip() for x in str(row['need_tool']).replace('[','').replace(']','').replace("'",'').split(',')]
+        used_list = [x.strip() for x in str(row['used_models']).replace('[','').replace(']','').replace("'",'').split(',')]
+        
+        missing = False
+        for n in need_list:
+            if n not in used_list:
+                if n in mapping_tool_names_acceptable:
+                    acc_names = mapping_tool_names_acceptable[n]
+                    if not any(a in used_list for a in acc_names):
+                        missing = True
+                        break
+                else:
+                    missing = True
+                    break
+        got_all_needed = not missing
+                            
+                    
+        print(f"Row {i}: Need {need_list}, Used {used_list} => Got all needed: {got_all_needed}")
+        
+        if not missing:
+            num_extra = len(used_list) - len(need_list)
+            if 'extract_entities' in used_list:
+                num_extra -= 1
+            if 'variant_annotations' in used_list and ('alphamissense' in used_list or 'query_gwas_by_gene' in used_list):
+                num_extra -= 1
+            if 'query_gwas_extensive' in used_list and 'query_gwas_by_gene' in used_list:
+                num_extra -= 1
+        else:
+            num_extra = 0
+            
+        print(f"Row {i}: Number of extra tools called: {num_extra}")
+        
+        tool_selection_results[i] = {
+            'need_tool': need_list,
+            'need_tool_str': str(need_list),
+            'used_models': used_list,
+            'got_all_needed': got_all_needed,
+            'num_extra': num_extra
+        }
+        
+    tool_df = pd.DataFrame.from_dict(tool_selection_results, orient='index')    
+    # print(tool_df)
+    
+    # accuracy for got_all_needed 
+    print("Accuracy for calling the right tool", tool_df.got_all_needed.mean())
+    print("Mean # extra tools called", tool_df.num_extra.mean())
+    print(tool_df.groupby(['need_tool_str']).got_all_needed.mean())
+    print(tool_df.groupby(['need_tool_str']).num_extra.mean())
+    
+    # simple barplot, grouped by need_tool_str, showing got_all_needed and num_extra
+    overall_acc   = tool_df.got_all_needed.mean()
+    overall_extra = tool_df.num_extra.mean()
+
+    # --- Per-tool
+    per_tool = (
+        tool_df.groupby("need_tool_str")
+            .agg(acc=("got_all_needed","mean"),
+                    extra=("num_extra","mean"))
+    )
+
+    # --- Plot
+    fig, axes = plt.subplots(1, 2, figsize=(12,5), gridspec_kw={'width_ratios':[1,2]})
+
+    # Left: overall
+    axes[0].bar(["Got all needed", "Mean # extras"], [overall_acc, overall_extra],
+                color=["steelblue","olive"])
+    axes[0].set_ylim(0, max(1, overall_extra+0.5))
+    axes[0].set_title("Overall")
+    axes[0].set_ylabel("Score")
+    axes[0].spines['top'].set_visible(False)
+    axes[0].spines['right'].set_visible(False)
+
+    # Right: per tool grouped bars
+    x = range(len(per_tool))
+    width = 0.35
+    axes[1].bar([i - width/2 for i in x], per_tool["acc"], width, label="Got all needed", color="steelblue")
+    axes[1].bar([i + width/2 for i in x], per_tool["extra"], width, label="Mean # extras", color="olive")
+
+    # Define mapping from raw tool names to nicer labels
+    label_map = {
+        "['BioGRID']": "BioGRID",
+        "['GWAS']": "GWAS",
+        "['gencode_gene_node']": "Gencode",
+        "['miRDB']": "miRNA\ntargets",
+        "['query_gwas_extensive', 'alphamissense']": "GWAS+\nAlphaMissense",
+        "['reactome']": "Reactome",
+    }
+
+    # After plotting per-tool bars:
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels([label_map.get(lbl, lbl) for lbl in per_tool.index],
+                            rotation=0, ha="center")
+
+    # axes[1].set_xticks(x)
+    # axes[1].set_xticklabels(per_tool.index, rotation=20, ha="right")
+    axes[1].set_ylim(0, max(1, per_tool["extra"].max()+0.5))
+    axes[1].set_title("By needed tool")
+    axes[1].legend(frameon=False)
+    axes[1].spines['top'].set_visible(False)
+    axes[1].spines['right'].set_visible(False)
+
+
+    plt.tight_layout()
+    plt.savefig('figures/tool_selection.png', dpi=220, bbox_inches="tight")
+
 if __name__ == "__main__":
-    results = collect_results()
+    results, full_df = collect_results()
+    
+    results = convert_full_accuracy(full_df, group_by_set=True)
     plot_split(results, save_prefix="accuracy_by_testset")
+    
+    non_set = convert_full_accuracy(full_df, group_by_set=False)
+    results_nonlabbench = non_set[~non_set["dataset"].str.lower().str.contains("labbench")]
+    plot_by_dataset(results_nonlabbench, save_path="figures/accuracy_by_dataset.png", 
+                    figure_size=(9.5,5))
+    
+    results_labbench = non_set[non_set["dataset"].str.lower().str.contains("labbench")]
+    plot_by_dataset(results_labbench, save_path="figures/accuracy_dbqa.png", 
+                    figure_size=(3,5), max_y=0.5)
+    
+    # print(convert_full_accuracy(full_df))
+    
+    # plot_heatmap_by_set(results)
+    print(full_df)
+    
+
+    tool_selection(full_df[full_df.method=='alvessa'])
+
 
 
 # %%

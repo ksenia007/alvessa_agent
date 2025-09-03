@@ -12,7 +12,7 @@ TypedDict schema describing the mutable LangGraph state."""
 from __future__ import annotations
 import operator
 from typing import Annotated, Any, Dict, List
-
+from entity_classes import Gene
 from typing_extensions import TypedDict
 
 
@@ -28,6 +28,9 @@ class State(TypedDict, total=False):
     gene_level_gencode: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     prompt: Annotated[str, operator.add]
     mc_setup: Annotated[bool, operator.and_]
+    
+    # to replace the keys commented out below w/ proper gene objects
+    gene_entities: Annotated[Dict[str, "Gene"], operator.or_]
 
     # UniProt / HumanBase look-ups
     uniprot_entries_base: Annotated[Dict[str, Dict], operator.or_]
@@ -39,11 +42,11 @@ class State(TypedDict, total=False):
     humanbase_expecto: Annotated[Dict[str, List[Dict[str, Any]]], operator.or_]
     tissue_expression_preds_variant_text_description: Annotated[Dict[str, Any], operator.or_]
     expression_preds_variant_table: Annotated[Dict[str, Dict[str, Any]], operator.or_]
-    biogrid_predictions: Annotated[Dict[str, List[str]], operator.or_]
-    biogrid_interaction_groups: Annotated[Dict[str, List[str]], operator.or_]
-    biogrid_interactions_select_nonhuman: Annotated[Dict[str, List[str]], operator.or_]
+    # biogrid_predictions: Annotated[Dict[str, List[str]], operator.or_]
+    # biogrid_interaction_groups: Annotated[Dict[str, List[str]], operator.or_]
+    # biogrid_interactions_select_nonhuman: Annotated[Dict[str, List[str]], operator.or_]
     reactome_pathways: Annotated[Dict[str, List[str]], operator.or_]
-    biogrid_summarized_go: Annotated[Dict[str, List[str]], operator.or_]
+    # biogrid_summarized_go: Annotated[Dict[str, List[str]], operator.or_]
     dbsnp_variants: Annotated[Dict[str, Dict[str, Dict[str, Any]]], operator.or_]
     dbsnp_summaries: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     sei_predictions: Annotated[Dict[str, Dict[str, Any]], operator.or_]

@@ -85,42 +85,33 @@ def bioGRID_predictions_agent(state: "State") -> "State":
         
     # TODO: Split the functionality, BioGRID should only fetch interactions, and HB called outside
     """
-    preds = state.get("bioGRID_predictions", {}).copy()
-    human_interactions = state.get("biogrid_interaction_groups", {}).copy()
-    nonhuman_select_interactions = state.get("biogrid_interactions_select_nonhuman", {}).copy()
-
-    # human_interactions = defaultdict(list, state.get("biogrid_interaction_groups", {}))
-    # nonhuman_select_interactions = defaultdict(list, state.get("biogrid_interactions_select_nonhuman", {}))
-
-    for gene in state.get("genes", []):
-        if gene in preds:
+    gene_obj = state.get("gene_entities", [])
+    for gene_name in gene_obj.keys():
+        if not gene_name:
+            continue
+        gene = gene_obj[gene_name]
+        # if BioGrid was run before, skip genes we already have predictions for
+        if gene.has_interactions_collected():
+            if DEBUG:
+                print(f"[BioGRID] Skipping {gene.symbol}, already has interactions collected.")
             continue
 
         try:
-            interactions, human_set, nonhuman_set = _fetch_predictions_BioGRID(gene)
-
-            # print(human_set)
-            # print(nonhuman_set)
+            _, human_set, nonhuman_set = _fetch_predictions_BioGRID(gene_name)
         except Exception as exc:
             print(f"[BioGRID] {gene}: {exc}")
         else:
-            human_interactions[gene] = defaultdict(list)
-            nonhuman_select_interactions[gene] = defaultdict(list)
-
-            for key, val in human_set.items():
-                human_interactions[gene][key].extend(list(set(val)))
-            for key, val in nonhuman_set.items():
-                nonhuman_select_interactions[gene][key].extend(list(set(val)))
-
-            preds[gene] = list(set(interactions))
+            # populate Gene object
+            for exp, all_genes_interacting in human_set.items():
+                # key is the experimental system
+                print('ADDING HUMAN INTERACTIONS')
+                gene.add_many_interactions(exp, all_genes_interacting)
+            for exp, all_genes_interacting in nonhuman_set.items():
+                gene.add_many_nonhuman_interactions(exp, all_genes_interacting)
 
         time.sleep(0.3)  # courteous pause
 
     if DEBUG:
-        print(f"[BioGRID] Predictions fetched for {len(preds)} genes.")
-        print("[BioGRID] Example predictions:", list(preds.items())[:2])
+        print(f"[BioGRID] Predictions fetched")
 
-    return {
-        "biogrid_predictions": preds,
-        "biogrid_interaction_groups": human_interactions,
-        "biogrid_interactions_select_nonhuman": nonhuman_select_interactions}
+    return 

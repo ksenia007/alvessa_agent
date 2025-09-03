@@ -51,8 +51,16 @@ def _process_dbsnp_variants(state: "State") -> "State":
 # Data aggregation helpers
 def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
     """Extract all data for a single gene from state."""
+    
+    print(state.get('gene_entities', {}))
+    if not gene or gene not in state.get('gene_entities', {}):
+        raise ValueError(f"Gene {gene} not found in state gene_entities")
+    else:
+        print(state.get('gene_entities', {})[gene].to_json())
+    raise ValueError("Debug stop")
 
     gene_info = {"gene": gene}
+    
     
     # Define data sources with their state keys and optional processing
     data_sources = [
@@ -146,7 +154,7 @@ def create_context_block(state: "State") -> str:
         print("[create_context_block function] preparing context block...")
     
     # Build gene-based context
-    gene_list = list(set(state.get("genes", [])))
+    gene_list = list(set(state.get("gene_entities", [])))
     context_payload = [_extract_gene_data(state, gene) for gene in gene_list]
 
     if DEBUG:

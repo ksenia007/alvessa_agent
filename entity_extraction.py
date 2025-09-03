@@ -6,6 +6,7 @@ from claude_client import claude_call
 from config import DEBUG, GENE_EXTRACT_MODEL, GLINER_MODEL, GLINER_THRESHOLD, GLINER_ENTITY_LABELS
 from state import State
 from flair.data import Sentence
+from entity_classes import Gene, canon_gene_key
 
 # Global variables to cache the models
 _gliner_model = None
@@ -340,6 +341,20 @@ def entity_extraction_node(state: "State") -> "State":
     extraction_result = _extract_entities_merged(user_input)
     if DEBUG:
         print(f"[entity_extraction_node] Extracted: {extraction_result}")
+    # create gene objects in the state if any genes were found
+    extraction_result['gene_entities'] = {}
+    raw_genes = extraction_result.get("genes") or []
+    gene_keys = [canon_gene_key(g) for g in raw_genes if g]
+    for key in gene_keys:
+        print(f"[entity_extraction_node] Processing gene key: {key}")
+        if key in state.get("gene_entities", {}):
+            continue
+        g = Gene(key)
+        g.add_tool("EntityExtraction")
+        print(f"[entity_extraction_node] Created Gene object for: {key}")
+        print(g.to_json())
+        g.normalize()
+        extraction_result['gene_entities'][key] = g 
     return extraction_result
 
 

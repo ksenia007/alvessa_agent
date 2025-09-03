@@ -6,6 +6,8 @@ local_dbs/*
 scratch.py
 images/video_demo
 figures/*.pdf
+paper/*.pdf
+images/*.key
 benchmarks_generation/results/
 benchmarks_generation/*.csv
 benchmarks_generation/*/*.csv

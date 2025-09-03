@@ -16,7 +16,7 @@ from pathlib import Path
 from evaluate_benchmarks_general import run_benchmark
 SUBFOLDERS = ['labbench']
 MAIN_PATH = Path("benchmarks_generation")
-MAX_ROWS = 15  # -1 means all
+MAX_ROWS = 100 # -1 means all
 
 SYSTEM_MSG = (
     """You are a multiple-choice answering system.
@@ -46,6 +46,9 @@ def main():
             if not file_name.endswith(".csv"):
                 continue
 
+            if 'dbqa_' not in file_name:
+                continue
+            
             in_path = sub_path / file_name
             out_path = out_dir / file_name
 
