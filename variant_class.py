@@ -41,6 +41,18 @@ class Variant:
             self.variant_summaries.append(new_summary)
             
     def return_full_summary(self) -> str:
+        # add functional predictions summary first
+        func_summary = ""
+        if self.functional_predictions:
+            func_preds = []
+            for gene, tools in self.functional_predictions.items():
+                for tool, scores in tools.items():
+                    score_str = ', '.join(map(str, scores))
+                    func_preds.append(f"{tool}: {score_str}")
+                func_summary += f"Functional predictions for {gene}: " + ", ".join(func_preds)
+        
+        self.variant_summaries.insert(0, func_summary)
+        
         return '; '.join(self.variant_summaries)
     
     def add_functional_prediction(self, gene: str, tool: str, score: Any):

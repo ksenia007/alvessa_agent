@@ -121,8 +121,9 @@ def alphamissense_predictions_agent(state: "State") -> "State":
     except Exception as e:
         warnings.warn(f"[AlphaMissense] Merge failed: {e}")
         return 
-
-
+    # drop lines with NaN in am_class
+    merged = merged.dropna(subset=['am_class'])
+    print(merged)
     print(f"[AlphaMissense] finished merging... {datetime.now()}")
 
     grouped = merged.groupby(['gene', 'var_id', 'snp_key'], as_index=False).agg({
@@ -131,9 +132,9 @@ def alphamissense_predictions_agent(state: "State") -> "State":
 
     for row in grouped.itertuples(index=False):
         gene, var_id, snp_key, am_class = row
-        var_obj.add_functional_prediction(gene, 'AlphaMissense', am_class)
-
-        print(var_obj)
+        if am_class is None:
+            continue
+        variants[var_id].add_functional_prediction(gene, 'AlphaMissense', am_class)
 
     print(f"[AlphaMissense] done... {datetime.now()}")
 

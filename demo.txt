@@ -1,12 +1,28 @@
 ================================================================================
-Q: tell me about alpha missense predictions for TP53
+Q: tell me about Sei predictions for TP53
 
 Answer:
-Based on the provided context, there is no information about AlphaMissense predictions for TP53. The context contains extensive GWAS association data for TP53, including 239 total GWAS associations and variant frequency information from population databases, but does not include any AlphaMissense pathogenicity predictions or scores for TP53 variants.
+SEI (Sequence-based Epigenomic Imputation) predictions for TP53 variants show diverse functional categories across multiple genomic regions. The predictions include transcriptional regulatory elements (TN1, TN2, TN3, TN4 Transcription categories), promoter regions (P Promoter), enhancer elements (E1 Stem cell, E4 Multi-tissue), heterochromatin regions (HET4 Heterochromatin), and low signal regions (L3 Low signal). The most common prediction is TN1 Transcription, appearing in 8 variants (rs1642792, rs1042522, rs2909430, rs1625895, rs17881850, rs138932666, rs17880847). Other transcription-related predictions include TN2 (rs74351250, rs8073498), TN3 (rs62062585), and TN4 (rs78378222). Two variants show promoter activity (rs17883687, rs17882854), while enhancer predictions include E1 Stem cell (rs4968204) and E4 Multi-tissue (rs9894946). Three variants show L3 Low signal predictions (rs201214141, rs78496430, rs55745760), and one shows HET4 Heterochromatin (rs28934576).
 
 Evidence:
-  - The context contains GWAS data for TP53 with 239 total associations
-  - Variant frequency data is provided for multiple TP53-associated SNPs from databases like dbSNP, TOPMED, and GnomAD
-  - No AlphaMissense predictions, scores, or pathogenicity assessments are mentioned in the TP53 data
+  - rs78378222: SEI: TN4 Transcription
+  - rs201214141: SEI: L3 Low signal
+  - rs1642792: SEI: TN1 Transcription
+  - rs62062585: SEI: TN3 Transcription
+  - rs1042522: SEI: TN1 Transcription
+  - rs2909430: SEI: TN1 Transcription
+  - rs9894946: SEI: E4 Multi-tissue
+  - rs17883687: SEI: P Promoter
+  - rs1625895: SEI: TN1 Transcription
+  - rs74351250: SEI: TN2 Transcription
+  - rs8073498: SEI: TN2 Transcription
+  - rs17882854: SEI: P Promoter
+  - rs28934576: SEI: HET4 Heterochromatin
+  - rs17881850: SEI: TN1 Transcription
+  - rs138932666: SEI: TN1 Transcription
+  - rs78496430: SEI: L3 Low signal
+  - rs55745760: SEI: L3 Low signal
+  - rs4968204: SEI: E1 Stem cell
+  - rs17880847: SEI: TN1 Transcription
 
 
