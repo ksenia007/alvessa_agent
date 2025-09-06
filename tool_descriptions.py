@@ -1,6 +1,6 @@
 from langchain.agents import Tool
 from entity_extraction import entity_extraction_node
-from tool_humanbase import humanbase_predictions_agent, humanbase_expecto_agent, humanbase_tissue_expecto_annotate_variants
+from tool_humanbase import humanbase_predictions_agent, expectosc_predictions_agent
 from tool_biogrid import bioGRID_predictions_agent
 from tool_reactome import reactome_pathways_agent
 from tool_go_summarization import make_go_summarization_node
@@ -53,20 +53,17 @@ TOOL_CATALOG = {
     "variant_annotations": "Fetches dbSNP data about the identified variants. This requires gwas to be run first. This is to be used only when the variant needs to be annotated with its **coordinates** and **chromosome number** and similar details. This tool is also a prerequisite to run humanbase, sei, alphamissense, etc. Reason based on the user's question if sequence models need to be run, and if so, this tool is a prerequisite to run them.",
     "variant_population_summaries": "Fetches population-wide summaries of allele frequencies for the identified variants across studies. Useful for characterizing the frequency of variants in the population. This requires gwas to be run first.",
     "sei": "Fetches predictions of the sequence regulatory activity for given variants. This requires variant_annotations to be run first.", 
-    "humanbase_expecto": "Fetches Expecto, gene expression disruption predictions from HumanBase per variant. Pulls all precomputed predictions for the input genes.",
-    "humanbase_tissue_expecto_annotate_variants": "Annotates variants with tissue-specific expression disruption predictions from HumanBase. Requires humanbase_expecto and variant_annotations to be run first.",
+    "expectosc_predictions_agent": "Annotates variants with predicted (from sequence) cell type-specific expression disruption predictions. Requires variant_annotations to be run first.",
     "alphamissense": "Fetches Alphamissense predicted pathogenicity classes for given variants. This requires variant_annotations to be run first.",
     "miRDB": "Fetches miRDB computationally predicted gene targets of miRNA.",
 }
-
 
 
 TOOL_FN_MAP = {
     "extract_entities":   entity_extraction_node,
     "expand_gene_set_by_trait":     query_by_trait_agent,
     "humanbase_functions":      humanbase_predictions_agent,
-    "humanbase_expecto":       humanbase_expecto_agent,
-    "humanbase_tissue_expecto_annotate_variants": humanbase_tissue_expecto_annotate_variants,
+    "expectosc_predictions_agent": expectosc_predictions_agent,
     "uniprot_base":   uniprot_node,
     "query_gwas_by_gene":           gwas_associations_agent,
     "query_gwas_extensive":          lambda x: gwas_associations_agent(x, mode="extensive"),

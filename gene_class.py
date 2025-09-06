@@ -21,6 +21,7 @@ import json
 import requests
 from variant_class import Variant
 
+
 def _upper_unique(items: List[str]) -> List[str]:
     return sorted({s.upper() for s in items if s})
 
@@ -170,6 +171,7 @@ class Gene:
             
     def update_text_summaries(self, summary: str) -> None:
         summary = (summary or "").strip()
+        
         if summary and summary not in self.text_summaries_from_tools:
             self.text_summaries_from_tools.append(summary)
             

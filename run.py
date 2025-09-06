@@ -56,7 +56,7 @@ if __name__ == "__main__":
         #"Do not run any of the tools, just proceed directly to the LLM.",
         #"Tell me about predicted functions of TP53",
         # "Get GWAS assocaitions for PTEN, run deep search",
-        "tell me about Sei predictions for TP53"
+        "tell me about gene expression disruptions for variants in KRAS",
         # "Tell me about rs12345 variant"
         # "Which gene is the best drug target for virally induced cancers, KRAS or TP53?",
         #"How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",

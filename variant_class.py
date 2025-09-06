@@ -42,6 +42,7 @@ class Variant:
             
     def return_full_summary(self) -> str:
         # add functional predictions summary first
+        print(self.variant_summaries)
         func_summary = ""
         if self.functional_predictions:
             func_preds = []
@@ -51,9 +52,40 @@ class Variant:
                     func_preds.append(f"{tool}: {score_str}")
                 func_summary += f"Functional predictions for {gene}: " + ", ".join(func_preds)
         
-        self.variant_summaries.insert(0, func_summary)
+        if func_summary:
+            self.variant_summaries.insert(0, func_summary)
+            
         
-        return '; '.join(self.variant_summaries)
+        # add per_gene_context info
+        for gene, context in self.per_gene_context.items():
+            ctx = context.get('context', '')
+            var_cat = context.get('variant_category', '')
+            context_str = f"Gene: {gene}, Category: {var_cat}"
+            self.variant_summaries.insert(0, context_str)  
+            
+        # add info about organism, location and per_gene_context (by gene) info
+        if self.organism:
+            self.variant_summaries.insert(0, f"Organism: {self.organism}")
+        
+        for build, loc in self.loc_by_build.items():
+
+            chrom = loc.get('chrom', '')
+            pos = loc.get('pos', '')
+            ref = ','.join(loc.get('ref', [])) if loc.get('ref') else ''
+            alt = ','.join(loc.get('alt', [])) if loc.get('alt') else ''
+            loc_str = f"Location ({build}): chr{chrom}:{pos}"
+            if ref:
+                loc_str += f", Ref: {ref}"
+            if alt:
+                loc_str += f", Alt: {alt}"
+            self.variant_summaries.insert(0, loc_str)
+        
+        # insert rsID at the very front
+        if self.rsID:
+            self.variant_summaries.insert(0, f"Begin info for Variant ID: {self.rsID}")
+        self.variant_summaries.insert(0, "*")
+        print(self.variant_summaries)
+        return ' | '.join(self.variant_summaries)+'*.'
     
     def add_functional_prediction(self, gene: str, tool: str, score: Any):
         """Add a functional prediction score for a specific gene from a specific tool.

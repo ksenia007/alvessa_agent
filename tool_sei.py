@@ -36,6 +36,7 @@ def sei_predictions_agent(state: "State") -> "State":
     """
     print('[SEI] started...')
     variants = state.get("variant_entities", {}).copy()
+    gene_objs = state.get("gene_entities", {}).copy()
 
     # Load resources
     try:
@@ -87,6 +88,9 @@ def sei_predictions_agent(state: "State") -> "State":
             if seq_class_name:
                 for g in genes:
                     variants[var_id].add_functional_prediction(g, "SEI", seq_class_name)
+                    if g in gene_objs.keys():
+                        gene_objs[g].add_tool("SEI")
+                        gene_objs[g].update_text_summaries("Values predicted by Sei: Sei model clustered ChipSeq, DNase, and histone mark profiles into 40 groups (sequence classes). The Sei class represents the role of sequence where variant falls; agnositc to coding regions, can have sequence class even in exons.")
                     assigned += 1
 
         except Exception as e:

@@ -1,28 +1,18 @@
 ================================================================================
-Q: tell me about Sei predictions for TP53
+Q: tell me about gene expression disruptions for variants in KRAS
 
 Answer:
-SEI (Sequence-based Epigenomic Imputation) predictions for TP53 variants show diverse functional categories across multiple genomic regions. The predictions include transcriptional regulatory elements (TN1, TN2, TN3, TN4 Transcription categories), promoter regions (P Promoter), enhancer elements (E1 Stem cell, E4 Multi-tissue), heterochromatin regions (HET4 Heterochromatin), and low signal regions (L3 Low signal). The most common prediction is TN1 Transcription, appearing in 8 variants (rs1642792, rs1042522, rs2909430, rs1625895, rs17881850, rs138932666, rs17880847). Other transcription-related predictions include TN2 (rs74351250, rs8073498), TN3 (rs62062585), and TN4 (rs78378222). Two variants show promoter activity (rs17883687, rs17882854), while enhancer predictions include E1 Stem cell (rs4968204) and E4 Multi-tissue (rs9894946). Three variants show L3 Low signal predictions (rs201214141, rs78496430, rs55745760), and one shows HET4 Heterochromatin (rs28934576).
+Based on the ExpectoSC predictions for KRAS variants, there are notable cell-type specific gene expression disruptions. For variant rs61761075 (intronic), the most significant disruption is increased KRAS expression in cardiac cells, with atrial cardiomyocytes showing the highest increase (z-score of 3.4469) and ventricular cardiomyocytes also showing high increase (z-score of 3.4286). These scores are above the high confidence threshold of 3. For variant rs61759623 (also intronic), the disruption pattern shows decreased KRAS expression, particularly in retinal cells, with Muller cells showing the strongest decrease (z-score of -1.9647) and retinal cone cells also showing decreased expression (z-score of -1.6101). The expression disruption scores range from moderate decreases to high confidence increases depending on the variant and cell type.
 
 Evidence:
-  - rs78378222: SEI: TN4 Transcription
-  - rs201214141: SEI: L3 Low signal
-  - rs1642792: SEI: TN1 Transcription
-  - rs62062585: SEI: TN3 Transcription
-  - rs1042522: SEI: TN1 Transcription
-  - rs2909430: SEI: TN1 Transcription
-  - rs9894946: SEI: E4 Multi-tissue
-  - rs17883687: SEI: P Promoter
-  - rs1625895: SEI: TN1 Transcription
-  - rs74351250: SEI: TN2 Transcription
-  - rs8073498: SEI: TN2 Transcription
-  - rs17882854: SEI: P Promoter
-  - rs28934576: SEI: HET4 Heterochromatin
-  - rs17881850: SEI: TN1 Transcription
-  - rs138932666: SEI: TN1 Transcription
-  - rs78496430: SEI: L3 Low signal
-  - rs55745760: SEI: L3 Low signal
-  - rs4968204: SEI: E1 Stem cell
-  - rs17880847: SEI: TN1 Transcription
+  - rs61761075 shows cell-type specific GE disruption with scores ranging min=-0.4140, median=-0.0606, max=3.4469
+  - rs61761075 has top disruption in Atrial Cardiomyocyte / heart (3.4469)
+  - rs61761075 has high disruption in Ventricular Cardiomyocyte / heart (3.4286)
+  - rs61759623 shows cell-type specific GE disruption with scores ranging min=-1.9647, median=-0.5609, max=0.2135
+  - rs61759623 has bottom disruption in Muller cell / retina (-1.9647)
+  - rs61759623 has decreased expression in Retinal Cone cell / retina (-1.6101)
+  - Both rs61761075 and rs61759623 are categorized as intronic variants in KRAS
+  - ExpectoSC scores above 3 are considered high confidence
+  - Positive scores indicate increased expression, negative scores indicate decreased expression
 
 

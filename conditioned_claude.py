@@ -162,7 +162,7 @@ def create_context_block(state: "State") -> str:
     for id in variant_objs:
         variant_summary = variant_objs[id].return_full_summary()
         if variant_summary:
-            variant_summaries += f"Variant {id}: {variant_summary}\n"
+            variant_summaries += f"{variant_summary}\n"
 
     context_payload += [{"variant_summaries": variant_summaries.strip()}] if variant_summaries else []
     context_payload = ensure_json_safe(context_payload)
@@ -196,7 +196,7 @@ def conditioned_claude_node(state: "State") -> "State":
     if len(system_msg)<2:
         system_msg = (
             "You are a biology data analyst. Answer strictly with facts you can "
-            "point to inside CONTEXT. Respond only with JSON with keys answer and evidence. Be descriptive and detailed. Ensure proper JSON format. "
+            "point to inside CONTEXT. Respond only with JSON with keys answer and evidence. Be descriptive and detailed, think in steps and outline your process. Ensure proper JSON format. "
             "The 'evidence' field must always be a list of short strings, and always reference the entity to which you are referring. "
             # "If the CONTEXT contains trait-based associations (query_type: 'trait_based'), focus on the genetic associations "
             # "with the queried trait/disease, including related genes, variants, and their biological significance."
