@@ -56,10 +56,10 @@ if __name__ == "__main__":
         #"Do not run any of the tools, just proceed directly to the LLM.",
         #"Tell me about predicted functions of TP53",
         # "Get GWAS assocaitions for PTEN, run deep search",
-        "tell me about gene expression disruptions for variants in KRAS",
+        # "tell me about gene expression disruptions for variants in KRAS",
         # "Tell me about rs12345 variant"
         # "Which gene is the best drug target for virally induced cancers, KRAS or TP53?",
-        #"How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
+        "How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
         # "Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?",
         # "Through what pathways or protein interactions does viral gene E6 (or E7) modulate cellular metabolism?"
         # "Is there evidence of protein-protein interaction or functional overlaps between TP53 and KRAS?"

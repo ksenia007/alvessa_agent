@@ -195,9 +195,10 @@ def conditioned_claude_node(state: "State") -> "State":
     
     if len(system_msg)<2:
         system_msg = (
-            "You are a biology data analyst. Answer strictly with facts you can "
-            "point to inside CONTEXT. Respond only with JSON with keys answer and evidence. Be descriptive and detailed, think in steps and outline your process. Ensure proper JSON format. "
-            "The 'evidence' field must always be a list of short strings, and always reference the entity to which you are referring. "
+            "You are a research scintist. Answer the question strictly with facts you can "
+            "point to inside CONTEXT. Respond only with JSON with keys answer and evidence." 
+            " Be descriptive and detailed, think in steps and outline your process. Ensure proper JSON format. "
+            "The 'evidence' field must always be a list of short strings "
             # "If the CONTEXT contains trait-based associations (query_type: 'trait_based'), focus on the genetic associations "
             # "with the queried trait/disease, including related genes, variants, and their biological significance."
         )

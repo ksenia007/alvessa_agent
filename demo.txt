@@ -1,18 +1,15 @@
 ================================================================================
-Q: tell me about gene expression disruptions for variants in KRAS
+Q: How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?
 
 Answer:
-Based on the ExpectoSC predictions for KRAS variants, there are notable cell-type specific gene expression disruptions. For variant rs61761075 (intronic), the most significant disruption is increased KRAS expression in cardiac cells, with atrial cardiomyocytes showing the highest increase (z-score of 3.4469) and ventricular cardiomyocytes also showing high increase (z-score of 3.4286). These scores are above the high confidence threshold of 3. For variant rs61759623 (also intronic), the disruption pattern shows decreased KRAS expression, particularly in retinal cells, with Muller cells showing the strongest decrease (z-score of -1.9647) and retinal cone cells also showing decreased expression (z-score of -1.6101). The expression disruption scores range from moderate decreases to high confidence increases depending on the variant and cell type.
+Based on the provided context, I cannot find specific information about NUCKS1's direct roles in cancer or viral infections. The context primarily contains genomic and protein interaction data for NUCKS1, including its chromosomal location, tissue expression patterns, GWAS associations, and protein-protein interactions. While NUCKS1 is described as a nuclear protein that interacts with numerous chromatin-related proteins and DNA repair factors, the context does not explicitly describe its mechanisms of action in cancer or viral infection processes, nor does it provide information about overlapping roles between these two disease contexts.
 
 Evidence:
-  - rs61761075 shows cell-type specific GE disruption with scores ranging min=-0.4140, median=-0.0606, max=3.4469
-  - rs61761075 has top disruption in Atrial Cardiomyocyte / heart (3.4469)
-  - rs61761075 has high disruption in Ventricular Cardiomyocyte / heart (3.4286)
-  - rs61759623 shows cell-type specific GE disruption with scores ranging min=-1.9647, median=-0.5609, max=0.2135
-  - rs61759623 has bottom disruption in Muller cell / retina (-1.9647)
-  - rs61759623 has decreased expression in Retinal Cone cell / retina (-1.6101)
-  - Both rs61761075 and rs61759623 are categorized as intronic variants in KRAS
-  - ExpectoSC scores above 3 are considered high confidence
-  - Positive scores indicate increased expression, negative scores indicate decreased expression
+  - Symbol: NUCKS1 | Entrez: 64710 | UniProt: Q9H1E3 | Ensembl: ENSG00000069275.13 | Gene type: protein_coding
+  - Isoform localizations: General locations: Nucleus, Chromosome
+  - TISSUE SPECIFICITY: Widely expressed, with highest levels in thyroid gland, prostate and uterus and in fetal liver, thymus and lung
+  - Gene NUCKS1 has 45 total GWAS associations, including 35 significant associations from 23 studies
+  - Interactions: Affinity Capture-MS: [extensive list of chromatin and DNA repair proteins including ATRX, BAP1, PARP1, PRKDC, etc.]
+  - No explicit mention of cancer mechanisms or viral infection roles in the provided context
 
 
