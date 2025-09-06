@@ -1,0 +1,12 @@
+================================================================================
+Q: tell me about alpha missense predictions for TP53
+
+Answer:
+Based on the provided context, there is no information about AlphaMissense predictions for TP53. The context contains extensive GWAS association data for TP53, including 239 total GWAS associations and variant frequency information from population databases, but does not include any AlphaMissense pathogenicity predictions or scores for TP53 variants.
+
+Evidence:
+  - The context contains GWAS data for TP53 with 239 total associations
+  - Variant frequency data is provided for multiple TP53-associated SNPs from databases like dbSNP, TOPMED, and GnomAD
+  - No AlphaMissense predictions, scores, or pathogenicity assessments are mentioned in the TP53 data
+
+
