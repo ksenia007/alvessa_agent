@@ -5,7 +5,8 @@ from typing import List, Dict, Any
 from config import DEBUG
 from tools.gwas.query import query_gene_associations, query_trait_associations
 from state import State
-
+from variant_class import Variant
+from gene_class import Gene
 
 def _create_empty_association_record(identifier: str, is_gene: bool = True) -> Dict[str, Any]:
     """Create a standardized empty association record."""
@@ -135,12 +136,14 @@ def gwas_associations_agent(state: "State", mode: str = "summary") -> "State":
     State
         Updated state with "gwas_associations" field
     """
-    associations = state.get("gwas_associations", {}).copy()
-    variants = state.get("dbsnp_variants", {}).copy()
-    gene_list = list(set(state.get("genes", [])))
+    
+    gene_objs = state.get("gene_entities", {})
+    gene_list = list(gene_objs.keys())
+    variant_objs = state.get("variant_entities", {})
+    variants = list(variant_objs.keys())
     
     for gene in gene_list:
-        if gene in associations:
+        if gene_objs[gene].has_gwas_associations():
             if DEBUG:
                 print(f"[GWAS] Skipping {gene} - already processed")
             continue
@@ -148,70 +151,107 @@ def gwas_associations_agent(state: "State", mode: str = "summary") -> "State":
         if DEBUG:
             print(f"[GWAS] Querying associations for gene: {gene}")
 
-        try:
-            if mode == "extensive":
-                print(f"[GWAS] Querying associations for gene: {gene} in extensive mode")
-                result = query_gene_associations(
-                    gene_symbol=gene,
-                        db_path="local_dbs",
-                        fps_disease_traits=200,
-                        top_studies_by_risk=100,
-                        top_studies_by_significance=100,
-                    )
-            else:
-                print(f"[GWAS] Querying associations for gene: {gene} in summary mode")
-                result = query_gene_associations(
-                    gene_symbol=gene,
+        # try:
+        if mode == "extensive":
+            print(f"[GWAS] Querying associations for gene: {gene} in extensive mode")
+            result = query_gene_associations(
+                gene_symbol=gene,
                     db_path="local_dbs",
-                    fps_disease_traits=20,
+                    fps_disease_traits=200,
+                    top_studies_by_risk=100,
+                    top_studies_by_significance=100,
                 )
+            print(result)
+        else:
+            print(f"[GWAS] Querying associations for gene: {gene} in summary mode")
+            result = query_gene_associations(
+                gene_symbol=gene,
+                db_path="local_dbs",
+                fps_disease_traits=20,
+            )
+        
+        if result.get("found", True):
+            if gene not in gene_objs.keys():
+                print(f"[GWAS] Warning: gene {gene} not in gene_objs, creating new Gene object.")
+                gene_objs[gene] = Gene(symbol=gene)
+            gene_objs[gene].add_tool("gwas_associations_agent")
+            gene_objs[gene].add_gwas_association(
+                total_associations=result.get("total_associations", 0),
+                sig_associations=result.get("total_significant_associations", 0), 
+                total_studies=result.get("total_studies_analyzed", 0),
+                summary_high_risk=result.get("summary_by_high_risk_alleles", {}),
+                summary_sig=result.get("summary_by_significance", {})
+            )
+            # if we did extensive mode, we can also add additional info
+            related_genes = result.get("summary_by_high_risk_alleles", {}).get("related_genes", [])
+            affected_protein_levels = result.get("summary_by_high_risk_alleles", {}).get("affected_protein_levels", [])
+        
+            print('gene_objs[gene].gwas_associations', gene_objs[gene].gwas_associations)
+            # Extract variant_annotations from both summary sections
+            risk_variants = result.get("summary_by_high_risk_alleles", {}).get("variant_annotations", {})
+            sig_variants = result.get("summary_by_significance", {}).get("variant_annotations", {})
             
-            if result.get("found", True):
-                associations[gene] = {
-                    "gene": gene,
-                    "found": True,
-                    "total_associations": result.get("total_associations", 0),
-                    "total_significant_associations": result.get("total_significant_associations", 0),
-                    "total_studies_analyzed": result.get("total_studies_analyzed", 0),
-                    "summary_by_high_risk_alleles": result.get("summary_by_high_risk_alleles", {}),
-                    "summary_by_significance": result.get("summary_by_significance", {}),
-
-                }
-                # Extract variant_annotations from both summary sections
-                risk_variants = result.get("summary_by_high_risk_alleles", {}).get("variant_annotations", {})
-                sig_variants = result.get("summary_by_significance", {}).get("variant_annotations", {})
+            # Combine variant annotations from both sections
+            all_variants = {}
+            all_variants.update(risk_variants)
+            all_variants.update(sig_variants)
+            for v in all_variants.keys():
+                if v in variants:
+                    if all_variants[v].get("mapped_gene", "") != gene:
+                        print('mapped to other gene, skipping')
+                        continue
+                    # this variant was already pulled, but possibly for the different gene
+                    var_exist = variants[v]
+                    var_exist.add_per_gene_traits(gene, all_variants[v].get("associated_disease_traits", {}))
+                    var_exist.add_per_gene_context(gene, all_variants[v].get("context", ""), all_variants[v].get("variant_category", ""))
+                else:
+                    # init new variant entry, add to Variant list and then link to Gene
+                    if all_variants[v].get("mapped_gene", "") != gene:
+                        print('mapped to other gene, skipping')
+                        continue
+                    var_info = all_variants[v]
+                    new_var = Variant(rsID=v, organism='human')
+                    new_var.add_per_gene_traits(gene, var_info.get("associated_disease_trait", {}))
+                    new_var.add_per_gene_context(gene, var_info.get("context", ""), var_info.get("variant_category", ""))
                 
-                # Combine variant annotations from both sections
-                all_variants = {}
-                all_variants.update(risk_variants)
-                all_variants.update(sig_variants)
-                variants[gene] = all_variants
-                
-                # Pop out the variant annotations from summary_by_high_risk_alleles, and from summary_by_significance
-                associations[gene]["summary_by_high_risk_alleles"].pop("variant_annotations", None)
-                associations[gene]["summary_by_significance"].pop("variant_annotations", None)
-                
-                _log_query_result("gene", gene, result)
-            else:
-                associations[gene] = _create_empty_association_record(gene, is_gene=True)
-                _log_query_result("gene", gene, result)
-                
-        except Exception as exc:
-            if DEBUG:
-                print(f"[GWAS] Error querying {gene}: {exc}")
+                variant_objs[v] = new_var
+                gene_objs[gene].link_variant(new_var)     
+                # add all traits to gene as well
+                for t in var_info.get("associated_disease_traits", {}).keys():
+                    gene_objs[gene].link_trait(t)              
+            # variants[gene] = all_variants
             
-            error_record = _create_empty_association_record(gene, is_gene=True)
-            error_record["error"] = str(exc)
-            associations[gene] = error_record
+            # create a summary text for all we have found for this gene
+            summary_text = f"Gene {gene} has {result.get('total_associations', 0)} total GWAS associations, "
+            summary_text += f"including {result.get('total_significant_associations', 0)} significant associations "
+            summary_text += f"from {result.get('total_studies_analyzed', 0)} studies."
+            if related_genes:
+                summary_text += f"Based on the GWAS, related genes include: {', '.join(related_genes)}. "
+            if affected_protein_levels:
+                summary_text += f"Affected protein levels include: {', '.join(affected_protein_levels)}."
+            # add risk and sig variant into (p vals and effect size)
+            summary_text += f" Assoicated traits include: "
+            for t in gene_objs[gene].variants:
+                # for each variant, list traits, effect and p-value
+                var = gene_objs[gene].variants[t]
+                for tr, details in var.per_gene_traits.get(gene, {}).items():
+                    p_val = details.get("p_value", "N/A")
+                    risk = details.get("risk_score", "N/A")
+                    summary_text += f"{tr} (p={p_val}, risk={risk}, rsID={t}); "
+                
+            # update_text_summaries
+            gene_objs[gene].update_text_summaries(summary_text)
 
+                
         # Rate limiting
         time.sleep(0.1)
 
-    return {"gwas_associations": associations, "dbsnp_variants": variants}
+    return {'variant_entities': variant_objs} #{"gwas_associations": associations, "dbsnp_variants": variants}
 
 
 def query_by_trait_agent(state: "State") -> "State":
     """
+    TODO: update with classes support
     Query GWAS associations by disease/trait terms.
     
     Uses extracted traits from state or falls back to full user input.
@@ -287,43 +327,43 @@ def query_by_trait_agent(state: "State") -> "State":
     return {"trait_associations": trait_associations, "genes": related_genes}
 
 
-def has_gwas_associations(state: "State") -> bool:
-    """Check if any GWAS associations were found for genes."""
-    associations = state.get("gwas_associations", {})
-    has_associations = any(
-        assoc.get("found", False) and assoc.get("total_associations", 0) > 0
-        for assoc in associations.values()
-    )
+# def has_gwas_associations(state: "State") -> bool:
+#     """Check if any GWAS associations were found for genes."""
+#     associations = state.get("gwas_associations", {})
+#     has_associations = any(
+#         assoc.get("found", False) and assoc.get("total_associations", 0) > 0
+#         for assoc in associations.values()
+#     )
     
-    if DEBUG:
-        print(f"[has_gwas_associations] associations found: {has_associations}")
+#     if DEBUG:
+#         print(f"[has_gwas_associations] associations found: {has_associations}")
     
-    return has_associations
+#     return has_associations
 
 
-def has_significant_gwas_associations(state: "State") -> bool:
-    """Check if any significant GWAS associations were found for genes."""
-    associations = state.get("gwas_associations", {})
-    has_significant = any(
-        assoc.get("total_significant_associations", 0) > 0
-        for assoc in associations.values()
-    )
+# def has_significant_gwas_associations(state: "State") -> bool:
+#     """Check if any significant GWAS associations were found for genes."""
+#     associations = state.get("gwas_associations", {})
+#     has_significant = any(
+#         assoc.get("total_significant_associations", 0) > 0
+#         for assoc in associations.values()
+#     )
     
-    if DEBUG:
-        print(f"[has_significant_gwas_associations] significant associations found: {has_significant}")
+#     if DEBUG:
+#         print(f"[has_significant_gwas_associations] significant associations found: {has_significant}")
     
-    return has_significant
+#     return has_significant
 
 
-def has_trait_associations(state: "State") -> bool:
-    """Check if any trait associations were found."""
-    trait_associations = state.get("trait_associations", {})
-    has_associations = (
-        trait_associations.get("found", False) and 
-        trait_associations.get("total_associations", 0) > 0
-    )
+# def has_trait_associations(state: "State") -> bool:
+#     """Check if any trait associations were found."""
+#     trait_associations = state.get("trait_associations", {})
+#     has_associations = (
+#         trait_associations.get("found", False) and 
+#         trait_associations.get("total_associations", 0) > 0
+#     )
     
-    if DEBUG:
-        print(f"[has_trait_associations] trait associations found: {has_associations}")
+#     if DEBUG:
+#         print(f"[has_trait_associations] trait associations found: {has_associations}")
     
-    return has_associations
+#     return has_associations

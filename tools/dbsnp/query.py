@@ -107,7 +107,10 @@ def get_variant_coordinates(rsid: str, assembly: str = None) -> List[Dict[str, s
         assembly = DBSNP_DEFAULT_ASSEMBLY
 
     data = fetch_snp_json(rsid)
-    placements = data["primary_snapshot_data"]["placements_with_allele"]
+    try:
+        placements = data["primary_snapshot_data"]["placements_with_allele"]
+    except:
+        return None
 
     bucket = []
     for plc in placements:

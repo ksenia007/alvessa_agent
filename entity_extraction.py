@@ -1,17 +1,33 @@
 from __future__ import annotations
 from typing import List, Dict, Any, Optional
 import re
-
+import requests
 from claude_client import claude_call
 from config import DEBUG, GENE_EXTRACT_MODEL, GLINER_MODEL, GLINER_THRESHOLD, GLINER_ENTITY_LABELS
 from state import State
 from flair.data import Sentence
-from entity_classes import Gene, canon_gene_key
+from gene_class import Gene, canon_gene_key
+from variant_class import Variant
 
 # Global variables to cache the models
 _gliner_model = None
 _flair_model = None
 
+
+def _symbol_to_entrez(symbol: str) -> Optional[str]:
+    """Convert an HGNC symbol to an Entrez ID via MyGene.info"""
+    print(f"Resolving symbol: {symbol}")
+    try:
+        r = requests.get(
+            "https://mygene.info/v3/query",
+            params={"q": symbol, "species": "human", "fields": "entrezgene", "size": 1},
+            timeout=8,
+        )
+        r.raise_for_status()
+        hits = r.json()["hits"]
+        return None if not hits else str(hits[0]["entrezgene"])
+    except Exception:
+        return None
 
 # --- Model Loading Helpers ---
 
@@ -351,10 +367,26 @@ def entity_extraction_node(state: "State") -> "State":
             continue
         g = Gene(key)
         g.add_tool("EntityExtraction")
+        g.set_gene_ids(_symbol_to_entrez(key))
+        print(_symbol_to_entrez(key))
         print(f"[entity_extraction_node] Created Gene object for: {key}")
         print(g.to_json())
         g.normalize()
         extraction_result['gene_entities'][key] = g 
+        
+        
+    # pull in Variants
+    extraction_result['variant_entities'] = {}
+    raw_variants = extraction_result.get("variants") or []
+    for var in raw_variants:
+        if var in state.get("variant_entities", {}):
+            continue
+        if 'rs' not in var:
+            print('Variant detected not in rsID format, skipping:', var) #TODO: add support for chr:pos:ref>alt
+            continue
+        v = Variant(rsID=var)
+        v.add_tool("EntityExtraction")
+        extraction_result['variant_entities'][var] = v
     return extraction_result
 
 

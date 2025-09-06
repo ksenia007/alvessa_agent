@@ -27,7 +27,7 @@ import json
 
 
 
-def run_pipeline(user_message: str, prompt: str = '', mc_setup: bool = True) -> Dict:
+def run_pipeline(user_message: str, prompt: str = '', mc_setup: bool = False) -> Dict:
     """
     Execute the LangGraph workflow on a single user prompt.
 
@@ -54,8 +54,10 @@ if __name__ == "__main__":
     EXAMPLE_QUESTIONS: List[str] = [
         # "What microRNAs regulate the cancer-related functions of TP53, and how are these connected to pathways and protein interactions?"
         #"Do not run any of the tools, just proceed directly to the LLM.",
-        "Tell me about thinks in uniprot for TP53",
-        # "Which diseases and traits are associated with the genes TP53 and KRAS?",
+        #"Tell me about predicted functions of TP53",
+        # "Get GWAS assocaitions for PTEN, run deep search",
+        "tell me about alpha missense predictions for TP53"
+        # "Tell me about rs12345 variant"
         # "Which gene is the best drug target for virally induced cancers, KRAS or TP53?",
         #"How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
         # "Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?",

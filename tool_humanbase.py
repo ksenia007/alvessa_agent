@@ -18,21 +18,6 @@ import numpy as np
 
 DEBUG=True
 
-def _symbol_to_entrez(symbol: str) -> Optional[str]:
-    """Convert an HGNC symbol to an Entrez ID via MyGene.info"""
-    if DEBUG:
-        print(f"[HumanBase] Resolving symbol: {symbol}")
-    try:
-        r = requests.get(
-            "https://mygene.info/v3/query",
-            params={"q": symbol, "species": "human", "fields": "entrezgene", "size": 1},
-            timeout=8,
-        )
-        r.raise_for_status()
-        hits = r.json()["hits"]
-        return None if not hits else str(hits[0]["entrezgene"])
-    except Exception:
-        return None
 
 
 def _fetch_predictions_HB(entrez: str) -> List[Dict[str, float]]:
@@ -323,27 +308,58 @@ def humanbase_predictions_agent(state: "State") -> "State":
     State
         Updated state with the `"humanbase_predictions"` field filled.
     """
-    preds = state.get("humanbase_predictions", {}).copy()
+    gene_objs = state.get("gene_entities", {})
+    
+    print(gene_objs)
 
-    for gene in state.get("genes", []):
-        if gene in preds:
+    for gene in gene_objs.keys():
+        if gene_objs[gene].has_tool("humanbase_predictions"):
             continue
-
-        entrez = _symbol_to_entrez(gene)
+        
+        entrez = gene_objs[gene].entrez_id
         if not entrez:
-            preds[gene] = []
+            if DEBUG:
+                print(f"[HumanBase] Could not find Entrez ID for gene symbol: {gene}")
+            gene_objs[gene].add_tool("humanbase_predictions")
             continue
-
         try:
             tmp = _fetch_predictions_HB(entrez)
         except Exception as exc:
-            print(f"[HumanBase] {gene}: {exc}")
-            preds[gene] = []
-        else:
-            preds[gene] = _filter_predictions_HB(tmp, threshold=0.95)
+            gene_objs[gene].add_tool("humanbase_predictions")
+            continue
+        
+        low_thr = _filter_predictions_HB(tmp, threshold=0.7)
+        high_thr = _filter_predictions_HB(tmp, threshold=0.95)
+        # split by category - disease ontology and GO terms
+        disease_terms = []
+        for d in low_thr:
+            if 'category' not in d:
+                continue
+            if d['category'].lower() in ['disease ontology', 'disease']:
+                disease_terms.append(d)
+        
+        go_terms = []
+        for d in high_thr:
+            if 'category' not in d:
+                continue
+            if d['category'].lower() in ['gene ontology (bp)', 'go']:
+                go_terms.append(d)
+        
+        # convert to list of strings - term + description for disease and term for GO
+        go_terms_list = [list(set([d['term'] for d in go_terms]))][0]
+        disease_list = [f"{d['term']}: {d['description']} (score={d['score']})" for d in disease_terms]
+        
+        # collect predicted Disease Ontology (finter by category) and separately GO terms
+        gene_objs[gene].add_many_predicted_diseases(disease_list)
+        gene_objs[gene].add_many_predicted_go(go_terms_list)
+        gene_objs[gene].add_tool("humanbase_predictions")
+        
+        # add text description of the disease terms
+        if disease_list:
+            disease_text = f"Predicted disease associations for gene {gene} (score>0.7 in HumanBase): " + "; ".join(disease_list)
+            gene_objs[gene].update_text_summaries(disease_text)
 
-
-    return {**state, "humanbase_predictions": preds}
+    return 
 
 def humanbase_expecto_agent(state: "State") -> "State":
     """

@@ -12,7 +12,6 @@ Tool to query Reactome Pathways with a list of gene symbols"""
 from __future__ import annotations
 from state import State 
 import pandas as pd
-from tool_humanbase import _symbol_to_entrez
 
 DEBUG=True
 
@@ -52,14 +51,10 @@ def reactome_pathways_agent(state: "State") -> "State":
 
         entrez = gene_list[gene].entrez_id
         if not entrez:
-            entrez = _symbol_to_entrez(gene)
-            if entrez:
-                gene_list[gene].set_gene_ids(entrez_id = entrez)
-            else:
-                if DEBUG:
-                    print(f"[Reactome] Could not find Entrez ID for gene symbol: {gene}")
-                gene_list[gene].add_tool("reactome_pathways")
-                continue
+            if DEBUG:
+                print(f"[Reactome] Could not find Entrez ID for gene symbol: {gene}")
+            gene_list[gene].add_tool("reactome_pathways")
+            continue
         
         match = df[df['geneID']==int(entrez)]
         gene_list[gene].add_many_pathways(list(set(match['pathway_name'].values)))

@@ -13,7 +13,7 @@ UniProt tool: fetch entry + extract disease / function / GO traits.
 from __future__ import annotations
 import requests
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any, Iterable
 from state import State
 
 DEBUG = True
@@ -92,170 +92,278 @@ def remove_pubmed_text(description: str) -> str:
     cleaned = re.sub(r'\(\s*,*\s*\)', '()', cleaned)
     return re.sub(r'\(\s*\)', '', cleaned).strip()
 
+def dedup_keep(seq):
+    seen = set(); out = []
+    for x in seq:
+        if x not in seen:
+            seen.add(x); out.append(x)
+    return out
 
-def extract_locations_ISOFORM(entry: Dict) -> List[str]:
-    """Extract subcellular locations, enriched with isoform metadata and tissue/induction notes.
-    Keeps molecule, note, location values; maps 'Isoform N' to ALTERNATIVE PRODUCTS isoformIds/synonyms.
-    Also parses TISSUE SPECIFICITY / INDUCTION texts and attaches them to matching isoforms.
-    Uses remove_pubmed_text if available to strip PubMed refs."""
-    if DEBUG:
-        print("Extracting subcellular locations (smart)")
 
+def _isoform_sort_key(iso_id: str, name: Optional[str]) -> tuple:
+    """
+    Sort by numeric isoform number if available, else by name, then by id.
+    Examples:
+      "P04637-2" -> (0, 2, "", "P04637-2")
+      "Q9XYZ1-11" -> (0, 11, "", "Q9XYZ1-11")
+      fallback -> (1, inf, name_or_empty, iso_id)
+    """
+    m = re.search(r"-(\d+)$", iso_id or "")
+    if m:
+        return (0, int(m.group(1)), "", iso_id)
+    return (1, float("inf"), (name or ""), iso_id)
+
+
+def summarize_isoform_localization(
+    isoforms: Dict[str, Dict[str, Any]],
+    *,
+    line_separator: str = " |-| ",
+    joiner_meta: str = "; ",
+    joiner_locs: str = ", ",
+    include_general: bool = True,
+    max_notes_per_line: Optional[int] = None,
+) -> str:
+    """
+    Build a compact, readable paragraph summarizing isoform localizations.
+    Expects a dict shaped like the output of `parse_uniprot_isoforms_localization`.
+
+    Returns a single string (paragraph). If nothing to report, returns "".
+
+    Example fragment per isoform:
+      "Isoform 2 [P04637-2] | aka: p53beta; status: Described; Locations: Nucleus, Cytoplasm; <notes>"
+
+    Parameters:
+      line_separator: placed between isoform summaries (default " |-| ").
+      joiner_meta: joins metadata pieces after the header (default "; ").
+      joiner_locs: joins multiple location names (default ", ").
+      include_general: append a final “general” bucket if present.
+      max_notes_per_line: cap number of notes appended per isoform/general (None = no cap).
+    """
+    if not isoforms:
+        return ""
+
+    lines: List[str] = []
+
+    # --- Specific isoforms first (skip the general bucket) ---
+    specific_items = [
+        (iso_id, rec) for iso_id, rec in isoforms.items()
+        if iso_id != "general_localization"
+    ]
+    # Sort for stable output: numeric isoform order when possible
+    specific_items.sort(key=lambda kv: _isoform_sort_key(kv[0], kv[1].get("name")))
+
+    for iso_id, rec in specific_items:
+        name: str = rec.get("name") or iso_id
+        aliases: List[str] = rec.get("aliases") or []
+        status: Optional[str] = rec.get("status")
+        locs: List[str] = dedup_keep(rec.get("locations") or [])
+        notes: List[str] = rec.get("notes") or []
+
+        header = f"{name} [{iso_id}]"
+        meta_bits: List[str] = []
+        if aliases:
+            meta_bits.append("aka: " + ", ".join(aliases))
+        if status:
+            meta_bits.append(f"status: {status}")
+
+        parts: List[str] = [header + ((" | " + joiner_meta.join(meta_bits)) if meta_bits else "")]
+        if locs:
+            parts.append("Locations: " + joiner_locs.join(locs))
+
+        if max_notes_per_line is not None:
+            notes = notes[:max_notes_per_line]
+        for n in notes:
+            if n:
+                parts.append(n)
+
+        line = "; ".join(p for p in parts if p).strip()
+        if line:
+            lines.append(line)
+
+    # --- General bucket last (optional) ---
+    if include_general and "general_localization" in isoforms:
+        gen = isoforms["general_localization"]
+        gen_locs: List[str] = dedup_keep(gen.get("locations") or [])
+        gen_notes: List[str] = gen.get("notes") or []
+
+        parts: List[str] = []
+        if gen_locs:
+            parts.append("General locations: " + joiner_locs.join(gen_locs))
+        if max_notes_per_line is not None:
+            gen_notes = gen_notes[:max_notes_per_line]
+        for n in gen_notes:
+            if n:
+                parts.append(n)
+
+        if parts:
+            lines.append(" — ".join(parts))
+
+    return line_separator.join(lines)
+
+
+
+
+def parse_uniprot_isoforms_localization(entry: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """
+    Return:
+      {
+        "P04637-2": {"name":"Isoform 2","aliases":[...],"status":"Described","locations":[...],"notes":[...]},
+        ...,
+        "general_localization": {"name":"general_localization","aliases":[],"status":None,"locations":[...],"notes":[...]}
+      }
+    """
     import re
 
-    summaries: List[str] = []
+    iso_map_by_num: Dict[str, Dict[str, Any]] = {}
+    out: Dict[str, Dict[str, Any]] = {}
 
-    # -------- 1) Build isoform map from ALTERNATIVE PRODUCTS --------
-    # iso_map['1'] = {'ids': ['P04637-1'], 'synonyms': ['p53','p53alpha'], 'status': 'Displayed'}
-    iso_map: Dict[str, Dict[str, Any]] = {}
+    # 1) ALTERNATIVE PRODUCTS -> map isoform number -> (ids, aliases, status, name)
     for item in entry.get("comments", []):
-        if item.get("commentType") == "ALTERNATIVE PRODUCTS":
-            for iso in item.get("isoforms", []) or []:
-                num = None
-                name_obj = iso.get("name")
-                if isinstance(name_obj, dict):
-                    num = name_obj.get("value")
-                elif isinstance(name_obj, str):
-                    num = name_obj
-                if not num:
-                    continue
-                syns = []
-                for s in iso.get("synonyms", []) or []:
-                    if isinstance(s, dict) and isinstance(s.get("value"), str):
-                        syns.append(s["value"])
-                    elif isinstance(s, str):
-                        syns.append(s)
-                ids = list(iso.get("isoformIds", []) or [])
-                status = iso.get("isoformSequenceStatus")
-                iso_map[str(num).strip()] = {
-                    "ids": ids,
-                    "synonyms": syns,
-                    "status": status,
-                }
+        if item.get("commentType") != "ALTERNATIVE PRODUCTS":
+            continue
+        for iso in item.get("isoforms", []) or []:
+            nmv = iso.get("name", {})
+            num = nmv.get("value") if isinstance(nmv, dict) else (nmv if isinstance(nmv, str) else None)
+            if not num:
+                continue
+            aliases = []
+            for syn in iso.get("synonyms", []) or []:
+                if isinstance(syn, dict) and isinstance(syn.get("value"), str):
+                    aliases.append(syn["value"])
+                elif isinstance(syn, str):
+                    aliases.append(syn)
+            ids = list(iso.get("isoformIds", []) or [])
+            status = iso.get("isoformSequenceStatus")
+            num_map_entry = {
+                "ids": ids,
+                "aliases": dedup_keep(aliases),
+                "status": status,
+                "name": f"Isoform {str(num).strip()}",
+            }
+            iso_map_by_num[str(num).strip()] = num_map_entry
 
-    # -------- 2) Pull tissue specificity / induction notes and attach to isoforms if text mentions them --------
-    # iso_notes['2'] = ["Isoform 2 is expressed ...", "Isoform 2 is not induced ..."]
+    # 2) Collect isoform-specific and general notes from TISSUE SPECIFICITY / INDUCTION
     iso_notes: Dict[str, List[str]] = {}
     general_notes: List[str] = []
     for item in entry.get("comments", []):
         ctype = item.get("commentType")
         if ctype not in ("TISSUE SPECIFICITY", "INDUCTION"):
             continue
-        texts = item.get("texts") or []
-        for t in texts:
-            val = ""
-            if isinstance(t, dict) and isinstance(t.get("value"), str):
-                val = t["value"]
-            elif isinstance(t, str):
-                val = t
+        for t in item.get("texts") or []:
+            val = t.get("value") if isinstance(t, dict) else (t if isinstance(t, str) else "")
             if not val:
                 continue
-            # Clean PubMed refs if utility exists
             try:
-                val = remove_pubmed_text(val)
+                val = remove_pubmed_text(val)  # clean refs
             except NameError:
                 pass
-
-            # Attach to specific isoforms if "Isoform N" is mentioned; else keep as general
-            mentioned = False
+            tagged = False
             for m in re.finditer(r"\bIsoform\s+(\d+)\b", val, flags=re.IGNORECASE):
                 n = m.group(1)
                 iso_notes.setdefault(n, []).append(val)
-                mentioned = True
-            if not mentioned:
+                tagged = True
+            if not tagged:
                 general_notes.append(f"{ctype}: {val}")
 
-    # -------- 3) Build enriched SUBCELLULAR LOCATION summaries --------
+    # 3) SUBCELLULAR LOCATION to build records (prefer isoform IDs; else general)
+    def rec_for_general():
+        return out.setdefault("general_localization", {"name": "general_localization", "aliases": [], "status": None, "locations": [], "notes": []})
+
     for item in entry.get("comments", []):
         if item.get("commentType") != "SUBCELLULAR LOCATION":
             continue
 
-        molecule = item.get("molecule") or ""  # e.g., "Isoform 1"
-        # Try to extract the number part to link to iso_map/iso_notes
-        mnum = None
+        molecule = item.get("molecule") or ""
         m = re.search(r"\bIsoform\s+(\d+)\b", molecule, flags=re.IGNORECASE)
-        if m:
-            mnum = m.group(1)
+        iso_id = None
+        num = m.group(1) if m else None
+        name = molecule or ""
+        aliases: List[str] = []
+        status = None
 
-        # Note text normalization (supports note.value or note.texts[].value)
+        if num and num in iso_map_by_num and iso_map_by_num[num]["ids"]:
+            iso_id = iso_map_by_num[num]["ids"][0]
+            name = iso_map_by_num[num]["name"] or name
+            aliases = iso_map_by_num[num]["aliases"] or []
+            status = iso_map_by_num[num]["status"]
+
+        # Note text
         note_text = ""
         note = item.get("note")
         if isinstance(note, dict):
             if isinstance(note.get("value"), str):
-                note_text = note.get("value", "")
+                note_text = note["value"]
             elif isinstance(note.get("texts"), list):
-                vals = []
-                for t in note["texts"]:
-                    if isinstance(t, dict) and isinstance(t.get("value"), str):
-                        vals.append(t["value"])
-                note_text = " ".join(vals).strip()
+                parts = []
+                for tx in note["texts"]:
+                    if isinstance(tx, dict) and isinstance(tx.get("value"), str):
+                        parts.append(tx["value"])
+                note_text = " ".join(parts).strip()
         elif isinstance(note, str):
             note_text = note
-
         try:
             if note_text:
                 note_text = remove_pubmed_text(note_text)
         except NameError:
             pass
 
-        # Collect unique location values
+        # Locations
         locs_raw = []
         for sl in item.get("subcellularLocations", []) or []:
             loc = sl.get("location")
-            val = None
-            if isinstance(loc, dict):
-                val = loc.get("value")
-            elif isinstance(loc, str):
-                val = loc
-            if val:
-                locs_raw.append(val)
-        # de-dup keep order
-        seen = set(); locations = []
-        for v in locs_raw:
-            if v not in seen:
-                seen.add(v); locations.append(v)
+            v = loc.get("value") if isinstance(loc, dict) else (loc if isinstance(loc, str) else None)
+            if v:
+                locs_raw.append(v)
+        locations = dedup_keep(locs_raw)
 
-        # Enrich with isoform metadata
-        meta_parts: List[str] = []
-        if molecule:
-            meta_parts.append(molecule)
-        if mnum and mnum in iso_map:
-            ids = ", ".join(iso_map[mnum].get("ids") or [])
-            syns = ", ".join(iso_map[mnum].get("synonyms") or [])
-            status = iso_map[mnum].get("status")
-            if ids:
-                meta_parts.append(f"IDs: {ids}")
-            if syns:
-                meta_parts.append(f"aka: {syns}")
-            if status:
-                meta_parts.append(f"status: {status}")
+        # Upsert target record
+        if iso_id:
+            rec = out.setdefault(iso_id, {"name": name, "aliases": [], "status": status, "locations": [], "notes": []})
+            for a in aliases:
+                if a not in rec["aliases"]:
+                    rec["aliases"].append(a)
+            for v in locations:
+                if v not in rec["locations"]:
+                    rec["locations"].append(v)
+            if note_text and note_text not in rec["notes"]:
+                rec["notes"].append(note_text)
+            # attach iso-specific notes
+            if num and num in iso_notes:
+                for txt in iso_notes[num]:
+                    if txt not in rec["notes"]:
+                        rec["notes"].append(txt)
+        else:
+            rec = rec_for_general()
+            for v in locations:
+                if v not in rec["locations"]:
+                    rec["locations"].append(v)
+            if note_text and note_text not in rec["notes"]:
+                rec["notes"].append(note_text)
 
-        # Attach tissue/induction notes that reference this isoform
-        extra_notes = []
-        if mnum and mnum in iso_notes:
-            extra_notes = iso_notes[mnum]
+    # 4) Add general notes (no isoform mention)
+    if general_notes:
+        rec = out.setdefault("general_localization", {"name": "general_localization", "aliases": [], "status": None, "locations": [], "notes": []})
+        for txt in general_notes:
+            if txt not in rec["notes"]:
+                rec["notes"].append(txt)
 
-        # Build summary string
-        parts: List[str] = []
-        if meta_parts:
-            parts.append(" | ".join(meta_parts))
-        if note_text:
-            parts.append(note_text)
-        if locations:
-            parts.append("Locations: " + ", ".join(locations))
-        for en in extra_notes:
-            parts.append(en)
+    # 5) Ensure any isoforms with notes but no SUBCELLULAR LOCATION still appear
+    for num, meta in iso_map_by_num.items():
+        if not meta["ids"]:
+            continue
+        iso_id = meta["ids"][0]
+        if iso_id not in out and num in iso_notes:
+            out[iso_id] = {
+                "name": meta["name"],
+                "aliases": meta["aliases"],
+                "status": meta["status"],
+                "locations": [],
+                "notes": dedup_keep(iso_notes[num]),
+            }
+            
+    summary = summarize_isoform_localization(out)
 
-        summary = " — ".join([p for p in parts if p]).strip()
-        if summary:
-            summaries.append(summary)
-
-    # -------- 4) Optionally append general tissue/induction notes (not isoform-specific) --------
-    for gnote in general_notes:
-        if gnote and gnote not in summaries:
-            summaries.append(gnote)
-
-    return summaries
+    return out, summary
 
                 
 
@@ -268,11 +376,8 @@ def extract_summaries(entry: Dict) -> Dict[str, str]:
     function = extract_function_from_uniprot_entry(entry)
     go_terms = extract_GO_from_uniprot_entry(entry)
     uniprotID = entry.get("primaryAccession", "")
-    locations = extract_locations(entry)
-    print('LOCATIONS', locations)
-    test = extract_locations_ISOFORM(entry)
-    print('TEST', test)
-    raise Exception('STOP')
+    locations, text_summary_loc = parse_uniprot_isoforms_localization(entry)
+    print('parse_uniprot_isoforms_localization', locations)
     if locations:
         summaries["locations"] = locations
     if uniprotID:
@@ -285,17 +390,16 @@ def extract_summaries(entry: Dict) -> Dict[str, str]:
         summaries["go_terms"] = go_terms #remove_pubmed_text(", ".join(go_terms))
     if DEBUG:
         print(f"Extracted summaries: {summaries}")
-    return summaries
-
-def additional_info_extraction(entry: Dict) -> Dict[str, str]:
-    """Extract additional info from a UniProt entry."""
-    if DEBUG:
-        print("Extracting additional info")
-    info: Dict[str, str] = {}
-    # extract organism: scientificName
-    # fullName': {'value'
-    # 'genes': [{'geneName': {'value': 'TP53'}, 'synonyms': [{'value': 'P53'}]}]...
+        
+    # create disease text summary:
+    summary_full = "Information collected from UniProt: \n"
+    if locations:
+        summary_full += f"Isoform localizations: {text_summary_loc}\n"
+    if diseases:
+        summary_full += "\n Associated diseases: " + ", ".join(diseases) + "."
     
+    return summaries, summary_full
+
     
 def uniprot_node(state: "State") -> "State":
     """Download UniProt entries for every gene symbol."""
@@ -314,20 +418,21 @@ def uniprot_node(state: "State") -> "State":
         entry_base = get_uniprot_entry_for_gene(gene)
         print('ENTRY BASE', entry_base)
         if entry_base:
-            info = extract_summaries(entry_base)
-            print('INFO', info)
+            info, summary_full = extract_summaries(entry_base)
             # raise Exception('STOP')
-
             # add to the gene object 
             gene_objs[gene].add_function_label(info.get('function', ""))
             gene_objs[gene].add_many_diseases(info.get('diseases', []))
             gene_objs[gene].add_many_go_terms(info.get('go_terms', []))
+            gene_objs[gene].set_isoform_localizations(info.get('locations', {}))
             if "uniprotID" in info:
                 gene_objs[gene].set_gene_ids(uniprot_id = info["uniprotID"])
-        
+            gene_objs[gene].add_tool("uniprot_entry")
+            gene_objs[gene].update_text_summaries(summary_full)
+
     return 
 
-
+# I am not sure what we used this for, temporarily commenting out (Sept 2, 2025)
 # def trait_disease_extraction_node(state: "State") -> "State":
 #     """Attach disease traits pulled from UniProt entries."""
 #     entries = state.get("uniprot_entries", {})

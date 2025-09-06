@@ -47,7 +47,7 @@ def gencode_gene_node(state: "State") -> "State":
             try:
                 structure = summarize_gene_structure(gene)
                 gene_obj.set_gene_type(structure.get("gene_type", "unknown"))
-                gene_obj.set_gene_ids(entrez_id = structure.get("gene_id", ""))
+                gene_obj.set_gene_ids(ensemble_id = structure.get("gene_id", ""))
                 gene_obj.set_chrom_location(chrom = structure.get("chromosome", ""),
                                             gene_span=structure.get("gene_span_bp", (0,0)))
                 print('structure.get("transcript_ids", [])', structure.get("transcript_ids", []))

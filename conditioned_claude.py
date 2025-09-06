@@ -52,51 +52,47 @@ def _process_dbsnp_variants(state: "State") -> "State":
 def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
     """Extract all data for a single gene from state."""
     
-    print(state.get('gene_entities', {}))
-    if not gene or gene not in state.get('gene_entities', {}):
-        raise ValueError(f"Gene {gene} not found in state gene_entities")
-    else:
-        print(state.get('gene_entities', {})[gene].to_json())
-    raise ValueError("Debug stop")
-
-    gene_info = {"gene": gene}
+    gene_objs = state.get("gene_entities", {})
+    gene_obj = gene_objs.get(gene)
+    print('****'*10)
+    # gene_info = {"gene": gene}
     
     
-    # Define data sources with their state keys and optional processing
-    data_sources = [
-        ('Summary about the gene structure, transcripts and complexity from GENCODE:', 'gene_level_gencode'),
-        ("Diseases associated with this gene:", "gene_disease_traits"),
-        ("Top 30 predicted gene functions (from HumanBase database):", "humanbase_predictions", lambda hits: [hit["term"] for hit in hits if "term" in hit][:30]),
-        ("Gene ontology (GO) summarized terms of interacting genes: ", "biogrid_summarized_go"),
-        ("Interacting human genes based on BioGRID curated database, organized by experimental system", "biogrid_interaction_groups"),
-        ("Interacting non-human genes based on BioGRID curated database, organized by experimental system", "biogrid_interactions_select_nonhuman"),
-        ("Associated Reactome pathways (curated biological pathways which describe how molecules interact within a cell to carry out different biological processes)", "reactome_pathways"),
-        ("GWAS-based associations and their statistical significance for the gene and its variants, for example connection to traits, protein levels etc. Returns associations that are high-risk or high-signifiance or both.", "gwas_associations"),
-        ("Uniprot-derived annotations for the given gene, diseases and functions:", "uniprot_entries_base", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
-        # ("uniprot_entries_gwas", "uniprot_entries_gwas", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
-        ("Regulatory activity role for the regions where variants were found. Defined computationally through Sei, a deep learning model that predicts transcription factors, histone marks and dnase, though clustering prediction over the genome and then assinging values. Reperesents role of the region", "sei_predictions"),
-        ("Gene expression context of the genes, gives context for the ranges of variants that *could* be observed in this gene:", "humanbase_expecto", lambda data: data.get('summary_text')),
-        ("Per variant gene expression modulation predictions, linked to variants of interest. Note that it is z-scored to 1000Genomes, so values below 1 are a fairly small effect:", "tissue_expression_preds_variant_text_description", lambda txt: txt if isinstance(txt, str) and txt.strip() else None),
-        ("Pathogenicity predictions for each missense variant of interest in this particular gene. Computed through AlphaMissense, which predicts the likelihood that missense variants (genetic mutations where a single amino acid in a protein is changed) can cause disease", "alphamissense_predictions"),
-        ("dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)", "dbsnp_variants", _process_dbsnp_variants),
-        ("dbSNP variant summary (rare vs common variants, chromosomes, assembly info)", "dbsnp_summaries", _process_dbsnp_variants),
-        ("All computationally predicted gene targets for this miRNA (from the miRDB database):", "mirDB_targets"),
-    ]
+    # # Define data sources with their state keys and optional processing
+    # data_sources = [
+    #     ('Summary about the gene structure, transcripts and complexity from GENCODE:', 'gene_level_gencode'),
+    #     ("Diseases associated with this gene:", "gene_disease_traits"),
+    #     ("Top 30 predicted gene functions (from HumanBase database):", "humanbase_predictions", lambda hits: [hit["term"] for hit in hits if "term" in hit][:30]),
+    #     ("Gene ontology (GO) summarized terms of interacting genes: ", "biogrid_summarized_go"),
+    #     ("Interacting human genes based on BioGRID curated database, organized by experimental system", "biogrid_interaction_groups"),
+    #     ("Interacting non-human genes based on BioGRID curated database, organized by experimental system", "biogrid_interactions_select_nonhuman"),
+    #     ("Associated Reactome pathways (curated biological pathways which describe how molecules interact within a cell to carry out different biological processes)", "reactome_pathways"),
+    #     ("GWAS-based associations and their statistical significance for the gene and its variants, for example connection to traits, protein levels etc. Returns associations that are high-risk or high-signifiance or both.", "gwas_associations"),
+    #     ("Uniprot-derived annotations for the given gene, diseases and functions:", "uniprot_entries_base", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
+    #     # ("uniprot_entries_gwas", "uniprot_entries_gwas", lambda data: {k: v for k, v in data.items() if k != 'go_terms'}),
+    #     ("Regulatory activity role for the regions where variants were found. Defined computationally through Sei, a deep learning model that predicts transcription factors, histone marks and dnase, though clustering prediction over the genome and then assinging values. Reperesents role of the region", "sei_predictions"),
+    #     ("Gene expression context of the genes, gives context for the ranges of variants that *could* be observed in this gene:", "humanbase_expecto", lambda data: data.get('summary_text')),
+    #     ("Per variant gene expression modulation predictions, linked to variants of interest. Note that it is z-scored to 1000Genomes, so values below 1 are a fairly small effect:", "tissue_expression_preds_variant_text_description", lambda txt: txt if isinstance(txt, str) and txt.strip() else None),
+    #     ("Pathogenicity predictions for each missense variant of interest in this particular gene. Computed through AlphaMissense, which predicts the likelihood that missense variants (genetic mutations where a single amino acid in a protein is changed) can cause disease", "alphamissense_predictions"),
+    #     ("dbSNP variant annotations (genomic coordinates and allele frequencies from population studies)", "dbsnp_variants", _process_dbsnp_variants),
+    #     ("dbSNP variant summary (rare vs common variants, chromosomes, assembly info)", "dbsnp_summaries", _process_dbsnp_variants),
+    #     ("All computationally predicted gene targets for this miRNA (from the miRDB database):", "mirDB_targets"),
+    # ]
     
-    for source in data_sources:
-        field_name, state_key = source[:2]
-        processor = source[2] if len(source) > 2 else None
+    # for source in data_sources:
+    #     field_name, state_key = source[:2]
+    #     processor = source[2] if len(source) > 2 else None
         
-        data = state.get(state_key, {}).get(gene)
+    #     data = state.get(state_key, {}).get(gene)
         
-        if data:
-            if processor:
-                data = processor(data)
-            if data:  # Only add if data exists after processing
-                gene_info[field_name] = data
-                if DEBUG and state_key in ['biogrid_summarized_go', 'biogrid_predictions','reactome_pathways']:
-                    print(f'[conditioned_claude_node] Found {state_key} for {gene}: {data}')
-    return gene_info
+    #     if data:
+    #         if processor:
+    #             data = processor(data)
+    #         if data:  # Only add if data exists after processing
+    #             gene_info[field_name] = data
+    #             if DEBUG and state_key in ['biogrid_summarized_go', 'biogrid_predictions','reactome_pathways']:
+    #                 print(f'[conditioned_claude_node] Found {state_key} for {gene}: {data}')
+    return gene_obj.summarize_text()
 
 
 def _build_trait_context(trait_associations: Dict[str, Any]) -> Dict[str, Any]:
@@ -159,30 +155,17 @@ def create_context_block(state: "State") -> str:
 
     if DEBUG:
         print(f"[create_context_block] genes to summarize: {gene_list}")
-    
-    # Add trait-based context if no genes but trait data exists
-    trait_associations = state.get("trait_associations", {})
-    if not gene_list and trait_associations.get("found", False):
-        if DEBUG:
-            print("[create_context_block] No genes found, adding trait-based associations")
-        context_payload.append(_build_trait_context(trait_associations))
-    
-    # Serialize context and handle truncation
-    marked_payload = []
-    for entry in context_payload:
-        marked_payload.append(entry)  # keep the entry
-        if isinstance(entry, dict):
-            if "gene" in entry:
-                marker = f"end of entity {entry['gene']} description"
-            elif "trait" in entry:
-                marker = f"end of entity {entry['trait']} description"
-            else:
-                marker = "end of entity description"
-        else:
-            marker = "end of entity description"
-        marked_payload.append({"_marker": marker})
+        
+    # Add variant-based context if available
+    variant_objs = state.get("variant_entities", {})
+    variant_summaries = ""
+    for id in variant_objs:
+        variant_summary = variant_objs[id].return_full_summary()
+        if variant_summary:
+            variant_summaries += f"Variant {id}: {variant_summary}\n"
 
-    context_payload = ensure_json_safe(marked_payload)
+    context_payload += [{"variant_summaries": variant_summaries.strip()}] if variant_summaries else []
+    context_payload = ensure_json_safe(context_payload)
     return to_unquoted_top(context_payload)
 
 
@@ -213,11 +196,10 @@ def conditioned_claude_node(state: "State") -> "State":
     if len(system_msg)<2:
         system_msg = (
             "You are a biology data analyst. Answer strictly with facts you can "
-            "point to inside CONTEXT. Respond only with JSON with keys answer and evidence. Ensure proper JSON format. "
-            "Produce raw json output. I don't want markdown. "
+            "point to inside CONTEXT. Respond only with JSON with keys answer and evidence. Be descriptive and detailed. Ensure proper JSON format. "
             "The 'evidence' field must always be a list of short strings, and always reference the entity to which you are referring. "
-            "If the CONTEXT contains trait-based associations (query_type: 'trait_based'), focus on the genetic associations "
-            "with the queried trait/disease, including related genes, variants, and their biological significance."
+            # "If the CONTEXT contains trait-based associations (query_type: 'trait_based'), focus on the genetic associations "
+            # "with the queried trait/disease, including related genes, variants, and their biological significance."
         )
     
     if DEBUG:

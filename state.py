@@ -12,7 +12,8 @@ TypedDict schema describing the mutable LangGraph state."""
 from __future__ import annotations
 import operator
 from typing import Annotated, Any, Dict, List
-from entity_classes import Gene
+from gene_class import Gene
+from variant_class import Variant
 from typing_extensions import TypedDict
 
 
@@ -31,14 +32,15 @@ class State(TypedDict, total=False):
     
     # to replace the keys commented out below w/ proper gene objects
     gene_entities: Annotated[Dict[str, "Gene"], operator.or_]
+    variant_entities: Annotated[Dict[str, "Variant"], operator.or_]
 
     # UniProt / HumanBase look-ups
-    uniprot_entries_base: Annotated[Dict[str, Dict], operator.or_]
-    uniprot_entries_gwas: Annotated[Dict[str, Dict], operator.or_]
-    gene_disease_traits: Annotated[Dict[str, List[str]], operator.or_]
-    gene_function_traits: Annotated[Dict[str, List[str]], operator.or_]
-    gene_GO_traits: Annotated[Dict[str, List[str]], operator.or_]
-    humanbase_predictions: Annotated[Dict[str, List[Dict[str, Any]]], operator.or_]
+    # uniprot_entries_base: Annotated[Dict[str, Dict], operator.or_]
+    # uniprot_entries_gwas: Annotated[Dict[str, Dict], operator.or_]
+    # gene_disease_traits: Annotated[Dict[str, List[str]], operator.or_]
+    # gene_function_traits: Annotated[Dict[str, List[str]], operator.or_]
+    # gene_GO_traits: Annotated[Dict[str, List[str]], operator.or_]
+    # humanbase_predictions: Annotated[Dict[str, List[Dict[str, Any]]], operator.or_]
     humanbase_expecto: Annotated[Dict[str, List[Dict[str, Any]]], operator.or_]
     tissue_expression_preds_variant_text_description: Annotated[Dict[str, Any], operator.or_]
     expression_preds_variant_table: Annotated[Dict[str, Dict[str, Any]], operator.or_]

@@ -56,42 +56,49 @@ def alphamissense_predictions_agent(state: "State") -> "State":
     """
 
     print(f"[AlphaMissense] started... {datetime.now()}")
-    preds = state.get("alphamissense_predictions", {}).copy()
-    variants = state.get("dbsnp_variants", {}).copy()
+    # preds = state.get("alphamissense_predictions", {}).copy()
+    variants = state.get("variant_entities", {}).copy()
 
     # Gracefully handle file reading errors
     try:
         pathogenicity_class_df_hg38 = pd.read_parquet('local_dbs/AlphaMissense_hg38.parquet')
     except Exception as e:
         warnings.warn(f"Failed to load required files: {e}. Cannot run AlphaMissense predictions.")
-        return {**state, "alphamissense_predictions": preds}
+        return 
     
     print(f"[AlphaMissense] loaded am file... {datetime.now()}")
     
     snp_records = []
-    for gene, gene_vars in variants.items():
-        for var_id, var_data in gene_vars.items():
-            all_snps = var_data.get("coordinates", [])
-            for snp in all_snps:
-                chrom, pos, ref, alt, assembly = snp.get("chrom"), snp.get("pos"), snp.get("ref"), snp.get("alt"), snp.get("assembly")
-
-                if assembly and "GRCh38" in assembly:
-                    if None not in (chrom, pos, ref, alt):
-                        snp_records.append({
-                            "gene": gene,
-                            "uniprot_IDs": _symbol_to_uniprot(gene),
-                            "var_id": var_id,
-                            "snp_key": f"SNP:{ref}->{alt}",
-                            "chrom": f"chr{chrom}",
-                            "pos": pos,
-                            "ref": ref,
-                            "alt": alt
-                        })
-                    else:
-                        warnings.warn(f"Missing coordinate data for {gene} variant {var_id} (SNP {ref}->{alt})")
+    for var_id, var_obj in variants.items():
+        print(var_obj)
+        locs = var_obj.get_location('GrCh38')
+        related_genes = var_obj.get_related_genes()
+        chrom, pos, refs, alts = locs.get('chrom'), locs.get('pos'), locs.get('ref'), locs.get('alt')
+        if len(refs) != 1:
+            warnings.warn(f"Skipping variant {var_id} with multiple reference alleles: {refs}")
+            print(var_obj)
+            continue
+        ref = refs[0]
+        if locs and related_genes:
+            for gene in related_genes:
+                if not alts: 
+                    continue
+                for alt in alts:
+                    snp_records.append({
+                        "gene": gene,
+                        "uniprot_IDs": _symbol_to_uniprot(gene),
+                        "var_id": var_id,
+                        "snp_key": f"SNP:{ref}->{alt}",
+                        "chrom": f"chr{chrom}",
+                        "pos": pos,
+                        "ref": ref,
+                        "alt": alt
+                    })
+            else:
+                warnings.warn(f"Missing coordinate data for {gene} variant {var_id} (SNP {ref}->{alt})")
 
     if not snp_records:
-        return {"alphamissense_predictions": preds}
+        return 
 
     snps_df = pd.DataFrame(snp_records)
 
@@ -102,7 +109,7 @@ def alphamissense_predictions_agent(state: "State") -> "State":
         snps_exploded = snps_df.explode("uniprot_IDs")
     else:
         warnings.warn("[AlphaMissense] No UniProt column generated.")
-        return {"alphamissense_predictions": preds}
+        return 
 
     try:
         merged = snps_exploded.merge(
@@ -113,7 +120,7 @@ def alphamissense_predictions_agent(state: "State") -> "State":
         )
     except Exception as e:
         warnings.warn(f"[AlphaMissense] Merge failed: {e}")
-        return {"alphamissense_predictions": preds}
+        return 
 
 
     print(f"[AlphaMissense] finished merging... {datetime.now()}")
@@ -124,16 +131,14 @@ def alphamissense_predictions_agent(state: "State") -> "State":
 
     for row in grouped.itertuples(index=False):
         gene, var_id, snp_key, am_class = row
-        preds.setdefault(gene, {})
-        preds[gene].setdefault(var_id, {})
-        preds[gene][var_id][snp_key] = am_class
+        var_obj.add_functional_prediction(gene, 'AlphaMissense', am_class)
+
+        print(var_obj)
 
     print(f"[AlphaMissense] done... {datetime.now()}")
 
-    print("[AlphaMissense] Predictions: ", preds)
     time.sleep(0.3)  # courteous pause
 
-    return {
-        "alphamissense_predictions": preds}
+    return 
 
 
