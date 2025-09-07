@@ -15,7 +15,7 @@ from tool_sei import sei_predictions_agent
 from tool_alphamissense import alphamissense_predictions_agent
 from tool_annotate_gencode import gencode_gene_node
 from tool_miRDB import miRDB_agent
-
+from tool_remap import remap_crm_agent
 
 EXAMPLE_TOOL_SELECTION = """EXAMPLE PIPELINES (pay attention to dependencies):
 
@@ -58,6 +58,7 @@ TOOL_CATALOG = {
     "expectosc_predictions_agent": "Annotates variants with predicted (from sequence) cell type-specific expression disruption predictions. Requires variant_annotations to be run first.",
     "alphamissense": "Fetches Alphamissense predicted pathogenicity classes for given variants. This requires variant_annotations to be run first.",
     "miRDB": "Fetches miRDB computationally predicted gene targets of miRNA.",
+    "remap_crm_agent": "Fetches cis-regulatory modules (CRMs) from the ReMap 2022 database for each gene, reporting transcription factors with ChIP-seq binding peaks near gene’s TSS. Requires Gencode (gencode_gene_node) run first. Useful for exploring transcriptional regulation."
 }
 
 
@@ -79,5 +80,6 @@ TOOL_FN_MAP = {
     "alphamissense":  alphamissense_predictions_agent,
     "gencode_gene_node": gencode_gene_node,
     "miRDB": miRDB_agent,
+    "remap_crm_agent": remap_crm_agent
 }
 

@@ -16,7 +16,7 @@ from pathlib import Path
 from evaluate_benchmarks_general import run_benchmark
 SUBFOLDERS = ['labbench']
 MAIN_PATH = Path("benchmarks_generation")
-MAX_ROWS = 30 # -1 means all
+MAX_ROWS = 20 # -1 means all
 
 SYSTEM_MSG = (
     """You are a multiple-choice answering system.

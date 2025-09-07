@@ -110,7 +110,7 @@ def summarize_gene_structure(gene_name: str) -> Optional[Dict[str, Any]]:
         exon_counts[tx] = int(exon_count)
         spans.append(int(tx_rows["end"].max() - tx_rows["start"].min() + 1))
 
-    gene_span = (int(gene_df["start"].min()), int(gene_df["end"].max()))
+    gene_span = (int(gene_df["start"].dropna().min()), int(gene_df["end"].dropna().max()))
     gene_type = gene_df["gene_type"].unique()
     if len(gene_type) != 1:
         gene_type = ",".join(gene_type)  # Multiple types, join as string
@@ -128,6 +128,12 @@ def summarize_gene_structure(gene_name: str) -> Optional[Dict[str, Any]]:
         chromosome = ",".join(chromosome)  # Multiple chromosomes, join as string
     else:
         chromosome = chromosome[0]
+        
+    strand = gene_df["strand"].dropna().unique()
+    if len(strand) != 1:
+        strand = None
+    else:
+        strand = strand[0]
     
     return {
         "gene_name": gene_name,
@@ -136,7 +142,8 @@ def summarize_gene_structure(gene_name: str) -> Optional[Dict[str, Any]]:
         "chromosome": chromosome,
         "exons_per_transcript": exon_counts,
         "transcript_ids": transcripts,
-        "gene_span_bp": gene_span
+        "gene_span_bp": gene_span, 
+        "strand": strand,
     }
 
 # %%

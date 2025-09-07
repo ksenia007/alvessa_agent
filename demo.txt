@@ -1,14 +1,26 @@
 ================================================================================
-Q: Summarize GO terms for TP53
+Q: Which TFs bind in front of TP53
 
 Answer:
-TP53 GO terms encompass three main categories: Cellular Component (C), Molecular Function (F), and Biological Process (P). For cellular components, TP53 is localized to the germ cell nucleus, mitochondrion, chromatin, cytosol, endoplasmic reticulum, and nucleus. Its molecular functions include histone deacetylase regulator activity, 14-3-3 protein binding, DNA-binding transcription repressor activity (RNA polymerase II-specific), protein phosphatase 2A binding, receptor tyrosine kinase binding, and molecular function activator activity. The biological processes TP53 participates in include bone marrow development, neuroblast proliferation, regulation of cell cycle G2/M phase transition, somitogenesis, intrinsic apoptotic signaling pathway by p53 class mediator, and protein stabilization.
+Looking at the provided context, I need to identify transcription factors (TFs) that bind in front of the TP53 gene.
+
+```json
+{
+  "answer": "Based on the ReMap Cis Regulatory Modules data, 685 unique transcription factors are predicted to bind within 1000bp upstream and downstream of the TP53 gene (chr17:7687546 +/-1000bp). Key transcription factors that bind in front of TP53 include: TP53 itself (autoregulation), MYC, MAX, E2F family members (E2F1, E2F3, E2F4, E2F6, E2F7, E2F8), p53 family members (TP63), NF-κB pathway components (NFKB1, NFKB2, RELA, RELB), STAT family (STAT1, STAT2, STAT3, STAT5B), AP-1 components (FOS, JUN, JUNB, JUND, FOSL1, FOSL2), CREB/ATF family (CREB1, ATF2, ATF3, ATF4, ATF7), and chromatin remodeling complexes (SMARCA4, SMARCA2, CREBBP, EP300). The analysis identified 3 peaks with binding sites for these factors.",
+  "evidence": [
+    "ReMap Cis Regulatory Modules data shows TFs predicted to bind for TP53 chr17:7687546 (+/-1000bp): 3 peaks",
+    "Total unique binders: 685 transcription factors",
+    "TP53 itself is listed among the binders, indicating autoregulation",
+    "Key oncogenes and tumor suppressors present: MYC, E2F1, E2F3, E2F4, E2F6, E2F7, E2F8, TP63",
+    "NF-κB pathway components: NFKB1, NFKB2, RELA, RELB",
+    "STAT transcription factors: STAT1, STAT2, STAT3, STAT5B",
+    "AP-1 complex components: FOS, JUN, JUNB, JUND, FOSL1, FOSL2",
+    "CREB/ATF family members: CREB1, ATF2, ATF3, ATF4, ATF7",
+    "Chromatin remodeling factors: SMARCA4, SMARCA2, CREBBP, EP300"
+  ]
+}
+```
 
 Evidence:
-  - C:germ cell nucleus, C:mitochondrion, C:chromatin, C:cytosol, C:endoplasmic reticulum, C:nucleus
-  - F:histone deacetylase regulator activity, F:14-3-3 protein binding, F:DNA-binding transcription repressor activity, RNA polymerase II-specific
-  - F:protein phosphatase 2A binding, F:receptor tyrosine kinase binding, F:molecular function activator activity
-  - P:bone marrow development, P:neuroblast proliferation, P:regulation of cell cycle G2/M phase transition
-  - P:somitogenesis, P:intrinsic apoptotic signaling pathway by p53 class mediator, P:protein stabilization
 
 

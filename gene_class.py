@@ -48,12 +48,13 @@ class Gene:
     aliases: List[str] = field(default_factory=list)
     gene_type: Optional[str] = None
     build: Optional[str] = "GRCh38"  
+    strand: Optional[str] = None
     
     text_summaries_from_tools: List[str] = field(default_factory=list)
 
     # ---- Gene-level genomic location ----
     chrom: Optional[str] = None
-    start: Optional[int] = None
+    start: Optional[int] = None # always hg38
     end: Optional[int] = None
     strand: Optional[str] = None
 
@@ -101,6 +102,7 @@ class Gene:
     
     # ---- Tools ----
     tools_run: List[str] = field(default_factory=list)
+    binding_peaks: List[Dict[str, Any]] = field(default_factory=list)  
 
 
     # ------------ Normalization ------------
@@ -132,16 +134,8 @@ class Gene:
         for k in ("start", "end"):
             if d.get(k) is not None: d[k] = int(d[k])
         return d
-
-    # ------------ Linking to other classes ------------
-    def link_variant(self, variant: "Variant") -> None:
-        if variant.rsID not in self.variants.keys():
-            self.variants[variant.rsID] = variant
-
-    def link_trait(self, trait_id: str) -> None:
-        if trait_id not in self.traits:
-            self.traits.append(trait_id)
-            
+    
+    # ----- INFO about the gene -----
     def set_gene_type(self, gene_type: str) -> None:
         gene_type = (gene_type or "").strip()
         if gene_type:
@@ -169,14 +163,39 @@ class Gene:
         if strand:
             self.strand = strand.strip()
             
+    def get_uniprot_id(self) -> List[str]:
+        return self.uniprot_id if self.uniprot_id else None
+    
+    def is_positive_strand(self) -> Optional[bool]:
+        if self.strand == "+":
+            return True
+        elif self.strand == "-":
+            return False
+        else:
+            return None
+        
+    def get_location(self) -> Optional[Tuple[str, Optional[int], Optional[int], Optional[str]]]:
+        return (self.chrom, self.start, self.end, self.strand)
+
+    # ------------ Linking to other classes ------------
+    def link_variant(self, variant: "Variant") -> None:
+        if variant.rsID not in self.variants.keys():
+            self.variants[variant.rsID] = variant
+
+    def link_trait(self, trait_id: str) -> None:
+        if trait_id not in self.traits:
+            self.traits.append(trait_id)
+            
+    
+            
     def update_text_summaries(self, summary: str) -> None:
+        """IMPORTANT: Append a text summary from a tool, avoiding duplicates."""
         summary = (summary or "").strip()
         
         if summary and summary not in self.text_summaries_from_tools:
             self.text_summaries_from_tools.append(summary)
             
-    def get_uniprot_id(self) -> List[str]:
-        return self.uniprot_id if self.uniprot_id else None
+
             
     # ------------ GWAS associations ------------
     def add_gwas_association(self, total_associations, sig_associations, total_studies, 
@@ -201,6 +220,22 @@ class Gene:
     
     def get_all_traits(self) -> List[str]:
         return self.traits
+    
+    # ------------ Binding peaks ------------
+    def add_binding_peaks(self, peak_info: Dict[str, Any]) -> None:
+        self.binding_peaks = peak_info 
+        
+    def get_n_unique_binding_peaks(self) -> int:
+        """Return the number of binding peaks recorded."""
+        return self.binding_peaks.get("n_peaks", 0)
+
+    def get_n_binders(self) -> List[Dict[str, Any]]:
+        """Return the number of binders recorded."""
+        return self.binding_peaks.get("n_unique_binders", 0)
+    
+    def get_all_binding_tfs(self) -> List[str]:
+        """Return the list of unique binding TFs recorded."""
+        return self.binding_peaks.get("unique_binders", [])
 
     # ------------- miRNA targets -------------
     def add_miRNA_targets(self, miRNA: Dict[str, Any]) -> None:
@@ -255,7 +290,7 @@ class Gene:
         for pg in partner_genes:
             self.add_nonhuman_interaction(experiment_type, pg)
 
-    # ------------ GO & other functions ------------
+    # ------------ GO & other functions, diseases, pathways etc (UniProt and HumanBase and Reactome) ------------
     def add_go_terms(self, label: str) -> None:
         label = (label or "").strip()
         if label and label not in self.go_annotations:
@@ -287,6 +322,7 @@ class Gene:
         label = (label or "").strip()
         if label and label not in self.predicted_go:
             self.predicted_go.append(label)
+    
     def add_many_predicted_go(self, labels: List[str]) -> None:
         for label in labels:
             self.add_predicted_go(label)
@@ -330,7 +366,9 @@ class Gene:
     def get_n_transcripts(self) -> int:
         return len(self.transcripts)
 
+
     # ------------ Structure stats ------------
+    
     def compute_structure_stats(self) -> None:
         n_tx = len(self.transcripts)
         self.transcript_count = n_tx

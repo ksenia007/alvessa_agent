@@ -46,10 +46,15 @@ def gencode_gene_node(state: "State") -> "State":
             gene_obj = gene_objects[gene]
             try:
                 structure = summarize_gene_structure(gene)
+                if not structure:
+                    if DEBUG:
+                        print(f"[gencode_gene_node] No GENCODE structure found for gene: {gene}")
+                    continue
                 gene_obj.set_gene_type(structure.get("gene_type", "unknown"))
                 gene_obj.set_gene_ids(ensemble_id = structure.get("gene_id", ""))
                 gene_obj.set_chrom_location(chrom = structure.get("chromosome", ""),
-                                            gene_span=structure.get("gene_span_bp", (0,0)))
+                                            gene_span=structure.get("gene_span_bp", (0,0)), 
+                                            strand=structure.get("strand", None))
                 for i in structure.get("transcript_ids", []):
                     gene_obj.add_transcript(i, n_exons=structure.get("exons_per_transcript", {}).get(i, 0))
                     

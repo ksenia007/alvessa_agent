@@ -61,7 +61,7 @@ if __name__ == "__main__":
         #"Which of the following variants is associated with gene NKX2-5 and has the worst possible predicted coding downstream effect? [A] rs6891790 [B] rs2277923 [C] rs773670132 [D] rs4868243"
         # "Tell me about rs12345 variant"
         # "How many exons in TP53?"
-        "Summarize GO terms for TP53"
+        "Which TFs bind in front of TP53"
         # "Which gene is the best drug target for virally induced cancers, KRAS or TP53?",
         # "How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
         # "Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?",
