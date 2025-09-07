@@ -6,7 +6,6 @@ Updated: 2025-06-26
 
 
 Description: 
-
 Self-verification node that checks if the answer matches context."""
 
 from __future__ import annotations

@@ -200,10 +200,15 @@ def gwas_associations_agent(state: "State", mode: str = "summary") -> "State":
                     if all_variants[v].get("mapped_gene", "") != gene:
                         print('mapped to other gene, skipping')
                         continue
-                    # this variant was already pulled, but possibly for the different gene
-                    var_exist = variants[v]
+                    # this variant was already pulled, but possibly for the different gene, add this one
+                    var_exist = variant_objs[v]
                     var_exist.add_per_gene_traits(gene, all_variants[v].get("associated_disease_traits", {}))
                     var_exist.add_per_gene_context(gene, all_variants[v].get("context", ""), all_variants[v].get("variant_category", ""))
+                    # add to gene as well
+                    gene_objs[gene].link_variant(var_exist)
+                    # add all traits to gene as well
+                    for t in all_variants[v].get("associated_disease_traits", {}).keys():
+                        gene_objs[gene].link_trait(t)
                 else:
                     # init new variant entry, add to Variant list and then link to Gene
                     if all_variants[v].get("mapped_gene", "") != gene:
@@ -214,12 +219,11 @@ def gwas_associations_agent(state: "State", mode: str = "summary") -> "State":
                     new_var.add_per_gene_traits(gene, var_info.get("associated_disease_trait", {}))
                     new_var.add_per_gene_context(gene, var_info.get("context", ""), var_info.get("variant_category", ""))
                 
-                variant_objs[v] = new_var
-                gene_objs[gene].link_variant(new_var)     
-                # add all traits to gene as well
-                for t in var_info.get("associated_disease_traits", {}).keys():
-                    gene_objs[gene].link_trait(t)              
-            # variants[gene] = all_variants
+                    variant_objs[v] = new_var
+                    gene_objs[gene].link_variant(new_var)     
+                    # add all traits to gene as well
+                    for t in var_info.get("associated_disease_traits", {}).keys():
+                        gene_objs[gene].link_trait(t)              
             
             # create a summary text for all we have found for this gene
             summary_text = f"Gene {gene} has {result.get('total_associations', 0)} total GWAS associations, "

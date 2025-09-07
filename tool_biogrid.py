@@ -16,7 +16,6 @@ from typing import Any, Dict, List, Optional
 from config import BioGRID_API_KEY
 from state import State 
 from tools.word2vec import fps_word2vec
-from tool_go_summarization import make_go_summarization_node
 from collections import defaultdict
 
 DEBUG=True
@@ -104,7 +103,6 @@ def bioGRID_predictions_agent(state: "State") -> "State":
             # populate Gene object
             for exp, all_genes_interacting in human_set.items():
                 # key is the experimental system
-                print('ADDING HUMAN INTERACTIONS')
                 gene.add_many_interactions(exp, all_genes_interacting)
             for exp, all_genes_interacting in nonhuman_set.items():
                 gene.add_many_nonhuman_interactions(exp, all_genes_interacting)

@@ -175,6 +175,9 @@ class Gene:
         if summary and summary not in self.text_summaries_from_tools:
             self.text_summaries_from_tools.append(summary)
             
+    def get_uniprot_id(self) -> List[str]:
+        return self.uniprot_id if self.uniprot_id else None
+            
     # ------------ GWAS associations ------------
     def add_gwas_association(self, total_associations, sig_associations, total_studies, 
                              summary_high_risk, summary_sig) -> None:
@@ -504,11 +507,21 @@ class Gene:
         tx_bits = []
         if self.transcript_count is not None:
             tx_bits.append(f"n_transcripts={self.transcript_count}")
-        if self.avg_exons_per_transcript is not None:
-            tx_bits.append(f"avg_exons/tx={self.avg_exons_per_transcript:.1f}")
         if self.max_transcript_span_bp is not None:
             tx_bits.append(f"max_span={self.max_transcript_span_bp:,} bp")
         tx_line = _kv("Transcripts", _join(tx_bits))
+        
+        # add detailed traincript ID + exon counts
+        if self.transcripts:
+            tx_details = []
+            for tx_id, rec in sorted(self.transcripts.items()):
+                ne = rec.get("n_exons")
+                if ne is not None:
+                    tx_details.append(f"{tx_id}({ne} exons)")
+                else:
+                    tx_details.append(tx_id)
+            if tx_details:
+                tx_line = _join([tx_line, "Transcripts: " + ", ".join(tx_details)], sep=" | ")
         
         # add summaries from text_summaries_from_tools
         if self.text_summaries_from_tools:

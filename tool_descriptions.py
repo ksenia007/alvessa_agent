@@ -3,7 +3,7 @@ from entity_extraction import entity_extraction_node
 from tool_humanbase import humanbase_predictions_agent, expectosc_predictions_agent
 from tool_biogrid import bioGRID_predictions_agent
 from tool_reactome import reactome_pathways_agent
-from tool_go_summarization import make_go_summarization_node
+from tool_go_summarization import go_summarization_agent
 from tool_uniprot import (
     uniprot_node,
 )
@@ -40,7 +40,7 @@ IF YOU INCLUDE ANYTHING OTHER THAN A LIST OF TOOLS, YOU WILL BE CONSIDERED INVAL
 
 TOOL_CATALOG = {
     "extract_entities": "Extracts genes and all biomedical entities from the user question for query understanding using both Claude and GLiNER models. Returns genes (Claude + GLiNER), traits, and all entity types found by GLiNER. This tool MUST be called first before running any other tool as it provides essential entity extraction for pipeline execution.",
-    "expand_gene_set_by_trait": "Use this tool ONLY IF the expanded gene set by a trait is REQUIRED to answer the question. This could be used to discover more relevant genes underlying a trait, if a broader genetic context would be valuable for the analysis. Searches for genetic associations with diseases, traits, or phenotypes mentioned in the user query and expands the gene list with additional related genes found through GWAS associations. ",
+    # TODO: need to add support w/ classes "expand_gene_set_by_trait": "Use this tool ONLY IF the expanded gene set by a trait is REQUIRED to answer the question. This could be used to discover more relevant genes underlying a trait, if a broader genetic context would be valuable for the analysis. Searches for genetic associations with diseases, traits, or phenotypes mentioned in the user query and expands the gene list with additional related genes found through GWAS associations. ",
     "gencode_gene_node": "Annotates genes with GENCODE gene annotations such as transcripts, number exons, genomic span. Essential for many downstream analyses.",
     "humanbase_functions": "Fetch per-gene functional predictions from HumanBase tissue-specific networks. Provides expanded list of functions.",
     "uniprot_base":  "Queries UniProt for functional annotations and disease links.",
@@ -49,7 +49,9 @@ TOOL_CATALOG = {
     "uniprot_gwas":   "Runs UniProt query again on genes identified via GWAS associations. Helps to expand the base annotations with related genes.",
     "BioGRID": "Fetches gene interactions from BioGRID and their functional annotations for the input genes. Provides a curated context-specific list of protein-protein, genetic and chemical interactions.",
     "reactome": "Fetches Reactome pathways associated with the input genes. Provides a curated collection of biological pathways which describe how molecules interact within a cell to carry out different biological processes.",
-    "Summarize_bioGRID_GO": "Required for BioGrid. Summarizes BioGRID GO terms for the input genes. Provides a compact list of GO terms for the input genes.",
+   #  "Summarize_bioGRID_GO": "Required for BioGrid. Summarizes BioGRID GO terms for the input genes. Provides a compact list of GO terms for the input genes.",
+   "Summarize_GO": "Summarizes GO terms for the input genes. Can only ber run after UniProt, needed to answer questions about GO terms or functions of genes.",
+
     "variant_annotations": "Fetches dbSNP data about the identified variants. This requires gwas to be run first. This is to be used only when the variant needs to be annotated with its **coordinates** and **chromosome number** and similar details. This tool is also a prerequisite to run humanbase, sei, alphamissense, etc. Reason based on the user's question if sequence models need to be run, and if so, this tool is a prerequisite to run them.",
     "variant_population_summaries": "Fetches population-wide summaries of allele frequencies for the identified variants across studies. Useful for characterizing the frequency of variants in the population. This requires gwas to be run first.",
     "sei": "Fetches predictions of the sequence regulatory activity for given variants. This requires variant_annotations to be run first.", 
@@ -70,7 +72,7 @@ TOOL_FN_MAP = {
     "uniprot_gwas":   uniprot_node,       
     "BioGRID":        bioGRID_predictions_agent,
     "reactome":       reactome_pathways_agent,
-    "Summarize_bioGRID_GO": make_go_summarization_node, 
+    "Summarize_GO": go_summarization_agent, 
     "variant_annotations":          dbsnp_variants_agent,
     "variant_population_summaries": lambda x: dbsnp_variants_agent(x, include_population_summaries=True),
     "sei":            sei_predictions_agent,

@@ -50,7 +50,6 @@ def gencode_gene_node(state: "State") -> "State":
                 gene_obj.set_gene_ids(ensemble_id = structure.get("gene_id", ""))
                 gene_obj.set_chrom_location(chrom = structure.get("chromosome", ""),
                                             gene_span=structure.get("gene_span_bp", (0,0)))
-                print('structure.get("transcript_ids", [])', structure.get("transcript_ids", []))
                 for i in structure.get("transcript_ids", []):
                     gene_obj.add_transcript(i, n_exons=structure.get("exons_per_transcript", {}).get(i, 0))
                     

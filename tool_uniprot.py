@@ -432,7 +432,7 @@ def uniprot_node(state: "State") -> "State":
 
     return 
 
-# I am not sure what we used this for, temporarily commenting out (Sept 2, 2025)
+# not sure what these were used for, leaving commented out for now
 # def trait_disease_extraction_node(state: "State") -> "State":
 #     """Attach disease traits pulled from UniProt entries."""
 #     entries = state.get("uniprot_entries", {})

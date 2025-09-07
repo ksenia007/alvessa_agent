@@ -35,6 +35,7 @@ def collect_results(root_base=RESULTS_ROOT):
                 if not fname.endswith(".csv"):
                     continue
                 fpath = os.path.join(mpath, fname)
+                print(fname)
                 try:
                     df = pd.read_csv(fpath)
                                 
@@ -52,8 +53,11 @@ def collect_results(root_base=RESULTS_ROOT):
                     df['test_set'] = fname.replace(".csv","")
                     
                     # reference main file w/ models needed
-                    ref = pd.read_csv(os.path.join(root_base, dataset, fname))
-                    df['need_tool'] = ref.iloc[0]['tool']
+                    try:
+                        ref = pd.read_csv(os.path.join(root_base, dataset, fname))
+                        df['need_tool'] = ref.iloc[0]['tool']
+                    except:
+                        df['need_tool'] = np.nan
                     
                     full_df = pd.concat([full_df, df], ignore_index=True)
                 except Exception as e:
@@ -524,6 +528,7 @@ if __name__ == "__main__":
     plot_by_dataset(results_nonlabbench, save_path="figures/accuracy_by_dataset.png", 
                     figure_size=(9.5,5))
     
+    print(non_set.dataset.unique())
     results_labbench = non_set[non_set["dataset"].str.lower().str.contains("labbench")]
     plot_by_dataset(results_labbench, save_path="figures/accuracy_dbqa.png", 
                     figure_size=(3,5), max_y=0.5)

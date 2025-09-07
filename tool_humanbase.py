@@ -69,7 +69,6 @@ def _fetch_expectosc_variants_HB(entrez: str) -> Optional[pd.DataFrame]:
     if DEBUG:
         print(f"[HumanBase] Fetching tissue variant predictions for Entrez ID: {entrez}")
 
-    #url = f"https://humanbase.io/api/genes/{entrez}/tissue_variants"
     url = f"https://humanbase.io/api/genes/{entrez}/tissue_variants/?database=clever-tissues&collapse=true"
     r = requests.get(url, timeout=12)
 

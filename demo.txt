@@ -1,15 +1,14 @@
 ================================================================================
-Q: How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?
+Q: Summarize GO terms for TP53
 
 Answer:
-Based on the provided context, I cannot find specific information about NUCKS1's direct roles in cancer or viral infections. The context primarily contains genomic and protein interaction data for NUCKS1, including its chromosomal location, tissue expression patterns, GWAS associations, and protein-protein interactions. While NUCKS1 is described as a nuclear protein that interacts with numerous chromatin-related proteins and DNA repair factors, the context does not explicitly describe its mechanisms of action in cancer or viral infection processes, nor does it provide information about overlapping roles between these two disease contexts.
+TP53 GO terms encompass three main categories: Cellular Component (C), Molecular Function (F), and Biological Process (P). For cellular components, TP53 is localized to the germ cell nucleus, mitochondrion, chromatin, cytosol, endoplasmic reticulum, and nucleus. Its molecular functions include histone deacetylase regulator activity, 14-3-3 protein binding, DNA-binding transcription repressor activity (RNA polymerase II-specific), protein phosphatase 2A binding, receptor tyrosine kinase binding, and molecular function activator activity. The biological processes TP53 participates in include bone marrow development, neuroblast proliferation, regulation of cell cycle G2/M phase transition, somitogenesis, intrinsic apoptotic signaling pathway by p53 class mediator, and protein stabilization.
 
 Evidence:
-  - Symbol: NUCKS1 | Entrez: 64710 | UniProt: Q9H1E3 | Ensembl: ENSG00000069275.13 | Gene type: protein_coding
-  - Isoform localizations: General locations: Nucleus, Chromosome
-  - TISSUE SPECIFICITY: Widely expressed, with highest levels in thyroid gland, prostate and uterus and in fetal liver, thymus and lung
-  - Gene NUCKS1 has 45 total GWAS associations, including 35 significant associations from 23 studies
-  - Interactions: Affinity Capture-MS: [extensive list of chromatin and DNA repair proteins including ATRX, BAP1, PARP1, PRKDC, etc.]
-  - No explicit mention of cancer mechanisms or viral infection roles in the provided context
+  - C:germ cell nucleus, C:mitochondrion, C:chromatin, C:cytosol, C:endoplasmic reticulum, C:nucleus
+  - F:histone deacetylase regulator activity, F:14-3-3 protein binding, F:DNA-binding transcription repressor activity, RNA polymerase II-specific
+  - F:protein phosphatase 2A binding, F:receptor tyrosine kinase binding, F:molecular function activator activity
+  - P:bone marrow development, P:neuroblast proliferation, P:regulation of cell cycle G2/M phase transition
+  - P:somitogenesis, P:intrinsic apoptotic signaling pathway by p53 class mediator, P:protein stabilization
 
 

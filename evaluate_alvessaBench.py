@@ -15,17 +15,16 @@ from pathlib import Path
 
 from evaluate_benchmarks_general import run_benchmark
 
-SUBFOLDERS = ['GWAS'] #,'GWAS_AM', 'mirDB', 'gencode', 'GWAS', 'reactome', 'biogrid']
+SUBFOLDERS = ['gencode'] #['GWAS_AM', 'mirDB', 'gencode', 'GWAS', 'reactome', 'biogrid']
 MAIN_PATH = Path("benchmarks_generation")
-MAX_ROWS = 20  # -1 means all
+MAX_ROWS = 5  # -1 means all
 
 SYSTEM_MSG = (
     """You are a multiple-choice answering system.
 You must reply with exactly one of the following letters: A, B, C, or D.
 Do not include any explanation, reasoning, or extra text.
-Your response will be parsed by a program that will fail if you output anything other than a single capital letter.
 Example valid output: C
-Example invalid outputs: Answer: C, C., Option C, B because..."""
+Example invalid outputs: "Answer: C", "C.", "Option C", "B because..." """
 )
 
 def main():
