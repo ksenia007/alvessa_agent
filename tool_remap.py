@@ -28,7 +28,7 @@ def remap_crm_agent(state: "State", window_width: int =1000) -> "State":
     For each gene:
       - get (chrom, start, end, strand) on GrCh38
       - TSS := start if is_positive_strand(strand) else end
-      - find peaks withinwindow width bp of TSS
+      - find peaks within window width bp of TSS
       - from BED col4 collect list of 'genes that bind there' (CRM members)
       - write a concise summary to gene.update_text_summaries(...)
     

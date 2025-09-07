@@ -19,13 +19,6 @@ from tool_uniprot import get_uniprot_entry_for_gene, extract_GO_from_uniprot_ent
 
 DEBUG=True
 
-# def make_go_summarization_node(source, embedding_method='word2vec'):
-#     def node(state: State):
-#         genes = state.get(f"{source}_predictions", [])
-#         return go_summarization_agent(state, genes, source, embedding_method)
-#     return node
-
-
 def go_summarization_agent(state: "State", embedding_method: str = 'word2vec') -> "State":
     """
     Summarize GO terms per gene and append a short line to each Gene's text summaries.
