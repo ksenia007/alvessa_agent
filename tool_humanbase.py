@@ -12,27 +12,14 @@ Helpers to query HumanBase and MyGene.info. The latter is used to convert to ent
 from __future__ import annotations
 import requests
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 import numpy as np
+# Agent-compatible node
+from state import State 
 
 DEBUG=True
 
-def _symbol_to_entrez(symbol: str) -> Optional[str]:
-    """Convert an HGNC symbol to an Entrez ID via MyGene.info"""
-    if DEBUG:
-        print(f"[HumanBase] Resolving symbol: {symbol}")
-    try:
-        r = requests.get(
-            "https://mygene.info/v3/query",
-            params={"q": symbol, "species": "human", "fields": "entrezgene", "size": 1},
-            timeout=8,
-        )
-        r.raise_for_status()
-        hits = r.json()["hits"]
-        return None if not hits else str(hits[0]["entrezgene"])
-    except Exception:
-        return None
 
 
 def _fetch_predictions_HB(entrez: str) -> List[Dict[str, float]]:
@@ -70,7 +57,7 @@ def _filter_predictions_HB(
         )
     return pared
 
-def _fetch_tissue_variants_HB(entrez: str) -> Optional[pd.DataFrame]:
+def _fetch_expectosc_variants_HB(entrez: str) -> Optional[pd.DataFrame]:
     """
     Download HumanBase tissue-specific variant effect predictions for a given Entrez ID.
     Note that this is only pre-computed scores, with hg19 build.
@@ -82,7 +69,6 @@ def _fetch_tissue_variants_HB(entrez: str) -> Optional[pd.DataFrame]:
     if DEBUG:
         print(f"[HumanBase] Fetching tissue variant predictions for Entrez ID: {entrez}")
 
-    #url = f"https://humanbase.io/api/genes/{entrez}/tissue_variants"
     url = f"https://humanbase.io/api/genes/{entrez}/tissue_variants/?database=clever-tissues&collapse=true"
     r = requests.get(url, timeout=12)
 
@@ -123,73 +109,8 @@ def _fetch_tissue_variants_HB(entrez: str) -> Optional[pd.DataFrame]:
 
     return pd.DataFrame(records)
 
-def summarize_tissue_variants_text_HB(df: Optional[pd.DataFrame]) -> Optional[str]:
-    if df is None or df.empty:
-        return None
 
-    # Coverage
-    n_variants = df[["chr", "position"]].drop_duplicates().shape[0]
-    n_alts = df[["chr", "position", "alt"]].drop_duplicates().shape[0]
-    n_tissues = df["tissue"].nunique()
-    n_scores = len(df)
-
-    # Score stats
-    s = df["score"].describe(percentiles=[0.25, 0.5, 0.75])
-    score_min, score_q25, score_median, score_q75, score_max, score_mean, score_std = [
-        s[k] for k in ["min", "25%", "50%", "75%", "max", "mean", "std"]
-    ]
-
-    # Tissue means
-    tm = df.groupby("tissue")["score"].mean().sort_values(ascending=False)
-    top_tissues = ", ".join([f"{t} ({m:.4f})" for t, m in tm.head(3).items()])
-    bottom_tissues = ", ".join([f"{t} ({m:.4f})" for t, m in tm.tail(3).items()])
-
-    # Extremes
-    max_row = df.loc[df["score"].idxmax()]
-    min_row = df.loc[df["score"].idxmin()]
-    pos_tissue = max_row["tissue"]
-    neg_tissue = min_row["tissue"]
-
-    def tissue_stats(tname):
-        sub = df[df["tissue"] == tname]["score"]
-        return f"mean={sub.mean():.4f}, median={sub.median():.4f}, min={sub.min():.4f}, max={sub.max():.4f}"
-
-    def variant_other_context(row):
-        sub = df[
-            (df["chr"] == row["chr"]) &
-            (df["position"] == row["position"]) &
-            (df["alt"] == row["alt"])
-        ]
-        other = sub[sub["tissue"] != row["tissue"]]["score"]
-        if other.empty:
-            return "no other tissue data"
-        mean_other = other.mean()
-        sign_consistent = all((o >= 0) == (row["score"] >= 0) for o in other.dropna())
-        if sign_consistent:
-            sign_note = "all other tissues have the same direction of effect"
-        else:
-            sign_note = "effects vary in sign across tissues"
-        return f"mean across other tissues={mean_other:.4f} ({sign_note})"
-
-    pos_tissue_context = tissue_stats(pos_tissue)
-    neg_tissue_context = tissue_stats(neg_tissue)
-    pos_variant_context = variant_other_context(max_row)
-    neg_variant_context = variant_other_context(min_row)
-
-    return (
-        "HumanBase tissue_variant summary "
-        "(Expecto; positive=increased expression, negative=decreased; "
-        "scores comparable across tissues/variants; subset of precomputed variants incl. common+selected).\n"
-        f"Variants={n_variants}, Alts={n_alts}, Tissues={n_tissues}, Scores={n_scores}.\n"
-        f"Score distribution: min={score_min:.4f}, Q25={score_q25:.4f}, median={score_median:.4f}, "
-        f"Q75={score_q75:.4f}, max={score_max:.4f}, mean={score_mean:.4f}, std={score_std:.4f}.\n"
-        f"Tissues with highest mean score: {top_tissues}.\n"
-        f"Tissues with lowest mean score: {bottom_tissues}.\n"
-    )
-
-from typing import Optional, Tuple, Dict
-
-def describe_variant_in_tissues_HB(df: Optional[pd.DataFrame],
+def describe_variant_in_celltypes_HB(df: Optional[pd.DataFrame],
                                  chrom: str,
                                  position: int,
                                  alt: str, 
@@ -290,29 +211,141 @@ def describe_variant_in_tissues_HB(df: Optional[pd.DataFrame],
     def tissue_str(tissues):
         parts = []
         for t in tissues:
-            pct_str = f", percentile_in_tissue={t['percentile_in_tissue']}" if t['percentile_in_tissue'] is not None else ""
-            parts.append(f"{t['tissue']} ({t['score']:.4f}{pct_str})")
+            # pct_str = f", percentile_in_tissue={t['percentile_in_tissue']}" if t['percentile_in_tissue'] is not None else ""
+            # parts.append(f"{t['tissue']} ({t['score']:.4f}{pct_str})")
+            if np.abs(t['score']) >= 1 :
+                parts.append(f"{t['tissue']} ({t['score']:.4f})")
         return ", ".join(parts)
 
+    top_tissues = f"Top: {tissue_str(top_tissues)}." if np.abs(max_score) >= 1 else ""
+    bottom_tissues = f"Bottom: {tissue_str(bottom_tissues)}." if np.abs(min_score) >= 1 else ""
+    
+
     text_description = (
-        f"Variant {chrom}:{position}>{alt}, id {variant_id}, appears in {sub['tissue'].nunique()} tissues.\n"
         f"Scores: min={min_score:.4f}, median={median_score:.4f}, max={max_score:.4f}, "
-        f"mean={mean_score:.4f}, std={std_score:.4f}.\n"
-        f"Top tissues: {tissue_str(top_tissues)}.\n"
-        f"Bottom tissues: {tissue_str(bottom_tissues)}.\n"
-        f"Overall, this variant's mean effect is {relative_effect} compared to all variants in the dataset."
+        f"{top_tissues}"
+        f"{bottom_tissues}"
+        # f"Overall, this variant's mean effect is {relative_effect} compared to other variants for this gene."
     )
 
     return stats_dict, text_description
 
-# Agent-compatible node
-from state import State  # noqa: E402
 
 
+def expectosc_predictions_agent(state: "State") -> "State":
+    """
+    Annotate variants with HumanBase ExpectoSC (cell-type/tissue) scores (GrCh37).
+      1) Fetch per gene in gene_entities, annotate any variants that appear.
+      2) For variants whose related genes weren't fetched, fetch-on-demand and annotate.
+    Writes to each Variant:
+      - add_functional_prediction(gene, "ExpectoSC", text)
+      - update_text_summaries(text)
+    """
+    if DEBUG:
+        print(f"[ExpectoSC] started...")
+
+    variants = (state.get("variant_entities") or {}).copy()
+    genes    = (state.get("gene_entities")    or {}).copy()
+    if not variants or not genes:
+        if DEBUG: print("[ExpectoSC] nothing to do (no variants or genes).")
+        return
+
+    def _get_entrez(gsym, gobj):
+        eid = getattr(gobj, "entrez_id", None)
+        if not eid and hasattr(gobj, "get_entrez_id"):
+            try: eid = gobj.get_entrez_id()
+            except Exception: eid = None
+        if not eid:
+            eid = None
+        return str(eid) if eid else None
+
+    def _annotate_if_match(var_id, var_obj, gene_sym, df):
+        # GrCh37 coordinates from Variant
+        locs = var_obj.get_location("GrCh37")
+        if not locs: return 0
+        chrom, pos = locs.get("chrom"), locs.get("pos")
+        refs, alts = (locs.get("ref") or []), (locs.get("alt") or [])
+        if chrom is None or pos is None or not refs or not alts: return 0
+        if len(refs) != 1: return 0
+        ref = refs[0]
+        chr_str = f"chr{chrom}"
+
+        hits = 0
+        for alt in alts:
+            try:
+                _, text = describe_variant_in_celltypes_HB(df, chr_str, pos, alt, var_id)
+            except Exception:
+                continue
+            if not text:
+                continue
+            # very short, readable line
+            # var_obj.add_functional_prediction(gene_sym, "ExpectoSC", text)
+            var_obj.update_text_summaries(f"Cell-type specific GE disruption (target = {gene_sym}): {text}")
+            hits += 1
+        return hits
+
+    fetched: dict[str, Optional[pd.DataFrame]] = {}
+    fetched_genes: set[str] = set()
+    total_ann = 0
+
+    # --- Pass 1: fetch for genes in gene_entities, annotate matching variants ---
+    for gsym, gobj in genes.items():
+        entrez = _get_entrez(gsym, gobj)
+        if not entrez:
+            continue
+        try:
+            df = _fetch_expectosc_variants_HB(entrez)  # returns DataFrame or None
+        except Exception as e:
+            if DEBUG: print(f"[ExpectoSC] fetch failed {gsym}/{entrez}: {e}")
+            df = None
+        fetched[gsym] = df
+        fetched_genes.add(gsym)
+        if df is None or df.empty:
+            continue
+        
+        gobj.update_text_summaries("Values for cell type specific gene expression disruption are predicted by ExpectoSC, scaled z-scores relative to common 1000Genomes variants; positive - increased expression, and negative - decreased. Scores with abs() <1 are not provided; above 3 is high confidence. Predicts for variants +/- 20kbp around TSS, could be a coding variant.")
+        
+        # annotate any variant that lists this gene
+        for var_id, var_obj in variants.items():
+            rel = (var_obj.get_related_genes() or [])
+            if gsym in rel:
+                total_ann += _annotate_if_match(var_id, var_obj, gsym, df)
+
+    # --- Pass 2: for variants referencing genes we didn't fetch, fetch-on-demand & annotate ---
+    for var_id, var_obj in variants.items():
+        rel = (var_obj.get_related_genes() or [])
+        for gsym in rel:
+            if gsym in fetched_genes:
+                continue
+            gobj = genes.get(gsym)
+            if not gobj:
+                continue
+            entrez = _get_entrez(gsym, gobj)
+            if not entrez:
+                continue
+            try:
+                df = _fetch_expectosc_variants_HB(entrez)
+            except Exception as e:
+                if DEBUG: print(f"[ExpectoSC] fetch (late) failed {gsym}/{entrez}: {e}")
+                df = None
+            fetched[gsym] = df
+            fetched_genes.add(gsym)
+            if df is None or df.empty:
+                continue
+            total_ann += _annotate_if_match(var_id, var_obj, gsym, df)
+
+    if DEBUG:
+        print(f"[ExpectoSC] done — annotated {total_ann}")
+
+    # nothing to put back into state — annotations live on Variant objects
+    return
+
+    
+    
 def humanbase_predictions_agent(state: "State") -> "State":
     """
     LangGraph node that annotates each gene with HumanBase predictions.
-ч
+
     Parameters
     ----------
     state
@@ -323,142 +356,55 @@ def humanbase_predictions_agent(state: "State") -> "State":
     State
         Updated state with the `"humanbase_predictions"` field filled.
     """
-    preds = state.get("humanbase_predictions", {}).copy()
+    gene_objs = state.get("gene_entities", {})
+    
+    print(gene_objs)
 
-    for gene in state.get("genes", []):
-        if gene in preds:
+    for gene in gene_objs.keys():
+        if gene_objs[gene].has_tool("humanbase_predictions"):
             continue
-
-        entrez = _symbol_to_entrez(gene)
+        
+        entrez = gene_objs[gene].entrez_id
         if not entrez:
-            preds[gene] = []
+            if DEBUG:
+                print(f"[HumanBase] Could not find Entrez ID for gene symbol: {gene}")
+            gene_objs[gene].add_tool("humanbase_predictions")
             continue
-
         try:
             tmp = _fetch_predictions_HB(entrez)
         except Exception as exc:
-            print(f"[HumanBase] {gene}: {exc}")
-            preds[gene] = []
-        else:
-            preds[gene] = _filter_predictions_HB(tmp, threshold=0.95)
-
-
-    return {**state, "humanbase_predictions": preds}
-
-def humanbase_expecto_agent(state: "State") -> "State":
-    """
-    LangGraph node that annotates each gene with Expecto predictions from HumanBase.
-
-    Parameters
-    ----------
-    state
-        Current graph state.
-
-    Returns
-    -------
-    State
-        Updated state with the `"humanbase_predictions"` field filled.
-    """
-    if DEBUG:
-        print("[HumanBase Expecto] Fetching tissue-specific predictions for genes")
-    
-    preds = state.get("humanbase_expecto", {}).copy()
-
-    for gene in state.get("genes", []):
-        if gene in preds:
+            gene_objs[gene].add_tool("humanbase_predictions")
             continue
-
-        entrez = _symbol_to_entrez(gene)
-        if not entrez:
-            preds[gene] = {}
-            continue
-
-        try:
-            tmp = _fetch_tissue_variants_HB(entrez)
-        except Exception as exc:
-            print(f"[HumanBase] {gene}: {exc}")
-            preds[gene] = {}
-        else:
-            summary_text = summarize_tissue_variants_text_HB(tmp)
-            if summary_text is None:
-                preds[gene] = {}
-            else:
-                preds[gene] = {
-                    "summary_text": summary_text,
-                    "dataframe": tmp
-                }
-
-    return {**state, "humanbase_expecto": preds}
-
-def humanbase_tissue_expecto_annotate_variants(state: "State") -> "State":
-    """
-    LangGraph node that annotates each variant with HumanBase tissue-specific predictions.
-
-    Parameters
-    ----------
-    state
-        Current graph state.
-
-    Returns
-    -------
-    State
-        Updated state with the `"humanbase_tissue_expecto"` field filled.
-    """
-    if DEBUG:
-        print("[HumanBase Expecto Variant] Annotating variants with gene expression predictions")
-    variant_descr = {}
-    variant_table_dict = {}
-    preds = state.get("humanbase_expecto", {}).copy()
-    variants = state.get("dbsnp_variants", {}).copy()
-    if not variants:
-        return {**state, "tissue_expression_preds_variant": []}
-
-    # annotate each variant with tissue-specific predictions
-    for gene, gene_vars in variants.items():
-        variant_table_dict[gene] = {}
-        if DEBUG:
-            print('[HumanBase Expecto Variant] Processing gene:', gene)
-        if gene not in preds:
-            continue
-        gene_descr = f"Gene: {gene}: " 
-        if DEBUG:
-            print(preds[gene])
-        for variant_id, var_data in gene_vars.items():
-            if DEBUG:
-                print(f"[HumanBase Expecto Variant] Processing variant {variant_id} for gene {gene}")
-            # use describe_variant_in_tissues_HB
-            all_snps = var_data['coordinates']
-            for snp in all_snps:
-                if 'GRCh38' in snp['assembly']:
-                    continue
-                chrom = snp['chrom']
-                if 'chr' not in chrom:
-                    chrom = 'chr' + str(chrom)
-                pos = snp['pos']
-                ref = snp['ref']
-                alt = snp['alt']
-                
-                if DEBUG:
-                    print(f"[HumanBase Expecto per variant] Processing variant {chrom}:{pos} {ref}>{alt} for gene {gene}")
-                descr = describe_variant_in_tissues_HB(
-                    preds[gene]["dataframe"],
-                    chrom,
-                    pos,
-                    alt, 
-                    variant_id
-                )
-                if descr[0] is None:
-                    continue
-                
-                if len(descr[1])>1:
-                    gene_descr += f" Variant {chrom}:{pos} {ref}>{alt}: {descr[1]};"
-                    
-                variant_table_dict[gene][variant_id] = descr[0]
-            
-        if gene_descr:
-            variant_descr[gene] = gene_descr
         
-    return {
-        "tissue_expression_preds_variant_text_description": variant_descr, 
-        "expression_preds_variant_table": variant_table_dict
-    }
+        low_thr = _filter_predictions_HB(tmp, threshold=0.7)
+        high_thr = _filter_predictions_HB(tmp, threshold=0.95)
+        # split by category - disease ontology and GO terms
+        disease_terms = []
+        for d in low_thr:
+            if 'category' not in d:
+                continue
+            if d['category'].lower() in ['disease ontology', 'disease']:
+                disease_terms.append(d)
+        
+        go_terms = []
+        for d in high_thr:
+            if 'category' not in d:
+                continue
+            if d['category'].lower() in ['gene ontology (bp)', 'go']:
+                go_terms.append(d)
+        
+        # convert to list of strings - term + description for disease and term for GO
+        go_terms_list = [list(set([d['term'] for d in go_terms]))][0]
+        disease_list = [f"{d['term']}: {d['description']} (score={d['score']})" for d in disease_terms]
+        
+        # collect predicted Disease Ontology (finter by category) and separately GO terms
+        gene_objs[gene].add_many_predicted_diseases(disease_list)
+        gene_objs[gene].add_many_predicted_go(go_terms_list)
+        gene_objs[gene].add_tool("humanbase_predictions")
+        
+        # add text description of the disease terms
+        if disease_list:
+            disease_text = f"Predicted disease associations for gene {gene} (score>0.7 in HumanBase): " + "; ".join(disease_list)
+            gene_objs[gene].update_text_summaries(disease_text)
+
+    return 

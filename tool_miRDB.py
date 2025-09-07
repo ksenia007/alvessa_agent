@@ -74,7 +74,9 @@ def miRDB_agent(state: "State") -> "State":
         
     """
 
-    preds = state.get("mirDB_targets", {}).copy()
+    #preds = state.get("mirDB_targets", {}).copy()
+    gene_objs = state.get('gene_entities', {})
+    
     organism_codes = {
         'cfa': 'dog',
         'gga': 'chicken',
@@ -90,16 +92,18 @@ def miRDB_agent(state: "State") -> "State":
         names=['miRNAID', 'geneID', 'confidence']
     )
 
-    for gene in state.get("genes", []):
-        if gene in preds or gene[:3] != 'MIR':
+    for gene in gene_objs.keys():
+        if 'mir' not in gene.lower():
             continue
 
         mirbase_ID = _convert_to_miRBASE(gene)
-        preds[gene] = {}
+        print(f"Processing {gene} as {mirbase_ID}")
+        preds_temp = {}
 
         for prefix, organism_name in organism_codes.items():
             subset = df[df['miRNAID'].str.startswith(prefix) & df['miRNAID'].str.contains(mirbase_ID)]
             if subset.empty:
+                print(f"No targets found for {mirbase_ID} in {organism_name}")
                 continue
 
             targets_entrez = subset['geneID'].values
@@ -108,6 +112,16 @@ def miRDB_agent(state: "State") -> "State":
             targets_symbols = _refseq_to_symbol(targets_entrez)
             print(f"finished symbol querying ({organism_name})... {datetime.now()}")
 
-            preds[gene][organism_name] = list(set((targets_symbols)))
+            preds_temp[organism_name] = list(set((targets_symbols)))
+            
+        gene_objs[gene].add_miRNA_targets(preds_temp)
+        gene_objs[gene].add_tool("miRDB_agent")
+        # create a text summary about miRNA targets
+        summary = f" All computationally predicted gene targets for  {gene} (from the miRDB database), separated by organism, include: "
+        for org, targets in preds_temp.items():
+            summary += f"{org} - {', '.join(targets)}; "
+        summary += f' End of record for {gene} |'
+        gene_objs[gene].update_text_summaries(summary)
 
-    return {"mirDB_targets": preds}
+
+    return 

@@ -6,8 +6,12 @@ local_dbs/*
 scratch.py
 images/video_demo
 figures/*.pdf
+figures/checkpoint*
+paper/*.pdf
+images/*.key
 benchmarks_generation/results/
 benchmarks_generation/*.csv
 benchmarks_generation/*/*.csv
 benchmarks_generation/*/*.parquet
 benchmarks_generation/results_checkpoint_aug23
+benchmarks_generation/results_checkpoint_*

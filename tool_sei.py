@@ -16,7 +16,7 @@ import time
 import shutil
 from state import State 
 import warnings
-
+import datetime
 DEBUG=True
 
 def sei_predictions_agent(state: "State") -> "State":
@@ -34,95 +34,70 @@ def sei_predictions_agent(state: "State") -> "State":
         Updated state with the `"sei_predictions"` field filled.
         
     """
-    preds = state.get("sei_predictions", {}).copy()
-    variants = state.get("dbsnp_variants", {}).copy()
- 
-    # Gracefully handle file reading errors
+    print('[SEI] started...')
+    variants = state.get("variant_entities", {}).copy()
+    gene_objs = state.get("gene_entities", {}).copy()
+
+    # Load resources
     try:
-        seq_class_df_hg38 = pd.read_csv('local_dbs/sorted.hg38.tiling.bed.ipca_randomized_300.labels.merged.bed', names=['chr', 'start_pos', 'end_pos', 'seq_class'], sep = '\t')
-        with open('local_dbs/seqclass.names', 'r') as f:
+        seq_class_df_hg38 = pd.read_csv(
+            "local_dbs/sorted.hg38.tiling.bed.ipca_randomized_300.labels.merged.bed",
+            sep="\t",
+            names=["chr", "start_pos", "end_pos", "seq_class"],
+        )
+        with open("local_dbs/seqclass.names", "r") as f:
             seq_class_names = [line.strip() for line in f]
     except Exception as e:
-        warnings.warn(f"Failed to load required files: {e}. Cannot run SEI predictions.")
-        return {"sei_predictions": preds}
+        warnings.warn(f"[SEI] Failed to load required files: {e}. Cannot run SEI predictions.")
+        return
 
-    state_all_snps = {}
+    # Group BED rows by chromosome for faster filtering
+    bed_by_chr = {c: df for c, df in seq_class_df_hg38.groupby("chr", sort=False)}
 
-    for gene, gene_vars in variants.items():
-        state_all_snps[gene] = {}
-        
+    assigned = 0
+    for var_id, var_obj in variants.items():
         try:
-            for var, var_data in gene_vars.items():
-                try:
-                    all_snps = var_data['coordinates']
-
-                    for snp in all_snps:
-                        chrom = snp.get('chrom')
-                        pos = snp.get('pos')
-                        assembly = snp.get('assembly')
-
-                        if 'GRCh38' in assembly:
-                            if all(x is not None for x in [chrom, pos]):
-                                print("[SEI] Running for " + var + " in " + gene, "with coordinates: " + chrom + ":" + str(pos))
-                                state_all_snps[gene][var] = [chrom, pos]
-                                print(state_all_snps[gene][var])
-                                break
-                            else:
-                                continue
-                        else:
-                            continue
-
-                except Exception as e:
-                    warnings.warn(f"Failed to process variant {var} for gene {gene}: {e}")
-                    continue
-        except Exception as e:
-            warnings.warn(f"Sei prediction unavailable for gene {gene}: {e}")
-            continue
-    
-    for gene, variants in state_all_snps.items():
-        preds[gene] = {}
-        if variants=={}:
-            if DEBUG:
-                print(f"No variants found for gene {gene}, skipping.")
-            continue
-        print(variants)
-        for var_id, coords in variants.items():
-            try:
-                chrom, variant_pos = coords
-            except (ValueError, TypeError):
-                print(f"[WARN] {var_id} has no valid coordinates: {coords}")
+            locs = var_obj.get_location("GrCh38")  
+            genes = var_obj.get_related_genes()
+            if not locs or not genes:
                 continue
-            try:
-                chr_str = f'chr{chrom}'
 
-                match = seq_class_df_hg38[
-                            (seq_class_df_hg38['chr'] == chr_str) &
-                            (seq_class_df_hg38['start_pos'] <= variant_pos) &
-                            (seq_class_df_hg38['end_pos'] >= variant_pos)
-                        ]
-                
-                if not match.empty:
-                    try:
-                        seq_class_num = match['seq_class'].iloc[0]
-                        seq_class_name = seq_class_names[int(seq_class_num)]
-                    except (IndexError, ValueError) as e:
-                        warnings.warn(f"Failed to get seq class name for {gene} variant {var_id}: {e}")
-                        seq_class_name = None
-                else:
-                    if DEBUG:
-                        print(f"No sequence class match found for: {chrom}, {variant_pos}")
+            chrom = locs.get("chrom")
+            pos   = locs.get("pos")
+            if chrom is None or pos is None:
+                continue
+
+            chr_str = f"chr{chrom}"
+            bed_chr = bed_by_chr.get(chr_str)
+            if bed_chr is None:
+                # no tiles for this chromosome
+                continue
+
+            # Interval lookup 
+            hit = bed_chr[(bed_chr["start_pos"] <= pos) & (bed_chr["end_pos"] >= pos)]
+            if hit.empty:
+                seq_class_name = None
+            else:
+                try:
+                    cls_idx = int(hit.iloc[0]["seq_class"])
+                    seq_class_name = seq_class_names[cls_idx] if 0 <= cls_idx < len(seq_class_names) else None
+                except Exception as e:
+                    warnings.warn(f"[SEI] seq_class index issue for {var_id} @ {chr_str}:{pos}: {e}")
                     seq_class_name = None
-                    
-                preds[gene][var_id] = seq_class_name
 
-            except Exception as e:
-                warnings.warn(f"Failed to process prediction for {gene} variant {var_id}: {e}")
-                preds[gene][var_id] = None
+            if seq_class_name:
+                for g in genes:
+                    variants[var_id].add_functional_prediction(g, "SEI", seq_class_name)
+                    if g in gene_objs.keys():
+                        gene_objs[g].add_tool("SEI")
+                        gene_objs[g].update_text_summaries("Values predicted by Sei: Sei model clustered ChipSeq, DNase, and histone mark profiles into 40 groups (sequence classes). The Sei class represents the role of sequence where variant falls; agnositc to coding regions, can have sequence class even in exons.")
+                    assigned += 1
 
-    print("[SEI] Predictions: ", preds)
+        except Exception as e:
+            warnings.warn(f"[SEI] Failed to process {var_id}: {e}")
+            continue
+
     time.sleep(0.3)  # courteous pause
-
-    return {
-        "sei_predictions": preds}
+    return
 
 

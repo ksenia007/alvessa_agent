@@ -7,6 +7,7 @@ from config import DEBUG, DBSNP_DEFAULT_ASSEMBLY
 from tools.dbsnp.query import get_variant_info
 from state import State
 from tools.gencode.query import annotate_variant
+import statistics
 
 
 def _create_coordinate_summary(rsid: str, coordinates: List[Dict[str, Any]]) -> str:
@@ -19,108 +20,89 @@ def _create_coordinate_summary(rsid: str, coordinates: List[Dict[str, Any]]) -> 
     pos38 = primary_coord.get("pos", "Unknown")
     
     return f"{rsid} is located at chr:{chrom}, pos: {pos38} (GRCh38)"
-
-def _create_frequency_summary(allele_frequencies: List[Dict[str, Any]]) -> str:
-    """
-    Generates a concise, human-readable summary of allele frequency data,
-    highlighting the top 2 and bottom 2 representative studies.
-    """
-    if not allele_frequencies:
-        return "No allele frequency data is available."
-
-    # Filter for valid entries that have the required keys
-    valid_freqs = [f for f in allele_frequencies if 'allele_frequency' in f and 'study_name' in f]
     
-    if not valid_freqs:
-        num_studies = len(set(f.get("study_name") for f in allele_frequencies))
-        return f"Frequency data from {num_studies} studies was found, but no valid frequencies were calculated."
-        
-    # Sort all valid observations by allele frequency
-    sorted_freqs = sorted(valid_freqs, key=lambda x: x['allele_frequency'])
-    count = len(sorted_freqs)
-    num_unique_studies = len(set(f.get("study_name") for f in sorted_freqs))
-    
-    # Helper function to format a single observation string
-    def format_obs(entry):
-        return f"{entry['allele_frequency']:.4f} in {entry.get('study_name', 'N/A')}"
-
-    # Handle cases with few observations
-    if count == 1:
-        return f"The only available frequency observation is {format_obs(sorted_freqs[0])}."
-    if count == 2:
-        return f"The two available frequency observations are {format_obs(sorted_freqs[0])} and {format_obs(sorted_freqs[1])}."
-    if count == 3:
-        mean_af = sum(f['allele_frequency'] for f in sorted_freqs) / count
-        return (f"Frequencies from 3 observations range from {format_obs(sorted_freqs[0])} to "
-                f"{format_obs(sorted_freqs[2])}, with a mean of {mean_af:.4f}.")
-
-    # Handle the main case for 4 or more observations
-    bottom1 = format_obs(sorted_freqs[0])
-    bottom2 = format_obs(sorted_freqs[1])
-    top1 = format_obs(sorted_freqs[-2])
-    top2 = format_obs(sorted_freqs[-1])
-    
-    return (f"Allele frequencies from {count} observations across {num_unique_studies} studies range from as low as "
-            f"{bottom1} and {bottom2}, to as high as {top1} and {top2}.")
-
-
-
-def _create_af_summary_sorted_by_counts(allele_frequencies: List[Dict[str, Any]]) -> str:
+def _create_af_summary_sorted_by_counts(rows, target_alt=None, min_people=10_000):
     """
-    Generates a summary of allele frequencies from studies that are first sorted
-    by their sample size (total_count). This highlights the frequencies observed
-    in the smallest and largest available cohorts.
+    ALT-only AF summary across studies (3-decimal AFs, no percents).
+    Adds heterogeneity (I²) and shows extreme 2 by AF (low/high) + largest-N examples.
     """
-    if not allele_frequencies:
-        return "No allele frequency data is available."
+    # 1) Aggregate ALT rows per study
+    per = {}  # study -> (K_alt, N)
+    for r in rows or []:
+        study = (r.get("study_name") or r.get("study") or "").strip()
+        obs = r.get("observation") or {}
+        ref = str(obs.get("deleted_sequence") or "").strip().upper()
+        alt = str(obs.get("inserted_sequence") or "").strip().upper()
+        if not study or not ref or not alt or alt == ref:
+            continue  # drop REF→REF and incomplete
+        if target_alt and alt != target_alt.upper():
+            continue
 
-    # Filter for valid entries that have all required keys for sorting and reporting
-    valid_data = [
-        f for f in allele_frequencies
-        if ('total_count' in f) and ('study_name' in f) and ('allele_frequency' in f)
+        n_raw = r.get("total_count") or r.get("allele_number") or r.get("allele_denominator")
+        k_raw = r.get("allele_count")
+        if k_raw < min_people*2: 
+            continue
+        af_raw = r.get("allele_frequency")
+        try:
+            n = int(float(n_raw))
+            k = int(round(float(k_raw))) if k_raw is not None else int(round(float(af_raw) * n))
+        except (TypeError, ValueError):
+            continue
+        if n <= 0 or not (0 <= k <= n):
+            continue
+
+        K, N = per.get(study, (0, 0))
+        per[study] = (K + k, N + n)
+
+    items = [{"study": s, "k": K, "n": N, "p": K / N} for s, (K, N) in per.items() if N > 0]
+    if not items:
+        return "No ALT-allele observations match the criteria."
+
+    # 2) Core stats
+    items.sort(key=lambda x: x["n"])
+    tot_k = sum(x["k"] for x in items)
+    tot_n = sum(x["n"] for x in items)
+    pooled = tot_k / tot_n
+    med_all = statistics.median(x["p"] for x in items)
+
+    # high-powered: ≈ 10k people -> ~20k alleles
+    allele_cut = 2 * int(min_people or 0)
+    hi = [x for x in items if x["n"] >= allele_cut]
+    med_hi = statistics.median(x["p"] for x in hi) if hi else None
+
+    # 3) Agreement (fixed-effect I² with plus-four variance)
+    def _var_plus4(p, n):
+        n4 = n + 4
+        p4 = (p*n + 2) / n4
+        return p4 * (1 - p4) / n4
+
+    ws = [1.0 / max(_var_plus4(x["p"], x["n"]), 1e-12) for x in items]
+    p_fe = sum(w * x["p"] for w, x in zip(ws, items)) / sum(ws)
+    Q = sum(w * (x["p"] - p_fe) ** 2 for w, x in zip(ws, items))
+    df = max(1, len(items) - 1)
+    I2 = max(0.0, (Q - df) / max(Q, 1e-12)) * 100.0  # percent (conventional)
+
+    # 4) Extremes by AF (low/high) and by N (largest two)
+    by_af = sorted(items, key=lambda x: x["p"])
+    low2 = by_af[:2]
+    high2 = by_af[-2:] if len(by_af) >= 2 else by_af[-1:]
+
+    by_n = sorted(items, key=lambda x: x["n"])
+    topN2 = by_n[-2:] if len(by_n) >= 2 else by_n[-1:]
+
+    f = lambda x: f"{x:.3f}"  # 3-decimal AFs
+    label = f"ALT {target_alt.upper()}" if target_alt else "ALT (any substitution)"
+
+    parts = [
+        f"{label}: weighted AF {f(pooled)} (over {len(items)} studies), "
+        f"median AF {f(med_all)}"
+        + (f", median for studies with n>={min_people:,} ppl = {f(med_hi)}" if med_hi is not None else ""),
+        f"agreement I^2 heterogeneity statistic={I2:.1f}%",
+        "Extreme AFs: low in " + ", ".join(f"{x['study']} {f(x['p'])} (n={x['n']:,})" for x in low2),
+        "high in " + ", ".join(f"{x['study']} {f(x['p'])} (n={x['n']:,})" for x in reversed(high2)),
+        "largest-N studies: " + ", ".join(f"{x['study']} {f(x['p'])} (n={x['n']:,})" for x in reversed(topN2)),
     ]
-    
-    if not valid_data:
-        return "No studies with complete allele frequency and total count data were found."
-        
-    # Sort all valid observations by total_count (sample size)
-    sorted_by_counts = sorted(valid_data, key=lambda x: x['total_count'])
-    count = len(sorted_by_counts)
-    
-    # Helper function to format the output string
-    # It reports the allele frequency but includes the sample size for context
-    def format_obs(entry):
-        af = entry['allele_frequency']
-        study = entry.get('study_name', 'N/A')
-        n = entry['total_count']
-        return f"{af:.4f} in {study} (n={n:,})"
-
-    # Handle cases with few observations
-    if count == 1:
-        return f"The only available study reports a frequency of {format_obs(sorted_by_counts[0])}."
-    if count == 2:
-        # sorted_by_counts[0] is the smaller cohort, [1] is the larger
-        return (f"The allele frequency is {format_obs(sorted_by_counts[0])} in the smaller cohort and "
-                f"{format_obs(sorted_by_counts[1])} in the larger one.")
-    if count == 3:
-        return (f"From three cohorts sorted by size, the reported allele frequencies are "
-                f"{format_obs(sorted_by_counts[0])} (smallest), "
-                f"{format_obs(sorted_by_counts[1])} (medium), and "
-                f"{format_obs(sorted_by_counts[2])} (largest).")
-
-    # Handle the main case for 4 or more observations
-    # Get the studies with the two smallest sample sizes
-    bottom1 = format_obs(sorted_by_counts[0])
-    bottom2 = format_obs(sorted_by_counts[1])
-    # Get the studies with the two largest sample sizes
-    top1 = format_obs(sorted_by_counts[-2])
-    top2 = format_obs(sorted_by_counts[-1])
-    
-    num_unique_studies = len(set(f.get("study_name") for f in sorted_by_counts))
-    
-    return (f"From {count} observations across {num_unique_studies} studies sorted by sample size, "
-            f"the reported allele frequencies range from {bottom1} and {bottom2} in the smallest cohorts, "
-            f"to {top1} and {top2} in the largest cohorts.")
+    return "; ".join(parts)+". "
     
 
 def dbsnp_variants_agent(state: "State", assembly: str = None, include_population_summaries: bool = False) -> "State":
@@ -132,132 +114,39 @@ def dbsnp_variants_agent(state: "State", assembly: str = None, include_populatio
     if DEBUG:
         print(f"[dbSNP] Using genome assembly: {assembly}")
 
-    variants = state.get("dbsnp_variants", {}).copy()
+    variants = state.get("variant_entities", {}).copy()
     
-    rsids = _extract_rsids_from_gwas(state)
+    rsids = variants.keys()
     
     if DEBUG:
-        print(f"[dbSNP] Found {sum(len(v) for v in rsids.values())} total rsIDs to query across genes.")
+        print(f"[dbSNP] Found {len(rsids)} total rsIDs to query across genes.")
     
-    for gene, gene_rsids in rsids.items():
-        for rsid in gene_rsids:
+    for rsid in rsids:
+        result = get_variant_info(rsid, assembly)
+        if not result: continue
+        coordinates = result.get("coordinates", [])
+        if not coordinates:
             if DEBUG:
-                print(f"[dbSNP] Querying variant information for: {rsid}")
-
-            try:
-                result = get_variant_info(rsid, assembly)
-                allele_frequencies = result.get("allele_frequencies", [])
-                coordinates = result.get("coordinates", [])
-                
-                # Merge with existing variant data (preserve GWAS data)
-                variants[gene][rsid].update({
-                    "rsid": result.get("rsid", rsid),
-                    "found": True,
-                    "coordinates": coordinates,
-                    "coordinate_count": len(coordinates),
-                    "chromosomes": list(set(coord.get("chrom", "Unknown") for coord in coordinates)),
-                    "allele_frequencies": allele_frequencies,
-                    "frequency_study_count": len(allele_frequencies),
-                    "frequency_studies": [freq.get("study_name", "Unknown") for freq in allele_frequencies],
-                    "assembly_filter": result.get("assembly_filter", assembly)
-                })
-                
-                if DEBUG:
-                    print(f"[dbSNP] {rsid}: {len(coordinates)} coords, {len(allele_frequencies)} studies")
-                    
-                variants[gene][rsid].setdefault("annotations", [])
-                for coord in result.get("coordinates", []):
-                    build = coord.get("assembly", "Unknown")
-                    if 'GRCh37' in build or 'hg19' in build:
-                        continue
-                    
-                    chrom = coord.get("chrom", "Unknown")
-                    pos = coord.get("pos", 0)
-                    annots = annotate_variant(chrom, pos)
-                    if annots:
-                        # Correctly append the entire annotation dictionary as one item in the list
-                        variants[gene][rsid]["annotations"].append(annots)
-                        if DEBUG:
-                            print(f"[dbSNP] Annotated {rsid} at {chrom}:{pos} with features.")
-                        break
-                    
-            except Exception as exc:
-                if DEBUG:
-                    print(f"[dbSNP] Error querying {rsid}: {exc}")
-                # Merge error info with existing variant data
-                variants[gene][rsid].update({
-                    "rsid": rsid, "found": False, "coordinates": [], "coordinate_count": 0,
-                    "chromosomes": [], "allele_frequencies": [], "frequency_study_count": 0,
-                    "frequency_studies": [], "error": str(exc)
-                })
-            time.sleep(0.1)
-
-    # Generate new, improved per-variant summaries from the detailed variant data
-    dbsnp_summaries = state.get("dbsnp_summaries", {}).copy()
-    for gene, gene_variants in variants.items():
-        if not gene_variants:
+                print(f"[dbSNP] No coordinates found for {rsid}. Skipping annotation.")
             continue
+
+        for coord in coordinates:
+            variants[rsid].add_location(
+                build=coord.get("assembly", "Unknown"),
+                chrom=coord.get("chrom", "Unknown"),
+                pos=coord.get("pos", 0),
+                ref=coord.get("ref", ""),
+                alt=coord.get("alt", "")
+            )
+        variants[rsid].add_tool("dbsnp_variants_agent")
+        variants[rsid].add_af_freq(result.get("allele_frequencies", []))
         
-        dbsnp_summaries[gene] = {}
-        for rsid, data in gene_variants.items():
-            if not data.get("found"):
-                dbsnp_summaries[gene][rsid] = {"summary": f"Variant {rsid} was not found in dbSNP.", "stats": {}}
-                continue
-            
-            coord_summary = _create_coordinate_summary(rsid, data.get("coordinates", []))
-            freq_summary = _create_frequency_summary(data.get("allele_frequencies", []))
-            freq_summary_sorted_by_counts = _create_af_summary_sorted_by_counts(data.get("allele_frequencies", []))
-            
-            # Combine into a final summary object for this variant
-            dbsnp_summaries[gene][rsid] = {
-                "rsid": rsid,
-                "summary": f"{coord_summary}. {freq_summary} {freq_summary_sorted_by_counts}"
-            }
-
-    # Pop allele frequencies from variants
-    for gene, gene_variants in variants.items():
-        for rsid, data in gene_variants.items():
-            data.pop("allele_frequencies", None)
-            data.pop("frequency_study_count", None)
-            data.pop("frequency_studies", None)
-
-    if include_population_summaries:
-        return {"dbsnp_variants": variants, "dbsnp_summaries": dbsnp_summaries}
-    else:
-        return {"dbsnp_variants": variants}
-
-
-
-def _extract_rsids_from_gwas(state: "State") -> Dict[str, Set[str]]:
-    """Extracts unique rsIDs from GWAS variant data in the state, grouped by gene."""
-    rsids_by_gene = {}
-    
-    # Get rsIDs directly from the dbsnp_variants structure populated by GWAS
-    dbsnp_variants = state.get("dbsnp_variants", {})
-    for gene, variants in dbsnp_variants.items():
-        if variants:  # If there are variants for this gene
-            gene_rsids = set(variants.keys())  # rsIDs are the keys
-            if gene_rsids:
-                rsids_by_gene[gene] = gene_rsids
-    
-    # Extract rsIDs from text in GWAS summaries if needed –– likely redundant
-    associations = state.get("gwas_associations", {})
-    for gene, data in associations.items():
-        if not data.get("found", False):
-            continue
+        variant_summary = f" {rsid} was found in dbSNP. "
+        variant_summary += _create_af_summary_sorted_by_counts(result.get("allele_frequencies", []))
         
-        gene_rsids = rsids_by_gene.get(gene, set())
-        for summary_key in ["summary_by_high_risk_alleles", "summary_by_significance"]:
-            summary = data.get(summary_key, {})
-            snps = summary.get("high_risk_snps", [])
-            for snp in snps:
-                if isinstance(snp, str):
-                    gene_rsids.update(_extract_rsids_from_text(snp))
-        
-        if gene_rsids:
-            rsids_by_gene[gene] = gene_rsids
-            
-    return rsids_by_gene
+        variants[rsid].update_text_summaries(variant_summary)
+    return
+
 
 
 def _extract_rsids_from_text(text: str) -> Set[str]:

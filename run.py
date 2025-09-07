@@ -54,10 +54,16 @@ if __name__ == "__main__":
     EXAMPLE_QUESTIONS: List[str] = [
         # "What microRNAs regulate the cancer-related functions of TP53, and how are these connected to pathways and protein interactions?"
         #"Do not run any of the tools, just proceed directly to the LLM.",
-        "Tell me about exons in TP53",
-        # "Which diseases and traits are associated with the genes TP53 and KRAS?",
+        #"Tell me about predicted functions of TP53",
+        # "Get GWAS assocaitions for PTEN, run deep search",
+        # "tell me about gene coding consequences of variants in TP53",
+        # "Which of the following variants is associated with gene JAK2 and has the worst possible predicted coding downstream effect? [A] rs77656035 [B] rs776830350 [C] rs17879961 [D] rs73393498"
+        #"Which of the following variants is associated with gene NKX2-5 and has the worst possible predicted coding downstream effect? [A] rs6891790 [B] rs2277923 [C] rs773670132 [D] rs4868243"
+        # "Tell me about rs12345 variant"
+        # "How many exons in TP53?"
+        "Which TFs bind in front of TP53"
         # "Which gene is the best drug target for virally induced cancers, KRAS or TP53?",
-        #"How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
+        # "How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
         # "Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?",
         # "Through what pathways or protein interactions does viral gene E6 (or E7) modulate cellular metabolism?"
         # "Is there evidence of protein-protein interaction or functional overlaps between TP53 and KRAS?"

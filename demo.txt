@@ -1,15 +1,26 @@
 ================================================================================
-Q: Tell me about exons in TP53
+Q: Which TFs bind in front of TP53
 
 Answer:
-TP53 has 24 different transcripts with varying numbers of exons. The number of exons per transcript ranges from 7 to 12. The shortest transcripts (ENST00000413465.6, ENST00000504937.5, and ENST00000619186.4) contain 7 exons, while several transcripts (ENST00000420246.6, ENST00000455263.6, ENST00000610538.4, and ENST00000622645.4) contain the maximum of 12 exons. The gene spans 25,767 base pairs on chromosome 17, with transcript spans ranging from 7,092 to 19,137 base pairs.
+Looking at the provided context, I need to identify transcription factors (TFs) that bind in front of the TP53 gene.
+
+```json
+{
+  "answer": "Based on the ReMap Cis Regulatory Modules data, 685 unique transcription factors are predicted to bind within 1000bp upstream and downstream of the TP53 gene (chr17:7687546 +/-1000bp). Key transcription factors that bind in front of TP53 include: TP53 itself (autoregulation), MYC, MAX, E2F family members (E2F1, E2F3, E2F4, E2F6, E2F7, E2F8), p53 family members (TP63), NF-κB pathway components (NFKB1, NFKB2, RELA, RELB), STAT family (STAT1, STAT2, STAT3, STAT5B), AP-1 components (FOS, JUN, JUNB, JUND, FOSL1, FOSL2), CREB/ATF family (CREB1, ATF2, ATF3, ATF4, ATF7), and chromatin remodeling complexes (SMARCA4, SMARCA2, CREBBP, EP300). The analysis identified 3 peaks with binding sites for these factors.",
+  "evidence": [
+    "ReMap Cis Regulatory Modules data shows TFs predicted to bind for TP53 chr17:7687546 (+/-1000bp): 3 peaks",
+    "Total unique binders: 685 transcription factors",
+    "TP53 itself is listed among the binders, indicating autoregulation",
+    "Key oncogenes and tumor suppressors present: MYC, E2F1, E2F3, E2F4, E2F6, E2F7, E2F8, TP63",
+    "NF-κB pathway components: NFKB1, NFKB2, RELA, RELB",
+    "STAT transcription factors: STAT1, STAT2, STAT3, STAT5B",
+    "AP-1 complex components: FOS, JUN, JUNB, JUND, FOSL1, FOSL2",
+    "CREB/ATF family members: CREB1, ATF2, ATF3, ATF4, ATF7",
+    "Chromatin remodeling factors: SMARCA4, SMARCA2, CREBBP, EP300"
+  ]
+}
+```
 
 Evidence:
-  - TP53 has 24 transcripts
-  - TP53 exons per transcript range from 7 to 12
-  - TP53 transcript ENST00000413465.6 has 7 exons
-  - TP53 transcript ENST00000420246.6 has 12 exons
-  - TP53 gene spans from position 7661779 to 7687546 on chr17
-  - TP53 transcript spans range from 7092 to 19137 base pairs
 
 
