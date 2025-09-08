@@ -25,9 +25,9 @@ The following files must be downloaded before using the GWAS and Sei tools:
 -  Gencode annotaitons
 
 **Donwload location**
-`alvessa_proteind.db` 
+`alvessa_proteind.db` https://drive.google.com/file/d/1vD1GYe4V6LIwwkKqhEijFRzIb_3ScxmJ/view?usp=drive_link
 —  pLDDT and FPocket data for proteins, used by tool_prot to visualize protein structures and druggability.
 
-**Donwload location**
+**Donwload location** https://drive.google.com/file/d/17uZse6xB8T_U_XcUeVWdCntqfmHIsfv0/view?usp=drive_link
 `pdb.zip` (unzip into the pdb/ folder)
 —  contains PDB protein structures (from AlphaFold DB) corresponding to proteins in alvessa_proteind.db, used by tool_prot for structural visualization and druggability.
