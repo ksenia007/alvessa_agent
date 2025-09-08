@@ -6,6 +6,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/images/rocket_favicon_32.png?v=9">
 <link rel="icon" type="image/png" sizes="64x64" href="/images/rocket_favicon_64.png?v=9">
 <link rel="apple-touch-icon" sizes="180x180" href="/images/rocket_favicon_180.png?v=9">
+<link rel="stylesheet" href="static/tool_prot.css">
 <meta name="theme-color" content="#0b1020">
 
 <title>Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</title>
@@ -262,6 +263,9 @@ body.light .xtissue { color:#0b1020; }       /* keep tissue bold/dark */
   display: none;
 }
 
+/* Protein viewer iframe */
+.prot-frame { width: 100%; height: 720px; border: 1px solid #1e2a52; border-radius: 12px; background: #0e1430; }
+body.light .prot-frame { background: #ffffff; border-color: #cbd5e1; }
 </style>
 <body>
 <div class="wrap">
@@ -369,6 +373,12 @@ body.light .xtissue { color:#0b1020; }       /* keep tissue bold/dark */
     <div id="variantSummaryCard" class="card full" data-section style="display:none;">
       <div class="title">Variant Summary</div>
       <div id="variantSummary"></div>
+    </div>
+
+    <!-- Protein Visualization -->
+    <div id="protCard" class="card full" data-section style="display:none;">
+      <div class="title">Protein</div>
+      <div id="protMount"></div>
     </div>
 
     <div id="debugCard" class="card full" data-section style="display:none;">
@@ -713,6 +723,43 @@ function infoButtonHtml(label){
       </div>`;
     }).join("");
     if (blocks.trim()) { setHTML("uniprot", blocks); show("uniprotCard"); } else hide("uniprotCard");
+  }
+
+// === Protein renderer ===
+  function renderProt(st){
+    const html = st?.prot_html;
+    const mount = document.getElementById("protMount");
+    if (!mount) return;
+
+    if (!html || typeof html !== "string" || !html.trim()){
+      mount.innerHTML = "";
+      return hide("protCard");
+    }
+
+    const frame = document.createElement("iframe");
+    frame.className = "prot-frame";
+    frame.setAttribute("sandbox", "allow-scripts");
+    frame.setAttribute("referrerpolicy", "no-referrer");
+    frame.srcdoc = html;
+
+    const saveBtn = document.createElement("button");
+    saveBtn.className = "mini";
+    saveBtn.textContent = "Save HTML";
+    saveBtn.style.margin = "6px 0 10px";
+    saveBtn.onclick = () => {
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "prot.html"; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    };
+
+    mount.innerHTML = "";
+    mount.appendChild(saveBtn);
+    mount.appendChild(frame);
+    show("protCard");
+
+    console.log("renderProt: injected HTML length =", html.length);
   }
 
   const GWAS = {
@@ -1621,6 +1668,7 @@ function toggleExpectoDetails(geneKey, rsSafe, colspan){
     renderVariantSummary(st);
   
     renderGENCODE(st);
+    renderProt(st); 
     renderDebug(st);
     renderRaw(st);
   }
@@ -1669,9 +1717,26 @@ function toggleExpectoDetails(geneKey, rsSafe, colspan){
   });
 
 
-  document.getElementById("themeToggle").addEventListener("click", () => {
-    document.body.classList.toggle("light");
+    // Enter-to-run
+  window.addEventListener('load', () => {
+    const input = document.getElementById('q');
+    input?.focus();
+    input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
+
+    const input2 = document.getElementById('q2');
+    input2?.addEventListener('keydown', (e) => { if (e.key === 'Enter') runFrom('q2'); });
   });
+
+  document.getElementById("themeToggle").addEventListener("click", () => {
+  document.body.classList.toggle("light");
+
+  const frame = document.querySelector("#protMount iframe");
+  if (!frame) return;
+
+  const isLight = document.body.classList.contains("light");
+  frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
+});
+
 </script>
 </body>
 </html>
