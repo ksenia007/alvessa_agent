@@ -2,7 +2,7 @@
 Author: Keerthana Nallamotu <kn6412@princeton.edu>
 Contributors: 
 Created: 2024-08-21
-Updated: 2025-08-21
+Updated: 2025-09-09
 
 
 Description: 
@@ -14,23 +14,49 @@ from state import State
 import pandas as pd
 import requests
 from datetime import datetime
+import re
 
 DEBUG=True
 
-def _convert_to_miRBASE(symbol):
-    components = symbol.split("_")
+organism_codes = {
+    'cfa': 'dog',
+    'gga': 'chicken',
+    'hsa': 'human',
+    'mmu': 'mouse',
+    'rno': 'rat'
+}
 
-    name = components[0]
-    if len(components)>1:
-        arm = components[1]
+def _standardize_miRNA_name(symbol: str): 
+    symbol = symbol.lower().replace('_', '-')
+    organism = None
+
+    for code in organism_codes.keys():
+        if symbol.startswith(code + '-'):
+            organism = code
+            symbol = symbol[len(code)+1:] 
+            break
+
+    pattern = re.compile(r'mir-?(\d+)(-?(5p|3p))?')
+
+    match = pattern.match(symbol)
+    if not match:
+        pattern_simple = re.compile(r'(\d+)(-?(5p|3p))?')
+        match = pattern_simple.match(symbol)
+
+    if not match:
+        standardized_name = symbol
     else:
-        arm = None
+        number = match.group(1)
+        arm = match.group(3)  
+        standardized_name = f"miR-{number}"
+        if arm:
+            standardized_name += f"-{arm}"
 
-    output = f'miR-{name[3:]}'
-    if arm:
-        output+=f'-{arm[0]}p'
+    if organism:
+        standardized_name = f"{organism}-{standardized_name}"
 
-    return output
+    return organism, standardized_name
+
 
 import requests
 
@@ -76,14 +102,6 @@ def miRDB_agent(state: "State") -> "State":
 
     #preds = state.get("mirDB_targets", {}).copy()
     gene_objs = state.get('gene_entities', {})
-    
-    organism_codes = {
-        'cfa': 'dog',
-        'gga': 'chicken',
-        'hsa': 'human',
-        'mmu': 'mouse',
-        'rno': 'rat'
-    }
 
     df = pd.read_csv(
         'local_dbs/miRDB_v6.0_prediction_result.txt',
@@ -96,32 +114,50 @@ def miRDB_agent(state: "State") -> "State":
         if 'mir' not in gene.lower():
             continue
 
-        mirbase_ID = _convert_to_miRBASE(gene)
-        print(f"Processing {gene} as {mirbase_ID}")
+        organism, standardized_miRNA = _standardize_miRNA_name(gene)
+        if DEBUG:
+            print(f"Processing {gene} as {standardized_miRNA} (organism={organism})")
+
         preds_temp = {}
 
-        for prefix, organism_name in organism_codes.items():
-            subset = df[df['miRNAID'].str.startswith(prefix) & df['miRNAID'].str.contains(mirbase_ID)]
+        organisms_to_check = [organism] if organism else list(organism_codes.keys())
+
+        for org_code in organisms_to_check:
+            organism_name = organism_codes[org_code]
+            
+            if standardized_miRNA.startswith(org_code + '-'):
+                miRNA_to_match = standardized_miRNA[len(org_code)+1:]
+            else:
+                miRNA_to_match = standardized_miRNA
+
+            subset = df[
+                df['miRNAID'].str.startswith(org_code) &
+                df['miRNAID'].str.contains(miRNA_to_match)
+            ]
+
             if subset.empty:
-                print(f"No targets found for {mirbase_ID} in {organism_name}")
+                if DEBUG:
+                    print(f"No targets found for {standardized_miRNA} in {organism_name}")
                 continue
 
             targets_entrez = subset['geneID'].values
 
-            print(f"started symbol querying ({organism_name})... {datetime.now()}")
+            if DEBUG:
+                print(f"started symbol querying ({organism_name})... {datetime.now()}")
             targets_symbols = _refseq_to_symbol(targets_entrez)
-            print(f"finished symbol querying ({organism_name})... {datetime.now()}")
+            if DEBUG:
+                print(f"finished symbol querying ({organism_name})... {datetime.now()}")
 
-            preds_temp[organism_name] = list(set((targets_symbols)))
+            preds_temp[organism_name] = list(set(targets_symbols))
             
         gene_objs[gene].add_miRNA_targets(preds_temp)
         gene_objs[gene].add_tool("miRDB_agent")
+
         # create a text summary about miRNA targets
-        summary = f" All computationally predicted gene targets for  {gene} (from the miRDB database), separated by organism, include: "
+        summary = f"All computationally predicted gene targets for {gene} (from the miRDB database), separated by organism, include: "
         for org, targets in preds_temp.items():
             summary += f"{org} - {', '.join(targets)}; "
-        summary += f' End of record for {gene} |'
+        summary += f" End of record for {gene} |"
         gene_objs[gene].update_text_summaries(summary)
-
 
     return 
