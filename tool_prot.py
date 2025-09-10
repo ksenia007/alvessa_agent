@@ -1,20 +1,31 @@
 """
 Author: Dmitri Kosenkov
 Created: 2025-08-25
-Updated: 2025-09-08
+Updated: 2025-09-10
 
 Description:
-Agentic-style protein tool supporting multiple genes.
-Takes a list of human gene symbols as input, resolves the corresponding
-UniProt entries, and fetches structural and druggability data from the
-local SQLite database `alvessa_proteins.db`.
+Agentic-style protein visualization and summarization tool supporting multiple
+human genes. For each provided gene symbol, the tool resolves the corresponding
+UniProt entry and retrieves structural confidence (pLDDT) and fpocket-based
+druggability data from the local SQLite database alvessa_proteins.db, along
+with the corresponding AlphaFold PDB structure.
+
+Features:
+  - Generates an HTML page with an interactive 3Dmol.js viewer:
+    * Dropdown to select which protein to visualize
+    * Style options: cartoon, surface colored by pLDDT, or surface colored
+      by fpocket druggability scores
+    * Legends display raw pLDDT (0-100 percent) or fpocket min-max values
+      before normalization, while visualization uses normalized scores
+  - Updates each Gene entity with a concise text summary reporting UniProt ID,
+    protein ID, and raw statistics (min, max, avg) for pLDDT and fpocket
+  - Appends reusable interpretation notes (pLDDT reliability categories,
+    fpocket druggability score interpretation) once at the end of the output
 
 Returns:
-  - An HTML string with an interactive 3Dmol.js protein viewer,
-    with a dropdown to select which protein to visualize,
-  - Updates each Gene entity with a protein structure and druggability summary,
-    and appends interpretation notes once at the very end,
-  - Does NOT return prot_summary or prot_meta in state.
+  - Updated State object with:
+    * HTML string (prot_html) for interactive visualization
+    * Updated Gene entities containing protein summaries and interpretation notes
 """
 
 import os
@@ -138,10 +149,22 @@ def _fetch_fpocket(conn, protein_id: str):
     if not values:
         return None, None
 
-    stats = {"min": min(values), "max": max(values), "avg": sum(values) / len(values)}
-    max_val = max(values) if values else 1.0
-    normalized = [{"residue_no": r[0], "score": (r[1] / max_val) if max_val else 0.0}
-                  for r in rows if r[1] is not None]
+    stats = {
+        "min": min(values),
+        "max": max(values),
+        "avg": sum(values) / len(values),
+    }
+
+    min_val, max_val = stats["min"], stats["max"]
+    rng = max_val - min_val if max_val > min_val else 1.0
+
+    # --- Visualization normalization: min : 0.0, max : 1.0
+    normalized = [
+        {"residue_no": r[0], "score": (r[1] - min_val) / rng}
+        for r in rows if r[1] is not None
+    ]
+
+    # Return both raw stats (for summaries) and normalized (for visualization)
     return stats, normalized
 
 
@@ -274,6 +297,10 @@ def prot_agent(state: "State") -> "State":
             "plddt": plddt_norm or [],
             "fpocket": fpocket_norm or [],
             "pdb": pdb_data,
+            "stats": {
+                "plddt": plddt_stats,
+                "fpocket": fpocket_stats,
+            },
         }
 
     conn.close()
