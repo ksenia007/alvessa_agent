@@ -1,7 +1,7 @@
 // tool_prot.js
 
 // === Data placeholders ===
-// protData is injected by Python as: {gene: {plddt:[], fpocket:[], pdb:"..."}}
+// protData is injected by Python as: {gene: {plddt:[], fpocket:[], pdb:"...", stats:{plddt:{}, fpocket:{}}}}
 var currentGene = null;
 let viewer = null;
 
@@ -43,6 +43,32 @@ function drawLegend() {
   }
 }
 
+function updateLegend(gene, style) {
+  const legend = document.getElementById("legend");
+  if (!legend) return;
+
+  const spans = legend.getElementsByTagName("span");
+  if (style === "surface-plddt") {
+    spans[0].textContent = "Min (0%)";
+    spans[1].textContent = "Max (100%)";
+    legend.style.display = "flex";
+    drawLegend();
+  } else if (style === "surface-fpocket") {
+    const stats = protData[gene]?.stats?.fpocket;
+    if (stats) {
+      spans[0].textContent = `Min (${stats.min.toFixed(2)})`;
+      spans[1].textContent = `Max (${stats.max.toFixed(2)})`;
+    } else {
+      spans[0].textContent = "Min";
+      spans[1].textContent = "Max";
+    }
+    legend.style.display = "flex";
+    drawLegend();
+  } else {
+    legend.style.display = "none";
+  }
+}
+
 // === Contribution Normalizers ===
 function getPLDDTContributions(gene) {
   if (!protData[gene]) return [];
@@ -67,8 +93,6 @@ function colorSurface(contributions) {
       return s !== undefined ? viridisColor(s) : 0xAAAAAA;
     }
   });
-  document.getElementById("legend").style.display = "flex";
-  drawLegend();
 }
 
 // === Apply Selected Style ===
@@ -80,7 +104,6 @@ function applyStyle(gene, style) {
 
   if (style === "cartoon") {
     viewer.setStyle({}, { cartoon: { color: "spectrum" } });
-    document.getElementById("legend").style.display = "none";
   }
   else if (style === "surface-plddt") {
     colorSurface(getPLDDTContributions(gene));
@@ -88,6 +111,8 @@ function applyStyle(gene, style) {
   else if (style === "surface-fpocket") {
     colorSurface(getFpocketContributions(gene));
   }
+
+  updateLegend(gene, style);
 
   viewer.zoomTo();
   viewer.render();
@@ -129,25 +154,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // === Theme sync via postMessage ===
   window.addEventListener("message", (event) => {
-  if (!event.data || event.data.type !== "theme") return;
+    if (!event.data || event.data.type !== "theme") return;
 
-  const theme = event.data.theme;
+    const theme = event.data.theme;
 
-  // Toggle the body class so CSS variables update
-  if (theme === "light") {
-    document.body.classList.add("light");
-  } else {
-    document.body.classList.remove("light");
-  }
+    // Toggle the body class so CSS variables update
+    if (theme === "light") {
+      document.body.classList.add("light");
+    } else {
+      document.body.classList.remove("light");
+    }
 
-  // Update 3Dmol viewer background
-  if (viewer) {
-    const bg = theme === "light" ? "#ffffff" : "#0e1430";
-    viewer.setBackgroundColor(bg);
-    viewer.render();
-  }
- });
-
+    // Update 3Dmol viewer background
+    if (viewer) {
+      const bg = theme === "light" ? "#ffffff" : "#0e1430";
+      viewer.setBackgroundColor(bg);
+      viewer.render();
+    }
+  });
 });
-
-
