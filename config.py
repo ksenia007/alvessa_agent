@@ -42,3 +42,8 @@ TOOL_SELECTOR_MODEL: str = "claude-sonnet-4-20250514" #"claude-3-haiku-20240307"
 
 ANTHROPIC_API_KEY: str = os.environ["ANTHROPIC_API_KEY"]
 BioGRID_API_KEY: str = os.environ["BIOGRID_API_KEY"]
+
+# -----------------------------------------------------------------------------
+# Protein tool configuration
+# -----------------------------------------------------------------------------
+TOOL_PROT_MAX_GENES = 10 #Maximal number of proteins to be displayed by tool_prot.py

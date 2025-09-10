@@ -1,5 +1,6 @@
 env/
 .DS_Store
+.env
 .vscode/
 local_dbs/*
 **/__pycache__/
@@ -15,3 +16,5 @@ benchmarks_generation/*/*.csv
 benchmarks_generation/*/*.parquet
 benchmarks_generation/results_checkpoint_aug23
 benchmarks_generation/results_checkpoint_*
+TP53_plus1_prot.html
+TP53_plus1_prot.txt

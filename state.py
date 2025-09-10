@@ -45,3 +45,7 @@ class State(TypedDict, total=False):
     
     # interactive view
     ui: Annotated[Dict[str, Any], operator.or_]  # e.g., {"panels": [...]}
+
+    # Protein structure and druggablility visualization
+    prot_html: Annotated[str, operator.add]
+
