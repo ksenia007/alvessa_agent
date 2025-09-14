@@ -14,6 +14,7 @@ from __future__ import annotations
 import io
 import json
 import sys
+import os
 import threading
 from contextlib import contextmanager
 from pathlib import Path
@@ -24,7 +25,19 @@ from fastapi import FastAPI, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from config import DEBUG
+#------------------------------------------------
+# For Windows Platform:
 
+if sys.platform.startswith("win"):   # True only on Windows
+    os.environ["HF_HUB_DISABLE_SYMLINKS"] = "1"
+    from gliner import GLiNER
+
+    m = GLiNER.from_pretrained("urchade/gliner_medium-v2.1")
+
+    if DEBUG:
+       print("Loaded:", type(m))
+#------------------------------------------------
 
 try:
     import pandas as pd
@@ -60,6 +73,7 @@ def apple_touch_icon():
                         headers={"Cache-Control":"no-store"})
 
 app.mount("/images", StaticFiles(directory=BASE / "images"), name="images")
+app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 
 # -----------------------------------------------------------------------------
 # JSON sanitizer for NumPy/Pandas types

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Protein Viewer - {{GENE_SYMBOL}}</title>
+
+  <!-- Inline CSS injected by Python -->
+  {{CSS_INLINE}}
+
+  <!-- 3Dmol.js for molecular visualization -->
+  <script src="https://3dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+
+  <!-- Inline JS injected by Python -->
+  {{JS_INLINE}}
+</head>
+<body>
+  <!-- Toolbar row with protein and style selectors -->
+  <div id="toolbar">
+    <div id="controls">
+      <label for="proteinSelect">Protein:</label>
+      <select id="proteinSelect"></select>
+
+      <label for="styleSelect">Style:</label>
+      <select id="styleSelect">
+        <option value="cartoon">Cartoon</option>
+        <option value="surface-plddt">Surface (pLDDT)</option>
+        <option value="surface-fpocket">Surface (FPocket)</option>
+      </select>
+    </div>
+
+    <!-- Legend inline with controls -->
+    <div id="legend">
+      <span>Low (0.0)</span>
+      <canvas id="colorLegend"></canvas>
+      <span>High (1.0)</span>
+    </div>
+  </div>
+
+  <!-- Viewer container -->
+  <div id="viewer-container"></div>
+</body>
+</html>

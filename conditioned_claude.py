@@ -158,7 +158,7 @@ def conditioned_claude_node(state: "State") -> "State":
     
     if len(system_msg)<2:
         system_msg = (
-            "You are a research scintist. Answer the question strictly with facts you can "
+            "You are a research scientist. Answer the question strictly with facts you can "
             "point to inside CONTEXT. Respond only with JSON with keys answer and evidence." 
             " Be descriptive and detailed, think in steps and outline your process. Ensure proper JSON format. "
             "The 'evidence' field must always be a list of short strings "
