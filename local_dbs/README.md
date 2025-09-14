@@ -20,6 +20,8 @@ The following files must be downloaded before using the GWAS and Sei tools:
 **Download Location:** https://storage.googleapis.com/dm_alphamissense/AlphaMissense_hg19.tsv.gz
 - `NCBI2Reactome_All_Levels.txt`
 **Download Location:** https://reactome.org/download/current/NCBI2Reactome_All_Levels.txt
+- `old_go_data: Version 2025-07-22`
+**Download Location:** https://current.geneontology.org/products/pages/downloads.html
 
 **Donwload location** https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_48/gencode.v48.primary_assembly.basic.annotation.gtf.gz
 -  Gencode annotaitons
