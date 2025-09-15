@@ -16,6 +16,7 @@ from tool_alphamissense import alphamissense_predictions_agent
 from tool_annotate_gencode import gencode_gene_node
 from tool_miRDB import miRDB_agent
 from tool_remap import remap_crm_agent
+from tool_biogrid_summarization import Summarize_bioGRID_GO_agent
 from tool_prot import prot_agent
 
 EXAMPLE_TOOL_SELECTION = """EXAMPLE PIPELINES (pay attention to dependencies):
@@ -52,11 +53,10 @@ TOOL_CATALOG = {
     "query_gwas_by_gene":  "Retrieves genome-wide association study (GWAS) results for a given gene. It collects traits and diseases associated with genetic variants linked to that gene, along with the specific variants",
     "query_gwas_extensive": "This is a more comprehensive version of the query_gwas_by_gene tool, and it is used to retrieve more detailed information about the GWAS results. It collects an extensive list of traits/diseases associated with an extensive list of genetic variants linked to that gene. Use this tool *ONLY* if the question is very specific that requires what is equivalent to an extensive database search, not to general characterisation of the gene.",
     "uniprot_gwas":   "Runs UniProt query again on genes identified via GWAS associations. Helps to expand the base annotations with related genes.",
-    "BioGRID": "Fetches gene interactions from BioGRID and their functional annotations for the input genes. Provides a curated context-specific list of protein-protein, genetic and chemical interactions.",
+    "BioGRID": "Fetches gene interactions from BioGRID for the input genes. Use this tool *ONLY* when individual names of interacting genes are needed to answer the query and a summary of enriched GO terms is not sufficient. Provides a curated context-specific list of protein-protein, genetic and chemical interactions.",
     "reactome": "Fetches Reactome pathways associated with the input genes. Provides a curated collection of biological pathways which describe how molecules interact within a cell to carry out different biological processes.",
-   #  "Summarize_bioGRID_GO": "Required for BioGrid. Summarizes BioGRID GO terms for the input genes. Provides a compact list of GO terms for the input genes.",
-   "Summarize_GO": "Summarizes GO terms for the input genes. Can only ber run after UniProt, needed to answer questions about GO terms or functions of genes.",
-
+    "BioGRID_GO_summarize": "This is a summarized version of BIOGRID that should be run instead of BioGRID when individual interactor names are not needed to answer the query. Provides a summarized list of GO terms significantly enriched for the interacting genes of each input gene fetched from BioGRID.",
+    "Summarize_GO": "Summarizes GO terms for the input genes. Can only ber run after UniProt, needed to answer questions about GO terms or functions of genes.",
     "variant_annotations": "Fetches dbSNP data about the identified variants. This requires gwas to be run first. This is to be used only when the variant needs to be annotated with its **coordinates** and **chromosome number** and similar details. This tool is also a prerequisite to run humanbase, sei, alphamissense, etc. Reason based on the user's question if sequence models need to be run, and if so, this tool is a prerequisite to run them.",
     "variant_population_summaries": "Fetches population-wide summaries of allele frequencies for the identified variants across studies. Useful for characterizing the frequency of variants in the population. This requires gwas to be run first.",
     "sei": "Fetches predictions of the sequence regulatory activity for given variants. This requires variant_annotations to be run first.", 
@@ -78,6 +78,7 @@ TOOL_FN_MAP = {
     "query_gwas_extensive":          lambda x: gwas_associations_agent(x, mode="extensive"),
     "uniprot_gwas":   uniprot_node,       
     "BioGRID":        bioGRID_predictions_agent,
+    "BioGRID_GO_summarize":  Summarize_bioGRID_GO_agent,
     "reactome":       reactome_pathways_agent,
     "Summarize_GO": go_summarization_agent, 
     "variant_annotations":          dbsnp_variants_agent,

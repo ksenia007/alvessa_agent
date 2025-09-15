@@ -72,6 +72,12 @@ class Gene:
     # Val: list of partner gene IDs/symbols
     interactions_by_exp: Dict[str, List[str]] = field(default_factory=dict)
     nonhuman_interaction_by_exp: Dict[str, List[str]] = field(default_factory=dict)
+    interactors_summary_old_go_BP: List[str] = field(default_factory=list)
+    interactors_summary_old_go_MF: List[str] = field(default_factory=list)
+    interactors_summary_old_go_CC: List[str] = field(default_factory=list)
+    interactors_summary_pan_go_BP: List[str] = field(default_factory=list)
+    interactors_summary_pan_go_MF: List[str] = field(default_factory=list)
+    interactors_summary_pan_go_CC: List[str] = field(default_factory=list)
     
     # miRNA targets
     mirna_targets: Dict[str, List[str]] = field(default_factory=dict)
@@ -240,6 +246,12 @@ class Gene:
     # ------------- miRNA targets -------------
     def add_miRNA_targets(self, miRNA: Dict[str, Any]) -> None:
         self.mirna_targets = miRNA
+
+    # ------------- Enrichment functions -------------
+    def add_interactors_enriched_GO_terms(self, go_source, go_category, enriched_terms: List[str]) -> None:
+        if (go_source in ['old_go', 'pan_go']) and (go_source in ['BP', 'CC', 'MF']):
+            setattr(self, f'interactors_summary_{go_source}_{go_category}', enriched_terms)
+
         
 
 
