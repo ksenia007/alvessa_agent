@@ -47,8 +47,8 @@ def Summarize_bioGRID_GO_agent(state: "State") -> "State":
 
     old_go_folder = 'local_dbs/old_go_data/'
     pan_go_folder = 'local_dbs/pan_go_data/'
-    old_go_obo_file = 'local_dbs/old_go_data/go.obo'
-    pan_go_obo_file = 'local_dbs/pan_go_data/go.obo'
+    # old_go_obo_file = 'local_dbs/old_go_data/go.obo'
+    # pan_go_obo_file = 'local_dbs/pan_go_data/go.obo'
 
     for gene_name in gene_objs.keys():
 
@@ -68,8 +68,8 @@ def Summarize_bioGRID_GO_agent(state: "State") -> "State":
                 all_human_interactors_set.update(all_genes_interacting)
 
         for category in go_categories:
-            old_go_enrichment_results = run_go_enrichment(list(all_human_interactors_set), f'{old_go_folder}/goa_human_{category}.gmt', old_go_obo_file)
-            pan_go_enrichment_results = run_go_enrichment(list(all_human_interactors_set), f'{pan_go_folder}/functionome_release_{category}.gmt', pan_go_obo_file)
+            old_go_enrichment_results = run_go_enrichment(list(all_human_interactors_set), f'{old_go_folder}/goa_human_{category}.gmt', f'{old_go_folder}/go.obo')
+            pan_go_enrichment_results = run_go_enrichment(list(all_human_interactors_set), f'{pan_go_folder}/functionome_release_{category}.gmt', f'{pan_go_folder}/go.obo')
 
             old_go_enriched_go_terms = list(filter(None, old_go_enrichment_results.GO_Name.values))
             pan_go_enriched_go_terms = list(filter(None, pan_go_enrichment_results.GO_Name.values))
