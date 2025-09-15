@@ -39,6 +39,67 @@ def canon_gene_key(x: str) -> str:
 
 
 @dataclass
+class GeneGWASTraitHit:
+    trait: str
+    rsid: str
+    p_value: Optional[str] = None
+    risk_score: Optional[str] = None
+
+
+@dataclass
+class GeneGWASProfile:
+    found: bool = False
+    total_associations: int = 0
+    significant_associations: int = 0
+    total_studies: int = 0
+    variant_count: int = 0
+    trait_link_count: int = 0
+    p_value_threshold: Optional[str] = None
+    top_traits: List[GeneGWASTraitHit] = field(default_factory=list)
+    top_variants: List[str] = field(default_factory=list)
+    related_genes: List[str] = field(default_factory=list)
+    affected_proteins: List[str] = field(default_factory=list)
+
+
+def _deserialize_gwas_profile(data: Any) -> Optional[GeneGWASProfile]:
+    if not data:
+        return None
+    if isinstance(data, GeneGWASProfile):
+        return data
+    if not isinstance(data, dict):
+        return None
+
+    trait_hits: List[GeneGWASTraitHit] = []
+    for entry in data.get("top_traits", []) or []:
+        if isinstance(entry, GeneGWASTraitHit):
+            trait_hits.append(entry)
+            continue
+        if isinstance(entry, dict):
+            trait_hits.append(
+                GeneGWASTraitHit(
+                    trait=entry.get("trait", ""),
+                    rsid=entry.get("rsid", ""),
+                    p_value=entry.get("p_value"),
+                    risk_score=entry.get("risk_score"),
+                )
+            )
+
+    return GeneGWASProfile(
+        found=bool(data.get("found", False)),
+        total_associations=int(data.get("total_associations", 0) or 0),
+        significant_associations=int(data.get("significant_associations", 0) or 0),
+        total_studies=int(data.get("total_studies", 0) or 0),
+        variant_count=int(data.get("variant_count", 0) or 0),
+        trait_link_count=int(data.get("trait_link_count", 0) or 0),
+        p_value_threshold=data.get("p_value_threshold"),
+        top_traits=trait_hits,
+        top_variants=list(data.get("top_variants", []) or []),
+        related_genes=list(data.get("related_genes", []) or []),
+        affected_proteins=list(data.get("affected_proteins", []) or []),
+    )
+
+
+@dataclass
 class Gene:
     # ---- Core identifiers ----
     symbol: str
@@ -64,7 +125,7 @@ class Gene:
     
     
     # ----- GWAS associations ----
-    gwas_associations: Dict[str, Any] = field(default_factory=dict)
+    gwas_profile: Optional[GeneGWASProfile] = None
 
     # ---- Interactions (BioGRID later) ----
     # Key: experiment type (as in BioGRID "Experimental System", e.g. "Two-hybrid", "Co-IP",
@@ -198,25 +259,24 @@ class Gene:
 
             
     # ------------ GWAS associations ------------
-    def add_gwas_association(self, total_associations, sig_associations, total_studies, 
-                             summary_high_risk, summary_sig) -> None:
-        self.gwas_associations= {
-            "total_associations": total_associations,
-            "significant_associations": sig_associations,
-            "total_studies": total_studies,
-            "summary_high_risk": summary_high_risk,
-            "summary_significant": summary_sig
-        }
-        
-    
-    def get_all_gwas_associations(self) -> Dict[str, Any]:
-        return self.gwas_associations['total_associations']
-    
-    def get_all_gwas_info(self) -> str:
-        return self.gwas_associations
-    
+    def set_gwas_profile(self, profile: Optional[GeneGWASProfile]) -> None:
+        self.gwas_profile = profile
+
+    def clear_gwas_profile(self) -> None:
+        self.gwas_profile = None
+
     def has_gwas_associations(self) -> bool:
-        return bool(len(self.gwas_associations) > 0)
+        return bool(self.gwas_profile and self.gwas_profile.total_associations)
+
+    def get_all_gwas_associations(self) -> int:
+        if not self.gwas_profile:
+            return 0
+        return self.gwas_profile.total_associations
+
+    def get_all_gwas_info(self) -> Optional[Dict[str, Any]]:
+        if not self.gwas_profile:
+            return None
+        return asdict(self.gwas_profile)
     
     def get_all_traits(self) -> List[str]:
         return self.traits
@@ -431,7 +491,9 @@ class Gene:
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "Gene":
-        g = cls(**d)
+        data = dict(d)
+        data["gwas_profile"] = _deserialize_gwas_profile(data.get("gwas_profile"))
+        g = cls(**data)
         g.normalize()
         g.compute_structure_stats()
         return g
@@ -603,4 +665,3 @@ class Gene:
         ]
 
         return _bullet([l for l in lines if l])
-
