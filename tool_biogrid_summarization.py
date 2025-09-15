@@ -47,8 +47,6 @@ def Summarize_bioGRID_GO_agent(state: "State") -> "State":
 
     old_go_folder = 'local_dbs/old_go_data/'
     pan_go_folder = 'local_dbs/pan_go_data/'
-    # old_go_obo_file = 'local_dbs/old_go_data/go.obo'
-    # pan_go_obo_file = 'local_dbs/pan_go_data/go.obo'
 
     for gene_name in gene_objs.keys():
 
