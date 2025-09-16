@@ -7,17 +7,16 @@ Updated: 2025-08-21
 
 Description: 
 
-Run AlvessaBench & save results."""
+Run labBench & save results."""
 
 import argparse
 import os
 from pathlib import Path
 
-from evaluate_benchmarks_general import run_benchmark
-
-SUBFOLDERS = ['gencode'] #['GWAS_AM', 'mirDB', 'gencode', 'GWAS', 'reactome', 'biogrid']
+from .benchmarks_general import run_benchmark
+SUBFOLDERS = ['labbench']
 MAIN_PATH = Path("benchmarks_generation")
-MAX_ROWS = 5  # -1 means all
+MAX_ROWS = 20 # -1 means all
 
 SYSTEM_MSG = (
     """You are a multiple-choice answering system.
@@ -46,12 +45,14 @@ def main():
             if not file_name.endswith(".csv"):
                 continue
 
+            if 'dbqa_' not in file_name:
+                continue
+            
             in_path = sub_path / file_name
             out_path = out_dir / file_name
 
             if args.runner == "claude":
                 print(f"Running Claude on {in_path}")
-                print('Running Claude with system message:', SYSTEM_MSG)
                 run_benchmark(
                     str(in_path),
                     system_msg=SYSTEM_MSG,
@@ -61,7 +62,6 @@ def main():
                 )
             else:  # alvessa
                 print(f"Running Alvessa on {in_path}")
-                
                 run_benchmark(
                     str(in_path),
                     system_msg=SYSTEM_MSG,

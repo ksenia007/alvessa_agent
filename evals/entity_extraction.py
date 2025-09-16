@@ -19,7 +19,7 @@ from typing import Dict, List, Tuple, Callable
 from collections import defaultdict
 
 # Import the entity extraction nodes and the State class
-from entity_extraction import (
+from src.alvessa.agents.entity_extraction import (
     entity_extraction_node,
     claude_entity_extraction_node,
     flair_entity_extraction_node,
@@ -28,7 +28,7 @@ from entity_extraction import (
     gliner_flair_entity_extraction_node,
     gliner_claude_entity_extraction_node,
 )
-from state import State
+from src.state import State
 
 
 def load_benchmark_data(benchmark_dir: str) -> Dict[str, List[Tuple[str, List[str]]]]:

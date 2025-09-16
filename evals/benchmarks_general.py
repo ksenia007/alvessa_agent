@@ -16,8 +16,8 @@ from typing import Dict, Any
 import os
 import re
 import time
-from claude_client import claude_call
-from config import CONDITIONED_MODEL
+from src.alvessa.clients.claude import claude_call
+from src.config import CONDITIONED_MODEL
 import os, time, tempfile, shutil, re
 from typing import Callable, Dict, Any, Optional, Tuple
 import pandas as pd
@@ -255,7 +255,6 @@ def run_benchmark(
         print("No results to summarize.")
 
     return final_df
-
 
 
 
