@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from tools.tf_idf import fps_tfidf
 import warnings
 warnings.filterwarnings("ignore")
@@ -400,9 +400,35 @@ class GWASQueryEngine:
             # If variant already exists, merge all disease traits
             if variant_id in variant_annotations:
                 new_trait_data = variant_record['associated_disease_trait']
-                variant_annotations[variant_id]['associated_disease_trait'].update(new_trait_data)
+                existing = variant_annotations[variant_id]
+                existing_traits = existing.setdefault('associated_disease_trait', {})
+                existing_traits.update(new_trait_data)
+                existing['total_trait_count'] = len(existing_traits)
             else:
+                variant_record['total_trait_count'] = len(variant_record['associated_disease_trait'])
                 variant_annotations[variant_id] = variant_record
+
+        self._limit_variant_traits(variant_annotations)
+
+    def _limit_variant_traits(self, variant_annotations: Dict[str, Dict[str, Any]], max_traits: int = 20) -> None:
+        """Ensure no variant lists more than `max_traits` disease associations."""
+        for record in variant_annotations.values():
+            trait_map = record.get('associated_disease_trait') or {}
+            trait_items = list(trait_map.items())
+            trait_count = len(trait_items)
+            record['total_trait_count'] = trait_count
+
+            if trait_count <= max_traits:
+                record['traits_truncated'] = False
+                continue
+
+            sorted_traits = sorted(
+                trait_items,
+                key=lambda item: self._parse_pvalue(item[1].get('p_value')),
+            )
+            limited_traits = dict(sorted_traits[:max_traits])
+            record['associated_disease_trait'] = limited_traits
+            record['traits_truncated'] = True
     
     def _format_summary(self, genes: List[str], snps: List[str], proteins: List[str], 
                        traits: List[str], is_gene_query: bool) -> Dict:
