@@ -153,3 +153,4 @@ pandas==2.2.3
 gliner==0.2.21
 flair==0.15.1
 pytest
+gensim==4.3.3

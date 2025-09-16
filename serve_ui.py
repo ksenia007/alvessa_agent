@@ -25,7 +25,7 @@ from fastapi import FastAPI, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from config import DEBUG
+from src.config import DEBUG
 #------------------------------------------------
 # For Windows Platform:
 

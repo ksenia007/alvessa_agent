@@ -20,7 +20,7 @@ from __future__ import annotations
 import pprint
 from typing import Dict, List
 
-from graph_builder import build_graph
+from src.alvessa.workflow.graph_builder import build_graph
 
 import sys
 import json
@@ -99,5 +99,3 @@ if __name__ == "__main__":
 
             with open("demo.json", "w") as jf:
                 json.dump(result, jf, indent=2, default=str)
-
-

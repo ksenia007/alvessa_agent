@@ -2,8 +2,13 @@ import pandas as pd
 import random
 import os
 import sys
-sys.path.append('../')
-from tool_humanbase import _symbol_to_entrez
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+
+from src.tools.humanbase.node import _symbol_to_entrez
 from itertools import combinations
 import csv
 import requests

@@ -5,7 +5,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import entity_extraction
+from src.alvessa.agents import entity_extraction
 # --- Test Variant Extraction Logic ---
 
 def test_variant_extraction_node_rsids():
@@ -31,7 +31,7 @@ def test_variant_extraction_node_rsids():
 def test_variant_extraction_node_chr_pos():
     """Tests the variant_extraction_node for chr:pos:ref>alt format."""
     input_text = "Variants include chr7:55249071:C>T and chrX:1000:A>G. Also a duplicate chr7:55249071:C>T."
-    initial_state = {"messages": [{"content": inputtext}]}
+    initial_state = {"messages": [{"content": input_text}]}
     
     expected_output = {
         'variants': {},
@@ -123,7 +123,7 @@ def test_post_processing():
 
 # --- Test Individual Model Nodes (with Mocks) ---
 
-@patch('entity_extraction.claude_call')
+@patch('src.alvessa.agents.entity_extraction.claude_call')
 def test_claude_entity_extraction_node(mock_claude_call):
     """Tests the Claude node by mocking the claude_call function."""
     mock_response = MagicMock()
@@ -136,7 +136,7 @@ def test_claude_entity_extraction_node(mock_claude_call):
     
     assert sorted(result["genes"]) == sorted(["BRCA1", "TP53", "EGFR"])
 
-@patch('entity_extraction._get_gliner_model')
+@patch('src.alvessa.agents.entity_extraction._get_gliner_model')
 def test_gliner_entity_extraction_node(mock_get_gliner):
     """Tests the GLiNER node, checking for separate gene/protein extraction."""
     mock_model = MagicMock()
@@ -154,7 +154,7 @@ def test_gliner_entity_extraction_node(mock_get_gliner):
     assert result["proteins"] == ["TP53"]
     assert result["traits"] == ["breast cancer"]
 
-@patch('entity_extraction._get_flair_model')
+@patch('src.alvessa.agents.entity_extraction._get_flair_model')
 def test_flair_entity_extraction_node(mock_get_flair):
     """Tests the Flair node, checking for separate gene/protein extraction."""
     mock_model = MagicMock()
@@ -170,7 +170,7 @@ def test_flair_entity_extraction_node(mock_get_flair):
     mock_model.predict.side_effect = mock_predict
     mock_get_flair.return_value = mock_model
     
-    with patch('entity_extraction.Sentence') as mock_sentence_class:
+    with patch('src.alvessa.agents.entity_extraction.Sentence') as mock_sentence_class:
         mock_sentence_instance = MagicMock()
         mock_sentence_class.return_value = mock_sentence_instance
 
@@ -183,9 +183,9 @@ def test_flair_entity_extraction_node(mock_get_flair):
 
 # --- Test Merged Node ---
 
-@patch('entity_extraction._extract_entities_with_gliner')
-@patch('entity_extraction._extract_entities_with_flair')
-@patch('entity_extraction._extract_entities_with_claude')
+@patch('src.alvessa.agents.entity_extraction._extract_entities_with_gliner')
+@patch('src.alvessa.agents.entity_extraction._extract_entities_with_flair')
+@patch('src.alvessa.agents.entity_extraction._extract_entities_with_claude')
 def test_entity_extraction_node_merged(mock_claude, mock_flair, mock_gliner):
     """Tests the main merged node, ensuring results are combined and deduplicated correctly."""
     mock_claude.return_value = {"genes": ["BRCA1", "TP53"], "traits": []}
