@@ -182,7 +182,6 @@ NODES: tuple[Node, ...] = (
         description=(
             "Summarize BioGRID human interactors by reporting enriched GO/PAN-GO terms and narrative highlights."
         ),
-        aliases=("BioGRID_GO_summarize",),
         dependencies=("BioGRID",),
     ),
 )
