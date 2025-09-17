@@ -9,7 +9,6 @@ import sys
 import threading
 from contextlib import contextmanager
 from pathlib import Path
-from urllib.parse import urlparse
 
 import numpy as np
 from fastapi import FastAPI, Query
@@ -230,16 +229,13 @@ def get_app() -> FastAPI:
     return APP
 
 
-def serve(local_url: str = "http://127.0.0.1:8000") -> None:
+def serve(*, host: str = "127.0.0.1", port: int = 8000) -> None:
     """Run the FastAPI app with uvicorn on the requested address."""
 
-    if "//" not in local_url:
-        local_url = f"http://{local_url}"
-    parsed = urlparse(local_url)
-    host = parsed.hostname or "127.0.0.1"
-    port = parsed.port or (443 if parsed.scheme == "https" else 8000)
+    if port <= 0 or port >= 65536:
+        raise ValueError("Port must be between 1 and 65535")
 
-    print(f"[alvessa] Serving UI at {parsed.scheme}://{host}:{port}")
+    print(f"[alvessa] Serving UI at http://{host}:{port}")
 
     import uvicorn
 

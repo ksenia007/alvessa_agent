@@ -128,8 +128,8 @@ def _handle_question(args: argparse.Namespace) -> int:
 
 def _handle_ui(args: argparse.Namespace) -> int:
     """Launch the local FastAPI UI using uvicorn."""
-    local_url = args.local_url or "http://127.0.0.1:8000"
-    serve_ui(local_url)
+    port = args.port if args.port is not None else 8000
+    serve_ui(port=port)
     return 0
 
 
@@ -151,9 +151,11 @@ def _build_parser() -> argparse.ArgumentParser:
 
     ui_parser = subparsers.add_parser("ui", help="Serve the local FastAPI dashboard.")
     ui_parser.add_argument(
-        "--local-url",
-        default="http://127.0.0.1:8000",
-        help="Host/port to bind (e.g. http://127.0.0.1:8000).",
+        "port",
+        nargs="?",
+        type=int,
+        default=8000,
+        help="Port to bind (default: 8000).",
     )
     ui_parser.set_defaults(func=_handle_ui)
 

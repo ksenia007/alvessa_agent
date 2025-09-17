@@ -15,7 +15,7 @@ export BioGRID_API_KEY=...
 ### CLI usage
 - `alvessa question "Summarize GO terms enriched for interactors of TP53"`
 - `alvessa tools`
-- `alvessa ui --local-url http://127.0.0.1:8000`
+- `alvessa ui 9000` (serves the UI on `http://127.0.0.1:9000`; default is 8000)
 
 ## Quickstart commands
 ```bash
