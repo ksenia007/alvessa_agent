@@ -18,3 +18,4 @@ benchmarks_generation/results_checkpoint_aug23
 benchmarks_generation/results_checkpoint_*
 TP53_plus1_prot.html
 TP53_plus1_prot.txt
+out/

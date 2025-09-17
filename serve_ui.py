@@ -26,6 +26,11 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from src.config import DEBUG
+from src.alvessa.workflow.output_paths import (
+    build_output_paths,
+    create_run_directory,
+    get_latest_run_directory,
+)
 #------------------------------------------------
 # For Windows Platform:
 
@@ -53,8 +58,16 @@ from run import run_pipeline
 # -----------------------------------------------------------------------------
 app = FastAPI()
 BASE = Path(__file__).parent.resolve()
-STATE_FILE = BASE / "demo.json"
-LOG_FILE = BASE / "demo.log"   # single, absolute path used everywhere
+
+
+CURRENT_RUN_DIR = get_latest_run_directory()
+CURRENT_OUTPUTS = build_output_paths(CURRENT_RUN_DIR) if CURRENT_RUN_DIR else None
+
+
+def _set_current_run_dir(path: Path) -> None:
+    global CURRENT_RUN_DIR, CURRENT_OUTPUTS
+    CURRENT_RUN_DIR = path
+    CURRENT_OUTPUTS = build_output_paths(path)
 
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
@@ -158,9 +171,13 @@ def index():
 
 @app.get("/state")
 def get_state():
-    if not STATE_FILE.exists():
+    if not CURRENT_OUTPUTS:
         return JSONResponse({"error": "No run yet. Click Run."}, status_code=404)
-    return JSONResponse(json.loads(STATE_FILE.read_text()))
+
+    state_path = CURRENT_OUTPUTS["json"]
+    if not state_path.exists():
+        return JSONResponse({"error": "No run yet. Click Run."}, status_code=404)
+    return JSONResponse(json.loads(state_path.read_text()))
 
 @app.get("/run")
 def run(q: str = Query(..., description="User question")):
@@ -169,18 +186,34 @@ def run(q: str = Query(..., description="User question")):
         return JSONResponse({"error": "A run is already in progress."}, status_code=409)
 
     try:
-        # start fresh log
-        LOG_FILE.write_text("")
+        run_dir, _ = create_run_directory("ui")
+        _set_current_run_dir(run_dir)
+        outputs = CURRENT_OUTPUTS
+        log_path = outputs["log"]
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        log_path.write_text("")
 
         # redirect stdio for the duration of the pipeline
-        with redirect_stdio_to_log(LOG_FILE):
+        with redirect_stdio_to_log(log_path):
             print(f"=== START: {q} ===")
             state = run_pipeline(q)  # all prints inside stream to demo.log in real time
             print("=== END ===")
 
         # write sanitized state and return it
         state_json = to_jsonable(state)
-        STATE_FILE.write_text(json.dumps(state_json, indent=2))
+        outputs["json"].write_text(json.dumps(state_json, indent=2))
+
+        # simple text summary akin to CLI run
+        answer = state_json.get("llm_json", {}).get("answer", "")
+        evidence = state_json.get("llm_json", {}).get("evidence", [])
+        with outputs["txt"].open("w", encoding="utf-8") as txt:
+            txt.write("=" * 80 + "\n")
+            txt.write(f"Q: {q}\n\n")
+            txt.write(f"Answer:\n{answer}\n\n")
+            txt.write("Evidence:\n")
+            for ev in evidence or []:
+                txt.write(f"  - {ev}\n")
+        
         return JSONResponse(state_json)
 
     finally:
@@ -188,8 +221,12 @@ def run(q: str = Query(..., description="User question")):
 
 @app.get("/log")
 def get_log(pos: int = 0):
-    LOG_FILE.touch(exist_ok=True)
-    with LOG_FILE.open("r", encoding="utf-8", errors="replace") as f:
+    if not CURRENT_OUTPUTS:
+        return JSONResponse({"error": "No run yet. Click Run."}, status_code=404)
+
+    log_path = CURRENT_OUTPUTS["log"]
+    log_path.touch(exist_ok=True)
+    with log_path.open("r", encoding="utf-8", errors="replace") as f:
         f.seek(pos)
         data = f.read()
         new_pos = f.tell()

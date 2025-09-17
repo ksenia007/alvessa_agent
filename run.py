@@ -21,6 +21,7 @@ import pprint
 from typing import Dict, List
 
 from src.alvessa.workflow.graph_builder import build_graph
+from src.alvessa.workflow.output_paths import build_output_paths, create_run_directory
 
 import sys
 import json
@@ -48,7 +49,10 @@ def run_pipeline(user_message: str, prompt: str = '', mc_setup: bool = False) ->
 
 
 if __name__ == "__main__":
-    logfile = open("demo.log", "w")
+    run_dir, _ = create_run_directory("demo")
+    paths = build_output_paths(run_dir)
+
+    logfile = open(paths["log"], "w")
     sys.stdout = logfile
 
     EXAMPLE_QUESTIONS: List[str] = [
@@ -61,7 +65,8 @@ if __name__ == "__main__":
         #"Which of the following variants is associated with gene NKX2-5 and has the worst possible predicted coding downstream effect? [A] rs6891790 [B] rs2277923 [C] rs773670132 [D] rs4868243"
         # "Tell me about rs12345 variant"
         # "How many exons in TP53?"
-        "Which TFs bind in front of TP53"
+        # "Which TFs bind in front of TP53"
+        "Summarize GO terms enriched for interactors of TP53"
         # "Which gene is the best drug target for virally induced cancers, KRAS or TP53?",
         # "How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
         # "Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?",
@@ -70,13 +75,13 @@ if __name__ == "__main__":
         # "Are there common patterns in regulatory activity of variants found for TP53 and KRAS in GWAS studies?"
     ]
 
-    with open("demo.txt", "w") as f:
+    with open(paths["txt"], "w") as f:
         for q in EXAMPLE_QUESTIONS:
             print("\n" + "=" * 80)
             print("Q:", q)
             result = run_pipeline(q)
             # save for the html
-            with open("demo.json", "w") as jf:
+            with open(paths["json"], "w") as jf:
                 json.dump(result, jf, indent=2, default=str)
                 
             last_msg = result["messages"][-1]["content"]
@@ -97,5 +102,5 @@ if __name__ == "__main__":
             f.write("\n\n")
             
 
-            with open("demo.json", "w") as jf:
+            with open(paths["json"], "w") as jf:
                 json.dump(result, jf, indent=2, default=str)
