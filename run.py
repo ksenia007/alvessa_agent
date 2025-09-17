@@ -18,16 +18,24 @@ and also a PNG visual of the graph as graph_diagram.png
 
 from __future__ import annotations
 import pprint
+from pathlib import Path
 from typing import Dict, List
 
-from graph_builder import build_graph
+from src.alvessa.workflow.graph_builder import build_graph
+from src.alvessa.workflow.output_paths import build_output_paths, create_run_directory
 
 import sys
 import json
 
 
 
-def run_pipeline(user_message: str, prompt: str = '', mc_setup: bool = False) -> Dict:
+def run_pipeline(
+    user_message: str,
+    prompt: str = '',
+    mc_setup: bool = False,
+    *,
+    output_dir: Path | str | None = None,
+) -> Dict:
     """
     Execute the LangGraph workflow on a single user prompt.
 
@@ -35,20 +43,29 @@ def run_pipeline(user_message: str, prompt: str = '', mc_setup: bool = False) ->
     ----------
     user_message
         The natural-language question.
+    prompt
+        Optional system prompt override.
+    mc_setup
+        Whether to run in multi-call setup (skips verifier).
+    output_dir
+        Optional directory where artifacts like the graph diagram are written.
 
     Returns
     -------
     dict
         Final LangGraph state for inspection.
     """
-    graph = build_graph(mc_setup = mc_setup)
+    graph = build_graph(mc_setup = mc_setup, diagram_dir=output_dir)
     state = graph.invoke({"messages": [{"role": "user", "content": user_message}], 
                           "prompt": prompt})
     return state
 
 
 if __name__ == "__main__":
-    logfile = open("demo.log", "w")
+    run_dir, _ = create_run_directory("demo")
+    paths = build_output_paths(run_dir)
+
+    logfile = open(paths["log"], "w")
     sys.stdout = logfile
 
     EXAMPLE_QUESTIONS: List[str] = [
@@ -61,7 +78,8 @@ if __name__ == "__main__":
         #"Which of the following variants is associated with gene NKX2-5 and has the worst possible predicted coding downstream effect? [A] rs6891790 [B] rs2277923 [C] rs773670132 [D] rs4868243"
         # "Tell me about rs12345 variant"
         # "How many exons in TP53?"
-        "Which TFs bind in front of TP53"
+        # "Which TFs bind in front of TP53"
+        "Summarize GO terms enriched for interactors of TP53"
         # "Which gene is the best drug target for virally induced cancers, KRAS or TP53?",
         # "How does NUCKS1 play a role in cancer and in viral infections, and what is the overlap of these roles?",
         # "Why is TP53 important for all cancers but BRCA1 only in breast and ovarian cancers?",
@@ -70,13 +88,13 @@ if __name__ == "__main__":
         # "Are there common patterns in regulatory activity of variants found for TP53 and KRAS in GWAS studies?"
     ]
 
-    with open("demo.txt", "w") as f:
+    with open(paths["txt"], "w") as f:
         for q in EXAMPLE_QUESTIONS:
             print("\n" + "=" * 80)
             print("Q:", q)
-            result = run_pipeline(q)
+            result = run_pipeline(q, output_dir=run_dir)
             # save for the html
-            with open("demo.json", "w") as jf:
+            with open(paths["json"], "w") as jf:
                 json.dump(result, jf, indent=2, default=str)
                 
             last_msg = result["messages"][-1]["content"]
@@ -97,7 +115,5 @@ if __name__ == "__main__":
             f.write("\n\n")
             
 
-            with open("demo.json", "w") as jf:
+            with open(paths["json"], "w") as jf:
                 json.dump(result, jf, indent=2, default=str)
-
-
