@@ -58,6 +58,10 @@ from run import run_pipeline
 # -----------------------------------------------------------------------------
 app = FastAPI()
 BASE = Path(__file__).parent.resolve()
+WEB_DIR = BASE / "web"
+
+if not WEB_DIR.exists():
+    raise RuntimeError(f"Expected UI assets under {WEB_DIR}. Did you move the web directory?")
 
 
 CURRENT_RUN_DIR = get_latest_run_directory()
@@ -71,22 +75,22 @@ def _set_current_run_dir(path: Path) -> None:
 
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
-    ico = BASE / "images" / "favicon.ico"
+    ico = WEB_DIR / "images" / "favicon.ico"
     if ico.exists():
         return FileResponse(ico, media_type="image/x-icon", headers={"Cache-Control":"no-store"})
     # fallback to your 32x32 PNG if you don't have an .ico yet
-    return FileResponse(BASE / "images" / "rocket_favicon_32.png",
+    return FileResponse(WEB_DIR / "images" / "rocket_favicon_32.png",
                         media_type="image/png",
                         headers={"Cache-Control":"no-store"})
 
 @app.get("/apple-touch-icon.png", include_in_schema=False)
 def apple_touch_icon():
-    return FileResponse(BASE / "images" / "rocket_favicon_180.png",
+    return FileResponse(WEB_DIR / "images" / "rocket_favicon_180.png",
                         media_type="image/png",
                         headers={"Cache-Control":"no-store"})
 
-app.mount("/images", StaticFiles(directory=BASE / "images"), name="images")
-app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
+app.mount("/images", StaticFiles(directory=WEB_DIR / "images"), name="images")
+app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 
 # -----------------------------------------------------------------------------
 # JSON sanitizer for NumPy/Pandas types
@@ -167,7 +171,7 @@ RUN_LOCK = threading.Lock()
 # -----------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def index():
-    return FileResponse(BASE / "ui.html")
+    return FileResponse(WEB_DIR / "ui.html")
 
 @app.get("/state")
 def get_state():

@@ -54,5 +54,7 @@ Output files:
 - graph_diagram.png – LangGraph visualization (optional)
 
 UI files:
-- ui.html
+- web/ui.html
 - serve_ui.py
+- web/static/
+- web/images/
