@@ -1,5 +1,22 @@
 # Alvessa: agentic AI scientist
 
+## Installation
+```bash
+conda activate agents
+pip install -e .
+```
+
+Export required API tokens:
+```bash
+export ANTHROPIC_API_KEY=...
+export BioGRID_API_KEY=...
+```
+
+### CLI usage
+- `alvessa question "Summarize GO terms enriched for interactors of TP53"`
+- `alvessa tools`
+- `alvessa ui --local-url http://127.0.0.1:8000`
+
 ## Quickstart commands
 ```bash
 # install environment from requirements.txt
