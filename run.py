@@ -18,47 +18,13 @@ and also a PNG visual of the graph as graph_diagram.png
 
 from __future__ import annotations
 import pprint
-from pathlib import Path
-from typing import Dict, List
+from typing import List
 
-from src.alvessa.workflow.graph_builder import build_graph
+from src.alvessa.pipeline import run_pipeline
 from src.alvessa.workflow.output_paths import build_output_paths, create_run_directory
 
 import sys
 import json
-
-
-
-def run_pipeline(
-    user_message: str,
-    prompt: str = '',
-    mc_setup: bool = False,
-    *,
-    output_dir: Path | str | None = None,
-) -> Dict:
-    """
-    Execute the LangGraph workflow on a single user prompt.
-
-    Parameters
-    ----------
-    user_message
-        The natural-language question.
-    prompt
-        Optional system prompt override.
-    mc_setup
-        Whether to run in multi-call setup (skips verifier).
-    output_dir
-        Optional directory where artifacts like the graph diagram are written.
-
-    Returns
-    -------
-    dict
-        Final LangGraph state for inspection.
-    """
-    graph = build_graph(mc_setup = mc_setup, diagram_dir=output_dir)
-    state = graph.invoke({"messages": [{"role": "user", "content": user_message}], 
-                          "prompt": prompt})
-    return state
 
 
 if __name__ == "__main__":
@@ -70,12 +36,12 @@ if __name__ == "__main__":
 
     EXAMPLE_QUESTIONS: List[str] = [
         # "What microRNAs regulate the cancer-related functions of TP53, and how are these connected to pathways and protein interactions?"
-        #"Do not run any of the tools, just proceed directly to the LLM.",
-        #"Tell me about predicted functions of TP53",
-        # "Get GWAS assocaitions for PTEN, run deep search",
+        # "Do not run any of the tools, just proceed directly to the LLM.",
+        # "Tell me about predicted functions of TP53",
+        # "Get GWAS associations for PTEN, run deep search",
         # "tell me about gene coding consequences of variants in TP53",
         # "Which of the following variants is associated with gene JAK2 and has the worst possible predicted coding downstream effect? [A] rs77656035 [B] rs776830350 [C] rs17879961 [D] rs73393498"
-        #"Which of the following variants is associated with gene NKX2-5 and has the worst possible predicted coding downstream effect? [A] rs6891790 [B] rs2277923 [C] rs773670132 [D] rs4868243"
+        # "Which of the following variants is associated with gene NKX2-5 and has the worst possible predicted coding downstream effect? [A] rs6891790 [B] rs2277923 [C] rs773670132 [D] rs4868243"
         # "Tell me about rs12345 variant"
         # "How many exons in TP53?"
         # "Which TFs bind in front of TP53"
@@ -96,7 +62,7 @@ if __name__ == "__main__":
             # save for the html
             with open(paths["json"], "w") as jf:
                 json.dump(result, jf, indent=2, default=str)
-                
+
             last_msg = result["messages"][-1]["content"]
             answer = result["llm_json"].get("answer", "")
             evidence = result["llm_json"].get("evidence", [])
@@ -113,7 +79,6 @@ if __name__ == "__main__":
             for ev in evidence:
                 f.write(f"  - {ev}\n")
             f.write("\n\n")
-            
 
             with open(paths["json"], "w") as jf:
                 json.dump(result, jf, indent=2, default=str)

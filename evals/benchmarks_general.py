@@ -22,7 +22,7 @@ import os, time, tempfile, shutil, re
 from typing import Callable, Dict, Any, Optional, Tuple
 import pandas as pd
 
-from run import run_pipeline
+from src.alvessa.pipeline import run_pipeline
 
 
 
