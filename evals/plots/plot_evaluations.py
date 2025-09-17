@@ -10,62 +10,68 @@ Description:
 
 Simple plot of the results tables"""
 
-import os
 import textwrap
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib.transforms import blended_transform_factory
 
-RESULTS_ROOT = "benchmarks_generation"
+PLOTS_DIR = Path(__file__).resolve().parent
+EVALS_DIR = PLOTS_DIR.parent
+GENERATION_DIR = EVALS_DIR / "generation"
+FIGURES_DIR = EVALS_DIR.parent / "figures"
 
-def collect_results(root_base=RESULTS_ROOT):
+
+def collect_results(root_dir: Path = GENERATION_DIR):
     rows = []
     full_df = pd.DataFrame()
-    root = root_base+'/results'
-    for dataset in os.listdir(root):
-        dpath = os.path.join(root, dataset)
-        if not os.path.isdir(dpath):
+
+    results_dir = root_dir / "results"
+    if not results_dir.is_dir():
+        raise FileNotFoundError(f"Results directory not found: {results_dir}")
+
+    for dataset_dir in sorted(results_dir.iterdir()):
+        if not dataset_dir.is_dir():
             continue
-        for model in os.listdir(dpath):
-            mpath = os.path.join(dpath, model)
-            if not os.path.isdir(mpath):
+        dataset = dataset_dir.name
+        for model_dir in sorted(dataset_dir.iterdir()):
+            if not model_dir.is_dir():
                 continue
-            for fname in os.listdir(mpath):
-                if not fname.endswith(".csv"):
-                    continue
-                fpath = os.path.join(mpath, fname)
-                print(fname)
+            model = model_dir.name
+            for csv_path in sorted(model_dir.glob("*.csv")):
+                print(csv_path.name)
                 try:
-                    df = pd.read_csv(fpath)
-                                
+                    df = pd.read_csv(csv_path)
                     if "is_correct" not in df.columns:
                         continue
+
                     rows.append({
                         "dataset": dataset,
-                        "test_set": fname.replace(".csv",""),
+                        "test_set": csv_path.stem,
                         "model": model,
                         "n": len(df),
                         "accuracy": float(df["is_correct"].mean())
                     })
-                    df['model'] = model
-                    df['dataset'] = dataset
-                    df['test_set'] = fname.replace(".csv","")
-                    
-                    # reference main file w/ models needed
-                    try:
-                        ref = pd.read_csv(os.path.join(root_base, dataset, fname))
-                        df['need_tool'] = ref.iloc[0]['tool']
-                    except:
-                        df['need_tool'] = np.nan
-                    
-                    full_df = pd.concat([full_df, df], ignore_index=True)
-                except Exception as e:
-                    print(f"[warn] {fpath}: {e}")
-    return pd.DataFrame(rows), full_df
 
-import textwrap
-from matplotlib.transforms import blended_transform_factory
+                    df = df.copy()
+                    df["model"] = model
+                    df["dataset"] = dataset
+                    df["test_set"] = csv_path.stem
+
+                    try:
+                        ref_path = root_dir / dataset / csv_path.name
+                        ref = pd.read_csv(ref_path)
+                        df["need_tool"] = ref.iloc[0]["tool"]
+                    except Exception:
+                        df["need_tool"] = np.nan
+
+                    full_df = pd.concat([full_df, df], ignore_index=True)
+                except Exception as exc:
+                    print(f"[warn] {csv_path}: {exc}")
+    return pd.DataFrame(rows), full_df
 
 def plot_by_testset(df, save_path=None):
     if df.empty:
@@ -240,12 +246,11 @@ def plot_split(results, save_prefix="accuracy"):
         print("No results to plot.")
         return
     
-    if not os.path.exists("figures"):
-        os.makedirs("figures")
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     
     # Plot all together
     print("Plotting all results...")
-    plot_by_testset(results, save_path=f"figures/{save_prefix}_all.png")
+    plot_by_testset(results, save_path=str(FIGURES_DIR / f"{save_prefix}_all.png"))
     
     
     # Split
@@ -254,11 +259,11 @@ def plot_split(results, save_prefix="accuracy"):
 
     if not other_df.empty:
         print("Plotting non-LabBench...")
-        plot_by_testset(other_df, save_path=f"figures/{save_prefix}_nonlabbench.png")
+        plot_by_testset(other_df, save_path=str(FIGURES_DIR / f"{save_prefix}_nonlabbench.png"))
 
     if not lab_df.empty:
         print("Plotting LabBench...")
-        plot_by_testset(lab_df, save_path=f"figures/{save_prefix}_labbench.png")
+        plot_by_testset(lab_df, save_path=str(FIGURES_DIR / f"{save_prefix}_labbench.png"))
 
 
 def plot_by_dataset(df, save_path=None, figure_size=(9,6), max_y=1):

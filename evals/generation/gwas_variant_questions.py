@@ -2,7 +2,13 @@ import pandas as pd
 import random
 import os
 import sys
-sys.path.append('../')
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+
+LOCAL_DBS_DIR = ROOT / "local_dbs"
 
 def load_gwas_data(file_path: str) -> pd.DataFrame:
     """Load GWAS catalogue data from TSV file."""
@@ -186,8 +192,8 @@ def gwas_variant_set1(count):
     """Generate Set 1: Out of these variants, which one is associated with trait X for gene Y? (one real, 3 random)"""
     
     # Load and process GWAS data
-    gwas_file = '../local_dbs/gwas_catalogue_association.tsv'
-    df = load_gwas_data(gwas_file)
+    gwas_file = LOCAL_DBS_DIR / 'gwas_catalogue_association.tsv'
+    df = load_gwas_data(str(gwas_file))
     df = clean_and_prepare_variant_data(df, p_value_threshold=5e-8)
     
     # Get variant-gene-trait mapping and all variants
@@ -246,8 +252,8 @@ def gwas_variant_set2(count):
     """Generate Set 2: Same format but different question instances"""
     
     # Load and process GWAS data
-    gwas_file = '../local_dbs/gwas_catalogue_association.tsv'
-    df = load_gwas_data(gwas_file)
+    gwas_file = LOCAL_DBS_DIR / 'gwas_catalogue_association.tsv'
+    df = load_gwas_data(str(gwas_file))
     df = clean_and_prepare_variant_data(df, p_value_threshold=5e-8)
     
     # Get variant-gene-trait mapping and all variants
@@ -306,8 +312,8 @@ def gwas_variant_set3(count):
     """Generate Set 3: Same format but different question instances"""
     
     # Load and process GWAS data
-    gwas_file = '../local_dbs/gwas_catalogue_association.tsv'
-    df = load_gwas_data(gwas_file)
+    gwas_file = LOCAL_DBS_DIR / 'gwas_catalogue_association.tsv'
+    df = load_gwas_data(str(gwas_file))
     df = clean_and_prepare_variant_data(df, p_value_threshold=5e-8)
     
     # Get variant-gene-trait mapping and all variants

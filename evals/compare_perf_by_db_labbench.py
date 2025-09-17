@@ -15,11 +15,14 @@ import re
 import os
 import argparse
 import textwrap
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-DEFAULT_INPUT = "benchmarks_generation/results/labbench/claude/dbqa_mc_results_subset.csv"
+EVALS_DIR = Path(__file__).resolve().parent
+GENERATION_DIR = EVALS_DIR / "generation"
+DEFAULT_INPUT = str(GENERATION_DIR / "results" / "labbench" / "claude" / "dbqa_mc_results_subset.csv")
 
 SOURCE_PATTERNS = {
     "miRDB": re.compile(r"\bmiRDB\b", re.IGNORECASE),

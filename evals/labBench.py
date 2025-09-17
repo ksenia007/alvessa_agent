@@ -14,8 +14,9 @@ import os
 from pathlib import Path
 
 from .benchmarks_general import run_benchmark
+EVALS_DIR = Path(__file__).resolve().parent
 SUBFOLDERS = ['labbench']
-MAIN_PATH = Path("benchmarks_generation")
+MAIN_PATH = EVALS_DIR / "generation"
 MAX_ROWS = 20 # -1 means all
 
 SYSTEM_MSG = (

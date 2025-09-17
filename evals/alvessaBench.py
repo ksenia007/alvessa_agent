@@ -15,8 +15,9 @@ from pathlib import Path
 
 from .benchmarks_general import run_benchmark
 
+EVALS_DIR = Path(__file__).resolve().parent
 SUBFOLDERS = ['gencode'] #['GWAS_AM', 'mirDB', 'gencode', 'GWAS', 'reactome', 'biogrid']
-MAIN_PATH = Path("benchmarks_generation")
+MAIN_PATH = EVALS_DIR / "generation"
 MAX_ROWS = 5  # -1 means all
 
 SYSTEM_MSG = (

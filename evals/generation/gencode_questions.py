@@ -12,10 +12,16 @@ Create an evaluation using Gencode database.
 
 """
 #%%
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 
-def load_gencode(file_path: str = "../local_dbs/gencode.v48.expanded.parquet") -> pd.DataFrame:
+ROOT = Path(__file__).resolve().parents[2]
+LOCAL_DBS_DIR = ROOT / "local_dbs"
+
+
+def load_gencode(file_path: Path = LOCAL_DBS_DIR / "gencode.v48.expanded.parquet") -> pd.DataFrame:
     """Load Gencode database from a CSV file."""
     df = pd.read_parquet(file_path)
     df = df[df.gene_type.isin(['protein_coding', 'lncRNA'])]
@@ -176,4 +182,3 @@ if __name__ == "__main__":
     mc_max_exons.to_csv('gencode/set1.csv', index=False)
     mc_select_max_list = make_mc_questions_most_exons_in_list(df)
     mc_select_max_list.to_csv('gencode/set2.csv', index=False)
-

@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
@@ -13,7 +13,9 @@ from itertools import combinations
 import csv
 import requests
 
-with open('../local_dbs/gene_names_list.txt', 'r') as f:
+LOCAL_DBS_DIR = ROOT / 'local_dbs'
+
+with open(LOCAL_DBS_DIR / 'gene_names_list.txt', 'r') as f:
     gene_list = [line.strip() for line in f]
 all_genes_count = len(gene_list)
 
@@ -41,7 +43,7 @@ def reactome_set1(count):
 
     output_df = pd.DataFrame()
     new_questions = []
-    reactome_df = pd.read_csv('../local_dbs/NCBI2Reactome_All_Levels.txt', names = ['geneID', 'pathwayID', 'url', 'pathway_name', 'evidence_code', 'species'], sep = '\t')
+    reactome_df = pd.read_csv(LOCAL_DBS_DIR / 'NCBI2Reactome_All_Levels.txt', names = ['geneID', 'pathwayID', 'url', 'pathway_name', 'evidence_code', 'species'], sep = '\t')
     all_pathways_list = list(set(reactome_df['pathway_name'].values))
     all_pathways_count = len(all_pathways_list)
 
@@ -99,7 +101,7 @@ def reactome_set2(count):
 
     output_df = pd.DataFrame()
     new_questions = []
-    reactome_df = pd.read_csv('../local_dbs/NCBI2Reactome_All_Levels.txt', names = ['geneID', 'pathwayID', 'url', 'pathway_name', 'evidence_code', 'species'], sep = '\t')
+    reactome_df = pd.read_csv(LOCAL_DBS_DIR / 'NCBI2Reactome_All_Levels.txt', names = ['geneID', 'pathwayID', 'url', 'pathway_name', 'evidence_code', 'species'], sep = '\t')
     
     ### Code to create overlapping geneID_pairs.csv
     # pairs = set()
@@ -114,13 +116,13 @@ def reactome_set2(count):
 
     # print(len(pairs_list))
 
-    # with open("../local_dbs/overlapping_pathways_geneID_pairs.csv", "w", newline="") as f:
+    # with open(LOCAL_DBS_DIR / "overlapping_pathways_geneID_pairs.csv", "w", newline="") as f:
     #     writer = csv.writer(f)
     #     writer.writerow(["geneID1", "geneID2"])
     #     writer.writerows(pairs_list)
 
     pairs_list = []
-    with open("../local_dbs/overlapping_pathways_geneID_pairs.csv", "r") as f:
+    with open(LOCAL_DBS_DIR / "overlapping_pathways_geneID_pairs.csv", "r") as f:
         reader = csv.reader(f)
         next(reader)  
         for row in reader:
