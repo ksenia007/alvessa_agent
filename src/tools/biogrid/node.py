@@ -10,17 +10,14 @@ Description:
 Tool to query BioGRID interactions with a list of gene symbols"""
 
 from __future__ import annotations
-import requests
-import time
-from typing import Any, Dict, List, Optional
-from src.config import BioGRID_API_KEY
-from src.state import State 
-from src.tools.base import Node
-from src.tools.shared.word2vec import fps_word2vec
-from collections import defaultdict
-from tools.biogrid.utils import _fetch_predictions_BioGRID
 
-DEBUG=True
+import time
+
+from src.state import State
+from src.tools.base import Node
+from .utils import _fetch_predictions_BioGRID
+
+DEBUG = True
 
 def bioGRID_predictions_agent(state: "State") -> "State":
     """
@@ -38,11 +35,10 @@ def bioGRID_predictions_agent(state: "State") -> "State":
         
     # TODO: Split the functionality, BioGRID should only fetch interactions, and HB called outside
     """
-    gene_obj = state.get("gene_entities", [])
-    for gene_name in gene_obj.keys():
+    gene_entities = state.get("gene_entities") or {}
+    for gene_name, gene in gene_entities.items():
         if not gene_name:
             continue
-        gene = gene_obj[gene_name]
         # if BioGrid was run before, skip genes we already have predictions for
         if gene.has_interactions_collected():
             if DEBUG:
@@ -60,6 +56,7 @@ def bioGRID_predictions_agent(state: "State") -> "State":
                 gene.add_many_interactions(exp, all_genes_interacting)
             for exp, all_genes_interacting in nonhuman_set.items():
                 gene.add_many_nonhuman_interactions(exp, all_genes_interacting)
+            gene.add_tool("BioGRID")
 
         time.sleep(0.3)  # courteous pause
 
@@ -67,8 +64,6 @@ def bioGRID_predictions_agent(state: "State") -> "State":
         print(f"[BioGRID] Predictions fetched")
 
     return 
-
-
 NODES: tuple[Node, ...] = (
     Node(
         name="BioGRID",

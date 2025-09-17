@@ -249,6 +249,19 @@ class Gene:
         for partner in partner_genes:
             self.add_nonhuman_interaction(experiment_type, partner)
 
+    def add_interactors_enriched_go_terms(
+        self,
+        source: str,
+        category: str,
+        enriched_terms: List[str],
+    ) -> None:
+        """Record GO term enrichment calculated over interaction partners."""
+        self.interactions.add_enrichment(source, category, enriched_terms)
+
+    def get_interactors_enriched_go_terms(self) -> Dict[str, Dict[str, List[str]]]:
+        """Return GO enrichment summaries grouped by source and category."""
+        return self.interactions.get_enrichment()
+
     def get_interactions(self, experiment_type: Optional[str] = None) -> Dict[str, List[str]] | List[str]:
         if experiment_type is None:
             return self.interactions.human_interactions

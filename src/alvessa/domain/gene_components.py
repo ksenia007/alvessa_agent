@@ -57,11 +57,37 @@ class InteractionProfile:
     # Key: experiment type, Val: list of partner gene symbols
     human_interactions: Dict[str, List[str]] = field(default_factory=dict)
     nonhuman_interactions: Dict[str, List[str]] = field(default_factory=dict)
+    go_enrichment: Dict[str, Dict[str, List[str]]] = field(default_factory=dict)
 
     def all_interaction_partners(self) -> List[str]:
         """Flattens and returns a unique, sorted list of human interaction partners."""
         partners = {p for partners_list in self.human_interactions.values() for p in partners_list}
         return sorted(list(partners))
+
+    def add_enrichment(self, source: str, category: str, terms: List[str]) -> None:
+        """Record GO enrichment terms by source (e.g. old_go, pan_go) and category."""
+        source = (source or "").strip()
+        category = (category or "").strip()
+        if not source or not category:
+            return
+
+        cleaned = []
+        seen = set()
+        for term in terms or []:
+            term_norm = (term or "").strip()
+            if not term_norm or term_norm in seen:
+                continue
+            cleaned.append(term_norm)
+            seen.add(term_norm)
+
+        bucket = self.go_enrichment.setdefault(source, {})
+        bucket[category] = cleaned
+
+    def get_enrichment(self, source: str | None = None) -> Dict[str, Dict[str, List[str]]]:
+        """Return recorded GO enrichment grouped by source/category."""
+        if source is None:
+            return self.go_enrichment
+        return {source: dict(self.go_enrichment.get(source, {}))}
 
 @dataclass
 class TranscriptomeProfile:
@@ -134,4 +160,3 @@ class GeneGWASProfile:
     top_variants: List[str] = field(default_factory=list)
     related_genes: List[str] = field(default_factory=list)
     affected_proteins: List[str] = field(default_factory=list)
-

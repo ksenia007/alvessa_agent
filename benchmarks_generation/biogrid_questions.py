@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from src.tools.biogrid.node import _fetch_predictions_BioGRID
+from src.tools.biogrid.utils import _fetch_predictions_BioGRID
 
 with open('../local_dbs/gene_names_list.txt', 'r') as f:
     gene_list = [line.strip() for line in f]
