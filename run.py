@@ -18,6 +18,7 @@ and also a PNG visual of the graph as graph_diagram.png
 
 from __future__ import annotations
 import pprint
+from pathlib import Path
 from typing import Dict, List
 
 from src.alvessa.workflow.graph_builder import build_graph
@@ -28,7 +29,13 @@ import json
 
 
 
-def run_pipeline(user_message: str, prompt: str = '', mc_setup: bool = False) -> Dict:
+def run_pipeline(
+    user_message: str,
+    prompt: str = '',
+    mc_setup: bool = False,
+    *,
+    output_dir: Path | str | None = None,
+) -> Dict:
     """
     Execute the LangGraph workflow on a single user prompt.
 
@@ -36,13 +43,19 @@ def run_pipeline(user_message: str, prompt: str = '', mc_setup: bool = False) ->
     ----------
     user_message
         The natural-language question.
+    prompt
+        Optional system prompt override.
+    mc_setup
+        Whether to run in multi-call setup (skips verifier).
+    output_dir
+        Optional directory where artifacts like the graph diagram are written.
 
     Returns
     -------
     dict
         Final LangGraph state for inspection.
     """
-    graph = build_graph(mc_setup = mc_setup)
+    graph = build_graph(mc_setup = mc_setup, diagram_dir=output_dir)
     state = graph.invoke({"messages": [{"role": "user", "content": user_message}], 
                           "prompt": prompt})
     return state
@@ -79,7 +92,7 @@ if __name__ == "__main__":
         for q in EXAMPLE_QUESTIONS:
             print("\n" + "=" * 80)
             print("Q:", q)
-            result = run_pipeline(q)
+            result = run_pipeline(q, output_dir=run_dir)
             # save for the html
             with open(paths["json"], "w") as jf:
                 json.dump(result, jf, indent=2, default=str)

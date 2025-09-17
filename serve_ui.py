@@ -196,7 +196,7 @@ def run(q: str = Query(..., description="User question")):
         # redirect stdio for the duration of the pipeline
         with redirect_stdio_to_log(log_path):
             print(f"=== START: {q} ===")
-            state = run_pipeline(q)  # all prints inside stream to demo.log in real time
+            state = run_pipeline(q, output_dir=run_dir)  # all prints inside stream to demo.log in real time
             print("=== END ===")
 
         # write sanitized state and return it

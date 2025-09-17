@@ -10,6 +10,8 @@ Description:
 Compile the LangGraph workflow and save the diagram as PNG."""
 
 from __future__ import annotations
+from pathlib import Path
+
 from langgraph.graph import StateGraph, END
 
 from src.state import State
@@ -37,7 +39,7 @@ def run_async_sync(fn: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
-def build_graph(mc_setup: bool = False) -> Callable[[State], State]:
+def build_graph(mc_setup: bool = False, diagram_dir: Path | str | None = None) -> Callable[[State], State]:
     """Return a compiled LangGraph ready for invocation (diagram export is best‑effort)."""
     g = StateGraph(State)
 
@@ -84,16 +86,22 @@ def build_graph(mc_setup: bool = False) -> Callable[[State], State]:
     compiled = g.compile()
 
     # Best‑effort diagram printing
+    output_dir = Path(diagram_dir) if diagram_dir is not None else Path(__file__).resolve().parents[3]
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    png_path = output_dir / "graph_diagram.png"
+    mmd_path = output_dir / "graph_diagram.mmd"
+
     try:
         # Newer pattern (sometimes on the compiled object)
         png = compiled.draw_mermaid_png()
-        with open("graph_diagram.png", "wb") as f:
+        with png_path.open("wb") as f:
             f.write(png)
     except AttributeError:
         try:
             # Older pattern via an internal graph on compiled
             png = compiled.get_graph().draw_mermaid_png()  # may exist in some versions
-            with open("graph_diagram.png", "wb") as f:
+            with png_path.open("wb") as f:
                 f.write(png)
         except Exception:
             try:
@@ -103,7 +111,7 @@ def build_graph(mc_setup: bool = False) -> Callable[[State], State]:
                     mm = compiled.draw_mermaid()
                 else:
                     mm = compiled.get_graph().draw_mermaid()  # older fallback
-                with open("graph_diagram.mmd", "w") as f:
+                with mmd_path.open("w", encoding="utf-8") as f:
                     f.write(mm)
             except Exception:
                 print('UNABLE TO UPDATE THE DIAGRAM')
