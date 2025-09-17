@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alvessa-agent"
+version = "0.1.0"
+description = "Alvessa - An agentic evidence-grounded research assistant for genomics."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "Ksenia Sokolova" },
+  { name = "Keerthana Nallamotu" },
+  { name = "Sanketh Vedula" },
+  { name = "Dmitri Kosenkov" }
+]
+dependencies = [
+  "anthropic==0.52.1",
+  "fastapi==0.116.1",
+  "flair==0.15.1",
+  "gensim==4.3.3",
+  "gliner==0.2.21",
+  "langgraph==0.4.7",
+  "matplotlib==3.10.5",
+  "numpy==1.26.4",
+  "pandas==2.3.1",
+  "pytest==8.4.1",
+  "requests==2.32.3",
+  "scikit-learn==1.7.0",
+  "scipy==1.13.1",
+  "seaborn==0.13.2",
+  "statsmodels==0.14.5",
+  "typing_extensions==4.13.2",
+  "urllib3==2.4.0",
+  "uvicorn==0.35.0"
+]
+
+
+[project.scripts]
+alvessa = "src.alvessa.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
