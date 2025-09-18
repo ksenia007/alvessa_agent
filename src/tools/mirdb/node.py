@@ -169,6 +169,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="miRDB",
         entry_point=miRDB_agent,
-        description="Annotate miRNAs with predicted targets from the miRDB database across organisms.",
+        description="Fetches miRDB computationally predicted gene targets of miRNA.",
     ),
 )

@@ -375,22 +375,21 @@ NODES: tuple[Node, ...] = (
         name="query_gwas_by_gene",
         entry_point=gwas_associations_agent,
         description=(
-            "Retrieve GWAS associations for the extracted genes, enriching the state with variants, "
-            "traits, and per-gene summaries."
+            "Retrieves genome-wide association study (GWAS) results for a given gene. It collects traits and diseases associated with genetic variants linked to that gene, along with the specific variants"
         ),
     ),
     Node(
         name="query_gwas_extensive",
         entry_point=partial(gwas_associations_agent, mode="extensive"),
         description=(
-            "Run a deep GWAS search (extensive mode) returning expanded variant and trait coverage."
+            "This is a more comprehensive version of the query_gwas_by_gene tool, and it is used to retrieve more detailed information about the GWAS results. It collects an extensive list of traits/diseases associated with an extensive list of genetic variants linked to that gene. Use this tool *ONLY* if the question is very specific that requires what is equivalent to an extensive database search, not to general characterisation of the gene."
         ),
     ),
     Node(
         name="expand_gene_set_by_trait",
         entry_point=query_by_trait_agent,
         description=(
-            "Query GWAS traits by disease/phenotype keyword to expand the working gene list."
+            "Query GWAS traits by disease/phenotype keyword to expand the working gene list. This could be used to discover more relevant genes underlying a trait, if a broader genetic context would be valuable for the analysis."
         ),
     ),
 )

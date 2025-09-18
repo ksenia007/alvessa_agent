@@ -389,6 +389,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="prot",
         entry_point=prot_agent,
-        description="Render AlphaFold-based protein structures with FPocket summaries for supplied genes.",
+        description="Retrieves structural data for a single or several proteins given one or several gene symbols. Resolves UniProt ID and AlphaFold Protein Database structure, and provides per-residue metrics: pLDDT confidence scores (structural reliability) and FPocket druggability scores. Outputs both an interactive 3Dmol.js visualization and a text summary of min, max and averaged metrics.",
     ),
 )
