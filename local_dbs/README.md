@@ -26,8 +26,8 @@ The following files must be downloaded before using the GWAS and Sei tools:
 **Donwload location** https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_48/gencode.v48.primary_assembly.basic.annotation.gtf.gz
 -  Gencode annotaitons
 
-- `alvessa_proteins.db`  
-**Download Location:** https://drive.google.com/file/d/1vD1GYe4V6LIwwkKqhEijFRzIb_3ScxmJ/view?usp=drive_link  
+- `alvessa_proteins.db`   
+**Download Location:** https://drive.google.com/file/d/1YmZTGjNjmgWCbM2yKr_Ajp3YYeaHeFiE/view?usp=drive_link
 Contains pLDDT and FPocket data for proteins, used by `tool_prot` to visualize protein structures and druggability.
 
 - `pdb.zip` (unzip into the `pdb/` folder)  
