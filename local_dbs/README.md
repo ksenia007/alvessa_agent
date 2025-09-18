@@ -28,7 +28,7 @@ The following files must be downloaded before using the GWAS and Sei tools:
 
 - `alvessa_proteins.db`   
 **Download Location:** https://drive.google.com/file/d/1YmZTGjNjmgWCbM2yKr_Ajp3YYeaHeFiE/view?usp=drive_link
-Contains pLDDT and FPocket data for proteins, used by `tool_prot` to visualize protein structures and druggability.
+Contains pLDDT, SASA, Polarity Index and FPocket data for proteins, used by `tools.prot` to analyze and visualize protein structures and druggability.
 
 - `pdb.zip` (unzip into the `pdb/` folder)  
 **Download Location:** https://drive.google.com/file/d/17uZse6xB8T_U_XcUeVWdCntqfmHIsfv0/view?usp=drive_link  
