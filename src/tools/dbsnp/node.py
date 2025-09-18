@@ -240,7 +240,7 @@ NODES: tuple[Node, ...] = (
         name="variant_population_summaries",
         entry_point=partial(dbsnp_variants_agent, include_population_summaries=True),
         description=(
-            "Extend dbSNP annotations with population frequency summaries for each variant."
+            "Extend dbSNP annotations with population frequency summaries for each variant. Useful for characterizing the frequency of variants in the population."
         ),
         dependencies=("variant_annotations",),
     ),

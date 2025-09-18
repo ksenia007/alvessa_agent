@@ -415,12 +415,12 @@ NODES: tuple[Node, ...] = (
     Node(
         name="humanbase_functions",
         entry_point=humanbase_predictions_agent,
-        description="Fetch HumanBase functional predictions and annotate gene objects with disease/GO context.",
+        description="Fetch per-gene functional predictions from HumanBase tissue-specific networks. Provides expanded list of functions.",
     ),
     Node(
         name="expectosc_predictions_agent",
         entry_point=expectosc_predictions_agent,
-        description="Annotate variants with HumanBase ExpectoSC tissue-specific predictions (requires dbSNP coordinates).",
+        description="Annotates variants with predicted (from sequence) cell type-specific expression disruption predictions. Requires variant_annotations to be run first",
         dependencies=("variant_annotations",),
     ),
 )

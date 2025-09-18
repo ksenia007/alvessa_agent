@@ -232,11 +232,14 @@ NODES: tuple[Node, ...] = (
     Node(
         name="prot",
         entry_point=prot_agent,
-        description = (
-        "Visualize AlphaFold-predicted protein structures for one or more genes, overlaying "
-        "per-residue pLDDT confidence, FPocket-derived druggability scores, solvent-accessible "
-        "surface area (SASA), and polarity index (hydrophilic vs. hydrophobic regions). "
-        "Generates interactive 3D views with color-coded surfaces, summary statistics "
-        "(min/max/average per protein), and interpretation notes for druggability assessment.")
+        description=(
+            "Visualize AlphaFold-predicted protein structures for one or more genes, overlaying "
+            "per-residue pLDDT confidence scores (structural reliability), FPocket-derived "
+            "druggability scores, solvent-accessible surface area (SASA), and polarity index "
+            "(hydrophilic vs. hydrophobic regions). Resolves UniProt IDs and AlphaFold structures "
+            "automatically. Generates interactive 3Dmol.js views with color-coded surfaces, "
+            "summary statistics (min/max/average per protein), and interpretation notes for "
+            "druggability assessment."
+        ),
     ),
 )

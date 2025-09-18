@@ -107,7 +107,7 @@ NODES: tuple[Node, ...] = (
     Node(
         name="sei",
         entry_point=sei_predictions_agent,
-        description="Classify variants using the SEI sequence model to provide regulatory context.",
+        description="Fetches predictions of the sequence regulatory activity for given variants. This requires variant_annotations to be run first.",
         dependencies=("variant_annotations",),
     ),
 )

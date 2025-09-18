@@ -439,7 +439,7 @@ NODES: tuple[Node, ...] = (
     Node(
         name="uniprot_base",
         entry_point=uniprot_node,
-        description="Fetch UniProt entries for genes, extracting diseases, GO terms, and isoform annotations.",
+        description="Fetch UniProt entries for genes, extracting diseases, GO terms, and isoform annotations. Helps to expand the base annotations.",
         aliases=("uniprot_gwas",),
     ),
 )
