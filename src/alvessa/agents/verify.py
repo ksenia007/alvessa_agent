@@ -10,17 +10,16 @@ Self-verification node that checks if the answer matches context."""
 
 from __future__ import annotations
 import json
+import unicodedata
 from typing import Any, Dict
 
 from src.alvessa.clients.claude import claude_call
 from src.config import VERIFY_MODEL, DEBUG
 from src.state import State
 
-
 def verify_evidence_node(state: "State") -> "State":
     """
     Ask model (Claude-Haiku) to judge whether the answer’s evidence is supported.
-
     Returns
     -------
     State
@@ -29,14 +28,22 @@ def verify_evidence_node(state: "State") -> "State":
     if DEBUG:
         print("[verify_evidence_node] preparing verification...")
 
-
     reply = state.get("llm_json", {})
     context = state.get("context_block", "")
     question = (state.get("messages") or [{}])[-1].get("content", "")
-    answer: str = reply.get("answer", "")
-    evidence_list = reply.get("evidence", [])
 
-    system_msg: str = (
+    # Normalize strings to NFC form (ensures Å² stored canonically)
+    def normalize(text: str) -> str:
+        return unicodedata.normalize("NFC", text)
+
+    answer = normalize(reply.get("answer", ""))
+    evidence_list = [normalize(ev) for ev in reply.get("evidence", [])]
+    context = normalize(context)
+
+    # Serialize evidence list with ensure_ascii=True for safety
+    evidence_json = json.dumps(evidence_list, indent=2, ensure_ascii=True)
+
+    system_msg = (
         "You are a meticulous fact-checker. Decide whether ANSWER is fully "
         "supported by the listed EVIDENCE within CONTEXT. Reply only with either\n"
         '{"verdict":"pass"}\n  or\n{"verdict":"fail","reason":"<brief>"}'
@@ -45,7 +52,7 @@ def verify_evidence_node(state: "State") -> "State":
     verify_prompt = (
         f"QUESTION:\n{question}\n\n"
         f"ANSWER:\n{answer}\n\n"
-        f"EVIDENCE:\n{json.dumps(evidence_list, indent=2)}\n\n"
+        f"EVIDENCE:\n{evidence_json}\n\n"
         f"CONTEXT:\n{context}"
     )
 
@@ -67,8 +74,4 @@ def verify_evidence_node(state: "State") -> "State":
     if DEBUG:
         print("[verify_evidence_node]", verdict, parsed.get("reason", ""))
 
-
-    if verdict == "fail":
-        return {"verification": "fail"}
-    else:
-        return {"verification": "pass"}
+    return {"verification": verdict}

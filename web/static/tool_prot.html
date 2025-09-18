@@ -25,14 +25,16 @@
         <option value="cartoon">Cartoon</option>
         <option value="surface-plddt">Surface (pLDDT)</option>
         <option value="surface-fpocket">Surface (FPocket)</option>
+        <option value="surface-sasa">Surface (SASA/res)</option>
+        <option value="surface-pi">Surface (Polarity Index)</option>
       </select>
     </div>
 
     <!-- Legend inline with controls -->
-    <div id="legend">
-      <span>Low (0.0)</span>
-      <canvas id="colorLegend"></canvas>
-      <span>High (1.0)</span>
+    <div id="legend" style="display:none;">
+      <span id="legendMin">Min</span>
+      <canvas id="colorLegend" width="120" height="12"></canvas>
+      <span id="legendMax">Max</span>
     </div>
   </div>
 
