@@ -171,7 +171,7 @@ NODES: tuple[Node, ...] = (
     Node(
         name="alphamissense",
         entry_point=alphamissense_predictions_agent,
-        description="Annotate variants with AlphaMissense pathogenicity classes where available.",
+        description="Fetches Alphamissense predicted pathogenicity classes for given variants. This requires variant_annotations to be run first.",
         dependencies=("variant_annotations",),
     ),
 )

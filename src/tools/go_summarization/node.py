@@ -174,13 +174,13 @@ NODES: tuple[Node, ...] = (
     Node(
         name="Summarize_GO",
         entry_point=go_summarization_agent,
-        description="Summarizes GO terms for each gene using embeddings and UniProt fallbacks.",
+        description="Summarizes GO terms for the input genes, to condense long list into representative terms.",
     ),
     Node(
         name="Summarize_bioGRID_GO",
         entry_point=summarize_biogrid_go_agent,
         description=(
-            "Summarize BioGRID human interactors by reporting enriched GO/PAN-GO terms and narrative highlights."
+            "This is a summarized version of BIOGRID that should be run instead of BioGRID when individual interactor names are not needed to answer the query. Provides a summarized list of GO terms significantly enriched for the interacting genes of each input gene fetched from BioGRID."
         ),
         dependencies=("BioGRID",),
     ),

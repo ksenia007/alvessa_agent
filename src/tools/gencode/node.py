@@ -75,6 +75,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="gencode_gene_node",
         entry_point=gencode_gene_node,
-        description="Annotate genes with GENCODE metadata (transcripts, spans, gene type).",
+        description="Annotate genes with GENCODE metadata (transcripts, spans, gene type, number of exons). Essential for many downstream analyses.",
     ),
 )
