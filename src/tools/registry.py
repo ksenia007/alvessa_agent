@@ -25,6 +25,10 @@ EXAMPLE_TOOL_SELECTION = """EXAMPLE PIPELINES (pay attention to dependencies):
 
 5. Protein structure, visualization and druggability:
    ["prot"]
+   
+6. Two-Sample MR: 
+    ["extract_entities", "gencode_gene_node", "twosample_mr_agent-exposureID-outcomeID"] for general
+    ["extract_entities", "gencode_gene_node", "twosample_mr_agent-exposureID-outcomeID-GENE"] for gene-prioritized; *important* - note Gencode tool is required for gene-locus specific 2 sample MR
 
 
 Note these are only examples, and in real life you may need to run combinations of these tools **depending on the user intent and the entities extracted**.

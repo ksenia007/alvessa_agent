@@ -19,3 +19,9 @@ benchmarks_generation/results_checkpoint_*
 TP53_plus1_prot.html
 TP53_plus1_prot.txt
 out/
+.venv/*
+.venv
+alvessa_env/
+tmp_GENAL
+alvessa_agent.egg*
+

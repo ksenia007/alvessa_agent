@@ -48,3 +48,7 @@ class State(TypedDict, total=False):
 
     # Protein structure and druggablility visualization
     prot_html: Annotated[str, operator.add]
+    
+    # General free-text annotations (not tied to a specific gene)
+    text_notes: Annotated[List[str], operator.add]
+    two_sample_mr_ui: Annotated[Dict[str, Any], operator.or_]
