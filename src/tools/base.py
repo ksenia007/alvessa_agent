@@ -16,6 +16,7 @@ class Node:
     dependencies: Tuple[str, ...] = field(default_factory=tuple)
     aliases: Tuple[str, ...] = field(default_factory=tuple)
     tags: Tuple[str, ...] = field(default_factory=tuple)
+    run_in_second_loop: bool = False
 
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         return self.entry_point(*args, **kwargs)

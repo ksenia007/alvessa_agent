@@ -19,6 +19,7 @@ from src.state import State
 import re
 import numpy as np
 
+
 def ensure_json_safe(x):
     if isinstance(x, dict):
         return {ensure_json_safe(k): ensure_json_safe(v) for k, v in x.items()}
@@ -111,10 +112,14 @@ def create_context_block(state: "State") -> str:
     
     if DEBUG:
         print("[create_context_block function] preparing context block...")
+        
+    # Fiest, use text_notes in state if available
+    text_notes = state.get("text_notes", [])
+    context_payload = [{"general_notes": text_notes}] if text_notes else []
     
     # Build gene-based context
     gene_list = list(set(state.get("gene_entities", [])))
-    context_payload = [_extract_gene_data(state, gene) for gene in gene_list]
+    context_payload += [_extract_gene_data(state, gene) for gene in gene_list]
 
     if DEBUG:
         print(f"[create_context_block] genes to summarize: {gene_list}")

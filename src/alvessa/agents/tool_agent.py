@@ -68,7 +68,7 @@ def tool_invoke(state: "State") -> "State":
     """Invoke selected tools and agents, returning ONLY updates (no in-place mutation)."""
     selected_tools = list(state.get("use_tools", []))
     used = set(state.get("used_tools", []))
-
+    
     # filter out tools already used
     selected_tools = [t for t in selected_tools if t not in used]
     if DEBUG:
@@ -79,31 +79,77 @@ def tool_invoke(state: "State") -> "State":
     if not selected_tools:
         return {"use_tools": []}
 
+   
+    view = dict(state)
     acc: dict = {}  # all updates accumulated here
 
     # run tools sequentially against a read-only view
     for name in selected_tools:
+        print('*NAME*', name)
+        view.update(acc)
+        print(view)
         fn = TOOL_FN_MAP.get(name)
         if not fn:
-            continue
+            # check twosample_mr_agent special case
+            if name.startswith("twosample_mr_agent"):
+                print('[TOOL RUN] Special case: twosample_mr_agent with parameters')
+                fn = TOOL_FN_MAP.get("twosample_mr_agent")
+                if fn:
+                    # parse parameters from the name, e.g. twosample_mr_agent-EXPOSURE-OUTCOME
+                    parts = name.split("-")
+                    if len(parts) == 3:
+                        exposure, outcome = parts[1], parts[2]
+                        if DEBUG:
+                            print(f"[TOOL RUN] → {name} (exposure={exposure}, outcome={outcome})")
+                        print('view in twosample_mr_agent:', view)
+                        out = fn(view, exposure_gwas=exposure, outcome_gwas=outcome)
+                        if out is None:
+                            used.add(name)
+                            continue
+                        out = dict(out)
+                        out.pop("messages", None)
+                        _safe_merge(acc, out)
 
-        print(f"[TOOL RUN] → {name}", flush=True)
+                        used.add(name)
+                        continue 
+                    if len(parts) == 4:
+                        # also pass in optional gene name
+                        exposure, outcome, gene = parts[1], parts[2], parts[3]
+                        if DEBUG:
+                            print(f"[TOOL RUN] → {name} (exposure={exposure}, outcome={outcome}, gene={gene})")
+                        out = fn(view, exposure_gwas=exposure, outcome_gwas=outcome, gene_name=gene)
+                        if out is None:
+                            used.add(name)
+                            continue
+                        out = dict(out) # shallow copy
+                        out.pop("messages", None)
+                        _safe_merge(acc, out)
+                        used.add(name)
+                        view.update(acc)
 
-        # compose a view for the tool (original state + updates so far), no mutation
-        view = dict(state)
-        view.update(acc)
+                        continue    
+            else:
+                print(f"[TOOL RUN] Skipping unknown tool: {name}", flush=True)
+                used.add(name)
 
-        out = fn(view)
-        if not isinstance(out, dict):
+                continue       
+        else:
+            print(f"[TOOL RUN] → {name}", flush=True)
+
+            # compose a view for the tool (original state + updates so far), no mutation
+        
+            out = fn(view)
+            if not isinstance(out, dict):
+                used.add(name)
+                continue
+
+            # sanitize & merge
+            out = dict(out)  # shallow copy
+            out.pop("messages", None)
+            _safe_merge(acc, out)
+
             used.add(name)
-            continue
-
-        # sanitize & merge
-        out = dict(out)  # shallow copy
-        out.pop("messages", None)
-        _safe_merge(acc, out)
-
-        used.add(name)
+            view.update(acc)
 
     # book-keeping updates
     acc["used_tools"] = sorted(used)
@@ -162,7 +208,15 @@ def select_tools(state: "State") -> "State":
         print(f"[TOOL SELECTION ERROR] Could not parse: {tool_response}\n{e}")
         selected_tools = []
 
-    selected_tools = [t for t in selected_tools if t in TOOL_FN_MAP and t not in used_tools]
+    selected_tools_main = [t for t in selected_tools if t in TOOL_FN_MAP and t not in used_tools]
+    # special case for 'twosample_mr_agent' which allows more complicated semi match, as fomatted twosample_mr_agent-value1-value2
+    found_2sample = [
+        t for t in selected_tools if t.startswith("twosample_mr_agent") 
+    ]
+    if found_2sample:
+        selected_tools_main.append(found_2sample)
+    if DEBUG:
+        print(f"[TOOL SELECTION] Selected tools: {selected_tools}")
 
     updates = {
         "use_tools": selected_tools,
