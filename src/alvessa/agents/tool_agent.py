@@ -25,6 +25,44 @@ import ast
 from src.alvessa.agents.conditioned_claude import create_context_block
 
 DEBUG = True
+CACHED_TTL = None  # or "1h"
+
+def cached_system_blocks() -> list:
+    """
+    Build a short 'rules' block + a long 'catalog' block marked cacheable.
+    Anthropic caches the full prefix up to this block across requests.
+    """
+    # Keep the generic instruction short and stable
+    rules = {
+        "type": "text",
+        "text": (
+            "You decide which tools to run for a biomedical question. "
+            "Return ONLY a Python list of tool names as specific in the instructions (e.g., [\"uniprot_node\", \"gwas_associations_agent\"]). "
+            "Do not explain."
+        ),
+    }
+
+    # Long, stable content goes here: tool catalog + example format
+    catalog_text = "\n".join(f"- {name}: {desc}" for name, desc in TOOL_CATALOG.items())
+    examples_text = f"Examples of valid outputs:\n{EXAMPLE_TOOL_SELECTION}"
+
+    catalog_block = {
+        "type": "text",
+        "text": f"Available tools:\n{catalog_text}\n\n{examples_text}",
+        "cache_control": (
+            {"type": "ephemeral", "ttl": CACHED_TTL} if CACHED_TTL else {"type": "ephemeral"}
+        ),
+    }
+
+    return [rules, catalog_block]
+
+def format_state_for_prompt(state: State) -> str:
+    """Short per-call prompt (question + minimal guardrails)."""
+    question = state["messages"][-1]["content"]
+    return (
+        f'User question:\n"""{question}"""\n\n'
+        "Return ONLY a Python list of tool names. If none are needed, return []."
+    )
 
 
 def format_state_for_prompt(state: State) -> str:
@@ -33,7 +71,7 @@ def format_state_for_prompt(state: State) -> str:
     question = state["messages"][-1]["content"]
     catalog = "\n".join(f"- {name}: {desc}" for name, desc in TOOL_CATALOG.items())
 
-    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" \n\n If the question mentioned a database or tool and we do not have it, use the most similar available one. Available tools: {catalog}.\n\n Examples outputs look like this: {EXAMPLE_TOOL_SELECTION}"""
+    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" \n\n . Do not answer quesiton yet, your goal is to decide which tools to run. If the question mentioned a database or tool and we do not have it, use the most similar available one. Available tools: {catalog}.\n\n Examples outputs look like this: {EXAMPLE_TOOL_SELECTION}"""
 
 def _safe_merge(acc: dict, out: dict) -> None:
     """Merge tool output into acc without mutating caller state."""
@@ -157,42 +195,44 @@ def tool_invoke(state: "State") -> "State":
 
     return acc
 
-
 def select_tools(state: "State") -> "State":
-    """Intent recognition and tool selection."""
+    """Intent recognition and tool selection (with prompt caching)."""
     used_tools = set(state.get("used_tools", []))
 
+    # Build the short, per-call user prompt
+    base_user_prompt = format_state_for_prompt(state)
+
+    # Append volatile info (used tools + current context) to the user prompt ONLY.
     if used_tools:
-        if DEBUG:
-            print("[TOOL SELECTION] Selecting additional tools based on current state.")
-        system_msg_base = format_state_for_prompt(state)
+        used_tools_str = ", ".join(sorted(used_tools))
         current_context_block = create_context_block(state)
-        used_tools_str = ", ".join(sorted(used_tools)) if used_tools else "None"
-        system_msg = (
-            f"{system_msg_base}\n\n"
+        user_prompt = (
+            f"{base_user_prompt}\n\n"
             f"Already used tools: {used_tools_str}\n"
             f"Do not repeat tools already used.\n"
-            f"IMPORTANT: if no additional tools are needed, return [] with no explanation.\n"
-            f"Overall, NO explanation, downatream parser can only work with a list of tools.\n\n"
-            f"Current context block:\n{current_context_block}\n\n ANY OTHER WORD INCLUDED IN THE RESPONSE WILL BE CONSIDERED INVALID."
-            f"{system_msg_base}"
+            f"IMPORTANT: If no additional tools are needed, return [] with no explanation.\n"
+            f"Downstream parser accepts only a list. Any other word is invalid.\n"
+            f"Current context block:\n{current_context_block}"
         )
-        if len(system_msg) > N_CHARS:
-            system_msg = system_msg[:N_CHARS] + "...<truncated>"
         tool_updates = state.get("tool_updates", 0) + 1
     else:
-        system_msg = format_state_for_prompt(state)
+        user_prompt = base_user_prompt
         tool_updates = state.get("tool_updates", 0)
 
+    # # (Optional) very defensive clamp if you have extreme contexts
+    # if len(user_prompt) > N_CHARS:
+    #     user_prompt = user_prompt[:N_CHARS] + "...<truncated>"
+
     if DEBUG:
-        print(f"[TOOL SELECTION PROMPT] {system_msg}")
+        print(f"[TOOL SELECTION USER PROMPT] {user_prompt[:500]}{'...' if len(user_prompt)>500 else ''}")
 
     try:
         completion = claude_call(
             model=TOOL_SELECTOR_MODEL,
             max_tokens=256,
             temperature=0,
-            messages=[{"role": "user", "content": system_msg}],
+            system=cached_system_blocks(),
+            messages=[{"role": "user", "content": user_prompt}],
         )
         if DEBUG:
             print(f"[TOOL SELECTION RESPONSE] {completion}")
@@ -209,12 +249,12 @@ def select_tools(state: "State") -> "State":
         selected_tools = []
 
     selected_tools_main = [t for t in selected_tools if t in TOOL_FN_MAP and t not in used_tools]
-    # special case for 'twosample_mr_agent' which allows more complicated semi match, as fomatted twosample_mr_agent-value1-value2
-    found_2sample = [
-        t for t in selected_tools if t.startswith("twosample_mr_agent") 
-    ]
+
+    # Special case allows twosample_mr_agent-EXPOSURE-OUTCOME(-GENE)
+    found_2sample = [t for t in selected_tools if t.startswith("twosample_mr_agent")]
     if found_2sample:
-        selected_tools_main.append(found_2sample)
+        selected_tools_main.extend(found_2sample)
+
     if DEBUG:
         print(f"[TOOL SELECTION] Selected tools: {selected_tools}")
 
@@ -223,6 +263,7 @@ def select_tools(state: "State") -> "State":
         "tool_updates": tool_updates + (1 if used_tools else 0),
     }
     return updates
+
 
 def run_async_sync(fn):
     def wrapper(*args, **kwargs):

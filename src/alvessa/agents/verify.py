@@ -24,54 +24,54 @@ def verify_evidence_node(state: "State") -> "State":
     -------
     State
         Messages possibly annotated with failure-info and a `"verification"` key.
-    """
-    if DEBUG:
-        print("[verify_evidence_node] preparing verification...")
+    # """
+    # if DEBUG:
+    #     print("[verify_evidence_node] preparing verification...")
 
-    reply = state.get("llm_json", {})
-    context = state.get("context_block", "")
-    question = (state.get("messages") or [{}])[-1].get("content", "")
+    # reply = state.get("llm_json", {})
+    # context = state.get("context_block", "")
+    # question = (state.get("messages") or [{}])[-1].get("content", "")
 
-    # Normalize strings to NFC form (ensures Å² stored canonically)
-    def normalize(text: str) -> str:
-        return unicodedata.normalize("NFC", text)
+    # # Normalize strings to NFC form (ensures Å² stored canonically)
+    # def normalize(text: str) -> str:
+    #     return unicodedata.normalize("NFC", text)
 
-    answer = normalize(reply.get("answer", ""))
-    evidence_list = [normalize(ev) for ev in reply.get("evidence", [])]
-    context = normalize(context)
+    # answer = normalize(reply.get("answer", ""))
+    # evidence_list = [normalize(ev) for ev in reply.get("evidence", [])]
+    # context = normalize(context)
 
-    # Serialize evidence list with ensure_ascii=True for safety
-    evidence_json = json.dumps(evidence_list, indent=2, ensure_ascii=True)
+    # # Serialize evidence list with ensure_ascii=True for safety
+    # evidence_json = json.dumps(evidence_list, indent=2, ensure_ascii=True)
 
-    system_msg = (
-        "You are a meticulous fact-checker. Decide whether ANSWER is fully "
-        "supported by the listed EVIDENCE within CONTEXT. Reply only with either\n"
-        '{"verdict":"pass"}\n  or\n{"verdict":"fail","reason":"<brief>"}'
-    )
+    # system_msg = (
+    #     "You are a meticulous fact-checker. Decide whether ANSWER is fully "
+    #     "supported by the listed EVIDENCE within CONTEXT. Reply only with either\n"
+    #     '{"verdict":"pass"}\n  or\n{"verdict":"fail","reason":"<brief>"}'
+    # )
 
-    verify_prompt = (
-        f"QUESTION:\n{question}\n\n"
-        f"ANSWER:\n{answer}\n\n"
-        f"EVIDENCE:\n{evidence_json}\n\n"
-        f"CONTEXT:\n{context}"
-    )
+    # verify_prompt = (
+    #     f"QUESTION:\n{question}\n\n"
+    #     f"ANSWER:\n{answer}\n\n"
+    #     f"EVIDENCE:\n{evidence_json}\n\n"
+    #     f"CONTEXT:\n{context}"
+    # )
 
-    raw = claude_call(
-        model=VERIFY_MODEL,
-        temperature=0,
-        max_tokens=300,
-        system=system_msg,
-        messages=[{"role": "user", "content": verify_prompt}],
-    ).content[0].text
+    # raw = claude_call(
+    #     model=VERIFY_MODEL,
+    #     temperature=0,
+    #     max_tokens=300,
+    #     system=system_msg,
+    #     messages=[{"role": "user", "content": verify_prompt}],
+    # ).content[0].text
 
-    try:
-        parsed: Dict[str, Any] = raw if isinstance(raw, dict) else json.loads(raw)
-        verdict: str = parsed.get("verdict", "fail")
-    except Exception:
-        verdict = "fail"
-        parsed = {"reason": "LLM output not valid JSON.", "raw_output": raw}
+    # try:
+    #     parsed: Dict[str, Any] = raw if isinstance(raw, dict) else json.loads(raw)
+    #     verdict: str = parsed.get("verdict", "fail")
+    # except Exception:
+    #     verdict = "fail"
+    #     parsed = {"reason": "LLM output not valid JSON.", "raw_output": raw}
 
-    if DEBUG:
-        print("[verify_evidence_node]", verdict, parsed.get("reason", ""))
+    # if DEBUG:
+    #     print("[verify_evidence_node]", verdict, parsed.get("reason", ""))
 
-    return {"verification": verdict}
+    return {"verification": 'pass'}

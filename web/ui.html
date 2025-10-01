@@ -2,322 +2,221 @@
 <html lang="en">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="icon" href="/favicon.ico?v=9">
-<link rel="icon" type="image/png" sizes="32x32" href="/images/rocket_favicon_32.png?v=9">
-<link rel="icon" type="image/png" sizes="64x64" href="/images/rocket_favicon_64.png?v=9">
-<link rel="apple-touch-icon" sizes="180x180" href="/images/rocket_favicon_180.png?v=9">
-<link rel="stylesheet" href="static/tool_prot.css">
+<link rel="icon" href="favicon.ico?v=10">
+<link rel="icon" type="image/png" sizes="32x32" href="images/rocket_favicon_32.png?v=10">
+<link rel="icon" type="image/png" sizes="64x64" href="images/rocket_favicon_64.png?v=10">
+<link rel="apple-touch-icon" sizes="180x180" href="images/rocket_favicon_180.png?v=10">
 <meta name="theme-color" content="#0b1020">
+<title>Alvessa: An Agentic Evidence‑Grounded Research Assistant for Genomics</title>
 
-<title>Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</title>
 <style>
-  :root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
-  body { margin: 0; background: #0b1020; color: #e6e8ef; }
-  .wrap { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
-  .grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+  :root{ --bg:#0b1020; --fg:#e6e8ef; --card:#121832; --muted:#aab4d6; --line:#1e2a52; --pill-bg:#1a2347; --pill-line:#2a3a72; --accent:#2a3a72; --input:#0e1430; --shadow:0 6px 24px rgba(0,0,0,.2); --radius:16px; --r-sm:10px; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; --sans:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{ margin:0; background:var(--bg); color:var(--fg); font-family:var(--sans); overflow-anchor:none; }
+  a{ color:inherit; text-decoration:underline; text-underline-offset:2px; }
+  .wrap{ max-width:1100px; margin:24px auto; padding:0 16px; }
+  .grid{ display:grid; gap:16px; grid-template-columns:1fr 1fr; }
+  .full{ grid-column:1 / -1; }
 
-  .logo-hero { height: 40px; vertical-align: middle; }
-.logo-bar  { height: 24px; vertical-align: middle; }
+  /* Cards */
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); }
+  .title{ font-size:20px; font-weight:700; margin:0 0 8px; }
+  .muted{ color:var(--muted); font-size:12px; }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .mono{ font-family:var(--mono); }
+  .pill{ display:inline-block; padding:2px 8px; border-radius:999px; background:var(--pill-bg); border:1px solid var(--pill-line); margin:2px 6px 2px 0; font-size:12px; }
 
-  .card { background: #121832; border: 1px solid #1e2a52; border-radius: 16px; padding: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.2); }
-  .title { font-size: 20px; font-weight: 700; margin: 0 0 8px; }
-  .mono  { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .pill  { display: inline-block; padding: 2px 8px; border-radius: 999px; background:#1a2347; border:1px solid #2a3a72; margin:2px 6px 2px 0; font-size:12px; }
-  .answer { white-space: pre-wrap; line-height: 1.5; }
-  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  .muted { color:#aab4d6; font-size: 12px; }
-  button { cursor:pointer; background:#1b2450; color:#e6e8ef; border:1px solid #2a3a72; border-radius:10px; padding:8px 12px; }
-  input[type="text"] { width:100%; background:#0e1430; color:#e6e8ef; border:1px solid #2a3a72; border-radius:10px; padding:10px; }
-  .full { grid-column: 1 / -1; }
-  .json pre { overflow:auto; max-height: 340px; }
-  .scroll { max-height: 180px; overflow: auto; }
+  /* Inputs */
+  button{ cursor:pointer; background:#1b2450; color:var(--fg); border:1px solid var(--pill-line); border-radius:var(--r-sm); padding:8px 12px; }
+  button.ghost{ background:transparent; }
+  input[type="text"],select{ background:var(--input); color:var(--fg); border:1px solid var(--pill-line); border-radius:var(--r-sm); padding:10px; }
+  input[type="text"]{ width:100%; }
 
-  /* Centered start screen */
-  #hero { min-height: 60vh; display: grid; place-items: center; }
-  #hero .card { width: 100%; max-width: 720px; text-align: center; }
-  #hero .title { font-size: 24px; margin-bottom: 12px; }
+  /* Brand */
+  .brand-header{ grid-column:1/-1; display:flex; align-items:center; justify-content:center; gap:12px; padding:8px 0; }
+  .logo-brand{ height:44px; }
+  .brand-title{ margin:0; font-weight:800; text-align:center; font-size:clamp(24px,3.2vw,38px); letter-spacing:.2px; }
 
-  /* Hide containers until needed */
-  #grid { display: none; }
-  #runStatusCard { display: none; }
-  #toolbar { display: none; } /* appears after first run */
+  /* Hero */
+  #hero{ min-height:50vh; display:grid; place-items:center; }
+  #hero .card{ width:100%; max-width:720px; text-align:center; }
+  #grid, #toolbar{ display:none; }
 
-  /* Spinner + status line */
-  .spinner { width:16px; height:16px; border:2px solid #2a3a72; border-top-color: transparent; border-radius:50%;
-             animation: spin 1s linear infinite; display:inline-block; vertical-align:middle; margin-right:6px; }
-  .spinner.big { width:28px; height:28px; border-width:3px; margin-right:8px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .statusline{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; color:#aab4d6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:72ch; }
+  /* Spinner + status */
+  .spinner{ width:16px; height:16px; border:2px solid var(--accent); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; display:inline-block; vertical-align:middle; margin-right:6px; }
+  .spinner.big{ width:28px; height:28px; border-width:3px; margin-right:8px; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .statusline{ font-family:var(--mono); font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:72ch; }
 
-
-  /* Brand header (results page) */
-.brand-header {
-  grid-column: 1 / -1;          /* span full grid width */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 10px 0 6px;
-  background: transparent;      /* no card background */
-  border: 0;                    /* no border */
-  box-shadow: none;             /* no shadow */
-}
-
-.logo-brand { height: 44px; }
-
-.brand-title {
-  margin: 0;
-  font-weight: 800;
-  text-align: center;
-  font-size: clamp(24px, 3.2vw, 38px);
-  letter-spacing: 0.2px;
-}
-
-  /* GENCODE histogram */
-  .hist-svg { width:100%; height:150px; display:block; }
-  .hist-axis { font-size:12px; fill:#aab4d6; }
-  .hist-bar { fill:#2a3a72; }
-  .hist-bar:hover { opacity:0.9; }
-  .hist-baseline { stroke:#2a3a72; stroke-width:1; }
-
-  /* GWAS UI helpers */
-.gwas-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-.gwas-tabs { display:flex; gap:6px; }
-.gwas-tabs button { padding:6px 10px; border-radius:999px; background:#0e1430; border:1px solid #2a3a72; color:#e6e8ef; cursor:pointer; font-size:12px; }
-.gwas-tabs button.active { background:#1a2347; }
-.gwas-grid { display:grid; gap:12px; grid-template-columns: 1fr; }
-@media (min-width: 900px){ .gwas-grid { grid-template-columns: 1fr 1fr; } }
-.gwas-list { max-height: 240px; overflow:auto; padding-right:4px; }
-.pill.clickable { cursor:pointer; }
-.gwas-detail { border:1px solid #2a3a72; border-radius:12px; padding:10px; background:#0e1430; min-height: 88px; }
-.gwas-table { width:100%; border-collapse:collapse; font-size:12px; }
-.gwas-table th, .gwas-table td { padding:6px 8px; border-bottom:1px solid #1e2a52; text-align:left; }
-.gwas-meta { color:#aab4d6; font-size:12px; }
+  /* Variant Summary */
+  .vs-toolbar{ display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-bottom:6px; }
+  .vs-scroll{ overflow:auto; max-height:420px; }
 
 
-/* Variant Summary: widen + allow horizontal scroll where needed */
-.vs-scroll { overflow: auto; }
-.vs-table { width: 100%; min-width: 1400px; border-collapse: collapse; }
-.vs-table th, .vs-table td { white-space: nowrap; }            /* keep most columns single-line */
-.vs-table td.wrap, .vs-table th.wrap { white-space: normal; }  /* but allow wrapping for verbose cells */
-.vs-table td.traits { max-width: 520px; }                      /* give traits room */
-.vs-table td.expecto { max-width: 560px; }   
-.vs-table thead th { position: sticky; top: 0; background: #121832; }
-button.mini { cursor:pointer; background:#0e1430; color:#e6e8ef; border:1px solid #2a3a72; border-radius:999px; padding:2px 8px; font-size:11px; margin-left:6px; }
-.exp-detail-box { background:#0e1430; border:1px solid #2a3a72; border-radius:10px; padding:8px; }
-/* Expecto summary lines */
-.expecto-line { display:block; line-height:1.35; margin:2px 0; }
-.xnum { font-weight:800; font-size:1.12em; padding:0 6px; border-radius:6px; background:#0e1430; border:1px solid #2a3a72; display:inline-block; }
-.xpct { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; opacity:0.9; }
-.xtissue { font-weight:600; }
-
-.biogrid-group { margin-bottom: 8px; }
-.biogrid-group .pill { margin: 2px 6px 2px 0; }
-
-  
-.vs-table{
-  font-size: 13px;         
-  line-height: 1.45;
-}
-.vs-table th, .vs-table td{
-  padding: 8px 12px;        /* more horiz spacing between columns */
-}
-.vs-table td.traits, .vs-table td.expecto{
-  max-width: 620px;         /* a bit wider for wordy cells */
-}
-
-/* Outline pill for non-human interactions */
-.pill.nh {
-  background: transparent;
-  border: 1px dashed #2a3a72;   /* distinct + subtle */
-  color: #aab4d6;
-}
-/* light theme override */
-body.light .pill.nh {
-  border-color: #94a3b8;
-  color: #475569;
-}
-
-.biogrid-section-title { 
-  font-size: 12px; 
-  color: #aab4d6; 
-  margin: 8px 0 4px; 
-  font-weight: 600; 
-  letter-spacing: .2px;
-}
-body.light .biogrid-section-title { color: #6b7280; }
-
-/* === Light theme (activated by: <body class="light">) === */
-  body.light {
-    background: #ffffff;
-    color: #0b1020;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-  }
-
-  /* Cards / containers */
-  body.light .card { background:#ffffff; border-color:#d8dce6; color:#0b1020; box-shadow: 0 6px 24px rgba(0,0,0,0.06); }
-  body.light .brand-header { background: transparent; }
-  body.light .brand-title { color:#0b1020; }
-
-  /* Inputs & buttons */
-  body.light input[type="text"] { background:#ffffff; color:#0b1020; border:1px solid #c8cfe0; }
-  body.light button { background:#f3f5fb; color:#0b1020; border:1px solid #c8cfe0; }
-  body.light button.mini { background:#eef2ff; border-color:#cdd6f3; color:#0b1020; }
-
-  /* Muted / status text */
-  body.light .muted, 
-  body.light .statusline, 
-  body.light .gwas-meta { color:#6b7280; }
-
-  /* Pills (traits, tools, evidence) */
-  body.light .pill { 
-    background:#eef1f7; 
-    border:1px solid #d6d9e6; 
-    color:#0b1020;
-  }
-  body.light .pill.clickable.selected { 
-    background:#e5eaf6; 
-    border-color:#cbd5e1;
-  }
-
-  /* GWAS tabs, list panels */
-  body.light .gwas-tabs button { background:#f0f3fb; border:1px solid #cbd5e1; color:#0b1020; }
-  body.light .gwas-tabs button.active { background:#e5eaf6; }
-  body.light .gwas-detail { background:#f7f9ff; border:1px solid #d5dbea; }
-
-  /* Tables (GWAS + Variant Summary) */
-  body.light .gwas-table th, 
-  body.light .gwas-table td { border-bottom:1px solid #e5e7eb; }
-  body.light .vs-table { border-color:#e5e7eb; }
-  body.light .vs-table th, 
-  body.light .vs-table td { border-bottom:1px solid #e5e7eb; }
-  body.light .vs-table thead th { background:#f5f7fb; color:#0b1020; }
-
-  /* Expecto detail box */
-  body.light .exp-detail-box { background:#f7f9ff; border:1px solid #d5dbea; }
-
-  /* Histograms (GENCODE) */
-  body.light .hist-axis { fill:#6b7280; }
-  body.light .hist-bar { fill:#94a3b8; }           /* neutral slate */
-  body.light .hist-baseline { stroke:#cbd5e1; }
-
-  /* Misc dark backgrounds you used elsewhere */
-  body.light .json pre,
-  body.light .scroll,
-  body.light .gwas-list { background:#ffffff; color:#0b1020; }
-
-  /* Spinner ring */
-  body.light .spinner { border-color:#cbd5e1; border-top-color: transparent; }
-
-  /* Variant Summary table tweaks */
-  .vs-table td.am, .vs-table th.am {
-    white-space: normal;     /* allow wrapping */
-    max-width: 240px;        /* constrain AlphaMissense column */
-  }
-  .vs-table td.traits, .vs-table th.traits {
-    white-space: normal;     /* let GWAS traits pills wrap */
-    min-width: 260px;        /* give it more breathing room */
-    max-width: 620px;        /* keep consistent with your earlier design */
-  }
-
-
-  /* === BioGRID info popover === */
-.info-btn {
-  display:inline-flex; align-items:center; justify-content:center;
-  width:16px; height:16px; border-radius:50%;
-  font-size:11px; line-height:1; font-weight:700;
-  background:#0e1430; color:#c7d2fe; border:1px solid #2a3a72;
-  margin-left:6px; cursor:pointer; padding:0;
-}
-.info-btn:hover { filter: brightness(1.1); }
-.info-btn:focus { outline: 2px solid #93c5fd; outline-offset:2px; }
-
-.popover {
-  position:absolute; z-index:1000; max-width:420px;
-  background:#0e1430; color:#e6e8ef; border:1px solid #2a3a72;
-  border-radius:12px; padding:10px 12px; box-shadow:0 8px 28px rgba(0,0,0,.4);
-}
-.popover .pop-title { font-weight:700; margin-bottom:6px; }
-.popover .pop-body { font-size:13px; line-height:1.45; }
-.popover .pop-close { position:absolute; top:6px; right:8px; background:transparent; border:0; color:#aab4d6; cursor:pointer; font-size:16px; }
-
-/* light theme */
-body.light .info-btn { background:#f0f3fb; color:#1e293b; border-color:#cbd5e1; }
-body.light .popover { background:#ffffff; color:#0b1020; border-color:#e5e7eb; box-shadow:0 10px 30px rgba(0,0,0,.10); }
-body.light .popover .pop-close { color:#6b7280; }
-
-/* ExpectoSC badges & lines — light theme */
-body.light .xnum {
-  background:#eef1f7;         /* match your light pills */
-  border-color:#d6d9e6;
-  color:#0b1020;
-}
-body.light .expecto-line { color:#0b1020; }  /* ensure text is dark */
-body.light .xpct { opacity:0.85; }           /* readable but subtle */
-body.light .xtissue { color:#0b1020; }       /* keep tissue bold/dark */
-
-/* Hide the Frequency column (assumed 2nd col) */
-.vs-table th:nth-child(2),
-.vs-table td:nth-child(2) {
-  display: none;
-}
-
-/* Protein viewer iframe */
+  /* Protein viewer iframe */
 .prot-frame { width: 100%; height: 720px; border: 1px solid #1e2a52; border-radius: 12px; background: #0e1430; }
 body.light .prot-frame { background: #ffffff; border-color: #cbd5e1; }
+
+  
+
+  /* Citations */
+  .cite{ cursor:help; user-select:none; text-decoration:underline dotted; }
+  .cite-tip{ position:fixed; z-index:9999; max-width:420px; background:var(--input); color:var(--fg); border:1px solid var(--pill-line); border-radius:10px; padding:8px 10px; font-size:12px; line-height:1.4; box-shadow:0 8px 24px rgba(0,0,0,.4); pointer-events:none; opacity:0; transform:translateY(4px); transition:opacity .08s ease, transform .08s ease; }
+  .cite-tip.show{ opacity:1; transform:translateY(0); }
+  .refs-list{ margin:8px 0 0; padding-left:18px; }
+  .refs-list li{ margin:6px 0; }
+  .refs-list .muted{ margin-top:2px; display:block; }
+
+  /* Light mode */
+  body.light{ background:#fff; color:#0b1020; }
+  body.light .card{ background:#fff; border-color:#d8dce6; color:#0b1020; box-shadow:0 6px 24px rgba(0,0,0,.06); }
+  body.light input[type="text"], body.light select{ background:#fff; color:#0b1020; border:1px solid #c8cfe0; }
+  body.light button{ background:#f3f5fb; color:#0b1020; border:1px solid #c8cfe0; }
+  body.light .muted{ color:#6b7280; }
+  body.light .pill{ background:#eef1f7; border:1px solid #d6d9e6; color:#0b1020; }
+  body.light .vs-table thead th{ background:#f5f7fb; color:#0b1020; }
+  body.light .cite-tip{ background:#fff; color:#0b1020; border-color:#e5e7eb; box-shadow:0 10px 30px rgba(0,0,0,.10); }
+
+  /* Markdown-ish spacing */
+  .answer p{ margin:.45em 0; }
+  .answer h2, .answer h3, .answer h4{ margin:.6em 0 .3em; }
+  .answer ul{ margin:.35em 0 .35em 1.2em; }
+  .answer li{ margin:.15em 0; }
+
+
+  /* Utility */
+  .hide{ display:none !important; }
+  /* Let fixed layout honor column widths */
+/* Make the variant table predictable and scrollable */
+.vs-scroll{
+  overflow-x: auto;        /* explicit horizontal scroll */
+  overflow-y: auto;
+  max-height: 420px;
+}
+
+/* One definitive table rule (avoid duplicates) */
+.vs-table{
+  width: 100%;
+  min-width: 3200px;       /* plenty of room; adjust if needed */
+  border-collapse: collapse;
+  table-layout: fixed;     /* required for colgroup widths to apply */
+}
+
+/* Default: keep tight columns tidy (no bleed into neighbors) */
+.vs-table th,
+.vs-table td{
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;            /* prevents visual overlap */
+  text-overflow: ellipsis;     /* shows … for clipped text */
+}
+
+/* Columns that should wrap */
+.vs-table th.wrap,
+.vs-table td.wrap{
+  white-space: normal;
+  overflow: visible;           /* allow multi-line content to show */
+}
+
+/* Sticky header + hover (unchanged) */
+.vs-table thead th{ position: sticky; top: 0; background: var(--card); z-index: 1; }
+.vs-table tbody tr:hover{ background: rgba(42,58,114,0.12); }
+
+/* Ref/Alt: header never breaks; cells wrap long alleles */
+.vs-table th.seq{ white-space: nowrap; }
+.vs-table td.seq{
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  font-family: var(--mono);
+}
+
+/* Traits: make the column wide AND force each pill to wrap inside the cell */
+.vs-table col.col-traits { width: 1600px; }      /* wide GWAS column */
+
+.vs-table td.traits{ max-width: 1600px; }        /* match col width */
+.vs-table td.traits .pill{
+  display: inline-block;
+  max-width: 100%;            /* <-- key: pill never wider than the cell */
+  white-space: normal;        /* allow wrapping within the pill */
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+.vs-table col.col-pos { width: 120px; }   /* chrom/positions */
+.vs-table col.col-seq { width: 240px; }   /* Ref/Alt */
+.vs-table col.col-num { width: 120px; }   /* p-value / AF */
+
+
+
+#tsmr .mr-block{ margin-bottom:14px; }
+#tsmr .mr-head{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+#tsmr .mr-sum{ margin:6px 0 8px; }
+#tsmr .pill.ghost{ background:transparent; }
+#tsmr table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+#tsmr th,#tsmr td{ border-bottom:1px solid var(--line); padding:6px 8px; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#tsmr thead th{ position:sticky; top:0; background:var(--card); z-index:1; }
+#tsmr .scroll{ overflow:auto; max-height:360px; }
+
+
+
+
 </style>
+
 <body>
 <div class="wrap">
-  <!-- Theme toggle button -->
-  <button id="themeToggle" style="position:fixed;top:12px;right:12px;z-index:999;">
-    Toggle Theme
-  </button>
+  <button id="themeToggle" aria-label="Toggle theme" style="position:fixed;top:12px;right:12px;z-index:999;">Toggle Theme</button>
 
-  <!-- Centered start screen -->
-  <div id="hero">
+  <!-- Hero / landing (no auto-demo load) -->
+  <div id="hero" role="region" aria-label="Landing">
     <div class="card">
-        <div class="title">
-            <img src="/images/rocket_logo.png" alt="Alvessa logo" class="logo-hero" />
-            <span style="margin-left:8px;">Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</span>
-          </div>
-      <div class="muted" style="margin-bottom:12px;">Enter a question to explore entities, tools, and curated outputs.</div>
-      <div class="row" style="justify-content:center;">
-        <input id="q" type="text" placeholder="Ask a question… e.g., Genes interacting with TP53" />
-        <button id="runBtn" onclick="run()">Run</button>
+      <div class="title" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+        <img src="images/rocket_logo.png" alt="Alvessa logo" style="height:40px;" />
+        <span>Alvessa: An Agentic Evidence‑Grounded Research Assistant for Genomics</span>
       </div>
-      <div class="muted" style="margin-top:8px;">Tip: press Enter to run</div>
+      <p class="muted" style="margin-bottom:12px;">Load a JSON produced by Alvessa or ask a question (if the server endpoint is wired).</p>
+      <div class="row" style="justify-content:center; width:100%; gap:8px;">
+        <input id="q" type="text" placeholder="Ask a question… e.g., Genes interacting with TP53" aria-label="Question" />
+        <button id="runBtn" aria-label="Run query">Run</button>
+        <label class="pill" style="cursor:pointer;">
+          Load JSON
+          <input id="jsonFile" type="file" accept=".json,application/json" style="display:none;">
+        </label>
+      </div>
+      <div class="row" style="justify-content:center;margin-top:8px;">
+        <select id="demoSelect">
+          <option value="">Load demo… (not auto‑selected)</option>
+          <option value="out/20250924-004900_ui/demo.json">TP53 demo</option>
+        </select>
+        <button id="downloadBtn" class="pill">Download JSON</button>
+      </div>
+      <div class="muted" style="margin-top:8px;">Tip: nothing loads until you choose a file or click Run.</div>
     </div>
   </div>
 
-  <!-- Run status (spinner + single last-line status). Stays outside the grid. -->
-  <div id="runStatusCard" class="card full">
-    <div class="row" style="justify-content:flex-start; gap:12px;">
-      <span class="spinner big"></span>
-      <div>
-        <div style="font-weight:600;">Running…</div>
-        <div id="statusLine" class="statusline" title="latest log line">(waiting for output…)</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Secondary input toolbar (shown after first run so you can ask more) -->
+  <!-- Toolbar -->
   <div id="toolbar" class="card full">
     <div class="row" style="justify-content:space-between; gap:12px;">
-      <div class="muted" style="min-width:160px;">Ask another question</div>
+      <div class="row"><div class="muted" style="min-width:160px;">Ask another question</div></div>
       <div class="row" style="flex:1;">
-        <input id="q2" type="text" placeholder="Type another question… then press Enter" />
-        <button onclick="runFrom('q2')">Run</button>
+        <input id="q2" type="text" placeholder="Type another question… then press Enter" aria-label="Another question" />
+        <button id="runBtn2">Run</button>
+        <label class="pill" style="cursor:pointer;">
+          Load JSON
+          <input id="jsonFile2" type="file" accept=".json,application/json" style="display:none;">
+        </label>
       </div>
     </div>
   </div>
 
-  <!-- Main content grid -->
+  <!-- Main grid -->
   <div id="grid" class="grid">
-
-    <div id="brand" class="brand-header">
-      <img src="/images/rocket_logo.png" alt="Alvessa logo" class="logo-brand" />
-      <h1 class="brand-title">Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</h1>
+    <div class="brand-header">
+      <img src="images/rocket_logo.png" alt="Alvessa logo" class="logo-brand" />
+      <h1 class="brand-title">Alvessa: An Agentic Evidence‑Grounded Research Assistant for Genomics</h1>
     </div>
 
     <div class="card full">
@@ -325,421 +224,238 @@ body.light .prot-frame { background: #ffffff; border-color: #cbd5e1; }
       <div id="question" style="font-size:18px;"></div>
     </div>
 
-    <div id="entitiesCard" class="card" data-section style="display:none;">
+    <div id="answerCard" class="card full" data-section style="display:none;">
+      <div class="title">Answer</div>
+      <div id="answer" class="answer"></div>
+      <ol id="citations" class="refs-list"></ol>
+    </div>
+
+    <div id="entitiesCard" class="card full" data-section style="display:none;">
       <div class="title">Detected Entities</div>
       <div id="entities"></div>
     </div>
 
-    <div id="toolsCard" class="card" data-section style="display:none;">
-      <div class="title">Tools Used</div>
-      <div id="tools" class="row"></div>
+    <div id="geneSummaryCard" class="card full" data-section style="display:none;">
+      <div class="title">Gene Summary</div>
+      <div id="geneSummary"></div>
     </div>
 
-    <div id="answerCard" class="card" data-section style="display:none;">
-      <div class="title">Answer</div>
-      <div id="answer" class="answer"></div>
+    <!-- Variant Summary -->
+    <div id="variantSummaryCard" class="card full" data-section style="display:none;">
+      <div class="title">Variant Summary</div>
+      <div class="vs-toolbar">
+        <input id="vsFilter" type="text" placeholder="Filter (gene, rsID, trait, consequence…)" aria-label="Filter variants" style="flex:1;max-width:360px;">
+        <button id="vsCsvBtn" class="ghost">Download CSV</button>
+      </div>
+      <div id="variantSummary"></div>
     </div>
+
+    <!-- Protein Visualization -->
+<div id="protCard" class="card full" data-section style="display:none;">
+  <div class="title">Protein Structure</div>
+  <div id="protMount"></div>
+</div>
+
+<!-- Two-sample MR -->
+<div id="tsmrCard" class="card full" data-section style="display:none;">
+  <div class="title">Two-sample Mendelian Randomization</div>
+  <div id="tsmr"></div>
+</div>
+
 
     <div id="evidenceCard" class="card full" data-section style="display:none;">
       <div class="title">Evidence</div>
       <div id="evidence"></div>
     </div>
 
-    <div id="biogridCard" class="card" data-section style="display:none;">
-      <div class="title">BioGRID (genes)</div>
-      <div id="biogrid"></div>
-    </div>
-
-    <div id="reactomeCard" class="card" data-section style="display:none;">
-      <div class="title">Reactome Pathways</div>
-      <div id="reactome" class="scroll"></div>
-    </div>
-
-    <div id="uniprotCard" class="card full" data-section style="display:none;">
-      <div class="title">UniProt (base)</div>
-      <div id="uniprot"></div>
-    </div>
-
-    <div id="gwasCard" class="card full" data-section style="display:none;">
-      <div class="title">GWAS Summary</div>
-      <div id="gwas"></div>
-    </div>
-
-    <div id="gencodeCard" class="card full" data-section style="display:none;">
-      <div class="title">GENCODE (per gene)</div>
-      <div id="gencode"></div>
-    </div>
-
-    <div id="variantSummaryCard" class="card full" data-section style="display:none;">
-      <div class="title">Variant Summary</div>
-      <div id="variantSummary"></div>
-    </div>
-
-    <!-- Protein Visualization -->
-    <div id="protCard" class="card full" data-section style="display:none;">
-      <div class="title">Protein Structure</div>
-      <div id="protMount"></div>
-    </div>
-
-    <div id="debugCard" class="card full" data-section style="display:none;">
-      <div class="title">Debug (other fields)</div>
-      <pre id="debug" class="mono json scroll"></pre>
-    </div>
-
-    <div id="rawCard" class="card full json" data-section style="display:none;">
+    <!-- Minimal debug (toggle-able) -->
+    <div id="rawCard" class="card full" data-section style="display:none;">
       <div class="title">Raw State (debug)</div>
-      <pre id="raw" class="mono"></pre>
+      <pre id="raw" class="mono" style="max-height:340px;overflow:auto;"></pre>
     </div>
   </div>
 </div>
 
 <script>
-  // Basic helpers
-  const show  = id => { const el=document.getElementById(id); if (el) el.style.display='block'; };
-  const hide  = id => { const el=document.getElementById(id); if (el) el.style.display='none'; };
-  const setText = (id, text) => { const el=document.getElementById(id); if (el) el.textContent = text ?? ""; };
-  const setHTML = (id, html) => { const el=document.getElementById(id); if (el) el.innerHTML = html ?? ""; };
-  const uc = s => (s||"").toUpperCase();
-  function escapeHtml(s){
-    return (s ?? "").toString().replace(/[&<>"']/g, ch => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    }[ch]));
-  }
-    function asPills(arr){ return (arr||[]).map(x=>`<span class="pill">${escapeHtml(x)}</span>`).join(""); }
-  function hideAllSections(){ document.querySelectorAll('[data-section]').forEach(el => el.style.display='none'); }
-  function setStatus(text){ const el=document.getElementById('statusLine'); if (el){ el.textContent = text || ""; el.title = text || ""; } }
+/********************
+ * Utilities
+ ********************/
+const show = id => { const el=document.getElementById(id); if (!el) return; el.style.display = el.classList.contains('grid') ? 'grid' : 'block'; };
+const hide  = id => { const el=document.getElementById(id); if (el) el.style.display='none'; };
+const setText = (id, text) => { const el=document.getElementById(id); if (el) el.textContent = text ?? ""; };
+const setHTML = (id, html) => { const el=document.getElementById(id); if (el) el.innerHTML = html ?? ""; };
+const byId = id => document.getElementById(id);
 
-  const BIOGRID_INFO = {
-    "Experimental System": "BioGRID Experimental Systems used to classify interactions",
-    "Affinity Capture-Luminescence": "An interaction is inferred when a bait protein, tagged with luciferase, is enzymatically detected in immunoprecipitates of the prey protein as light emission. The prey protein is affinity captured from cell extracts by either polyclonal antibody or epitope tag.",
-    "Affinity Capture-MS": "An interaction is inferred when a bait protein is affinity captured from cell extracts by either polyclonal antibody or epitope tag and the associated interaction partner is identified by mass spectrometric methods.",
-    "Affinity Capture-RNA": "An interaction is inferred when a bait protein is affinity captured from cell extracts by either polyclonal antibody or epitope tag and associated RNA species identified by Northern blot, RT-PCR, affinity labeling, sequencing, or microarray analysis.",
-    "Affinity Capture-Western": "An interaction is inferred when a bait protein is affinity captured from cell extracts by either polyclonal antibody or epitope tag and the associated interaction partner identified by Western blot with a specific polyclonal antibody or second epitope tag. This category is also used if an interacting protein is visualized directly by dye stain or radioactivity. Note that this differs from any co-purification experiment involving affinity capture in that the co-purification experiment involves at least one extra purification step to get rid of potential contaminating proteins.",
-    "Co-fractionation": "Interaction inferred from the presence of two or more protein subunits in a partially purified protein preparation. If co-fractionation is demonstrated between 3 or more proteins, then add them as a complex.",
-    "Co-localization": "Interaction inferred from two proteins that co-localize in the cell by indirect immunofluorescence only when in addition, if one gene is deleted, the other protein becomes mis-localized. Also includes co-dependent association of proteins with promoter DNA in chromatin immunoprecipitation experiments.",
-    "Co-purification": "An interaction is inferred from the identification of two or more protein subunits in a purified protein complex, as obtained by classical biochemical fractionation or affinity purification and one or more additional fractionation steps.",
-    "FRET": "An interaction is inferred when close proximity of interaction partners is detected by fluorescence resonance energy transfer between pairs of fluorophore-labeled molecules, such as occurs between CFP (donor) and YFP (acceptor) fusion proteins.",
-    "PCA": "A Protein-Fragment Complementation Assay (PCA) is a protein-protein interaction assay in which a bait protein is expressed as fusion to one of the either N- or C- terminal peptide fragments of a reporter protein and prey protein is expressed as fusion to the complementary N- or C- terminal fragment of the same reporter protein. Interaction of bait and prey proteins bring together complementary fragments, which can then fold into an active reporter, e.g. the split-ubiquitin assay.",
-    "Two-hybrid": "Bait protein expressed as a DNA binding domain (DBD) fusion and prey expressed as a transcriptional activation domain (TAD) fusion and interaction measured by reporter gene activation.",
-    "Biochemical Activity": "An interaction is inferred from the biochemical effect of one protein upon another, for example, GTP-GDP exchange activity or phosphorylation of a substrate by a kinase. The bait protein executes the activity on the substrate hit protein. A Modification value is recorded for interactions of this type with the possible values Phosphorylation, Ubiquitination, Sumoylation, Dephosphorylation, Methylation, Prenylation, Acetylation, Deubiquitination, Proteolytic Processing, Glucosylation, Nedd(Rub1)ylation, Deacetylation, No Modification, Demethylation.",
-    "Co-crystal Structure": "Interaction directly demonstrated at the atomic level by X-ray crystallography. Also used for NMR or Electron Microscopy (EM) structures. If there is no obvious bait-hit directionality to the interaction involving 3 or more proteins, then the co-crystallized proteins should be listed as a complex.",
-    "Far Western": "An interaction is detected between a protein immobilized on a membrane and a purified protein probe.",
-    "Protein-peptide": "An interaction is detected between a protein and a peptide derived from an interaction partner. This includes phage display experiments.",
-    "Protein-RNA": "An interaction is detected between and protein and an RNA in vitro.", 
-    "Reconstituted Complex": "An interaction is detected between purified proteins in vitro.",
-    "Dosage Growth Defect": "A genetic interaction is inferred when over expression or increased dosage of one gene causes a growth defect in a strain that is mutated or deleted for another gene.",
-    "Dosage Lethality": "A genetic interaction is inferred when over expression or increased dosage of one gene causes lethality in a strain that is mutated or deleted for another gene.",
-    "Dosage Rescue": "A genetic interaction is inferred when over expression or increased dosage of one gene rescues the lethality or growth defect of a strain that is mutated or deleted for another gene.",
-    "Negative Genetic": "Mutations/deletions in separate genes, each of which alone causes a minimal phenotype, but when combined in the same cell results in a more severe fitness defect or lethality under a given condition. This term is reserved for high or low throughput studies with scores.",
-    "Phenotypic Enhancement": "A genetic interaction is inferred when mutation or overexpression of one gene results in enhancement of any phenotype (other than lethality/growth defect) associated with mutation or over expression of another gene.",
-    "Phenotypic Suppression": "A genetic interaction is inferred when mutation or over expression of one gene results in suppression of any phenotype (other than lethality/growth defect) associated with mutation or over expression of another gene.",
-    "Positive Genetic": "Mutations/deletions in separate genes, each of which alone causes a minimal phenotype, but when combined in the same cell results in a less severe fitness defect than expected under a given condition. This term is reserved for high or low throughput studies with scores.", 
-    "Synthetic Growth Defect": "A genetic interaction is inferred when mutations in separate genes, each of which alone causes a minimal phenotype, result in a significant growth defect under a given condition when combined in the same cell.",
-    "Synthetic Haploinsufficiency": "A genetic interaction is inferred when mutations or deletions in separate genes, at least one of which is hemizygous, cause a minimal phenotype alone but result in lethality when combined in the same cell under a given condition.",
-    "Synthetic Lethality": "A genetic interaction is inferred when mutations or deletions in separate genes, each of which alone causes a minimal phenotype, result in lethality when combined in the same cell under a given condition.",
-    "Synthetic Rescue": "A genetic interaction is inferred when mutations or deletions of one gene rescues the lethality or growth defect of a strain mutated or deleted for another gene.",
-    "Epistatic MiniArray Profile": "An observed double mutant colony's sizes are compared to those that would be expected from a distribution of typical double mutant colonies of each strain. Each interaction is assigned a score which indicated the magnitude of the difference from the expected value and the certainty of the score. A negative (or aggravating) score < -3 would imply synthetic sick/lethal interaction and a positive (alleviating) score >+3 would imply suppressor interaction.",
-    "Proximity Label-MS": "An interaction is inferred when a bait-enzyme fusion protein selectively modifies a vicinal protein with a diffusible reactive product, followed by affinity capture of the modified protein and identification by mass spectrometric methods."
+function escapeHtml(s){
+  var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  s = (s == null) ? '' : String(s);
+  return s.replace(/[&<>"']/g, function(ch){ return map[ch]; });
+}
+
+
+function asPills(arr){ return (arr||[]).map(x=>`<span class="pill">${escapeHtml(x)}</span>`).join(""); }
+function uc(s){ return (s||"").toUpperCase(); }
+function safeRender(name, fn){ try{ fn(); }catch(e){ console.warn(`[render:${name}]`, e); } }
+
+/********************
+ * Global state
+ ********************/
+let STATE = null;     // current JSON state
+let HERO_SHOWN = true;
+let VS_ROWS_FOR_CSV = [];
+
+let VS_FILTER_EL = null;
+let VS_CSV_BTN = null;
+
+/********************
+ * Markdown + citations
+ ********************/
+function mdToHtml(md){
+  var esc = function(s){
+    s = (s == null) ? '' : String(s);
+    return s.replace(/[&<>"']/g, function(ch){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'})[ch]; });
+  };  
+  md = (md || "").replace(/\r\n?/g, "\n");
+  // code fences
+  md = md.replace(/```([\s\S]*?)```/g, (_, code)=>`<pre class="mono">${esc(code)}</pre>`);
+  const lines = md.split("\n");
+  const out = []; let inUL = false;
+  function closeUL(){ if (inUL){ out.push("</ul>"); inUL=false; } }
+  for (let raw of lines){
+    const line = raw;
+    if (/^#{1,6}\s/.test(line)){
+      closeUL();
+      const level = Math.min(6, line.match(/^#+/)[0].length);
+      const text  = line.replace(/^#{1,6}\s+/, "");
+      out.push(`<h${level}>${inlineMd(text, esc)}</h${level}>`);
+      continue;
+    }
+    if (/^[-*]\s+/.test(line)){
+      if (!inUL){ out.push("<ul>"); inUL = true; }
+      const item = line.replace(/^[-*]\s+/, "");
+      out.push(`<li>${inlineMd(item, esc)}</li>`);
+      continue;
+    }
+    if (line.trim() === ""){ closeUL(); out.push(""); continue; }
+    closeUL(); out.push(`<p>${inlineMd(line, esc)}</p>`);
+  }
+  closeUL();
+  return out.join("\n").replace(/\n{2,}/g, "\n");
+}
+function inlineMd(s, esc){
+  s = esc(s);
+  s = s.replace(/`([^`]+)`/g, '<code class="mono">$1</code>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  return s;
+}
+
+// Parsing Anthropic-like repr for citations
+function scanBlocks(src, head){
+  const out=[]; let i=0; if (!src) return out;
+  while ((i = src.indexOf(head+"(", i)) !== -1){
+    let j = i + head.length + 1, depth = 1, q=null, esc=false;
+    for (; j < src.length; j++){
+      const ch = src[j];
+      if (q){ esc ? (esc=false) : (ch==='\\' ? esc=true : (ch===q && (q=null))); continue; }
+      if (ch === '"' || ch === "'") { q = ch; continue; }
+      if (ch === '(') depth++;
+      else if (ch === ')'){ depth--; if (!depth){ j++; break; } }
+    }
+    out.push(src.slice(i + head.length + 1, j - 1));
+    i = j;
+  }
+  return out;
+}
+function parseCites(block){
+  const chunks = scanBlocks(block, "CitationCharLocation");
+  return chunks.map(c => ({
+    document_index: Number((c.match(/document_index=(\d+)/)||[])[1]),
+    document_title: (c.match(/document_title=['\"]([\s\S]*?)['\"]/)||[])[1] || "",
+    cited_text: (c.match(/cited_text=['\"]([\s\S]*?)['\"]/)||[])[1]?.replace(/\\n/g," ") || null
+  })).filter(x => Number.isFinite(x.document_index));
+}
+function parseAnthropicCitationsFromString(rawStr){
+  if (!rawStr || typeof rawStr !== "string") return [];
+  const tBlocks = scanBlocks(rawStr, "TextBlock");
+  const cites = [];
+  for (const b of tBlocks){
+    const blockCites = parseCites(b) || [];
+    for (const c of blockCites){ const cited = (c.cited_text || "").replace(/\s+/g, " ").trim(); cites.push({ document_index: c.document_index, document_title: c.document_title, cited_text: cited }); }
+  }
+  return cites;
+}
+function buildBibliography(blocks, st){
+  const srcAny = st?.ui?.sources || st?.sources || (Array.isArray(st?.llm_json?.doc_manifest) ? Object.fromEntries(st.llm_json.doc_manifest.map(x => [x.index, { title: x.title, url: x.url }])) : null);
+  const lookup = (idx, fallback) => {
+    if (!srcAny) return { title: fallback };
+    if (Array.isArray(srcAny)) { const s = srcAny[idx]; return s ? { title: s.title||fallback, url: s.url, quote: s.quote } : { title: fallback }; }
+    if (typeof srcAny === "object"){ const s = srcAny[idx]; return s ? { title: s.title||fallback, url: s.url, quote: s.quote } : { title: fallback }; }
+    return { title: fallback };
   };
-  // Normalize some common variants users/tools might emit
-  const BIOGRID_ALIASES = {
-    "Affinity Capt-Luminescence":"Affinity Capture-Luminescence",
-    "Affinity Capt-MS":"Affinity Capture-MS",
-    "Affinity Capt-RNA":"Affinity Capture-RNA",
-    "Affinity Capt-Western":"Affinity Capture-Western",
-    "Protein–peptide":"Protein-peptide",
-    "Invivo":"In Vivo",
-    "Invitro":"In Vitro", 
-    "In vivo":"In Vivo",
-    "In vitro":"In Vitro"
-  };
-  function resolveBioGridTerm(term){
-    return BIOGRID_INFO[term] || BIOGRID_INFO[BIOGRID_ALIASES[term]] || null;
-  }
-  // === Lightweight popover manager (click to open, click-outside/Escape to close) ===
-let __bioPop = null;
-
-function closeBioPopover(){
-  if (__bioPop && __bioPop.parentNode) __bioPop.parentNode.removeChild(__bioPop);
-  __bioPop = null;
+  const bib = []; const seen = new Map();
+  const key = c => `${c.document_index}|${c.document_title||""}`;
+  for (const b of blocks){ for (const c of (b.citations||[])){ const k = key(c); if (!seen.has(k)){ const base = lookup(c.document_index, c.document_title || `Source ${c.document_index}`); const entry = { num: bib.length + 1, document_index: c.document_index, document_title: c.document_title, title: base.title, url: base.url || null, quote: base.quote || null, snippets: [] }; seen.set(k, entry.num); bib.push(entry); } } }
+  for (const b of blocks){ for (const c of (b.citations||[])){ const n = seen.get(key(c)); if (!n) continue; const ref = bib[n-1]; const snip = (c.cited_text||"").trim(); if (snip && !(ref.snippets||[]).includes(snip)){ (ref.snippets ||= []).push(snip); if (ref.snippets.length > 3) ref.snippets.length = 3; } } }
+  return { bib, numFor(c){ return seen.get(key(c)); } };
+}
+function replaceCitationPlaceholdersWithHtml(html){
+  return String(html||"").replace(/\s?\[\[CITE:(\d+)\]\]/g, (_, n) => ` <sup class="cite" data-cite="${Number(n)}" aria-label="Reference ${Number(n)}">[${Number(n)}]</sup>`);
+}
+function renderReferencesList(bibliography){
+  const el = byId("citations");
+  const esc = s => (s ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[ch]));
+  const trunc = s => { const t=String(s||""); return t.length<=260?t:t.slice(0,260).replace(/[,;:.\s]+$/,"")+"…"; };
+  el.innerHTML = bibliography.map(r=>{
+    const title = esc(r.title || `Source ${r.document_index}`);
+    const snips = (r.snippets||[]).map(s=>`<div class="muted">“${esc(trunc(s))}”</div>`).join("");
+    const quote = r.quote ? `<div class="muted">“${esc(trunc(r.quote))}”</div>` : "";
+    const url   = r.url ? `<div class="muted"><a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.url)}</a></div>` : "";
+    return `<li value="${r.num}"><div><strong>${title}</strong></div>${snips}${quote}${url}</li>`;
+  }).join("");
+}
+function wireCitationTooltips(containerEl, bibliography){
+  const tip = document.createElement("div"); tip.className = "cite-tip"; document.body.appendChild(tip);
+  const esc = s => (s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+  const trunc = s => { const t=String(s||""); return t.length<=200?t:t.slice(0,200).replace(/[,;:.\s]+$/,"")+"…"; };
+  const contentFor = n => { const ref = bibliography.find(r => r.num===n); if (!ref) return ""; const title = esc(ref.title || ref.document_title || `Source ${ref.document_index}`); const cited = ref.snippets?.[0] ? `<div class="muted" style="margin-top:4px;">“${esc(trunc(ref.snippets[0]))}”</div>` : ""; const quote = ref.quote ? `<div class="muted" style="margin-top:4px;">“${esc(trunc(ref.quote))}”</div>` : ""; const url = ref.url ? `<div style="margin-top:4px;"><a href="${esc(ref.url)}" target="_blank" rel="noopener noreferrer">${esc(ref.url)}</a></div>` : ""; return `<div style="font-weight:600;">[${n}] ${title}</div>${cited}${quote}${url}`; };
+  const pos = ev => { const pad=10; tip.style.left = Math.max(8, Math.min(window.innerWidth - tip.offsetWidth - pad, ev.clientX + 14)) + "px"; tip.style.top = Math.max(8, Math.min(window.innerHeight - tip.offsetHeight - pad, ev.clientY + 16)) + "px"; };
+  containerEl.querySelectorAll(".cite").forEach(el=>{ const n = Number(el.getAttribute("data-cite")); let pinned=false; el.addEventListener("mouseenter", ev => { if (!pinned){ tip.innerHTML = contentFor(n); tip.classList.add("show"); pos(ev); } }); el.addEventListener("mousemove", pos); el.addEventListener("mouseleave", () => { if (!pinned) tip.classList.remove("show"); }); el.addEventListener("click", ev => { ev.stopPropagation(); if (!pinned){ tip.innerHTML=contentFor(n); tip.classList.add("show"); pos(ev); pinned=true; document.addEventListener("click", ()=>{ pinned=false; tip.classList.remove("show"); }, {once:true}); } else { pinned=false; tip.classList.remove("show"); } }); });
 }
 
-function openBioPopover(anchorEl, term){
-  const def = resolveBioGridTerm(term);
-  if (!def) return;
-  closeBioPopover();
+/********************
+ * Renderers (gene_entities‑first)
+ ********************/
 
-  const pop = document.createElement("div");
-  pop.className = "popover";
-  pop.innerHTML = `
-    <button class="pop-close" aria-label="Close" title="Close">×</button>
-    <div class="pop-title">${anchorEl.getAttribute("data-title") || term}</div>
-    <div class="pop-body">${def}</div>
-  `;
-  document.body.appendChild(pop);
-  __bioPop = pop;
+ function renderProt(st){
+  const mount = document.getElementById("protMount");
+  if (!mount) return;
 
-  // position: right/top of the icon, staying in viewport
-  const r = anchorEl.getBoundingClientRect();
-  const pad = 8;
-  const pw = Math.min(420, Math.max(260, window.innerWidth * 0.6));
-  pop.style.maxWidth = pw + "px";
-  // compute preferred x/y
-  let x = window.scrollX + r.right + pad;
-  let y = window.scrollY + r.top - 4;
-  // if overflowing right edge, place above/below
-  const rect = () => pop.getBoundingClientRect();
-  pop.style.left = x + "px";
-  pop.style.top  = y + "px";
+  // Prefer embedded HTML blob if present
+  const html = st?.prot_html;
 
-  // reflow, then adjust if off-screen
-  requestAnimationFrame(()=>{
-    const pr = rect();
-    if (pr.right > window.innerWidth - 8){
-      x = window.scrollX + Math.max(8, r.left - pr.width - pad);
-      pop.style.left = x + "px";
-    }
-    if (pr.bottom > window.scrollY + window.innerHeight - 8){
-      y = window.scrollY + Math.max(8, r.bottom - pr.height - pad);
-      pop.style.top = y + "px";
-    }
-  });
+  // Optional fallbacks if your JSON uses different keys:
+  // - prot_iframe_url: a full URL to load in an iframe
+  // - pdb_id: render a lightweight PDBe Mol* embed (no server needed)
+  const iframeUrl = st?.prot_iframe_url;
+  const pdbId     = st?.pdb_id;
 
-  pop.querySelector(".pop-close")?.addEventListener("click", closeBioPopover, { once:true });
-}
+  // clear previous
+  mount.innerHTML = "";
 
-// Global handlers (delegated)
-document.addEventListener("click", (e)=>{
-  const btn = e.target.closest(".biogrid-info");
-  if (btn){
-    e.stopPropagation();
-    const term = btn.getAttribute("data-term");
-    if (!term) return;
-    // toggle if the same button
-    if (__bioPop){
-      closeBioPopover();
-      // small delay to feel like a toggle
-      requestAnimationFrame(()=>openBioPopover(btn, term));
-    } else {
-      openBioPopover(btn, term);
-    }
-  } else {
-    // click-outside closes
-    if (__bioPop && !e.target.closest(".popover")) closeBioPopover();
-  }
-});
-document.addEventListener("keydown", (e)=>{ if (e.key === "Escape") closeBioPopover(); });
-
-// Helper to render the ⓘ button next to a method name (used in renderBioGRID)
-function infoButtonHtml(label){
-  if (!resolveBioGridTerm(label)) return "";
-  const safe = label.replace(/"/g, '&quot;');
-  return `<button class="info-btn biogrid-info" data-term="${safe}" data-title="${safe}" aria-label="About ${safe}" title="About ${safe}">i</button>`;
-}
-  // Log polling (latest line only)
-  let logPos = 0, isPolling = false;
-  function showRunStatus(){ show('runStatusCard'); }
-  function hideRunStatus(){ hide('runStatusCard'); }
-
-  async function startLogPolling(){
-    if (isPolling) return;
-    isPolling = true; logPos = 0;
-    setStatus("(waiting for output…)"); showRunStatus();
-    while (isPolling){
-      try{
-        const res = await fetch(`/log?pos=${logPos}`, { cache: "no-store" });
-        if (!res.ok) throw new Error(String(res.status));
-        const { pos, data } = await res.json();
-        if (typeof pos === "number") logPos = pos;
-        if (data && data.length){
-          const lines = data.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-          if (lines.length) setStatus(lines[lines.length - 1]);
-        }
-      }catch(e){ console.error("[log poll]", e); }
-      await new Promise(r => setTimeout(r, 400));
-    }
-  }
-  function stopLogPolling(){ isPolling = false; }
-
-  // Data fetch
-  async function fetchState() {
-    const res = await fetch("/state");
-    if (!res.ok) return null;
-    return await res.json();
+  // Nothing to show?
+  if (!html && !iframeUrl && !pdbId){
+    return (document.getElementById("protCard").style.display = "none");
   }
 
-  // Renderers
-  function renderQuestion(st, qInput){
-    const q = (qInput && qInput.trim()) || (st?.messages?.slice(-1)[0]?.content) || "";
-    setText("question", q);
-    setText("questionTitle", "Question");
-  }
+  // Build iframe + optional save button
+  const frame = document.createElement("iframe");
+  frame.className = "prot-frame";
+  frame.setAttribute("sandbox", "allow-scripts");
+  frame.setAttribute("referrerpolicy", "no-referrer");
 
-  function renderEntities(st){
-    const genes = st?.genes || [];
-    if (genes.length) { setHTML("entities", `<div><strong>Genes:</strong> ${asPills(genes)}</div>`); show("entitiesCard"); }
-    else hide("entitiesCard");
-  }
-
-  function renderTools(st){
-    const used = st?.used_tools || [];
-    if (used.length) { setHTML("tools", asPills(used)); show("toolsCard"); }
-    else hide("toolsCard");
-  }
-
-  function renderAnswer(st){
-    const lj = st?.llm_json || {};
-    const ans = lj?.answer || "";
-    if (ans) { setText("answer", ans); show("answerCard"); }
-    else hide("answerCard");
-
-    const ev = Array.isArray(lj?.evidence) ? lj.evidence : [];
-    if (ev.length) { setHTML("evidence", ev.map(e=>`<div class="pill">${escapeHtml(e)}</div>`).join("")); show("evidenceCard"); }
-    else hide("evidenceCard");
-  }
-  function renderBioGRID(st) {
-    const preds   = st?.biogrid_predictions;
-    const groups  = st?.biogrid_interaction_groups;
-    const nonhum  = st?.biogrid_interactions_select_nonhuman;
-  
-    const hasObj = (o) => o && typeof o === "object" && Object.keys(o).length;
-  
-    let htmlMain = "";
-  
-    // ----- MAIN: prefer grouped; else predictions -----
-    if (hasObj(groups)) {
-      htmlMain = Object.entries(groups).map(([gene, methods]) => {
-        if (!methods || typeof methods !== "object") return "";
-        const methodHtml = Object.entries(methods).map(([method, partners]) => {
-          const list = Array.isArray(partners) ? [...new Set(partners)].filter(Boolean) : [];
-          const pills = list.length ? asPills(list) : '<span class="muted">none</span>';
-          return `
-            <div class="biogrid-group" style="margin-top:4px;">
-<div class="muted" style="margin-bottom:2px;">
-  ${escapeHtml(method)} ${infoButtonHtml(method)}
-</div>              <div class="scroll">${pills}</div>
-            </div>
-          `;
-        }).join("");
-  
-        return `
-          <div style="margin-bottom:12px;">
-            <strong>${escapeHtml(uc(gene))}</strong>
-            ${methodHtml || '<div class="muted" style="margin-top:4px;">no interactions returned</div>'}
-          </div>
-        `;
-      }).join("");
-    } else if (hasObj(preds)) {
-      htmlMain = Object.entries(preds).map(([gene, arr]) => {
-        const list = Array.isArray(arr) ? [...new Set(arr)].filter(Boolean) : [];
-        const n = list.length;
-        if (!n) {
-          return `<div style="margin-bottom:10px;">
-            <strong>${escapeHtml(uc(gene))}:</strong> 0 genes
-            <div class="muted">no interactions returned</div>
-          </div>`;
-        }
-        return `<div style="margin-bottom:10px;">
-          <strong>${escapeHtml(uc(gene))}:</strong> ${n} gene${n===1?'':'s'}
-          <div class="scroll" style="margin-top:6px;">${asPills(list)}</div>
-        </div>`;
-      }).join("");
-    }
-  
-    // If we have nothing so far and also no nonhuman → hide
-    if (!htmlMain.trim() && !hasObj(nonhum)) {
-      setHTML("biogrid", `<div class="muted">no interactions returned</div>`);
-      return hide("biogridCard");
-    }
-  
-    // ----- APPEND: Selected non-human interactions (outline pills) -----
-    let htmlNH = "";
-    if (hasObj(nonhum)) {
-      const section = Object.entries(nonhum).map(([gene, methods]) => {
-        if (!methods || typeof methods !== "object") return "";
-        const methodHtml = Object.entries(methods).map(([method, partners]) => {
-          const list = Array.isArray(partners) ? [...new Set(partners)].filter(Boolean) : [];
-          const pills = list.length
-            ? list.map(x => `<span class="pill nh">${escapeHtml(x)}</span>`).join(" ")
-            : '<span class="muted">none</span>';
-          return `
-            <div class="biogrid-group" style="margin-top:4px;">
-<div class="muted" style="margin-bottom:2px;">
-  ${escapeHtml(method)} ${infoButtonHtml(method)}
-</div>              <div class="scroll">${pills}</div>
-            </div>
-          `;
-        }).join("");
-  
-        return `
-          <div style="margin-bottom:12px;">
-            <strong>${escapeHtml(uc(gene))}</strong>
-            ${methodHtml || '<div class="muted" style="margin-top:4px;">none</div>'}
-          </div>
-        `;
-      }).join("");
-  
-      if (section.trim()) {
-        htmlNH = `
-          <div style="border-top:1px solid rgba(90,110,160,0.35); margin-top:8px; padding-top:8px;">
-            <div class="biogrid-section-title">Selected non‑human interactions</div>
-            ${section}
-          </div>
-        `;
-      }
-    }
-  
-    setHTML("biogrid", (htmlMain + htmlNH) || `<div class="muted">no interactions returned</div>`);
-    show("biogridCard");
-  }
-  
-  function renderReactome(st){
-    const rx = st?.reactome_pathways;
-    if (!rx || typeof rx !== 'object') return hide("reactomeCard");
-    const rows = Object.entries(rx)
-      .filter(([_, paths]) => Array.isArray(paths) && paths.length)
-      .map(([gene, paths]) => `<div><strong>${escapeHtml(uc(gene))}</strong><div class="muted">${paths.length} pathways</div><div class="scroll">${asPills(paths.slice(0,50))}</div></div>`)
-      .join("");
-    if (rows) { setHTML("reactome", rows); show("reactomeCard"); } else hide("reactomeCard");
-  }
-
-  function renderUniProtBase(st){
-    const up = st?.uniprot_entries_base;
-    if (!up || typeof up !== 'object') return hide("uniprotCard");
-    const blocks = Object.entries(up).map(([gene, obj])=>{
-      if (!obj || typeof obj !== 'object') return "";
-      const diseases = obj.diseases || "";
-      const func = obj.function || "";
-      if (!diseases && !func) return "";
-      return `<div style="margin-bottom:12px;">
-        <div><strong>${escapeHtml(uc(gene))}</strong></div>
-       ${diseases ? `<div class="muted" style="margin-top:4px;">Diseases</div><div class="scroll">${escapeHtml(diseases)}</div>` : ""}
-      ${func ? `<div class="muted" style="margin-top:6px;">Function</div><div class="scroll">${escapeHtml(func)}</div>` : ""}
-
-      </div>`;
-    }).join("");
-    if (blocks.trim()) { setHTML("uniprot", blocks); show("uniprotCard"); } else hide("uniprotCard");
-  }
-
-// === Protein renderer ===
-  function renderProt(st){
-    const html = st?.prot_html;
-    const mount = document.getElementById("protMount");
-    if (!mount) return;
-
-    if (!html || typeof html !== "string" || !html.trim()){
-      mount.innerHTML = "";
-      return hide("protCard");
-    }
-
-    const frame = document.createElement("iframe");
-    frame.className = "prot-frame";
-    frame.setAttribute("sandbox", "allow-scripts");
-    frame.setAttribute("referrerpolicy", "no-referrer");
+  if (html && typeof html === "string" && html.trim()){
     frame.srcdoc = html;
 
     const saveBtn = document.createElement("button");
@@ -750,994 +466,764 @@ function infoButtonHtml(label){
       const blob = new Blob([html], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = "prot.html"; a.click();
-      setTimeout(()=>URL.revokeObjectURL(url), 1000);
+      a.href = url; a.download = "protein_view.html"; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url), 800);
     };
-
-    mount.innerHTML = "";
     mount.appendChild(saveBtn);
-    mount.appendChild(frame);
-    show("protCard");
-
-    console.log("renderProt: injected HTML length =", html.length);
+  } else if (iframeUrl){
+    // external viewer you provide
+    frame.src = iframeUrl;
+  } else if (pdbId){
+    // super-light PDBe Mol* viewer (no external JS — it’s their hosted viewer)
+    // theme will still postMessage (below), which many viewers ignore safely.
+    frame.src = `https://www.ebi.ac.uk/pdbe/entry-files/molstar.html?structureId=${encodeURIComponent(pdbId)}`;
   }
 
-  const GWAS = {
-    state: {},
-  
-    // Merge all variant_annotations dictionaries found anywhere in the object.
-    collectVariantAnnotations(root){
-      const out = {};
-      const seen = new Set();
-      function mergeOne(dict){
-        for (const [vid, v] of Object.entries(dict)){
-          if (!out[vid]) { out[vid] = { ...(v||{}) }; }
-          else {
-            // shallow merge, prefer non-null/new values
-            for (const [k, val] of Object.entries(v||{})){
-              if (out[vid][k] == null && val != null) out[vid][k] = val;
-            }
-          }
-        }
-      }
-      function walk(x){
-        if (!x || typeof x !== "object") return;
-        if (seen.has(x)) return;
-        seen.add(x);
-        if (x.variant_annotations && typeof x.variant_annotations === "object" && !Array.isArray(x.variant_annotations)){
-          mergeOne(x.variant_annotations);
-        }
-        for (const v of Object.values(x)) walk(v);
-      }
-      walk(root);
-      return out;
-    },
-  
-    deepCollectStringArray(obj, keyNames){
-      const out = [];
-      const seenVals = new Set();
-      const seenObjs = new Set();
-      function walk(x){
-        if (!x || typeof x !== "object") return;
-        if (seenObjs.has(x)) return;
-        seenObjs.add(x);
-        for (const [k, v] of Object.entries(x)){
-          if (keyNames.includes(k) && Array.isArray(v)){
-            for (const item of v){
-              if (typeof item === "string" && !seenVals.has(item)) {
-                seenVals.add(item);
-                out.push(item);
-              }
-            }
-          }
-          if (v && typeof v === "object") walk(v);
-        }
-      }
-      walk(obj);
-      return out;
-    },
-  
-    extractVariantTraits(v){
-      const out = new Set();
-      const pushOne = s => { if (s && typeof s === "string") out.add(s); };
-      const pushMany = a => { if (Array.isArray(a)) a.forEach(pushOne); };
-  
-      // Handle nested format: associated_disease_trait: { trait_name: { p_value, risk_score } }
-      if (v?.associated_disease_trait && typeof v.associated_disease_trait === "object") {
-        Object.keys(v.associated_disease_trait).forEach(pushOne);
-      }
-      
-      // Handle legacy formats for compatibility
-      if (Array.isArray(v?.disease_trait)) pushMany(v.disease_trait); else pushOne(v?.disease_trait);
-      if (Array.isArray(v?.traits)) pushMany(v.traits); else pushOne(v?.trait);
-      if (Array.isArray(v?.phenotypes)) pushMany(v.phenotypes); else pushOne(v?.phenotype);
-      if (Array.isArray(v?.mapped_traits)) pushMany(v.mapped_traits); else pushOne(v?.mapped_trait);
-      if (Array.isArray(v?.gwas_disease_traits)) pushMany(v.gwas_disease_traits);
-  
-      return Array.from(out);
-    },
-  
-    extractContext(v){
-      // Try to get context from coordinates if available
-      if (v?.coordinates && Array.isArray(v.coordinates) && v.coordinates.length > 0) {
-        const coord = v.coordinates[0];
-        return coord?.context || coord?.region || "";
-      }
-      return v?.context || v?.variant_category || v?.functional_annotation || v?.consequence || "";
-    },
-  
-    extractP(v){
-      // First check direct p_value (legacy format)
-      let raw = (v?.p_value ?? v?.p ?? null);
-      
-      // If not found, check the new nested format: associated_disease_trait: { trait_name: { p_value, risk_score } }
-      if (raw == null && v?.associated_disease_trait && typeof v.associated_disease_trait === "object") {
-        // Get the best (lowest) p_value from all disease traits
-        let bestP = null;
-        for (const traitData of Object.values(v.associated_disease_trait)) {
-          if (traitData?.p_value != null) {
-            const p = traitData.p_value;
-            if (bestP == null || p < bestP) {
-              bestP = p;
-            }
-          }
-        }
-        raw = bestP;
-      }
-      
-      if (typeof raw === "number") return raw;
-      if (raw == null) return null;
-      const p = parseFloat(String(raw));
-      return Number.isFinite(p) ? p : null;
-    },
-  
-    extractORBeta(v){
-      // First check direct or_beta (legacy format)
-      let cand = v?.or_beta ?? v?.OR ?? v?.or ?? v?.beta ?? null;
-      
-      // If not found, check the new nested format for risk_score
-      if (cand == null && v?.associated_disease_trait && typeof v.associated_disease_trait === "object") {
-        // Get the best (highest) risk_score from all disease traits
-        let bestRisk = null;
-        for (const traitData of Object.values(v.associated_disease_trait)) {
-          if (traitData?.risk_score != null) {
-            const risk = traitData.risk_score;
-            if (bestRisk == null || risk > bestRisk) {
-              bestRisk = risk;
-            }
-          }
-        }
-        cand = bestRisk;
-      }
-      
-      return (typeof cand === "number") ? cand : null;
-    },
-  
-    normalizeGeneData(obj){
-      // 1) merge all annotations everywhere
-      let ann = this.collectVariantAnnotations(obj);
-      
-      // If obj is already a variant dictionary (from dbsnp_variants), use it directly
-      if (obj && typeof obj === "object" && !obj.variant_annotations && !obj.summary_by_high_risk_alleles && !obj.total_associations) {
-        // This looks like it's already a variant dictionary (rsid -> variant_data)
-        ann = obj;
-      }
-  
-      // 2) possible fallback IDs
-      const fallbackIDs = this.deepCollectStringArray(obj, ["high_risk_snps","gwas_high_risk_snps","snps"]);
-  
-      // 3) build variants
-      const byId = {};
-      const variants = Object.entries(ann).map(([vid, v])=>{
-        const row = {
-          id: vid,
-          p_value: this.extractP(v),
-          context: this.extractContext(v),
-          or_beta: this.extractORBeta(v),
-          traits: this.extractVariantTraits(v),
-        };
-        byId[vid] = row;
-        return row;
-      });
-  
-      // 4) add fallback-only ids if needed
-      for (const vid of fallbackIDs){
-        if (vid && !byId[vid]) {
-          byId[vid] = { id: vid, p_value: null, context: "", or_beta: null, traits: [] };
-          variants.push(byId[vid]);
-        }
-      }
-  
-      // 5) trait universe: start with traits that actually map to variants
-      const traitSet = new Set();
-      variants.forEach(v => (v.traits||[]).forEach(t => t && traitSet.add(t)));
-  
-      // Optionally include other summary trait lists (will appear even if unmapped)
-      const extraTraits = this.deepCollectStringArray(obj, [
-        "disease_traits","gwas_disease_traits","traits","mapped_traits","phenotypes"
-      ]);
-      for (const t of extraTraits) traitSet.add(t);
-  
-      const traits = Array.from(traitSet).sort((a,b)=>a.localeCompare(b));
-  
-      // 6) maps
-      const mapT2V = {};
-      const mapV2T = {};
-      for (const v of variants){
-        const tlist = (v.traits||[]);
-        mapV2T[v.id] = tlist.slice().sort((a,b)=>a.localeCompare(b));
-        for (const t of tlist) {
-          if (!t) continue;
-          (mapT2V[t] ||= []).push(v.id);
-        }
-      }
-      for (const t in mapT2V){
-        mapT2V[t].sort((a,b)=>{
-          const va = byId[a], vb = byId[b];
-          const pa = (va?.p_value ?? Number.POSITIVE_INFINITY);
-          const pb = (vb?.p_value ?? Number.POSITIVE_INFINITY);
-          return pa - pb;
-        });
-      }
-  
-      return { traits, variants, mapT2V, mapV2T };
-    },
-  
-    ensureStateForGene(safeId, obj, rawKey){
-      if (!this.state[safeId]){
-        const data = this.normalizeGeneData(obj);
-        this.state[safeId] = {
-          rawKey,
-          mode: "traits",
-          selectedTrait: data.traits.find(t => (data.mapT2V[t]||[]).length) || data.traits[0] || null,
-          selectedVariant: data.variants
-            .slice()
-            .sort((a,b)=>(a.p_value??1e300)-(b.p_value??1e300))[0]?.id || null,
-          data
-        };
-      }
-      return this.state[safeId];
-    },
-  
-    setMode(id, mode){ const s=this.state[id]; if(!s) return; s.mode=mode; this.renderGene(id); },
-    selectTrait(id, trait){ const s=this.state[id]; if(!s) return; s.selectedTrait=trait; s.mode="traits"; this.renderGene(id); },
-    selectVariant(id, varId){ const s=this.state[id]; if(!s) return; s.selectedVariant=varId; s.mode="variants"; this.renderGene(id); },
-  
-    fmtP(p){
-      if (p == null || !isFinite(p)) return "NA";
-      if (p === 0) return "<1e-300";
-      return (p < 1e-3) ? p.toExponential(2) : p.toFixed(3);
-    },
-  
-    geneCounts(obj, data){
-      const nVars = data.variants.length;
-      const nTraits = data.traits.length;
-      const total   = obj?.total_associations ?? nVars;
-      const signif  = obj?.total_significant_associations ?? null;
-      const studies = obj?.total_studies_analyzed ?? null;
-      const bits = [
-        `${nTraits} trait${nTraits===1?"":"s"}`,
-        `${nVars} variant${nVars===1?"":"s"}`
-      ];
-      if (Number.isFinite(total))   bits.push(`total: ${total}`);
-      if (Number.isFinite(signif))  bits.push(`significant: ${signif}`);
-      if (Number.isFinite(studies)) bits.push(`studies: ${studies}`);
-      return bits.join(" • ");
-    },
-  
-    renderGene(id){
-      const mount = document.getElementById(`gwas-${id}`);
-      const s = this.state[id];
-      if (!mount || !s) return;
-  
-      const displayGene = s.rawKey;
-      const { data, mode } = s;
-  
-      const tabs = `
-        <div class="gwas-tabs">
-          <button class="${mode==='traits'?'active':''}" onclick="GWAS.setMode('${id}','traits')">Traits</button>
-          <button class="${mode==='variants'?'active':''}" onclick="GWAS.setMode('${id}','variants')">Variants</button>
-        </div>`;
-  
-      // Left column
-      let listHTML = "";
-      if (mode === "traits"){
-        const pills = data.traits.map(t => {
-          const js = String(t).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
-          const cls = (s.selectedTrait===t) ? "pill clickable selected" : "pill clickable";
-          return `<span class="${cls}" onclick="GWAS.selectTrait('${id}','${js}')">${escapeHtml(t)}</span>`;
-        }).join("");
-        listHTML = `<div class="gwas-list">${pills || '<div class="muted">No traits found.</div>'}</div>`;
-      } else {
-        const rows = data.variants
-          .slice()
-          .sort((a,b)=> (a.p_value??1e300)-(b.p_value??1e300))
-          .map(v => `
-            <tr class="clickable" onclick="GWAS.selectVariant('${id}','${v.id}')">
-              <td class="mono">${escapeHtml(v.id)}</td>
-              <td>${escapeHtml(v.context||"")}</td>
-              <td class="mono">${this.fmtP(v.p_value)}</td>
-              <td class="gwas-meta">${(v.traits||[]).length}</td>
-            </tr>`).join("");
-        listHTML = rows
-          ? `<div class="gwas-list">
-               <table class="gwas-table">
-                 <thead><tr><th>Variant</th><th>Context</th><th>P</th><th>#traits</th></tr></thead>
-                 <tbody>${rows}</tbody>
-               </table>
-             </div>`
-          : '<div class="muted">No variants found.</div>';
-      }
-  
-      // Right column
-      let detailHTML = "";
-      if (mode === "traits"){
-        const t = s.selectedTrait;
-        if (!t){
-          detailHTML = '<div class="muted">Select a trait to see associated variants.</div>';
-        } else {
-          const vIds = s.data.mapT2V[t] || [];
-          if (!vIds.length){
-            detailHTML = `<div><strong>${escapeHtml(t)}</strong><div class="muted">No variants mapped to this trait.</div></div>`;
-          } else {
-            const rows = vIds.map(vid => {
-              const v = s.data.variants.find(x=>x.id===vid);
-              return `<tr>
-                <td class="mono">${escapeHtml(vid)}</td>
-                <td>${escapeHtml(v?.context||"")}</td>
-                <td class="mono">${this.fmtP(v?.p_value)}</td>
-              </tr>`;
-            }).join("");
-            detailHTML = `
-              <div><strong>${escapeHtml(t)}</strong></div>
-              <div class="muted" style="margin:4px 0 8px;">${vIds.length} variant${vIds.length===1?'':'s'}</div>
-              <div class="gwas-detail">
-                <table class="gwas-table">
-                  <thead><tr><th>Variant</th><th>Context</th><th>P</th></tr></thead>
-                  <tbody>${rows}</tbody>
-                </table>
-              </div>`;
-          }
-        }
-      } else {
-        const varId = s.selectedVariant;
-        if (!varId){
-          detailHTML = '<div class="muted">Select a variant to see associated traits.</div>';
-        } else {
-          const v = s.data.variants.find(x=>x.id===varId);
-          const traits = s.data.mapV2T[varId] || [];
-          const traitPills = traits.map(t => `<span class="pill">${escapeHtml(t)}</span>`).join("");
-          detailHTML = `
-            <div><strong>${escapeHtml(varId)}</strong></div>
-            <div class="gwas-meta">context: ${escapeHtml(v?.context||"")} • p: <span class="mono">${this.fmtP(v?.p_value)}</span>${(v?.or_beta!=null?` • OR/Beta: ${v.or_beta}`:"")}</div>
-            <div class="gwas-detail" style="margin-top:8px;">
-              <div class="muted" style="margin-bottom:6px;">Traits</div>
-              ${traitPills || '<div class="muted">No traits available.</div>'}
-            </div>`;
-        }
-      }
-  
-      const counts = this.geneCounts(window.__GWAS_RAW?.[s.rawKey] || {}, s.data);
-      mount.innerHTML = `
-        <div class="gwas-head">
-          <div>
-            <div><strong>${escapeHtml(uc(displayGene))}</strong></div>
-            <div class="gwas-meta">${counts}</div>
-          </div>
-          ${tabs}
-        </div>
-        <div class="gwas-grid" style="margin-top:8px;">
-          <div>${listHTML}</div>
-          <div>${detailHTML}</div>
-        </div>`;
-    }
-  };
-  
-  function renderGWAS(st){
-    const gw = st?.gwas_associations;
-    const dbsnp = st?.dbsnp_variants;
-    if (!gw || typeof gw !== 'object') return hide("gwasCard");
-    window.__GWAS_RAW = gw;
-  
-    const html = Object.keys(gw).map(gene => {
-      const safe = gene.replace(/[^a-z0-9_-]/gi, '_');
-      return `<div id="gwas-${safe}" style="margin-bottom:16px;"></div>`;
-    }).join("");
-    if (!html.trim()){ hide("gwasCard"); return; }
-  
-    setHTML("gwas", html);
-    show("gwasCard");
-  
-    for (const [rawGene, obj] of Object.entries(gw)){
-      const safe = rawGene.replace(/[^a-z0-9_-]/gi, '_');
-      // Use dbsnp_variants data if available, otherwise fall back to gwas_associations
-      const variantData = dbsnp?.[rawGene] || obj;
-      GWAS.ensureStateForGene(safe, variantData, rawGene);
-      GWAS.renderGene(safe);
-    }
-  }
-  
+  mount.appendChild(frame);
+  document.getElementById("protCard").style.display = "block";
 
-  function renderGENCODE(st){
-    const gc = st?.gene_level_gencode;
-    if (!gc || typeof gc !== 'object') return hide("gencodeCard");
-
-    const W = 700, H = 150;
-    const P = { top: 10, right: 10, bottom: 40, left: 28 };
-
-    const sections = Object.entries(gc).map(([gene, obj])=>{
-      if (!obj || typeof obj !== 'object') return "";
-
-      const exonsMap = obj.exons_per_transcript || {};
-      const counts = Object.values(exonsMap).map(v=>Number(v)).filter(n=>Number.isFinite(n));
-      const nTx = Array.isArray(obj.transcript_ids) ? obj.transcript_ids.length : (obj.n_transcripts ?? counts.length);
-
-      const spanMin = obj.min_transcript_span_bp, spanMax = obj.max_transcript_span_bp;
-      const spanLine = (spanMin && spanMax) ? `<div class="muted">span: ${escapeHtml(spanMin)}–${escapeHtml(spanMax)} bp</div>` : "";
-
-      if (!counts.length){
-        return `<div style="margin-bottom:14px;">
-          <div><strong>${escapeHtml(uc(gene))}</strong></div>
-          <div class="muted">transcripts: ${nTx}</div>
-          ${spanLine}
-          <div class="muted">No exon data available to plot.</div>
-        </div>`;
-      }
-
-      const freq = {};
-      for (const n of counts) freq[n] = (freq[n]||0) + 1;
-      const bins = Object.keys(freq).map(Number).sort((a,b)=>a-b);
-      const maxCount = Math.max(...bins.map(b => freq[b]));
-
-      const sorted = [...counts].sort((a,b)=>a-b);
-      const mid = Math.floor(sorted.length/2);
-      const median = (sorted.length % 2) ? sorted[mid] : (sorted[mid-1] + sorted[mid]) / 2;
-
-      const plotW = W - P.left - P.right;
-      const plotH = H - P.top - P.bottom;
-      const bandW = plotW / bins.length;
-      const gap = Math.min(6, Math.max(2, bandW * 0.12));
-
-      const bars = bins.map((b, i) => {
-        const c = freq[b];
-        const h = (c / maxCount) * plotH;
-        const x = P.left + i * bandW + gap/2;
-        const y = P.top + (plotH - h);
-        const w = Math.max(1, bandW - gap);
-        return `<rect class="hist-bar" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${w.toFixed(2)}" height="${Math.max(0,h).toFixed(2)}">
-                  <title>${b} exons • ${c} transcript${c===1?"":"s"}</title>
-                </rect>`;
-      }).join("");
-
-      const tickY = H - 18;
-      let xLabels = "";
-      if (bins.length <= 18) {
-        xLabels = bins.map((b, i) => {
-          const x = P.left + i * bandW + bandW/2;
-          return `<text class="hist-axis" x="${x.toFixed(2)}" y="${tickY}" text-anchor="middle">${b}</text>`;
-        }).join("");
-      } else {
-        const minB = bins[0], maxB = bins[bins.length-1];
-        const nearestIdx = Math.max(0, Math.min(bins.length-1, bins.findIndex(v => v>=median)));
-        const xMin = P.left + 0 * bandW + bandW/2;
-        const xMed = P.left + nearestIdx * bandW + bandW/2;
-        const xMax = P.left + (bins.length-1) * bandW + bandW/2;
-        xLabels = `
-          <text class="hist-axis" x="${xMin.toFixed(2)}" y="${tickY}" text-anchor="middle">${minB}</text>
-          <text class="hist-axis" x="${xMed.toFixed(2)}" y="${tickY}" text-anchor="middle">median ${median}</text>
-          <text class="hist-axis" x="${xMax.toFixed(2)}" y="${tickY}" text-anchor="middle">${maxB}</text>
-        `;
-      }
-
-      const baseY = P.top + plotH;
-      const baseline = `<line class="hist-baseline" x1="${P.left}" y1="${baseY}" x2="${W-P.right}" y2="${baseY}"/>`;
-      const xTitle = `<text class="hist-axis" x="${W/2}" y="${H-4}" text-anchor="middle"># exons</text>`;
-      const yTitle = `<text class="hist-axis" transform="rotate(-90 12 ${H/2})" x="12" y="${H/2}" text-anchor="middle"># transcripts</text>`;
-
-      return `<div style="margin-bottom:16px;">
-        <div><strong>${escapeHtml(uc(gene))}</strong></div>
-        <div class="muted">transcripts: ${nTx} • median exons: ${median}</div>
-        ${spanLine}
-        <svg class="hist-svg" viewBox="0 0 ${W} ${H}">
-          ${yTitle}
-          ${baseline}
-          ${bars}
-          ${xLabels}
-          ${xTitle}
-        </svg>
-      </div>`;
-    }).join("");
-
-    if (sections.trim()) { setHTML("gencode", sections); show("gencodeCard"); }
-    else hide("gencodeCard");
-  }
-  // ---------------- Variant Summary renderer (SEI / Expecto / AM columns shown only when available) ----------------
-  window.__EXPECTO_DETAILS  = window.__EXPECTO_DETAILS  || {}; // geneKey -> { rsSafe -> detailHTML }
-  window.__EXPECTO_EXPANDED = window.__EXPECTO_EXPANDED || {}; // geneKey -> Set(rsSafe)
-  function renderVariantSummary(st){
-  const sei    = st?.sei_predictions || {};
-  const am     = st?.alphamissense_predictions || {};
-  const dbsum  = st?.dbsnp_summaries || {};
-  const gwas   = st?.gwas_associations || {};
-  const dbsnp  = st?.dbsnp_variants || {};
-  const exVar  = st?.expression_preds_variant_table || {}; // gene -> rsid -> metrics
-
-  // ---- helpers ----
-  const freqLabel = (rs, geneDb) => {
-    const rareSet       = new Set(geneDb?.["rare_rsids"] || []);
-    const commonSet     = new Set(geneDb?.["common_rsids"] || []);
-    const veryCommonSet = new Set(geneDb?.["very_common_rsids"] || []);
-    return (
-      rareSet.has(rs)       ? "Rare (<1%)" :
-      commonSet.has(rs)     ? "Common (1–15%)" :
-      veryCommonSet.has(rs) ? "Very common (over 15%)" : "N/A"
-    );
-  };
-  const fmtNum = (x, digits=3) => {
-    const n = (typeof x === "number") ? x : parseFloat(String(x));
-    if (!Number.isFinite(n)) return "NA";
-    return Math.abs(n) < 1e-3 ? n.toExponential(2) : n.toFixed(digits);
-  };
-  const asPctInt = (p) => {
-    if (p == null) return null;
-    let n = (typeof p === "number") ? p : parseFloat(String(p));
-    if (!Number.isFinite(n)) return null;
-    if (n <= 1) n *= 100; // accept [0,1]
-    n = Math.round(n);
-    return Math.max(0, Math.min(100, n));
-  };
-  const ordinal = (n) => {
-    if (n == null) return "NA";
-    const v = Math.abs(n);
-    const j = v % 10, k = v % 100;
-    if (j === 1 && k !== 11) return v + "st";
-    if (j === 2 && k !== 12) return v + "nd";
-    if (j === 3 && k !== 13) return v + "rd";
-    return v + "th";
-  };
-  const sanitizeId = (s) => String(s || "").replace(/[^a-z0-9_-]/gi, "_");
-
-  // robust collectors (use GWAS helpers if present; otherwise deep-scan)
-  const collectVariantAnnotations = (obj) => {
-    if (window.GWAS?.collectVariantAnnotations) return GWAS.collectVariantAnnotations(obj);
-    const out = {}; const seen = new Set();
-    (function walk(x){
-      if (!x || typeof x !== "object" || seen.has(x)) return;
-      seen.add(x);
-      if (x.variant_annotations && typeof x.variant_annotations === "object" && !Array.isArray(x.variant_annotations)){
-        Object.assign(out, x.variant_annotations);
-      }
-      if (x.dbsnp_variants && typeof x.dbsnp_variants === "object" && !Array.isArray(x.dbsnp_variants)){
-        Object.assign(out, x.dbsnp_variants);
-      }
-      for (const v of Object.values(x)) walk(v);
-    })(obj || {});
-    return out;
-  };
-  const extractTraits = (v) => {
-    if (window.GWAS?.extractVariantTraits) return GWAS.extractVariantTraits(v);
-    const out = new Set();
-    const add = s => { if (s && typeof s === "string") out.add(s); };
-    const addMany = a => { if (Array.isArray(a)) a.forEach(add); };
-    if (!v) return [];
-    
-    // Handle new nested format: associated_disease_trait: { trait_name: { p_value, risk_score } }
-    if (v?.associated_disease_trait && typeof v.associated_disease_trait === "object") {
-      Object.keys(v.associated_disease_trait).forEach(add);
-    }
-    
-    // Handle legacy formats for compatibility
-    addMany(v?.disease_trait); add(v?.disease_trait);
-    addMany(v?.traits); add(v?.trait);
-    addMany(v?.phenotypes); add(v?.phenotype);
-    addMany(v?.mapped_traits); add(v?.mapped_trait);
-    addMany(v?.gwas_disease_traits);
-    return Array.from(out);
-  };
-  const extractP = (v) => {
-    if (window.GWAS?.extractP) return GWAS.extractP(v);
-    // First check direct p_value (legacy format)
-    let raw = (v?.p_value ?? v?.p ?? null);
-    
-    // If not found, check the new nested format: associated_disease_trait: { trait_name: { p_value, risk_score } }
-    if (raw == null && v?.associated_disease_trait && typeof v.associated_disease_trait === "object") {
-      // Get the best (lowest) p_value from all disease traits
-      let bestP = null;
-      for (const traitData of Object.values(v.associated_disease_trait)) {
-        if (traitData?.p_value != null) {
-          const p = traitData.p_value;
-          if (bestP == null || p < bestP) {
-            bestP = p;
-          }
-        }
-      }
-      raw = bestP;
-    }
-    
-    if (typeof raw === "number") return raw;
-    if (raw == null) return null;
-    const n = parseFloat(String(raw));
-    return Number.isFinite(n) ? n : null;
-  };
-  const extractContext = (v) => {
-    if (window.GWAS?.extractContext) return GWAS.extractContext(v);
-    return v?.context || v?.variant_category || v?.functional_annotation || v?.consequence || "";
-  };
-  const extractCategory = (v) => (v?.variant_category ?? v?.functional_annotation ?? v?.consequence ?? "");
-  const extractMappedGene = (v) => {
-    if (typeof v?.mapped_gene === "string") return v.mapped_gene;
-    if (Array.isArray(v?.mapped_genes) && v.mapped_genes.length) return v.mapped_genes[0];
-    return v?.mapped_gene_name || v?.gene || "";
-  };
-
-  // Which genes appear anywhere
-  const genes = new Set([
-    ...Object.keys(gwas || {}),
-    ...Object.keys(dbsum || {}),
-    ...Object.keys(sei || {}),
-    ...Object.keys(am || {}),
-    ...Object.keys(exVar || {})
-  ]);
-
-  // detail store (for Expecto "Details")
-  
-  const sections = [];
-
-  for (const gene of genes){
-    const geneSei = sei[gene] || {};
-    const geneAm  = am[gene]  || {};
-    const geneDb  = dbsum[gene] || {};
-    const gwasObj = gwas[gene] || {};
-    const dbsnpObj = dbsnp[gene] || {};
-    const combinedDataForGene = { gwas: gwasObj, dbsnp: dbsnpObj };
-    const geneEx  = exVar[gene] || {}; // rsid -> metrics
-
-    // Prefer per-gene annotations, but if empty due to nesting, fall back to global scan
-    const gwasAnnotations = collectVariantAnnotations(gwas[gene] || {});
-
-    // Get variants directly from dbSNP (which does not use the nested key)
-    const dbsnpAnnotations = dbsnp[gene] || {};
-
-    // Merge them together. Data from dbSNP will overwrite GWAS data for any overlapping variants.
-    let ann = { ...gwasAnnotations, ...dbsnpAnnotations };
-
-    // Fallback logic to scan all genes if the current gene yielded nothing
-    if (Object.keys(ann).length === 0) {
-      const globalGwasAnn = collectVariantAnnotations(gwas);
-      // For dbSNP, we need to merge the variant objects from all genes
-      const globalDbsnpAnn = Object.values(dbsnp || {}).reduce((acc, geneData) => ({...acc, ...geneData}), {});
-      ann = { ...globalGwasAnn, ...globalDbsnpAnn };
-    }
-
-    // rsids for this gene
-    const rsids = new Set([
-      ...Object.keys(ann || {}),
-      ...Object.keys(geneSei || {}),
-      ...Object.keys(geneAm || {}),
-      ...Object.keys(geneEx || {}),
-      ...(geneDb?.["rare_rsids"] || []),
-      ...(geneDb?.["common_rsids"] || []),
-      ...(geneDb?.["very_common_rsids"] || [])
-    ]);
-    if (rsids.size === 0) continue;
-
-    // Build rows
-    const rows = Array.from(rsids).map(rs => {
-      const vAnn     = ann?.[rs] || {};
-      const seiLabel = (rs in geneSei) ? (geneSei[rs] ?? "N/A") : "N/A";
-
-      // AlphaMissense
-      const amMap = geneAm?.[rs] || null;
-      let amList = [];
-      if (amMap && typeof amMap === "object"){
-        for (const [change, label] of Object.entries(amMap)){
-          const c = String(change || "").replace(/^SNP:/i, "").replace("->", "→");
-          amList.push(label ? `${c}: ${label}` : c);
-        }
-      }
-      if (amList.length === 0) amList = ["N/A"];
-
-      // Expecto per-variant metrics (if present)
-            // Expecto per-variant metrics (if present)
-            const ex = geneEx?.[rs] || null;
-            let expectoSummaryHtml = "N/A";
-            let expectoDetailHtml = "";
-            if (ex && typeof ex === "object"){
-              // Helpers
-              const pctInt   = asPctInt(ex.percentile); // may not exist globally; we'll use per-tissue percentiles below
-              const mean     = fmtNum(ex.mean_score);
-              const median   = fmtNum(ex.median_score);
-              const min_s    = fmtNum(ex.min_score);
-              const max_s    = fmtNum(ex.max_score);
-              const std_s    = fmtNum(ex.std_score);
-              const n_t      = (ex.n_tissues ?? "NA");
-              const coord    = ex.variant ? `${escapeHtml(ex.variant.chr || "")}:${escapeHtml(String(ex.variant.position || ""))} ${escapeHtml(ex.variant.alt || "")}` : "";
-      
-              const top1 = Array.isArray(ex.top_tissues) && ex.top_tissues.length ? ex.top_tissues[0] : null;
-              const bot1 = Array.isArray(ex.bottom_tissues) && ex.bottom_tissues.length ? ex.bottom_tissues[0] : null;
-      
-              const tissueLabel = (t) => {
-                if (!t) return "";
-                const bits = [t.tissue, t.organ, t.system, t.category].filter(Boolean);
-                return escapeHtml(bits.join(" / ") || String(t.tissue || ""));
-              };
-              const pctLabel = (p) => {
-                const pI = asPctInt(p);
-                return pI == null ? "NA" : `${ordinal(pI)} pct`;
-              };
-      
-              const lineHTML = (tag, t) => {
-                if (!t) return "";
-                // score highlighted, percentile mono, tissue bold
-                return `<span class="expecto-line">${tag} <span class="xnum pill">${fmtNum(t.score)}</span> (<span class="xpct">${pctLabel(t.percentile_in_tissue)}</span>) — <span class="xtissue">${tissueLabel(t)}</span></span>`;
-              };
-      
-              // ** headline-style summary (no mean/median here) **
-              const topLine = lineHTML("highest", top1);
-              const botLine = lineHTML("lowest",  bot1);
-              const lines   = [topLine, botLine].filter(Boolean);
-              expectoSummaryHtml = lines.length ? lines.join("") : "N/A";
-      
-              // ** full stats + lists are in the Details panel **
-              const listify = (arr) => {
-                if (!Array.isArray(arr) || !arr.length) return '<div class="muted">None</div>';
-                return `<ul style="margin:6px 0 0 16px; padding:0;">
-                  ${arr.map(t=>{
-                    const lbl = tissueLabel(t);
-                    return `<li><span class="xtissue">${lbl}</span> — score <span class="mono">${fmtNum(t.score)}</span>, ${pctLabel(t.percentile_in_tissue)}</li>`;
-                  }).join("")}
-                </ul>`;
-              };
-      
-              expectoDetailHtml = `
-                <div class="muted">ExpectoSC (cell-type specific expression disruption)</div>
-                ${coord ? `<div class="mono" style="margin:2px 0 6px;">${coord}</div>` : ""}
-                <div>n_tissues: ${escapeHtml(String(n_t))} • mean: ${mean} • median: ${median} • min: ${min_s} • max: ${max_s} • std: ${std_s}</div>
-                ${ex.relative_effect ? `<div style="margin-top:4px;">relative effect: ${escapeHtml(String(ex.relative_effect))}</div>` : ""}
-                ${topLine || botLine ? `<div style="margin-top:6px;">${topLine || ""}${botLine || ""}</div>` : ""}
-                <div style="margin-top:6px;"><strong>Top tissues</strong>${listify(ex.top_tissues)}</div>
-                <div style="margin-top:6px;"><strong>Lowest tissues</strong>${listify(ex.bottom_tissues)}</div>
-              `;
-            }
-      
-
-            return {
-              rs,
-              freq: freqLabel(rs, geneDb),
-              context: extractContext(vAnn),
-              category: extractCategory(vAnn),
-              mapped_gene: extractMappedGene(vAnn),
-              sei: seiLabel || "N/A",
-              expectoHtml: expectoSummaryHtml || "N/A",   
-              expectoDetailHtml,
-              am: amList,
-              traits: extractTraits(vAnn),
-              p: extractP(vAnn)
-            };
-    });
-
-    // Sort rows by frequency bucket, p-value asc, then rsid
-    const freqOrder = {"Rare (<1%)":0, "Common (1–15%)":1, "Very common (over 15%)":2, "N/A":3};
-
-    rows.sort((a,b)=>{
-      const fa = (freqOrder[a.freq] ?? 9), fb = (freqOrder[b.freq] ?? 9);
-      if (fa !== fb) return fa - fb;
-      const pa = (a.p ?? Number.POSITIVE_INFINITY), pb = (b.p ?? Number.POSITIVE_INFINITY);
-      if (pa !== pb) return pa - pb;
-      return a.rs.localeCompare(b.rs);
-    });
-
-    // Column visibility (per gene)
-    const hasSeiCol     = rows.some(r => r.sei && r.sei !== "N/A");
-const hasAmCol      = rows.some(r => Array.isArray(r.am) && r.am.some(x => x && x !== "N/A"));
-const hasExpectoCol = rows.some(r => r.expectoHtml && r.expectoHtml !== "N/A"); // was r.expecto
-
-const headerCols = `
-  <th>Variant</th>
-
-  <th>Context</th>
-  <th>Category</th>
-  <th>Mapped gene</th>
-  ${hasSeiCol ? '<th>SEI</th>' : ''}
-  ${hasExpectoCol ? '<th class="wrap">ExpectoSC</th>' : ''}
-  ${hasAmCol ? '<th class="am">AlphaMissense</th>' : ''}
-  <th class="traits">GWAS traits</th>
-`;
-
-    // Prepare detail store for this gene
-    const gkey = sanitizeId(gene);
-    window.__EXPECTO_DETAILS[gkey] = window.__EXPECTO_DETAILS[gkey] || {};
-
-    // Compute colspan for detail rows
-    const baseCols = 5 /* fixed cols */ + 1 /* GWAS traits */;
-    const colspan = baseCols + (hasSeiCol?1:0) + (hasExpectoCol?1:0) + (hasAmCol?1:0);
-
-    // Rows HTML (Expecto cell is .wrap, Traits cell is .traits.wrap)
-    const rowsHtml = rows.map(r=>{
-      const amHtml = (Array.isArray(r.am) ? r.am : ["N/A"])
-        .map(x => `<span class="pill">${escapeHtml(String(x))}</span>`).join(" ");
-      const tShown = (r.traits || []).slice(0, 8);
-      const traitsHtml = tShown.map(t => `<span class="pill">${escapeHtml(String(t))}</span>`).join(" ")
-        + ((r.traits && r.traits.length > 8) ? `<span class="muted"> +${r.traits.length - 8} more</span>` : "");
-
-      const rsSafe = sanitizeId(r.rs);
-      const hasDetail = Boolean(r.expectoDetailHtml && r.expectoDetailHtml.trim());
-      if (hasDetail) window.__EXPECTO_DETAILS[gkey][rsSafe] = r.expectoDetailHtml;
-
-      const expectoCell = hasExpectoCol
-        ? `<td class="expecto wrap">${r.expectoHtml || 'N/A'}${hasDetail ? ` <button class="mini" onclick="toggleExpectoDetails('${gkey}','${rsSafe}', ${colspan})">Details</button>` : ""}</td>`
-        : "";
-
-        const mainRow = `
-        <tr>
-          <td class="mono">${escapeHtml(r.rs)}</td>
-          <td>${escapeHtml(r.context || "N/A")}</td>
-          <td>${escapeHtml(r.category || "N/A")}</td>
-          <td>${escapeHtml(r.mapped_gene || "N/A")}</td>
-          ${hasSeiCol ? `<td>${escapeHtml(r.sei)}</td>` : ""}
-          ${expectoCell}
-          ${hasAmCol ? `<td class="am">${amHtml || 'N/A'}</td>` : ""}
-          <td class="traits">${traitsHtml || '<span class="muted">N/A</span>'}</td>
-        </tr>
-      `;
-
-      const expandedSet = (window.__EXPECTO_EXPANDED[gkey] ||= new Set());
-      const isOpen = expandedSet.has(rsSafe);
-
-      const detailRow = (hasDetail && hasExpectoCol)
-        ? `<tr id="expd_${gkey}_${rsSafe}" class="exp-detail" style="${isOpen ? "" : "display:none;"}">
-             <td colspan="${colspan}">
-               <div class="exp-detail-box">${window.__EXPECTO_DETAILS[gkey][rsSafe]}</div>
-             </td>
-           </tr>`
-        : "";
-
-      return mainRow + detailRow;
-    }).join("");
-
-    // Optional top-line counts from dbsnp_summaries
-    const statsBits = [];
-    if (Number.isFinite(geneDb?.["num_rare_variants (<1%)"]))         statsBits.push(`rare: ${geneDb["num_rare_variants (<1%)"]}`);
-    if (Number.isFinite(geneDb?.["num_common_variants (1-15%)"]))     statsBits.push(`common: ${geneDb["num_common_variants (1-15%)"]}`);
-    if (Number.isFinite(geneDb?.["num_very_common_variants (>15%)"])) statsBits.push(`very common: ${geneDb["num_very_common_variants (>15%)"]}`);
-
-    sections.push(`
-      <div style="margin-bottom:8px;">
-        <strong>${escapeHtml(uc(gene))}</strong>
-        ${statsBits.length ? `<span class="muted"> • ${statsBits.join(" • ")}</span>` : ""}
-      </div>
-      <div class="vs-scroll">
-        <table class="vs-table">
-          <thead><tr>${headerCols}</tr></thead>
-          <tbody>${rowsHtml}</tbody>
-        </table>
-      </div>
-    `);
-  }
-
-  if (sections.length){
-    setHTML("variantSummary", sections.join(""));
-    show("variantSummaryCard");
-  } else {
-    hide("variantSummaryCard");
-  }
+  // Theme sync (dark/light toggle): send a message the viewer can ignore if unsupported
+  const isLight = document.body.classList.contains("light");
+  // fire once after load
+  frame.addEventListener("load", () => {
+    frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
+  });
 }
 
-// Tiny helper 
-function toggleExpectoDetails(geneKey, rsSafe, colspan){
-  const rowId = `expd_${geneKey}_${rsSafe}`;
-  const row = document.getElementById(rowId);
-  if (!row) return;
 
-  const store = (window.__EXPECTO_EXPANDED[geneKey] ||= new Set());
-  const opening = (row.style.display === "none" || !row.style.display);
-
-  row.style.display = opening ? "" : "none";
-  if (opening) { store.add(rsSafe); row.scrollIntoView({block:"nearest", behavior:"smooth"}); }
-  else { store.delete(rsSafe); }
+ function renderQuestion(st){
+  var msgs = (st && st.messages) || [];
+  var lastUser = null;
+  for (var i = msgs.length - 1; i >= 0; i--){
+    if (msgs[i] && msgs[i].role === "user"){ lastUser = msgs[i]; break; }
+  }
+  var q = (lastUser && lastUser.content) || (st && st.prompt) || "";
+  setText("question", q);
+  setText("questionTitle", "Question");
 }
 
-  function renderDebug(st){
-    const keys = [
-      "uniprot_entries_gwas",
-      "gene_disease_traits",
-      "gene_function_traits",
-      "gene_GO_traits",
-      "humanbase_predictions",
-      "humanbase_expecto",
-      "tissue_expression_preds_variant_text_description",
-      "dbsnp_variants",
-      "dbsnp_summaries",
-      "sei_predictions",
-      "alphamissense_predictions",
-      "biogrid_summarized_go"
+function renderAnswerAndCitations(st){
+  const answerEl = byId("answer"); const refsEl = byId("citations"); answerEl.innerHTML = ""; refsEl.innerHTML = "";
+  const base = (st?.llm_json?.answer || (Array.isArray(st?.messages)?(st.messages.filter(m=>m.role==='assistant' && m.content).at(-1)?.content||""):"") || "").trim();
+  if (!base){ hide("answerCard"); return; }
+  const raw = st?.llm_json?.citations || st?.ui?.llm_raw_repr || st?.llm_raw_repr || "";
+  const cites = parseAnthropicCitationsFromString(raw);
+  if (!cites.length){ answerEl.innerHTML = mdToHtml(base); show("answerCard"); refsEl.innerHTML = ""; return; }
+  const { bib, numFor } = buildBibliography([{ text:"", citations: cites }], st);
+  function insertCitationsIntoText(text, citations, numFor){
+    let out = text; const lower = () => out.toLowerCase();
+    function tryInsert(snippet, n){ if (!snippet) return false; const sn = snippet.replace(/\s+/g," ").trim(); if (!sn) return false; let idx = lower().indexOf(sn.toLowerCase()); if (idx !== -1){ const end = idx + sn.length; out = out.slice(0, end) + ` [[CITE:${n}]]` + out.slice(end); return true; } const words = sn.split(" ").filter(Boolean); const short = words.slice(0, Math.min(12, words.length)).join(" "); if (short.length >= 20){ idx = lower().indexOf(short.toLowerCase()); if (idx !== -1){ const end = idx + short.length; out = out.slice(0, end) + ` [[CITE:${n}]]` + out.slice(end); return true; } } return false; }
+    function fallbackInsert(cited, n){
+      // Split into sentences without lookbehind; keeps punctuation
+      var sents = out.match(/[^.!?]+(?:[.!?]+|$)/g) || [out];
+      var keys = (cited||"").toLowerCase().split(/\s+/).filter(function(w){ return w.length>3; });
+      var best = -1, scoreBest = 0, posEnd = 0;
+    
+      for (var i=0; i<sents.length; i++){
+        var sLow = sents[i].toLowerCase();
+        var score = 0;
+        for (var k=0; k<keys.length; k++) if (sLow.indexOf(keys[k]) !== -1) score++;
+        if (score > scoreBest){ scoreBest = score; best = i; }
+      }
+      if (best >= 0){
+        for (var i2=0,p=0; i2<=best; i2++){ p += sents[i2].length; posEnd = p; }
+        out = out.slice(0, posEnd) + " [[CITE:"+n+"]]" + out.slice(posEnd);
+      } else {
+        out += " [[CITE:"+n+"]]";
+      }
+    }
+        for (const c of citations){ const n = numFor(c); if (!n) continue; if (!tryInsert(c.cited_text, n)) fallbackInsert(c.cited_text, n); }
+    return out; }
+  const annotated = insertCitationsIntoText(base, cites, numFor);
+  let html = mdToHtml(annotated); html = replaceCitationPlaceholdersWithHtml(html);
+  answerEl.innerHTML = html; show("answerCard"); renderReferencesList(bib); wireCitationTooltips(answerEl, bib);
+}
+  function renderEntities(st){
+    function escapeHtml(s){ return String(s??"").replace(/[&<>"']/g,ch=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch])); }
+    function asPills(arr){ return (arr||[]).filter(Boolean).map(x=>`<span class="pill">${escapeHtml(String(x))}</span>`).join(" "); }
+  
+    // Genes/entities
+    var ge = (st && st.gene_entities && typeof st.gene_entities === "object") ? Object.keys(st.gene_entities) : [];
+    var genes = ge.length ? ge : (st && st.genes ? st.genes : []);
+    var html = "";
+    if (genes && genes.length){
+      html += asPills(genes);
+    }
+  
+    // Tools used (look in a bunch of likely places)
+    var tools = [];
+    var candidates = [
+      st?.tools_used, st?.ui?.tools_used, st?.llm_json?.tools_used,
+      st?.tools, st?.ui?.tools, st?.pipeline?.tools, st?.tool_calls
     ];
-    const subset = {};
-    for (const k of keys) {
-      const v = st?.[k];
-      if (v && ((Array.isArray(v) && v.length) || (typeof v === 'object' && Object.keys(v).length))) {
-        subset[k] = v;
+    candidates.forEach(function(t){
+      if (!t) return;
+      if (Array.isArray(t)){
+        t.forEach(function(x){
+          if (!x) return;
+          if (typeof x === "string") tools.push(x);
+          else if (typeof x === "object"){
+            tools.push(x.name || x.tool || x.id || x.type);
+          }
+        });
+      } else if (typeof t === "object"){
+        Object.keys(t).forEach(function(k){ tools.push(k); });
+      } else if (typeof t === "string"){
+        tools = tools.concat(t.split(/[,\s]+/));
       }
+    });
+    tools = Array.from(new Set(tools.filter(Boolean)));
+  
+    if (tools.length){
+      if (html) html += '<div style="height:6px"></div>';
+      html += '<div class="muted" style="margin-bottom:4px;">Tools used</div>';
+      html += asPills(tools);
     }
-    if (Object.keys(subset).length) { setText("debug", JSON.stringify(subset, null, 2)); show("debugCard"); } else hide("debugCard");
-  }
-
-  function renderRaw(st){
-    if (st) { setText("raw", JSON.stringify(st, null, 2)); show("rawCard"); }
-    else hide("rawCard");
-  }
-
-  // Orchestration
-  async function refresh(qJustRan="") {
-    const st = await fetchState();
-    if (!st) return;
   
-    const hero = document.getElementById('hero');
-    if (hero && hero.style.display !== 'none'){ hide('hero'); show('grid'); }
-    show('toolbar');
-    const q2 = document.getElementById('q2'); if (q2) { q2.value = ""; q2.focus(); }
-  
-    renderQuestion(st, qJustRan);
-    renderEntities(st);
-    renderTools(st);
-    renderAnswer(st);
-    renderBioGRID(st);
-    renderReactome(st);
-    renderUniProtBase(st);
-    renderGWAS(st);
-    renderVariantSummary(st);
-  
-    renderGENCODE(st);
-    renderProt(st); 
-    renderDebug(st);
-    renderRaw(st);
+    if (html){
+      document.getElementById("entities").innerHTML = html;
+      document.getElementById("entitiesCard").style.display = "block";
+    } else {
+      document.getElementById("entitiesCard").style.display = "none";
+      document.getElementById("entities").innerHTML = "";
+    }
   }
-  // Run helpers
-  async function run(qOverride) {
-    const qEl = document.getElementById("q");
-    const q = (typeof qOverride === "string" ? qOverride : (qEl?.value || "")).trim();
-    if (!q) { alert("Type a question first."); return; }
-    if (qEl) qEl.blur();
-
-    // Clear previous sections; keep layout
-    hideAllSections();
-    setText("question", "");  
-    setStatus("(waiting for output…)");
-    showRunStatus();
-
-    // Start polling logs before kicking off the run
-    startLogPolling();
-
-    const res = await fetch("/run?q=" + encodeURIComponent(q));
-    if (!res.ok) {
-      setStatus("Run failed.");
-      setTimeout(()=>{ stopLogPolling(); hideRunStatus(); }, 800);
+  
+  function parsePandasLikeMRTable(txt){
+    // Accepts the pandas DataFrame pretty-print string and returns {cols, rows}
+    if (!txt || typeof txt !== "string") return { cols: [], rows: [] };
+    // strip the trailing "[N rows x M columns]" line if present
+    const lines = txt.split(/\r?\n/).filter(l => l.trim() && !/^\[\d+\s+rows\s+x\s+\d+\s+columns\]$/i.test(l.trim()));
+  
+    if (!lines.length) return { cols: [], rows: [] };
+  
+    // First non-empty is header; collapse 2+ spaces to tabs to preserve tokens with single spaces
+    const header = lines[0].trim().replace(/\s{2,}/g, "\t").split("\t").map(s => s.trim());
+    // Some DF prints include an "..." column where middle cols are elided; we’ll ignore it.
+    const keep = ["exposure","outcome","method","Q_df","Q_pval","OR_95CI"];
+    const colIdx = header.reduce((acc, name, i) => { acc[name] = i; return acc; }, {});
+    const cols = keep.filter(c => colIdx[c] != null);
+  
+    const rows = [];
+    for (let i = 1; i < lines.length; i++){
+      let raw = lines[i].trim();
+      // collapse 2+ spaces to tabs
+      let parts = raw.replace(/\s{2,}/g, "\t").split("\t");
+      // many pandas prints include a leading row index, drop it
+      if (parts.length && /^\d+$/.test(parts[0])) parts.shift();
+      // also drop an ellipsis column if present
+      parts = parts.filter(p => p.trim() !== "...");
+      // build the row in our kept column order
+      const row = cols.map(c => (parts[colIdx[c]] ?? "—"));
+      rows.push(row);
+    }
+    return { cols, rows };
+  }
+  
+  function renderTwoSampleMR(st){
+    const mount = document.getElementById("tsmr");
+    const card  = document.getElementById("tsmrCard");
+    if (!mount || !card) return;
+  
+    const block = st?.two_sample_mr_ui;
+    if (!block || typeof block !== "object" || !Object.keys(block).length){
+      card.style.display = "none";
+      mount.innerHTML = "";
       return;
     }
-
-    await refresh(q);
-    setTimeout(()=>{ stopLogPolling(); hideRunStatus(); }, 800);
+  
+    const sections = [];
+    Object.entries(block).forEach(([key, obj]) => {
+      if (!obj || typeof obj !== "object") return;
+      const title = key;
+      const cohort = obj.cohort ? `<span class="pill">${escapeHtml(String(obj.cohort))}</span>` : "";
+      const gene   = obj.gene   ? `<span class="pill">Gene: ${escapeHtml(String(obj.gene))}</span>` : "";
+      const cis    = (obj.cis===true || obj.cis==="true") ? `<span class="pill">cis</span>` : `<span class="pill ghost">trans</span>`;
+  
+      const sum    = obj.summary_text ? `<div class="mr-sum">${escapeHtml(String(obj.summary_text))}</div>` : "";
+      const parsed = parsePandasLikeMRTable(String(obj.results_table || ""));
+  
+      // fallback: nothing parsed
+      let tableHTML = `<div class="muted">No MR results table available.</div>`;
+      if (parsed.cols.length && parsed.rows.length){
+        const thead = `<thead><tr>${parsed.cols.map(c => `<th>${escapeHtml(c)}</th>`).join("")}</tr></thead>`;
+        const tbody = `<tbody>${
+          parsed.rows.map(r => `<tr>${r.map(v => `<td title="${escapeHtml(String(v))}">${escapeHtml(String(v))}</td>`).join("")}</tr>`).join("")
+        }</tbody>`;
+  
+        // CSV
+        const csv = [
+          parsed.cols.join(","),
+          ...parsed.rows.map(r => r.map(x => {
+            const s = String(x ?? "");
+            return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+          }).join(","))
+        ].join("\n");
+  
+        const btnId = `mrCsv_${Math.random().toString(36).slice(2,9)}`;
+        tableHTML = `
+          <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div class="muted">${parsed.rows.length} row${parsed.rows.length===1?"":"s"} • columns: ${parsed.cols.length}</div>
+            <button id="${btnId}" class="ghost">Download CSV</button>
+          </div>
+          <div class="scroll"><table>${thead}${tbody}</table></div>
+        `;
+  
+        // defer wiring after adding to DOM (we'll hook it below)
+        sections.push({ html:
+          `<div class="mr-block">
+             <div class="mr-head"><strong>${escapeHtml(title)}</strong> ${cohort} ${gene} ${cis}</div>
+             ${sum}
+             ${tableHTML}
+           </div>`,
+          btnId, csv
+        });
+        return;
+      }
+  
+      sections.push({ html:
+        `<div class="mr-block">
+           <div class="mr-head"><strong>${escapeHtml(title)}</strong> ${cohort} ${gene} ${cis}</div>
+           ${sum}
+           ${tableHTML}
+         </div>`
+      });
+    });
+  
+    mount.innerHTML = sections.map(s => s.html).join("");
+    card.style.display = "block";
+  
+    // wire CSV buttons
+    sections.forEach(s => {
+      if (!s.btnId || !s.csv) return;
+      const btn = document.getElementById(s.btnId);
+      if (!btn) return;
+      btn.addEventListener("click", () => {
+        const blob = new Blob([s.csv], { type: "text/csv;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "two_sample_mr_results.csv";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 500);
+      });
+    });
   }
 
-  function runFrom(inputId){
-    const el = document.getElementById(inputId);
-    const val = el ? el.value.trim() : "";
-    if (!val) { alert("Type a question first."); return; }
-    run(val);
+  
+function renderGeneSummary(st){
+  const ge = st?.gene_entities && typeof st.gene_entities === "object" ? st.gene_entities : {};
+  const blocks = Object.entries(ge).map(([gene, obj])=>{
+    if (!obj || typeof obj !== 'object') return '';
+    const id = obj.identifiers||{}; const sym = id.symbol || gene; const ens = id.ensembl_id||''; const uni = id.uniprot_id||''; const entrez = id.entrez_id||''; const aliases = (id.aliases||[]).slice(0,10).filter(Boolean);
+    const tx = obj.transcriptome||{}; const nTx = tx.transcript_count ?? (tx.transcripts ? Object.keys(tx.transcripts).length : undefined);
+    const spanMin = tx.median_transcript_span_bp || tx.min_transcript_span_bp; const spanMax = tx.max_transcript_span_bp;
+    const varCount = obj.variants && typeof obj.variants==='object' ? Object.keys(obj.variants).length : 0;
+    const header = `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><strong>${escapeHtml(uc(sym))}</strong><span class="muted">${ens?`• ${escapeHtml(ens)}`:''}${entrez?` • Entrez:${escapeHtml(entrez)}`:''}${uni?` • UniProt:${escapeHtml(uni)}`:''}</span></div>`;
+    const meta = `<div class="muted" style="margin-top:4px;">${nTx!=null?`Transcripts: ${nTx}`:''}${(spanMin||spanMax)?` • Span: ${escapeHtml(String(spanMin||'?'))}–${escapeHtml(String(spanMax||'?'))} bp`:''} • Variants in state: ${varCount}</div>`;
+    const aliasHtml = aliases.length? `<div class="muted" style="margin-top:4px;">Aliases</div><div>${asPills(aliases)}</div>` : '';
+    return `<div style="margin-bottom:12px;">${header}${meta}${aliasHtml}</div>`;
+  }).join("");
+  if (blocks.trim()){ setHTML("geneSummary", blocks); show("geneSummaryCard"); } else hide("geneSummaryCard");
+}
+
+// Variant Summary — strictly from gene_entities
+function pickBuild(loc_by_build, want){
+  if (!loc_by_build || typeof loc_by_build !== "object") return null;
+  var keys = Object.keys(loc_by_build);
+  var wantLC = String(want).toLowerCase();
+  var k = keys.find(k => String(k).toLowerCase().startsWith(wantLC));
+  if (!k && wantLC === "grch38") k = keys.find(k => String(k).toLowerCase().startsWith("grch37"));
+  if (!k && wantLC === "grch37") k = keys.find(k => String(k).toLowerCase().startsWith("grch38"));
+  return k ? (loc_by_build[k] || null) : null;
+}
+function normChrom(c){
+  if (!c) return "";
+  c = String(c);
+  if (/^chr/i.test(c)) c = c.replace(/^chr/i,'');
+  if (/^m(t)?$/i.test(c)) return "MT";
+  return c;
+}
+function compactKV(obj, keys){ if (!obj || typeof obj !== "object") return ""; const parts = []; for (const k of keys){ const v = obj[k]; if (v == null) continue; parts.push(`${k}:${typeof v === "number" ? (Math.abs(v) !== 0 && (Math.abs(v) < 1e-3 || Math.abs(v) >= 1e5) ? v.toExponential(3) : v.toFixed(3)) : String(v)}`); } return parts.join(", "); }
+function topExprString(exRec){ if (!exRec || typeof exRec !== "object") return ""; const flat = []; for (const [k,v] of Object.entries(exRec)){ let val = null; if (typeof v === "number") val = v; else if (v && typeof v === "object" && typeof v.z === "number") val = v.z; if (val == null) continue; flat.push({k, z: Number(val)}); } flat.sort((a,b)=>Math.abs(b.z)-Math.abs(a.z)); return flat.slice(0,3).map(e => `${e.k}:${e.z.toFixed(2)}`).join(", "); }
+
+function pickFirst(){ for (var i=0;i<arguments.length;i++){ var v=arguments[i]; if (v!==undefined && v!==null && v!=="") return v; } return ""; }
+function parseChrPos(s){
+  s = String(s || "");
+  var m = s.match(/(?:chr)?([0-9]+|X|Y|MT)[:\s]+(\d+)/i);
+  return m ? { chrom: m[1], pos: Number(m[2]) } : {};
+}
+function toStrAllele(x){
+  if (x == null) return "";
+  if (Array.isArray(x)) return x.join(",");
+  return String(x);
+}
+
+// Accept gene_entities OR derive a gene->variants map from other shapes.
+function getGeneMap(st){
+  // Preferred
+  if (st?.gene_entities && typeof st.gene_entities === "object" && Object.keys(st.gene_entities).length){
+    return st.gene_entities;
   }
 
-  // Enter-to-run
-  window.addEventListener('load', () => {
-    const input = document.getElementById('q');
-    input?.focus();
-    input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
+  // Fallbacks: variant_entities / variants / variant_list (array or dict)
+  const raw = st?.variant_entities ?? st?.variants ?? st?.variant_list ?? [];
+  const arr  = Array.isArray(raw) ? raw : Object.values(raw || {});
+  const gm   = {};
 
-    const input2 = document.getElementById('q2');
-    input2?.addEventListener('keydown', (e) => { if (e.key === 'Enter') runFrom('q2'); });
+  for (const item of arr){
+    const geneField = item.genes ?? item.gene_symbols ?? item.gene ?? item.symbol ?? [];
+    const genes = Array.isArray(geneField)
+      ? geneField
+      : String(geneField || "").split(/[;,|]/).map(s => s.trim()).filter(Boolean);
+
+    if (!genes.length) genes.push("NA");
+
+    for (const g of genes){
+      const G = (gm[g] ||= { variants: {} });
+      const id =
+        item.rsID || item.rsid || item.id || item.variant_id ||
+        [item.chrom||item.chr, item.pos||item.position||item.coord].filter(Boolean).join(":") ||
+        Math.random().toString(36).slice(2,9);
+
+      // Normalize per-gene context/traits into the expected nesting
+      const pgc = (item.per_gene_context && item.per_gene_context[g]) || item.per_gene || {};
+      const pgt = (item.per_gene_traits  && item.per_gene_traits[g])  || (item.traits_by_gene && item.traits_by_gene[g]) || {};
+
+      G.variants[id] = {
+        ...item,
+        per_gene_context: { ...(item.per_gene_context||{}), [g]: pgc },
+        per_gene_traits : { ...(item.per_gene_traits ||{}), [g]: pgt }
+      };
+    }
+  }
+  return gm;
+}
+
+function buildVariantRowsFromGeneEntities(st){
+  var rows = []; var ge = getGeneMap(st);   
+  if (!ge || typeof ge !== "object") return rows;
+
+  var seiG = st?.sei_predictions || st?.variant_sei || {};
+  var amG  = st?.alphamissense_predictions || st?.alphamissense || {};
+  var exprG= st?.expression_preds_variant_table || st?.variant_expression || {};
+
+  for (var gene in ge){
+    var gObj = ge[gene]; if (!gObj || typeof gObj !== "object") continue;
+    var vdict = gObj.variants; if (!vdict || typeof vdict !== "object") continue;
+
+    for (var k in vdict){
+      var v = vdict[k] || {};
+      var rsid = v.rsID || v.rsid || v.id || "";
+
+      var loc38 = pickBuild(v.loc_by_build, "GRCh38") || {};
+      var loc37 = pickBuild(v.loc_by_build, "GRCh37") || {};
+
+      // chrom + positions with robust fallbacks
+      var chrom = pickFirst(loc38.chrom, loc37.chrom, loc38.chr, loc37.chr, v.chrom, v.chr);
+      var pos38 = pickFirst(loc38.pos, loc38.position, v.pos38, v.position_38, v.hg38_position);
+      var pos37 = pickFirst(loc37.pos, loc37.position, v.pos37, v.position_37, v.hg19_position);
+
+      if (!chrom || (!pos38 && !pos37)){
+        var guess = parseChrPos(v.position || v.locus || v.coord || "");
+        if (!chrom && guess.chrom) chrom = guess.chrom;
+        if (!pos38 && guess.pos) pos38 = guess.pos;
+      }
+
+      // --- chrom + positions (robust) ---
+var chrom = normChrom(pickFirst(
+  loc38.chrom, loc37.chrom, loc38.chr, loc37.chr,
+  loc38.chromosome, loc37.chromosome, v.chrom, v.chr
+));
+var pos38 = pickFirst(loc38.pos, loc38.position, loc38.hg38_pos, v.pos38, v.position_38, v.hg38_position);
+var pos37 = pickFirst(loc37.pos, loc37.position, loc37.hg19_pos, v.pos37, v.position_37, v.hg19_position);
+
+// also parse "locus: chr16:538..." if present
+if (loc38.locus || loc38.coordinate || loc38.coord){
+  var g38 = parseChrPos(loc38.locus || loc38.coordinate || loc38.coord);
+  if (!chrom && g38.chrom) chrom = normChrom(g38.chrom);
+  if (!pos38 && g38.pos) pos38 = g38.pos;
+}
+if (loc37.locus || loc37.coordinate || loc37.coord){
+  var g37 = parseChrPos(loc37.locus || loc37.coordinate || loc37.coord);
+  if (!chrom && g37.chrom) chrom = normChrom(g37.chrom);
+  if (!pos37 && g37.pos) pos37 = g37.pos;
+}
+// variant-level locus fallback
+if ((!chrom || (!pos38 && !pos37)) && (v.position || v.locus || v.coord)){
+  var gv = parseChrPos(v.position || v.locus || v.coord);
+  if (!chrom && gv.chrom) chrom = normChrom(gv.chrom);
+  if (!pos38 && gv.pos) pos38 = gv.pos;
+}
+
+// --- Ref/Alt (robust) ---
+var refStr = toStrAllele(pickFirst(
+  loc38.ref, loc37.ref,
+  loc38.ref_allele, loc37.ref_allele,
+  v.ref, v.ref_allele, v.reference, v.reference_allele
+));
+var altStr = toStrAllele(pickFirst(
+  loc38.alt, loc37.alt,
+  loc38.alt_allele, loc37.alt_allele,
+  loc38.alts, loc37.alts,
+  v.alt, v.alt_allele, v.alternate, v.alternate_allele, v.alts
+));
+// if still empty, try alleles array or "C/T" string
+if (!refStr && !altStr){
+  var alle = pickFirst(loc38.alleles, loc37.alleles, v.alleles);
+  if (Array.isArray(alle) && alle.length >= 2){
+    refStr = toStrAllele(alle[0]);
+    altStr = toStrAllele(alle.slice(1));
+  } else if (typeof v.allele === "string" && v.allele.includes("/")){
+    var parts = v.allele.split("/");
+    refStr = parts[0];
+    altStr = parts.slice(1).join(",");
+  } else if (typeof loc38.ref_alt === "string" && loc38.ref_alt.includes("/")){
+    var p38 = loc38.ref_alt.split("/");
+    refStr = p38[0]; altStr = p38.slice(1).join(",");
+  }
+}
+
+      var ctxRec = (v.per_gene_context && v.per_gene_context[gene]) || {};
+      var context   = ctxRec.context || "";
+      var category  = ctxRec.variant_category || ctxRec.category || "";
+
+      var consequence = v.consequence || v.most_severe_consequence || v.vep_consequence || "";
+      var clinvar     = v.clinvar_significance || v.clin_sig || v.clinvar || "";
+
+      // Predictions
+      var seiStr = "";
+      var seiLocal = v.sei || v.functional_predictions?.SEI || v.predictions?.sei;
+      if (typeof seiLocal === "number") seiStr = seiLocal.toFixed(3);
+      else if (seiLocal && typeof seiLocal === "object") seiStr = compactKV(seiLocal, ["delta","max_delta","score","pred","chromatin"]);
+      else if (rsid && seiG?.[gene]?.[rsid] != null){
+        var sg = seiG[gene][rsid];
+        seiStr = (typeof sg === "number") ? sg.toFixed(3) : compactKV(sg, ["delta","max_delta","score","pred","chromatin"]);
+      }
+
+      var amStr = "";
+      var amLocal = v.alphamissense || v.predictions?.alphamissense || v.am;
+      if (typeof amLocal === "number") amStr = amLocal.toFixed(3);
+      else if (amLocal && typeof amLocal === "object") amStr = compactKV(amLocal, ["pathogenicity","score","p","label"]);
+      else if (rsid && amG?.[gene]?.[rsid] != null){
+        var ag = amG[gene][rsid];
+        amStr = (typeof ag === "number") ? ag.toFixed(3) : compactKV(ag, ["pathogenicity","score","p","label"]);
+      }
+
+      var exprStr = "";
+      var exprLocal = v.expression || v.predictions?.expression || v.expr;
+      if (exprLocal) exprStr = topExprString(exprLocal);
+      else if (rsid && exprG?.[gene]?.[rsid]) exprStr = topExprString(exprG[gene][rsid]);
+
+      // Traits
+      var topTrait = "", topP = null, topRisk = null;
+      var traitsRec = (v.per_gene_traits && v.per_gene_traits[gene]) || {};
+      var traitNames = [];
+      for (var t in traitsRec){
+        traitNames.push(t);
+        var p = Number(traitsRec[t]?.p_value);
+        if (Number.isFinite(p) && (topP===null || p<topP)){ topP=p; topTrait=t; topRisk=traitsRec[t]?.risk_score ?? null; }
+      }
+
+      // GnomAD alt AF (if present)
+      var gnomadAF = null;
+      var altSet = new Set((altStr||"").split(",").filter(Boolean));
+      (v.af_freqs || []).forEach(function(af){
+        if (af?.study_name === "GnomAD_genomes"){
+          var ins = af?.observation?.inserted_sequence;
+          if (ins && altSet.has(ins)) gnomadAF = af.allele_frequency ?? gnomadAF;
+        }
+      });
+
+      rows.push({
+        gene, rsid, chrom,
+        pos38, pos37,
+        ref: refStr, alt: altStr,
+        context, category, consequence, clinvar,
+        sei: seiStr, alphamissense: amStr, expr_preds: exprStr,
+        top_trait: topTrait, top_p: topP, top_risk: topRisk,
+        gnomad_alt_af: gnomadAF,
+        traits_list: traitNames.join("; ")
+      });
+    }
+  }
+
+  rows.sort(function(a,b){
+    var g = String(a.gene).localeCompare(String(b.gene));
+    if (g!==0) return g;
+    var pa = (a.top_p==null?Infinity:a.top_p), pb = (b.top_p==null?Infinity:b.top_p);
+    return pa - pb;
   });
 
+  return rows;
+}
 
-    // Enter-to-run
-  window.addEventListener('load', () => {
-    const input = document.getElementById('q');
-    input?.focus();
-    input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
+function collectVariantLikeRecords(st){
+  // Returns an array of raw variant objects from multiple possible shapes.
+  const out = [];
 
-    const input2 = document.getElementById('q2');
-    input2?.addEventListener('keydown', (e) => { if (e.key === 'Enter') runFrom('q2'); });
+  // 1) gene_entities.*.variants { rsid: {...} }
+  const ge = st?.gene_entities;
+  if (ge && typeof ge === "object"){
+    for (const [g, gObj] of Object.entries(ge)){
+      const vdict = gObj?.variants;
+      if (vdict && typeof vdict === "object"){
+        for (const [k,v] of Object.entries(vdict)){
+          if (v && typeof v === "object") out.push({__gene:g, __key:k, ...v});
+        }
+      }
+    }
+  }
+
+  // 2) variant_entities: []  (array)
+  const ve = st?.variant_entities;
+  if (Array.isArray(ve)){
+    for (const v of ve){
+      if (v && typeof v === "object") out.push(v);
+    }
+  }
+
+  // 3) variants: []  (array form)
+  if (Array.isArray(st?.variants)){
+    for (const v of st.variants){
+      if (v && typeof v === "object") out.push(v);
+    }
+  }
+
+  // 4) variants: {}  (dict form)
+  if (st?.variants && typeof st.variants === "object" && !Array.isArray(st.variants)){
+    for (const [k,v] of Object.entries(st.variants)){
+      if (v && typeof v === "object") out.push({__key:k, ...v});
+    }
+  }
+
+  return out;
+}
+
+function renderVariantSummary(data, mountId = "variantSummary") {
+  const root = document.getElementById(mountId);
+  if (!root) return;
+
+  // Helpers
+  const safe = (v) => (v === undefined || v === null || v === "" ? "—" : v);
+  const getLoc = (v, buildKey) => {
+    const b = v?.loc_by_build?.[buildKey];
+    if (!b) return { chrom: "—", pos: "—", ref: "—", alt: "—" };
+    const ref = Array.isArray(b.ref) ? b.ref.join(",") : safe(b.ref);
+    const alt = Array.isArray(b.alt) ? b.alt.join(",") : safe(b.alt);
+    return { chrom: safe(b.chrom), pos: safe(b.pos), ref: safe(ref), alt: safe(alt) };
+  };
+  const getTopTraitForGene = (v) => {
+    // Pick first gene with a valid per_gene_traits entry, then smallest p_value
+    const gene = (v.genes_related_to && v.genes_related_to[0]) ||
+                 Object.keys(v.per_gene_traits || {})[0];
+    if (!gene) return { gene: "—", trait: "—", p: "—" };
+
+    const entries = v.per_gene_traits?.[gene] || {};
+    let bestTrait = "—", bestP = Infinity;
+    for (const [trait, obj] of Object.entries(entries)) {
+      const p = Number(obj?.p_value);
+      if (!Number.isNaN(p) && p < bestP) {
+        bestP = p;
+        bestTrait = trait;
+      }
+    }
+    return { gene: safe(gene), trait: bestTrait, p: bestP === Infinity ? "—" : String(bestP) };
+  };
+  const getCategoryContext = (v, gene) => {
+    const ctx = v.per_gene_context?.[gene] || {};
+    return {
+      category: safe(ctx.variant_category || v.category || "—"),
+      context:  safe(ctx.context || v.context || "—"),
+    };
+  };
+  const getAlphaMissense = (v, gene) => {
+    const call = v.functional_predictions?.[gene]?.AlphaMissense;
+    if (!call) return "—";
+    return Array.isArray(call) ? call.join(", ") : String(call);
+  };
+  const getGnomadAF = (v) => {
+    const hit = (v.af_freqs || []).find(a => /gnomad/i.test(a.study_name || ""));
+    return hit ? (typeof hit.allele_frequency === "number" ? hit.allele_frequency.toFixed(6) : safe(hit.allele_frequency)) : "—";
+  };
+
+  // Rows
+  const variantsObj = data?.variants && typeof data.variants === "object" ? data.variants : {};
+  const rsids = Object.keys(variantsObj);
+  const rows = rsids.map(rsid => {
+    const v = variantsObj[rsid] || {};
+    const { gene, trait: topTrait, p: topP } = getTopTraitForGene(v);
+    const { category, context } = getCategoryContext(v, gene);
+    const b38 = getLoc(v, "GRCh38.p14");
+    const b37 = getLoc(v, "GRCh37.p13");
+    return {
+      gene,
+      rsid,
+      chrom: b38.chrom !== "—" ? b38.chrom : b37.chrom,
+      grch38: b38.pos,
+      grch37: b37.pos,
+      ref: b38.ref !== "—" ? b38.ref : b37.ref,
+      alt: b38.alt !== "—" ? b38.alt : b37.alt,
+      context,
+      category,
+      consequence: safe(v.consequence),
+      clinvar: safe(v.clinvar),
+      sei: safe(v.functional_predictions?.SEI),
+      alpha: getAlphaMissense(v, gene),
+      expr: safe(v.expr_preds),
+      topTrait: safe(topTrait),
+      topP: safe(topP),
+      gnomadAF: getGnomadAF(v),
+      traits: Array.isArray(v.traits) ? v.traits.join("; ") : safe(v.traits),
+      usedTools: Array.isArray(v.tools_run) ? v.tools_run.join(", ") : "—",
+    };
   });
 
-  document.getElementById("themeToggle").addEventListener("click", () => {
-  document.body.classList.toggle("light");
+  // Header + CSV
+  const cols = [
+    "Gene","RSID","Chrom","GRCh38 pos","GRCh37 pos","Ref","Alt","Context","Category",
+    "Consequence","ClinVar","SEI","AlphaMissense","Expr preds",
+    "Top trait (by p)","Top p-value","GnomAD alt AF","Traits"
+  ];
 
-  const frame = document.querySelector("#protMount iframe");
-  if (!frame) return;
+  const toCSV = () => {
+    const header = cols.join(",");
+    const body = rows.map(r => [
+      r.gene,r.rsid,r.chrom,r.grch38,r.grch37,r.ref,r.alt,r.context,r.category,
+      r.consequence,r.clinvar,r.sei,r.alpha,r.expr,r.topTrait,r.topP,r.gnomadAF,
+      `"${(r.traits || "").replaceAll(`"`,`""`)}"`
+    ].map(x => (x ?? "—")).join(",")).join("\n");
+    return header + "\n" + body;
+  };
 
-  const isLight = document.body.classList.contains("light");
-  frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
-});
+  // Styles to prevent overlap
+  const tableStyles = `
+    #${mountId} .vs-wrap { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; }
+    #${mountId} .vs-head { display:flex; align-items:center; gap:.75rem; margin: .25rem 0 .5rem; }
+    #${mountId} .vs-btn { border:1px solid #ddd; padding:.4rem .6rem; border-radius:.5rem; cursor:pointer; background:#fff; }
+    #${mountId} table { width:100%; border-collapse: collapse; table-layout: fixed; }
+    #${mountId} th, #${mountId} td { border:1px solid #eee; padding:.4rem .5rem; vertical-align: top; text-align:left; }
+    #${mountId} th { position:sticky; top:0; background:#fafafa; z-index:1; }
+    #${mountId} td, #${mountId} th { overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+    #${mountId} .subtle { color:#666; font-size:.85em; margin-top:.25rem; }
+  `;
+  const styleTag = document.createElement("style");
+  styleTag.textContent = tableStyles;
 
+  const title = `Variant Summary`;
+  const count = `${rows.length || 0} variants`;
+  const csvName = "variant_summary.csv";
+
+  const dlCSV = () => {
+    const blob = new Blob([toCSV()], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = csvName;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  // Build HTML
+  const headerHTML = `
+    <div class="vs-head">
+      <h3 style="margin:0">${title}</h3>
+      <button class="vs-btn" id="vsDownload">Download CSV</button>
+      <div style="color:#555">• ${count}</div>
+    </div>
+  `;
+
+  const thead = `
+    <thead>
+      <tr>${cols.map(c => `<th>${c}</th>`).join("")}</tr>
+    </thead>
+  `;
+
+  const tbody = `
+    <tbody>
+      ${rows.map(r => `
+        <tr>
+          <td>${r.gene}<div class="subtle">Tools: ${r.usedTools}</div></td>
+          <td>${r.rsid}</td>
+          <td>${r.chrom}</td>
+          <td>${r.grch38}</td>
+          <td>${r.grch37}</td>
+          <td>${r.ref}</td>
+          <td>${r.alt}</td>
+          <td>${r.context}</td>
+          <td>${r.category}</td>
+          <td>${r.consequence}</td>
+          <td>${r.clinvar}</td>
+          <td>${r.sei}</td>
+          <td>${r.alpha}</td>
+          <td>${r.expr}</td>
+          <td>${r.topTrait}</td>
+          <td>${r.topP}</td>
+          <td>${r.gnomadAF}</td>
+          <td>${r.traits}</td>
+        </tr>
+      `).join("")}
+    </tbody>
+  `;
+
+  root.innerHTML = `<div class="vs-wrap">${headerHTML}<table>${thead}${tbody}</table></div>`;
+  // Attach styles & wire buttons
+  root.prepend(styleTag);
+  const dlBtn = document.getElementById("vsDownload");
+  dlBtn?.addEventListener("click", dlCSV, { once: false });
+}
+
+function renderEvidence(st){
+  const ev = st?.evidence || st?.ui?.evidence || st?.llm_json?.evidence || st?.sources || [];
+  const items = [];
+  const pushItem = (obj) => { if (typeof obj === "string") { items.push(`<li>${escapeHtml(obj)}</li>`); return; } if (!obj || typeof obj !== "object") return; const title = obj.title ? `<div><strong>${escapeHtml(obj.title)}</strong></div>` : ""; const quote = obj.quote ? `<div class=\"muted\">“${escapeHtml(obj.quote)}”</div>` : ""; const url = obj.url ? `<div class=\"muted\"><a href=\"${escapeHtml(obj.url)}\" target=\"_blank\" rel=\"noopener noreferrer\">${escapeHtml(obj.url)}</a></div>` : ""; items.push(`<li>${title}${quote}${url}</li>`); };
+  if (Array.isArray(ev)) ev.forEach(pushItem); else if (typeof ev === "object") Object.values(ev).forEach(v => { if (Array.isArray(v)) v.forEach(pushItem); else pushItem(v); });
+  if (items.length){ setHTML("evidence", `<ol class="refs-list">${items.join("")}</ol>`); show("evidenceCard"); } else hide("evidenceCard");
+}
+
+function renderRaw(st){ const json = JSON.stringify(st ?? {}, null, 2); if (json && json !== "{}"){ setText("raw", json); show("rawCard"); } else hide("rawCard"); }
+
+/********************
+ * IO helpers (no auto-hydrate)
+ ********************/
+async function fetchState(){ try{ const res = await fetch("state", { cache:"no-store" }); if (!res.ok) return null; return await res.json(); } catch{ return null; } }
+async function runServer(q){ try{ await fetch("run?q=" + encodeURIComponent(q), { cache:"no-store" }); } catch {} STATE = await fetchState(); await refresh(q); }
+
+/********************
+ * Page wiring + refresh
+ ********************/
+async function refresh(qOverride){
+  if (!STATE) return;
+  if (HERO_SHOWN){ HERO_SHOWN = false; hide("hero"); show("grid"); show("toolbar"); }
+  if (qOverride) setText("question", qOverride);
+  safeRender("question", ()=>renderQuestion(STATE));
+  safeRender("answer", ()=>renderAnswerAndCitations(STATE));
+  safeRender("entities", ()=>renderEntities(STATE));
+  safeRender("geneSummary", ()=>renderGeneSummary(STATE));
+  safeRender("variants", ()=>renderVariantSummary(STATE));
+  safeRender("protein",    ()=>renderProt(STATE)); 
+  safeRender("twoSampleMR", () => renderTwoSampleMR(STATE));
+  safeRender("evidence", ()=>renderEvidence(STATE));
+  safeRender("raw", ()=>renderRaw(STATE));
+}
+
+// Theme toggle
+byId("themeToggle")?.addEventListener("click", () => { document.body.classList.toggle("light"); });
+
+// Run actions
+function wireRun(button, input){ if (!button || !input) return; const go = () => { const q = input.value.trim(); if (!q){ input.focus(); return; } runServer(q); }; button.addEventListener("click", go); input.addEventListener("keydown", e => { if (e.key === "Enter") go(); }); }
+wireRun(byId("runBtn"), byId("q")); wireRun(byId("runBtn2"), byId("q2"));
+
+// Load JSON from file inputs
+function wireJsonFile(input){ if (!input) return; input.addEventListener("change", () => { const f = input.files?.[0]; if (!f) return; const reader = new FileReader(); reader.onload = () => { try { STATE = JSON.parse(String(reader.result || "{}")); refresh(); } catch { alert("Invalid JSON file."); } }; reader.readAsText(f); input.value = ""; }); }
+wireJsonFile(byId("jsonFile")); wireJsonFile(byId("jsonFile2"));
+
+// Demo selector (manual only)
+byId("demoSelect")?.addEventListener("change", () => { const v = byId("demoSelect").value; if (!v) return; fetch(v, { cache:"no-store" }).then(r=>r.ok?r.json():null).then(j=>{ if(!j){ alert("Could not load demo JSON."); return; } STATE=j; refresh(); }).catch(()=>alert("Could not load demo JSON.")); });
+
+// Download current state
+byId("downloadBtn")?.addEventListener("click", () => { if (!STATE){ alert("No JSON loaded yet."); return; } const blob = new Blob([JSON.stringify(STATE, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "alvessa_state.json"; a.click(); setTimeout(()=>URL.revokeObjectURL(url), 1000); });
+
+// No auto-hydrate by default — uncomment to enable if desired
+// (async function hydrateOnLoad(){ const st = await fetchState(); if (st && Object.keys(st).length){ STATE = st; refresh(); } })();
 </script>
 </body>
 </html>
-
