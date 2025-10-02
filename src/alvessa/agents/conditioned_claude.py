@@ -115,7 +115,7 @@ def _stable_variant_title(rsid: str | None) -> str:
 def variant_text_document(v: "Variant") -> str:
     """
     Pure text (no in-place mutation) for sentence-chunked citation.
-    Keep it simple and sentence-y so Claude's auto sentence chunking works well.
+    Keeping it simple and sentence-y so Claude's auto sentence chunking works well.
     """
     lines: list[str] = []
 
@@ -460,7 +460,7 @@ def conditioned_claude_node(state: "State") -> "State":
     user_content = list(doc_blocks) + [
         {
             "type": "text",
-            "text": f"User asked: {user_question}\n\nUse citations to back up your answer."
+            "text": f"User asked: {user_question}\n Use provided information to answer."
         }
     ]
     
@@ -504,76 +504,3 @@ def conditioned_claude_node(state: "State") -> "State":
     }
     
     return {'llm_json': parsed_resp}
-
-# def conditioned_claude_node(state: "State") -> "State":
-#     """
-#     Build a compact JSON context and ask Claude for an answer.
-    
-#     This is the main reasoning engine that synthesizes data from all biomedical tools
-#     into a coherent, evidence-based response.
-
-#     Returns
-#     -------
-#     State
-#         Updated state with assistant message, context block and parsed JSON.
-#     """
-#     context_block = create_context_block(state)
-
-#     if DEBUG:
-#         print(f"[conditioned_claude_node] context length before truncation: {len(context_block)}")
-    
-#     if len(context_block) > N_CHARS:
-#         context_block = context_block[:N_CHARS] + "...<truncated>"
-    
-#     # Generate Claude response
-#     user_question = state["messages"][-1]["content"]
-#     system_msg = state.get('prompt', '')    
-    
-#     if len(system_msg)<2:
-#         system_msg = (
-#             "You are a research scientist. Answer the question strictly with facts you can "
-#             "point to inside CONTEXT. Respond only with JSON with keys answer and evidence." 
-#             " Be descriptive and detailed, think in steps and outline your process. Ensure proper JSON format. "
-#             "The 'evidence' field must always be a list of short strings "
-#             # "If the CONTEXT contains trait-based associations (query_type: 'trait_based'), focus on the genetic associations "
-#             # "with the queried trait/disease, including related genes, variants, and their biological significance."
-#         )
-    
-#     if DEBUG:
-#         print(f"[conditioned_claude_node] system message: {system_msg}")
-#         print(f"[conditioned_claude_node] user question: {user_question}")
-#         print(f"[conditioned_claude_node] context block length: {len(context_block)}")
-#         print(f"[conditioned_claude_node] full context block: {context_block}")
-    
-#     raw = claude_call(
-#         model=CONDITIONED_MODEL,
-#         temperature=0.1,
-#         max_tokens=20000,
-#         system=system_msg,
-#         messages=[{"role": "user", "content": f"User asked: {user_question}\n\nCONTEXT:\n{context_block}"}],
-#     )
-    
-#     if DEBUG:
-#         print("[conditioned_claude_node] raw response from Claude:", raw)
-
-#     # Parse Claude response
-#     llm_resp = raw.content[0].text.strip() if hasattr(raw.content[0], "text") else raw.content[0]
-    
-#     if DEBUG:
-#         print("[conditioned_claude_node] processed response text:", llm_resp)
-    
-#     if llm_resp.startswith("```"):
-#         llm_resp = re.sub(r"^```(?:json)?\s*|\s*```$", "", llm_resp.strip(), flags=re.DOTALL).strip()
-
-#     try:
-#         parsed_resp = json.loads(llm_resp) if isinstance(llm_resp, str) else llm_resp
-#     except Exception as exc:
-#         parsed_resp = {
-#             "answer": llm_resp, 
-#             "evidence": '',
-#         }
-#     return {
-#         "messages": [{"role": "assistant", "content": llm_resp}],
-#         "context_block": context_block,
-#         "llm_json": parsed_resp,
-#     }

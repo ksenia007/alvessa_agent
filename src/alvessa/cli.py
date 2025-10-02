@@ -14,10 +14,10 @@ from src.alvessa.ui.server import serve as serve_ui
 from src.alvessa.workflow.output_paths import build_output_paths, create_run_directory
 from src.tools.base import Node
 from src.tools.registry import NODES
-
+from src.state import create_files_from_state
 
 def _write_artifacts(run_dir: Path, question: str, result: dict) -> None:
-    """Persist canonical JSON/text artifacts for a pipeline run."""
+    """Persist canonical JSON/text artifacts for a pipeline run + the TABLES"""
     outputs = build_output_paths(run_dir)
 
     outputs["json"].write_text(
@@ -32,6 +32,8 @@ def _write_artifacts(run_dir: Path, question: str, result: dict) -> None:
     lines: List[str] = ["=" * 80, f"Q: {question}", "", "Answer:", str(answer), "", "Evidence:"]
     lines.extend(f"  - {item}" for item in evidence)
     outputs["txt"].write_text("\n".join(lines) + "\n", encoding="utf-8")
+    
+    create_files_from_state(result, run_dir)
 
 
 def _render_table(nodes: Iterable[Node]) -> str:

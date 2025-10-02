@@ -60,7 +60,16 @@ def gencode_gene_node(state: "State") -> "State":
                 for i in structure.get("transcript_ids", []):
                     gene_obj.add_transcript(i, n_exons=structure.get("exons_per_transcript", {}).get(i, 0))
                     
+                # # create a text summary
+                # summary = (
+                #     f"Gene {gene} (type: {gene_obj.gene_type}) has {structure.get('n_transcripts', 0)} transcripts. "
+                #     f"Transcript spans range from {structure.get('min_transcript_span_bp', 0)} to {structure.get('max_transcript_span_bp', 0)} bp. "
+                #     f"Gene is located on {structure.get('chromosome', '')} at positions {structure.get('gene_span_bp', (0,0))}. "
+                #     f"The number of exons per transcript: {structure.get('exons_per_transcript', {})}."
+                # )
+                # gene_obj.update_text_summaries(summary)                   
                 gene_obj.add_tool("gencode_gene_node")
+                
             except Exception as e:
                 print(f"[gencode_gene_node] Error annotating gene {gene}: {e}")
                     

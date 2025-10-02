@@ -23,6 +23,7 @@ from src.alvessa.workflow.output_paths import (
     get_latest_run_directory,
 )
 from src.config import DEBUG
+from src.state import create_files_from_state
 
 try:  # Optional dependency (installed by default in this project)
     import pandas as pd
@@ -223,7 +224,10 @@ def run(q: str = Query(..., description="User question")):
 
         # 4) write a safe file (optionally enforce allow_nan=False)
         outputs["json"].write_text(json.dumps(state_json, indent=2, allow_nan=False), encoding="utf-8")
-
+        
+        # convert select data in the JSON to .csv files for easier download and UI interfacing
+        create_files_from_state(state, run_dir)
+        
         return JSONResponse(state_json)
 
     finally:
