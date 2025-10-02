@@ -1009,7 +1009,7 @@
       }
 
       /********************
-       * Markdown + citations (unchanged)
+       * Markdown + citations 
        ********************/
       function mdToHtml(md) {
         var esc = function (s) {
@@ -1418,7 +1418,7 @@
       }
 
       /********************
-       * Protein (UNCHANGED)
+       * Protein 
        ********************/
       function renderProt(st) {
         const mount = document.getElementById("protMount");
@@ -1475,7 +1475,7 @@
       }
 
       /********************
-       * Renderers for Q/A, citations, evidence, raw (unchanged)
+       * Renderers for Q/A, citations, evidence, raw 
        ********************/
       function renderQuestion(st) {
         var msgs = (st && st.messages) || [];
@@ -1649,7 +1649,7 @@
       }
 
       /********************
-       * Two-sample MR (unchanged)
+       * Two-sample MR - need to remove
        ********************/
       function parsePandasLikeMRTable(txt) {
         if (!txt || typeof txt !== "string") return { cols: [], rows: [] };
@@ -2103,7 +2103,7 @@ ${
           /* fall through to state-based rendering */
         }
 
-        // Fallback: render from in-memory state (unchanged)
+        // Fallback: render from in-memory state 
         const ge =
           st?.gene_entities && typeof st.gene_entities === "object"
             ? st.gene_entities
@@ -2832,7 +2832,7 @@ ${
       }
 
       /********************
-       * Entities (unchanged visual)
+       * Entities 
        ********************/
       function renderEntities(st) {
         function escapeHtml(s) {
@@ -2945,7 +2945,7 @@ ${
         safeRender("entities", () => renderEntities(STATE));
         safeRender("geneSummary", () => renderGeneSummary(STATE)); // FILES first
         safeRender("variants", () => renderVariantSummary(STATE)); // FILES first
-        safeRender("protein", () => renderProt(STATE)); // UNCHANGED
+        safeRender("protein", () => renderProt(STATE)); 
         safeRender("twoSampleMR", () => renderTwoSampleMR(STATE));
         safeRender("evidence", () => renderEvidence(STATE));
         safeRender("raw", () => renderRaw(STATE));

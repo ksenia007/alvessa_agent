@@ -103,7 +103,7 @@ def _write_tsv(path: Path, rows: List[Dict[str, Any]], field_order: Optional[Lis
             writer.writerow({k: r.get(k, "") for k in keys})
 
 # =========================
-# Gene extractors (unchanged)
+# Gene extractors 
 # =========================
 def _gene_index_row(g: Gene) -> Dict[str, Any]:
     loc = g.get_location() or (None, None, None, None)

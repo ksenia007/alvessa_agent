@@ -146,6 +146,15 @@ def variant_text_document(v: "Variant") -> str:
     # traits (short)
     if v.traits:
         lines.append(f"Associated traits: {', '.join(sorted(set(map(str, v.traits))))}.")
+        
+    # add text from text_summaries_from_tools field
+
+    for summary in (v.text_summaries_from_tools or []):
+        summary = str(summary).strip()
+        if summary and not summary.endswith("."):
+            summary += "."
+        if summary:
+            lines.append(summary)
 
     # functional predictions: compress to short sentences by tool over genes
     if v.functional_predictions:
@@ -260,6 +269,7 @@ def _collect_variant_docs(state: "State") -> tuple[list[dict], list[tuple[str, i
         })
         manifest.append((title, len(manifest)))
     return docs, manifest
+
 def _anthropic_text_blocks(msg) -> list[str]:
     parts = []
     content = getattr(msg, "content", []) or []
