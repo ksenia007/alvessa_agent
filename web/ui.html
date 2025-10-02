@@ -884,7 +884,7 @@
         }
         await Promise.allSettled(textPromises);
 
-        // Also set ARTIFACT_BASE so relative fetches can still work if you later host the folder
+        // Also set ARTIFACT_BASE so relative fetches can still work
         ARTIFACT_BASE = LOCAL_BASE_HINT; // e.g., "out/20250924-004900_ui/"
       }
 
@@ -1375,7 +1375,7 @@
         input.addEventListener("change", async () => {
           LOCAL_FILES.clear();
 
-          // Load all files into memory (text only; skip huge binaries if you store any)
+          // Load all files into memory 
           const files = Array.from(input.files || []);
           for (const f of files) {
             const path = f.webkitRelativePath || f.name; // e.g., "out/…/demo.json", "genes/PTEN/gene.json"
@@ -1391,7 +1391,7 @@
           // and parse STATE from that file right away.
           const keys = Array.from(LOCAL_FILES.keys());
 
-          // pick the demo.json (you said this is always the state)
+          // pick the demo.json
           const demoKey = keys.find((k) => /(^|\/)demo\.json$/i.test(k));
           if (demoKey) {
             try {
@@ -1818,7 +1818,7 @@
         try {
           const idxText = await fetchTextCached("genes/genes.index.csv");
           const rows = parseCSV(idxText, ",");
-          // Render up to 20 cards (you can raise the cap)
+          // Render up to 20 cards
           const top = rows.slice(0, 20);
 
           // Small helper to make pills
@@ -2375,7 +2375,7 @@ ${
               rsid: v.variant_id || "—",
               chrom: loc.chrom || "—",
               grch38: loc.pos || "—",
-              grch37: "", // could be filled by scanning non-best GRCh37 entry if you want
+              grch37: "", // could be filled by scanning non-best GRCh37 entry 
               ref: loc.ref || "—",
               alt: loc.alt || "—",
               context,
@@ -2585,7 +2585,6 @@ ${
               r.chrom,
               r.grch38,
               r.grch37,
-              // ref/alt are hidden in UI, but still searchable if you want — include or drop:
               r.ref,
               r.alt,
               r.context,
