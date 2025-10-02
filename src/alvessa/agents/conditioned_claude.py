@@ -78,7 +78,7 @@ def _build_trait_context(trait_associations: Dict[str, Any]) -> Dict[str, Any]:
 def _clean_str(s: str) -> str:
     """Remove embedded newlines so they don't break the one-line-per-entry rule."""
     s = s.replace("\r", "")
-    s = s.replace("\n", " ")   # or ", " if you want them comma-separated
+    s = s.replace("\n", " ")   
     return re.sub(r"\s{2,}", " ", s).strip()
 
 def _to_unquoted_inner(obj) -> str:
@@ -191,7 +191,7 @@ def _collect_notes_doc(state: "State") -> list[dict]:
 def _collect_gene_docs(state: "State") -> tuple[list[dict], list[tuple[str, int]]]:
     """
     Returns (document_blocks, manifest) where manifest holds (stable_id, document_index)
-    so you can map citations back if you ever need to.
+    so we can map citations back
     """
     docs = []
     manifest = []
@@ -199,7 +199,7 @@ def _collect_gene_docs(state: "State") -> tuple[list[dict], list[tuple[str, int]
     gene_objs = state.get("gene_entities", {}) or {}
     # If user stored as list, normalize to dict-like view
     if isinstance(gene_objs, list):
-        # assume list of symbols; you can adjust if needed
+        # assume list of symbols
         gene_objs = {g: state.get("gene_lookup", {}).get(g) for g in gene_objs}
 
     # Dedup + deterministic order
@@ -217,8 +217,7 @@ def _collect_gene_docs(state: "State") -> tuple[list[dict], list[tuple[str, int]
             continue
         seen.add(symbol)
         title = _stable_gene_title(symbol)
-        # keep your presenter, sentence-y bullets work fine
-        text = g.summarize_text(include_go=False, include_pathways=True)
+        text = g.summarize_text(include_go=False, include_pathways=True, include_interactions=True)
         # strip leading bullets to keep sentences crisp
         text = text.replace("\n• ", " ").replace("• ", "")
         docs.append({
