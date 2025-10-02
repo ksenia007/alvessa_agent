@@ -68,6 +68,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="BioGRID",
         entry_point=bioGRID_predictions_agent,
-        description="Fetches gene interactions from BioGRID for the input genes. Use this tool *ONLY* when individual names of interacting genes are needed to answer the query and a summary of enriched GO terms is not sufficient. Provides a curated context-specific list of protein-protein, genetic and chemical interactions.",
+        description="Fetches gene interactions from BioGRID for the input genes. Provides a curated context-specific list of protein-protein, genetic and chemical interactions.",
     ),
 )

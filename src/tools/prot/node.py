@@ -66,23 +66,26 @@ def prot_agent(state: "State") -> "State":
     """Main agent pipeline: resolves UniProt IDs, fetches per-residue features,
     generates summaries, and builds interactive HTML for the frontend.
     """
+    
+    new_entries = {}
     ensure_fresh_db()
-    genes = state.get("genes") or []
-    if not genes and state.get("gene_symbol"):
-        genes = [state["gene_symbol"]]
+    gene_objs = state.get("gene_entities") or {}
+    genes = list(gene_objs.keys())
+    # if not genes and state.get("gene_symbol"):
+    #     genes = [state["gene_symbol"]]
     if not genes:
         warnings.warn("No gene symbols provided.")
-        state["used_tools"] = state.get("used_tools", []) + ["prot"]
-        return state
+        # state["used_tools"] = state.get("used_tools", []) + ["prot"]
+        return 
     if len(genes) > TOOL_PROT_MAX_GENES:
         warnings.warn(f"Truncating gene list from {len(genes)} to {TOOL_PROT_MAX_GENES}")
         genes = genes[:TOOL_PROT_MAX_GENES]
 
-    gene_entities = state.get("gene_entities") or {}
-    state["gene_entities"] = gene_entities
-    for g in genes:
-        if not isinstance(gene_entities.get(g), Gene):
-            gene_entities[g] = Gene(symbol=g)
+    # gene_entities = state.get("gene_entities") or {}
+    # state["gene_entities"] = gene_entities
+    # for g in genes:
+    #     if not isinstance(gene_entities.get(g), Gene):
+    #         gene_entities[g] = Gene(symbol=g)
 
     conn = get_connection()
     prot_data_all: Dict[str, Dict] = {}
@@ -116,7 +119,8 @@ def prot_agent(state: "State") -> "State":
         flags = derive_warning_flags(plddt_stats)
         if flags:
             summary = append_flags_to_summary_text(summary, flags)
-        gene_entities[gene_symbol].update_text_summaries(
+        
+        gene_objs[gene_symbol].update_text_summaries(
             "Protein structure and druggability:\n" + summary
         )
 
@@ -142,8 +146,8 @@ def prot_agent(state: "State") -> "State":
             include_fpocket_any, include_sasa_any, include_pi_any, include_plddt_any
         )
         last_gene = genes[-1]
-        if gene_entities.get(last_gene):
-            gene_entities[last_gene].update_text_summaries(notes)
+        if last_gene in gene_objs:
+            gene_objs[last_gene].update_text_summaries(notes)
     else:
         log("No proteins resolved for any of the requested genes.")
 
@@ -155,10 +159,10 @@ def prot_agent(state: "State") -> "State":
         js_template = f.read()
 
     html = inject_frontend_assets(html_template, css_template, js_template, prot_data_all, ", ".join(genes))
-    state["used_tools"] = state.get("used_tools", []) + ["prot"]
+    # state["used_tools"] = state.get("used_tools", []) + ["prot"]
     if prot_data_all:
-        state["prot_html"] = html
-    return state
+        new_entries["prot_html"] = html
+    return new_entries
 
 
 def _resolve_gene_to_protein(conn, gene_symbol: str):

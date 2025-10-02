@@ -23,6 +23,7 @@ from src.alvessa.workflow.output_paths import (
     get_latest_run_directory,
 )
 from src.config import DEBUG
+from src.state import create_files_from_state
 
 try:  # Optional dependency (installed by default in this project)
     import pandas as pd
@@ -46,6 +47,33 @@ APP.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 CURRENT_RUN_DIR = get_latest_run_directory()
 CURRENT_OUTPUTS = build_output_paths(CURRENT_RUN_DIR) if CURRENT_RUN_DIR else None
 
+from math import isfinite
+from collections.abc import Mapping, Sequence
+
+def _to_py_scalar(x):
+    # Converts numpy scalars to native Python scalars if present
+    if isinstance(x, (np.generic,)):  # np.floating, np.integer, etc.
+        return x.item()
+    return x
+
+def sanitize_json(obj):
+    """
+    Recursively:
+      - converts numpy scalars to Python scalars
+      - converts numpy arrays / pandas objects using your existing encoder
+      - replaces NaN / +/-Inf with None
+    """
+    if isinstance(obj, Mapping):
+        return {str(k): sanitize_json(v) for k, v in obj.items()}
+
+    if isinstance(obj, Sequence) and not isinstance(obj, (str, bytes, bytearray)):
+        return [sanitize_json(v) for v in obj]
+
+    obj = _to_py_scalar(obj)
+
+    if isinstance(obj, float):
+        return obj if isfinite(obj) else None
+    return obj
 
 class Tee(io.TextIOBase):
     """Duplicate writes to multiple streams (used for log teeing)."""
@@ -160,7 +188,11 @@ def get_state():
     state_path = CURRENT_OUTPUTS["json"]
     if not state_path.exists():
         return JSONResponse({"error": "No run yet. Click Run."}, status_code=404)
-    return JSONResponse(json.loads(state_path.read_text()))
+
+    raw = json.loads(state_path.read_text())
+    # In case an older run wrote non-finite values, sanitize on read too
+    safe = sanitize_json(_to_jsonable(raw))
+    return JSONResponse(safe)
 
 
 @APP.get("/run")
@@ -181,19 +213,21 @@ def run(q: str = Query(..., description="User question")):
             state = run_pipeline(q, output_dir=run_dir)
             print("=== END ===")
 
+        # 1) jsonable-encode (np arrays, DataFrames → lists/dicts)
         state_json = _to_jsonable(state)
-        outputs["json"].write_text(json.dumps(state_json, indent=2), encoding="utf-8")
 
-        answer = state_json.get("llm_json", {}).get("answer", "")
-        evidence = state_json.get("llm_json", {}).get("evidence", [])
-        with outputs["txt"].open("w", encoding="utf-8") as txt:
-            txt.write("=" * 80 + "\n")
-            txt.write(f"Q: {q}\n\n")
-            txt.write(f"Answer:\n{answer}\n\n")
-            txt.write("Evidence:\n")
-            for ev in evidence or []:
-                txt.write(f"  - {ev}\n")
+        # 2) add the question as a message if pipeline didn't include it
+        state_json.setdefault("messages", []).append({"role": "user", "content": q})
 
+        # 3) sanitize NaN/Inf
+        state_json = sanitize_json(state_json)
+
+        # 4) write a safe file (optionally enforce allow_nan=False)
+        outputs["json"].write_text(json.dumps(state_json, indent=2, allow_nan=False), encoding="utf-8")
+        
+        # convert select data in the JSON to .csv files for easier download and UI interfacing
+        create_files_from_state(state, run_dir)
+        
         return JSONResponse(state_json)
 
     finally:

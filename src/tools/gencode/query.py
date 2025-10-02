@@ -35,8 +35,6 @@ def annotate_variant(chrom: str, pos: int) -> Optional[Dict[str, Any]]:
             - feature_gene_lists: List of genes for each feature type
             - matches: DataFrame with matching features
             - genes_related_to: List of unique gene names related to the variant
-            
-
    
     """
     

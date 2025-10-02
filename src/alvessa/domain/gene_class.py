@@ -429,7 +429,7 @@ class GeneTextPresenter:
     def _clean(self, values: List[Any]) -> List[str]:
         return [str(v).strip() for v in values if str(v).strip()]
 
-    def summarize(self, include_go: bool = False, include_pathways: bool = True) -> str:
+    def summarize(self, include_go: bool = False, include_pathways: bool = True, include_interactions: bool = True) -> str:
         self.gene.normalize()
         self.gene.transcriptome.compute_stats()
 
@@ -459,7 +459,14 @@ class GeneTextPresenter:
 
         txp = self.gene.transcriptome
         if txp.transcript_count is not None:
-            tx_bits = [f"n_transcripts={txp.transcript_count}"]
+            tx_bits = [f"n_transcripts={txp.transcript_count}:"]
+            # add transcript name + exon count
+            for tx_id, tx_info in txp.transcripts.items():
+                n_exons = tx_info.get("n_exons")
+                if n_exons is not None:
+                    tx_bits.append(f"{tx_id}({n_exons} exons)")
+                else:
+                    tx_bits.append(tx_id)
             if txp.max_transcript_span_bp is not None:
                 tx_bits.append(f"max_span={txp.max_transcript_span_bp:,} bp")
             lines.append(self._kv("Transcripts", self._join(tx_bits)))
@@ -479,16 +486,31 @@ class GeneTextPresenter:
                     self._join(self._clean(self.gene.annotations.go_annotations)),
                 )
             )
-
-        n_partners = len(self.gene.interactions.all_interaction_partners())
-        n_exp_types = len(self.gene.interactions.human_interactions)
-        if n_partners > 0:
-            lines.append(
-                self._kv(
-                    "Interactions",
-                    f"{n_partners} partners across {n_exp_types} experiment types",
-                )
-            )
+        
+        if include_interactions and self.gene.has_interactions_collected():
+            # include summary + LIST of the partners, comma-separated by human and non-human
+            n_partners = len(self.gene.all_interaction_partners())
+            n_exp_types = len(self.gene.interactions.human_interactions)
+            n_nonhuman_exp_types = len(self.gene.interactions.nonhuman_interactions)
+            # add string for human first, grouped by experiment type
+            for exp_type, partners in self.gene.interactions.human_interactions.items():
+                if partners:
+                    lines.append(
+                        self._kv(
+                            f"Interactions from human data ({exp_type})",
+                            self._join(self._clean(partners), sep=", "),
+                        )
+                    )
+            # add string for non-human, grouped by experiment type
+            for exp_type, partners in self.gene.interactions.nonhuman_interactions.items():
+                if partners:
+                    lines.append(
+                        self._kv(
+                            f"Interactions from additional (non-human) data: ({exp_type})",
+                            self._join(self._clean(partners), sep=", "),
+                        )
+                    )
+                    
 
         if self.gene.text_summaries_from_tools:
             lines.extend(self.gene.text_summaries_from_tools)
