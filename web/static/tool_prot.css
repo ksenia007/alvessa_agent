@@ -9,7 +9,7 @@
   --text-muted: #aab4d6;
 
   /* Tooltips + legend colors (default = dark theme) */
-  --tooltip-bg: rgba(0, 0, 0, 0.85);
+  --tooltip-bg: rgba(0, 0, 0, 0.9); /* slightly stronger opacity for readability */
   --tooltip-fg: #ffffff;
   --legend-bg: var(--bg-main);
   --legend-text: var(--text-muted);
@@ -25,7 +25,7 @@ body.light {
   --text-main: #0b1020;
   --text-muted: #6b7280;
 
-  --tooltip-bg: rgba(255, 255, 255, 0.9);
+  --tooltip-bg: rgba(255, 255, 255, 0.95);
   --tooltip-fg: #000000;
   --legend-bg: #f8fafc;
   --legend-text: #374151;
@@ -44,7 +44,7 @@ body {
 /* Toolbar */
 #toolbar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;   /* allows stacked elements like ligand name block */
   justify-content: space-between;
   padding: 8px 12px;
   background: var(--bg-card);
@@ -56,6 +56,7 @@ body {
 /* Controls */
 #controls {
   display: flex;
+  flex-wrap: wrap;           /* ensures ligand block wraps below */
   align-items: center;
   gap: 10px;
   color: var(--text-main);
@@ -68,7 +69,8 @@ body {
 
 /* Dropdowns */
 #proteinSelect,
-#styleSelect {
+#styleSelect,
+#ligandSelect {
   background: var(--bg-panel);
   color: var(--text-main);
   border: 1px solid var(--border-strong);
@@ -76,6 +78,37 @@ body {
   padding: 4px 8px;
   font-size: 14px;
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+#styleSelect {
+  min-width: 220px; /* Wider for longer surface labels */
+}
+
+#ligandSelect {
+  min-width: 260px; /* Ligand entries are longer */
+  display: none;    /* hidden until BioLiP2 mode is selected */
+}
+
+#ligandLabel {
+  font-size: 14px;
+  color: var(--text-muted);
+  display: none; /* hidden by default */
+}
+
+/* Ligand Name block (forced to new line, uniform margins) */
+#ligandNameBlock {
+  display: none;
+  flex-basis: 100%;          /* forces block onto its own row */
+  margin: 6px 0;             /* consistent top/bottom spacing */
+}
+#ligandNameBlock label {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+#ligandNameValue {
+  font-size: 14px;
+  color: var(--text-main);   /* matches dropdown text */
+  margin-left: 4px;
 }
 
 /* Viewer */
@@ -106,6 +139,7 @@ body {
   gap: 6px;
   font-size: 13px;
   color: var(--legend-text);
+  min-width: 260px; /* Ensure legend stays wide enough */
 }
 
 #legend span {

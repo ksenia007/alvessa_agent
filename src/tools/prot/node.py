@@ -1,7 +1,7 @@
 # src/tools/prot/node.py
 # Author: Dmitri Kosenkov
-# Created: 2025-08-25
-# Updated: 2025-09-18
+# Created: 2025-09-20
+# Updated: 2025-10-01
 """
 node.py
 =======
@@ -12,15 +12,15 @@ Refactored from standalone tool_prot.py into the src.tools.prot package.
 Responsibilities:
 -----------------
 1. Resolve gene symbols to UniProt IDs and local protein records
-2. Fetch per-residue pLDDT, fpocket, SASA, and polarity index features
+2. Fetch per-residue pLDDT, fpocket, SASA, polarity index, disorder consensus, MoRF propensity, and BioLiP2 evidence
 3. Assemble summaries, warnings, and interpretation notes
 4. Build a standalone interactive HTML viewer (3Dmol.js)
 5. Return updated State and write HTML/TXT outputs to OUTPUT_DIR
 """
 
 import sys
-from pathlib import Path
 import warnings
+from pathlib import Path
 from typing import Dict, List
 
 PACKAGE_ROOT = Path(__file__).resolve().parent
@@ -28,18 +28,17 @@ REPO_ROOT = PACKAGE_ROOT.parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-import src.tools.prot as prot  # loads constants from  __init__.py
+import src.tools.prot as prot  # loads constants from __init__.py
 
 # --- Imports ---
 from src.state import State
-from src.config import DEBUG, TOOL_PROT_MAX_GENES
+from src.config import TOOL_PROT_MAX_GENES
 from src.alvessa.domain.gene_class import Gene
 from src.alvessa.domain.gene_components import GeneIdentifiers
 from src.tools.base import Node
 
 # --- Local storage Layout ---
 from src.tools.prot import (
-    REPO_ROOT,
     OUTPUT_DIR,
     HTML_TEMPLATE,
     CSS_TEMPLATE,
@@ -51,45 +50,69 @@ from src.tools.prot.utils import (
     get_connection,
     load_pdb_inline,
     log,
-    make_summary_text,
+    make_full_summary,
     interpretation_notes,
     derive_warning_flags,
     append_flags_to_summary_text,
     inject_frontend_assets,
+    make_biolip2_summary,
 )
 
 from src.tools.prot.plddt import fetch_plddt
 from src.tools.prot.fpocket import fetch_fpocket
 from src.tools.prot.sasa_pi import fetch_sasa_pi
+from src.tools.prot.disorder import fetch_disorder
+from src.tools.prot.biolip2 import fetch_biolip2
 
-def prot_agent(state: "State") -> "State":
-    """Main agent pipeline: resolves UniProt IDs, fetches per-residue features,
-    generates summaries, and builds interactive HTML for the frontend.
-    """
-    
-    new_entries = {}
-    ensure_fresh_db()
-    gene_objs = state.get("gene_entities") or {}
-    genes = list(gene_objs.keys())
-    # if not genes and state.get("gene_symbol"):
-    #     genes = [state["gene_symbol"]]
+def _prepare_genes(state: "State") -> List[str]:
+    """Resolve, deduplicate, and prepare gene symbols for downstream processing."""
+    genes = state.get("genes") or []
+    if not genes and state.get("gene_symbol"):
+        genes = [state["gene_symbol"]]
+
     if not genes:
         warnings.warn("No gene symbols provided.")
-        # state["used_tools"] = state.get("used_tools", []) + ["prot"]
-        return 
+        state["used_tools"] = state.get("used_tools", []) + ["prot"]
+        return []
+
+    # Deduplicate while preserving input order
+    seen = set()
+    unique_genes = []
+    for g in genes:
+        if g not in seen:
+            seen.add(g)
+            unique_genes.append(g)
+    genes = unique_genes
+
     if len(genes) > TOOL_PROT_MAX_GENES:
         warnings.warn(f"Truncating gene list from {len(genes)} to {TOOL_PROT_MAX_GENES}")
         genes = genes[:TOOL_PROT_MAX_GENES]
 
-    # gene_entities = state.get("gene_entities") or {}
-    # state["gene_entities"] = gene_entities
-    # for g in genes:
-    #     if not isinstance(gene_entities.get(g), Gene):
-    #         gene_entities[g] = Gene(symbol=g)
+    # Ensure gene_entities dict exists and contains Gene objects
+    gene_entities = state.get("gene_entities") or {}
+    for g in genes:
+        if not isinstance(gene_entities.get(g), Gene):
+            gene_entities[g] = Gene(symbol=g)
+    state["gene_entities"] = gene_entities
+
+    return genes
+
+def prot_agent(state: "State") -> "State":
+    """Main agent pipeline: resolves UniProt IDs, fetches per-residue features,
+       generates summaries, and builds interactive HTML for the frontend.
+    """
+    ensure_fresh_db()
+
+    # --- Gene handling via helper ---
+    genes = _prepare_genes(state)
+    if not genes:
+        return state
 
     conn = get_connection()
     prot_data_all: Dict[str, Dict] = {}
     include_plddt_any = include_fpocket_any = include_sasa_any = include_pi_any = False
+    include_disorder_any = include_morf_any = False
+    include_biolip2_any = False
 
     for gene_symbol in genes:
         log(f"Processing gene: {gene_symbol}")
@@ -102,6 +125,9 @@ def prot_agent(state: "State") -> "State":
         plddt_stats, plddt_norm = fetch_plddt(conn, protein_id)
         fpocket_stats, fpocket_norm = fetch_fpocket(conn, protein_id)
         sasa_stats, sasa_norm, pi_stats, pi_norm, residue_labels = fetch_sasa_pi(conn, protein_id)
+        disorder_stats, disorder_norm, morf_stats, morf_norm = fetch_disorder(conn, protein_id, uniprot_id)
+        biolip2_summary, biolip2_norm = fetch_biolip2(conn, uniprot_id)
+
         pdb_data = load_pdb_inline(pdb_file)
         if not pdb_data:
             log(f"Skipping {gene_symbol}: missing PDB data ({pdb_file})")
@@ -111,30 +137,44 @@ def prot_agent(state: "State") -> "State":
         include_fpocket_any |= bool(fpocket_stats)
         include_sasa_any |= bool(sasa_stats)
         include_pi_any |= bool(pi_stats)
+        include_disorder_any |= bool(disorder_stats)
+        include_morf_any |= bool(morf_stats)
+        include_biolip2_any |= bool(biolip2_summary)
 
-        summary = make_summary_text(
+        # --- Text summary ---
+        summary = make_full_summary(
             gene_symbol, uniprot_id, protein_id, pdb_file,
-            plddt_stats, fpocket_stats, sasa_stats, pi_stats
+            plddt_stats, fpocket_stats, sasa_stats, pi_stats,
+            disorder_stats, morf_stats,
+            biolip2_summary,
         )
+
         flags = derive_warning_flags(plddt_stats)
         if flags:
             summary = append_flags_to_summary_text(summary, flags)
-        
-        gene_objs[gene_symbol].update_text_summaries(
+
+        state["gene_entities"][gene_symbol].update_text_summaries(
             "Protein structure and druggability:\n" + summary
         )
 
+        # --- Store all features for frontend ---
         prot_data_all[gene_symbol] = {
             "plddt": plddt_norm or [],
             "fpocket": fpocket_norm or [],
             "sasa": sasa_norm or [],
             "pi": pi_norm or [],
+            "disorder": disorder_norm or [],
+            "morf": morf_norm or [],
             "pdb": pdb_data,
+            "biolip2": biolip2_norm or [],
             "stats": {
                 "plddt": plddt_stats,
                 "fpocket": fpocket_stats,
                 "sasa": sasa_stats,
                 "pi": pi_stats,
+                "disorder": disorder_stats,
+                "morf": morf_stats,
+                "biolip2": biolip2_summary,
             },
             "labels": residue_labels or {},
         }
@@ -143,11 +183,13 @@ def prot_agent(state: "State") -> "State":
 
     if prot_data_all:
         notes = interpretation_notes(
-            include_fpocket_any, include_sasa_any, include_pi_any, include_plddt_any
+            include_fpocket_any, include_sasa_any, include_pi_any,
+            include_plddt_any, include_disorder_any, include_morf_any,
+            include_biolip2_any,
         )
         last_gene = genes[-1]
-        if last_gene in gene_objs:
-            gene_objs[last_gene].update_text_summaries(notes)
+        if state["gene_entities"].get(last_gene):
+            state["gene_entities"][last_gene].update_text_summaries(notes)
     else:
         log("No proteins resolved for any of the requested genes.")
 
@@ -158,12 +200,14 @@ def prot_agent(state: "State") -> "State":
     with open(JS_TEMPLATE, "r", encoding="utf-8") as f:
         js_template = f.read()
 
-    html = inject_frontend_assets(html_template, css_template, js_template, prot_data_all, ", ".join(genes))
-    # state["used_tools"] = state.get("used_tools", []) + ["prot"]
+    html = inject_frontend_assets(
+        html_template, css_template, js_template, prot_data_all, ", ".join(genes)
+    )
+    state["used_tools"] = state.get("used_tools", []) + ["prot"]
     if prot_data_all:
-        new_entries["prot_html"] = html
-    return new_entries
-
+        state["prot_html"] = html
+        state["prot_data_all"] = prot_data_all
+    return state
 
 def _resolve_gene_to_protein(conn, gene_symbol: str):
     """Resolve a gene symbol to (uniprot_id, protein_id, pdb_file)."""
@@ -187,12 +231,10 @@ def _resolve_gene_to_protein(conn, gene_symbol: str):
         warnings.warn(f"Error fetching UniProt entry for {gene_symbol}: {e}")
         return None, None, None
 
-    cur = conn.cursor()
-    cur.execute(
+    row = conn.execute(
         "SELECT protein_id, pdb_file FROM data_proteins WHERE uniprot_id=? LIMIT 1",
         (uniprot_id,),
-    )
-    row = cur.fetchone()
+    ).fetchone()
     if not row:
         return uniprot_id, None, None
     protein_id, pdb_file = row
@@ -206,7 +248,10 @@ if __name__ == "__main__":
     genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "AFM"]
     base_name = genes[0] if len(genes) == 1 else f"{genes[0]}_plus{len(genes)-1}"
 
-    state = State({"genes": genes, "gene_entities": {g: Gene(GeneIdentifiers(symbol=g)) for g in genes}})
+    state = State({
+        "genes": genes,
+        "gene_entities": {g: Gene(GeneIdentifiers(symbol=g)) for g in genes},
+    })
     result = prot_agent(state)
 
     # --- Outputs ---
@@ -225,25 +270,34 @@ if __name__ == "__main__":
     with txt_out.open("w", encoding="utf-8") as f:
         f.write("\n".join(lines) if lines else "No summaries produced.")
 
+    # Also dump prot_data_all for debugging
+    json_out = OUTPUT_DIR / f"{base_name}_prot.json"
+    with json_out.open("w", encoding="utf-8") as f:
+        import json
+        f.write(json.dumps(result.get("prot_data_all", {}), indent=2, ensure_ascii=True))
+
     print("[OK] Generated outputs:")
     print(f"  * HTML file: {html_out.resolve()}")
     print(f"  * TXT file:  {txt_out.resolve()}")
+    print(f"  * JSON file: {json_out.resolve()}")
     print(f"[INFO] Genes processed: {', '.join(genes[:TOOL_PROT_MAX_GENES])}")
 
 
-# --- Node Registration ---
+# ----------------------------------------------------------------------
+# Node Registration
+# ----------------------------------------------------------------------
 NODES: tuple[Node, ...] = (
     Node(
         name="prot",
         entry_point=prot_agent,
         description=(
-            "Visualize AlphaFold-predicted protein structures for one or more genes, overlaying "
-            "per-residue pLDDT confidence scores (structural reliability), FPocket-derived "
-            "druggability scores, solvent-accessible surface area (SASA), and polarity index "
-            "(hydrophilic vs. hydrophobic regions). Resolves UniProt IDs and AlphaFold structures "
-            "automatically. Generates interactive 3Dmol.js views with color-coded surfaces, "
-            "summary statistics (min/max/average per protein), and interpretation notes for "
-            "druggability assessment."
+            "Visualize AlphaFold-predicted protein structures for one or more genes. "
+            "Overlays include: per-residue confidence scores (pLDDT, AlphaFold), "
+            "pocket druggability (FPocket), solvent-accessible surface area and polarity index (FreeSASA), "
+            "disorder consensus (IUPred3 + DisProt), MoRF propensity (IUPred3/ANCHOR2), "
+            "and ligand-binding evidence (BioLiP2 + ChEMBL). "
+            "Generates interactive 3Dmol.js views with color-coded surfaces, binding site info, "
+            "summary statistics, and interpretation notes."
         ),
     ),
 )

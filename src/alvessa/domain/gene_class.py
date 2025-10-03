@@ -407,9 +407,10 @@ class Gene:
         *,
         include_go: bool = False,
         include_pathways: bool = True,
+        include_interactions: bool =True
     ) -> str:
         presenter = GeneTextPresenter(self)
-        return presenter.summarize(include_go=include_go, include_pathways=include_pathways)
+        return presenter.summarize(include_go=include_go, include_pathways=include_pathways, include_interactions = include_interactions)
 
 
 class GeneTextPresenter:

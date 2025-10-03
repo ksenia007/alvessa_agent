@@ -1,14 +1,14 @@
-# src/tools/prot/tool_prot_utils.py
+# src/tools/prot/utils.py
 # Author: Dmitri Kosenkov
-# Created: 2025-08-25
-# Updated: 2025-09-18
+# Created: 2025-09-20
+# Updated: 2025-10-01
 #
 # Shared utilities for the agentic protein visualization tool.
 
 import json
 import sqlite3
 import warnings
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from collections import OrderedDict
 from pathlib import Path
 from datetime import datetime
@@ -20,13 +20,19 @@ REPO_ROOT = PACKAGE_ROOT.parents[2]
 # --- Imports ---
 from src.config import DEBUG
 
-# --- Local storage layout ---
+# --- Local storage layout and constants ---
 from src.tools.prot import (
-    REPO_ROOT,
     DB_PATH,
     PDB_DIR,
-    STATIC_DIR,
-    DB_MIN_MTIME
+    REQUIRED_META,
+    UPDATE_MSG,
+    PLDDT_HIGH_CUTOFF,
+    PLDDT_MEDIUM_CUTOFF,
+    PLDDT_LOW_WARNING,
+    BIO_RESIDUE_PREVIEW_MAX,
+    BIO_EXCLUDED_IDS_MAX,
+    FMT_FLOAT_NDIGITS,
+    FMT_FLOAT_DEFAULT,
 )
 
 # ------------------------------
@@ -37,7 +43,7 @@ def log(msg: str) -> None:
         print(f"[Protein] {msg} @ {datetime.now()}")
 
 
-def fmt_float(x: Optional[float], ndigits: int = 2, default: str = "NA") -> str:
+def fmt_float(x: Optional[float], ndigits: int = FMT_FLOAT_NDIGITS, default: str = FMT_FLOAT_DEFAULT) -> str:
     if x is None:
         return default
     try:
@@ -65,6 +71,46 @@ def sanitize_residue_label(res3: Optional[str], residue_no: Optional[int]) -> Op
     return lab
 
 
+def uniq_preserve_order(seq: List[Any]) -> List[Any]:
+    """Deduplicate a list while preserving order (hashable values)."""
+    seen = set()
+    out = []
+    for x in seq:
+        if x not in seen:
+            seen.add(x)
+            out.append(x)
+    return out
+
+
+def uniq_dicts_preserve_order(seq: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Deduplicate list of dicts by value while preserving order."""
+    seen = set()
+    out = []
+    for d in seq:
+        try:
+            key = tuple(sorted(d.items()))
+        except Exception:
+            key = None
+        if key not in seen:
+            seen.add(key)
+            out.append(d)
+    return out
+
+
+def merge_residue_fields(*fields: Optional[str]) -> List[str]:
+    """
+    Merge residue fields from BioLiP2 (chain1, chain2, extra1, extra2).
+    Example values: 'Q185 D187 W189 E198 N210'
+    Returns flat list of residue labels like ['Q185','D187',...].
+    """
+    residues: List[str] = []
+    for f in fields:
+        if not f:
+            continue
+        residues.extend([tok.strip() for tok in f.split() if tok.strip()])
+    return residues
+
+
 # ------------------------------
 # Database helpers
 # ------------------------------
@@ -81,14 +127,41 @@ def get_connection() -> sqlite3.Connection:
 
 
 def ensure_fresh_db() -> None:
+    """
+    Ensure that the local database exists and matches the required metadata.
+    """
     if not DB_PATH.exists():
-        raise RuntimeError(f"Database missing: {DB_PATH}")
-    mtime = datetime.fromtimestamp(DB_PATH.stat().st_mtime)
-    log(f"DB last modified: {mtime}")
-    if mtime < DB_MIN_MTIME:
-        raise RuntimeError(
-            f"alvessa_proteins.db is outdated (last modified {mtime}), please update."
-        )
+        raise RuntimeError(f"Database missing: {DB_PATH}. {UPDATE_MSG}")
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+    except sqlite3.Error as e:
+        raise RuntimeError(f"Could not open {DB_PATH}: {e}. {UPDATE_MSG}")
+
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='db_metadata';")
+    if cur.fetchone() is None:
+        print(f"try: {DB_PATH}. {UPDATE_MSG}")
+        raise RuntimeError(f"Invalid database: missing db_metadata table. {UPDATE_MSG}")
+
+    cur.execute("SELECT key, value FROM db_metadata;")
+    rows = dict(cur.fetchall())
+
+    for key, expected in REQUIRED_META.items():
+        actual = rows.get(key)
+        if actual != expected:
+            problem = (
+                f"missing required key '{key}'"
+                if actual is None
+                else f"{key} mismatch (expected {expected}, found {actual})"
+            )
+            raise RuntimeError(f"Invalid database: {problem}. {UPDATE_MSG}")
+
+    conn.close()
+    print(
+        f"Database {DB_PATH} passed validation "
+        f"(schema_version={rows['schema_version']}, build_time={rows['build_time']})."
+    )
 
 
 def load_pdb_inline(pdb_file: str) -> Optional[str]:
@@ -129,48 +202,50 @@ def minmax_normalize(rows: List[Tuple[int, float]]) -> Tuple[Optional[Dict[str, 
 # Interpretation notes
 # ------------------------------
 INTERPRETATION_TEXTS = OrderedDict([
-    ("plddt",
-     "\n"
-     "pLDDT (Predicted Local Distance Difference Test)\n"
-     "Per-residue confidence score from AlphaFold (0-100):\n"
-     "  - >90 : very high reliability (backbone + side chains accurate)\n"
-     "  - 70-90 : backbone usually correct; side chains less certain\n"
-     "  - <70 : lower confidence, often flexible or disordered regions\n"
-     "Refs.: Mariani V. et al., 2013; Guo C. et al., 2022; EBI AlphaFold course\n"
-    ),
-    ("fpocket",
-     "\n"
-     "FPocket Druggability Score (mean_druggability_score)\n"
-     "Numerical score (0-1) estimating drug-likeness of a pocket:\n"
-     "  - 0.0 : very unlikely to bind\n"
-     "  - ~0.5: borderline\n"
-     "  - 1.0 : highly druggable\n"
-     "Ref.: Schmidtke P. and Barril X., J. Med. Chem. 2010\n"
-    ),
-    ("sasa",
-     "\n"
-     "Total Solvent Accessible Surface Area (SASA)\n"
-     "Computed per residue (Å²). High SASA implies solvent exposure; low SASA implies burial.\n"
-     "Reported statistics include total SASA (sum across residues) and per-residue min, max, and mean values.\n"
-     "Ref.: Mitternacht S. FreeSASA: An open source C library for solvent accessible surface area calculations  F1000Research 2016, 5:189 https://doi.org/10.12688/f1000research.7931.1\n"
-    ),
-    ("pi",
-     "\n"
-     "SASA Per-Residue Polarity Index (PI)\n"
-     "Definition: PI = (P - A) / (P + A), where P = polar SASA and A = apolar SASA (Å²).\n"
-     "Range: -1.0 <= PI <= +1.0\n"
-     "  - +1.0 : completely polar (A = 0)\n"
-     "  -  0.0 : equal polar and apolar contributions (P = A)\n"
-     "  - -1.0 : completely apolar (P = 0)\n"
-     "Meaning: Positive PI indicates predominantly polar surface; negative PI indicates predominantly hydrophobic surface.\n"
-    ),
+    ("plddt", f"""
+AlphaFold pLDDT (Predicted Local Distance Difference Test)
+Per-residue confidence score from AlphaFold (0–100):
+  - >{PLDDT_HIGH_CUTOFF:.0f} : very high reliability
+  - {PLDDT_MEDIUM_CUTOFF:.0f}–{PLDDT_HIGH_CUTOFF:.0f} : backbone usually correct
+  - <{PLDDT_MEDIUM_CUTOFF:.0f} : lower confidence, often flexible
+"""),
+    ("fpocket", """
+FPocket Druggability Score (0–1)
+Estimate of drug-likeness of a pocket.
+"""),
+    ("sasa", """
+Solvent Accessible Surface Area (SASA)
+Computed per residue using FreeSASA (Å²).
+"""),
+    ("pi", """
+Polarity Index (PI)
+Derived from polar vs. apolar surface area decomposition.
+"""),
+    ("disorder", """
+Structural Disorder Consensus Score
+Integrates IUPred3 and DisProt.
+"""),
+    ("morf", """
+MoRF Propensity (ANCHOR2)
+Regions disordered in isolation but fold on binding.
+"""),
+    ("biolip2", """
+BioLiP2 ligand-binding evidence from experimental PDB structures.
+Curated protein–ligand interactions with cross-references to ChEMBL.
+For small-molecule ligands, ChEMBL IDs are retrieved.
+Common ions and solvents from PDB are excluded.
+Summarizes unique ligands, binding sites, and supporting PDB entries.
+"""),
 ])
 
 
 def interpretation_notes(include_fpocket: bool,
                          include_sasa: bool,
                          include_pi: bool,
-                         include_plddt: bool = True) -> str:
+                         include_plddt: bool = True,
+                         include_disorder: bool = True,
+                         include_morf: bool = True,
+                         include_biolip2: bool = False) -> str:
     sections: List[str] = ["\nInterpretation Notes\n"]
     if include_plddt:
         sections.append(INTERPRETATION_TEXTS["plddt"])
@@ -180,7 +255,26 @@ def interpretation_notes(include_fpocket: bool,
         sections.append(INTERPRETATION_TEXTS["sasa"])
     if include_pi:
         sections.append(INTERPRETATION_TEXTS["pi"])
+    if include_disorder:
+        sections.append(INTERPRETATION_TEXTS["disorder"])
+    if include_morf:
+        sections.append(INTERPRETATION_TEXTS["morf"])
+    if include_biolip2:
+        sections.append(INTERPRETATION_TEXTS["biolip2"])
     return "".join(sections)
+
+
+# ------------------------------
+# Summary formatting helpers
+# ------------------------------
+def _format_block(title: str, stats: Dict[str, Any], indent: int = 2) -> str:
+    if not stats:
+        return ""
+    pad = " " * indent
+    lines = [f"{pad}{title}:"]
+    for k, v in stats.items():
+        lines.append(f"{pad*2}{k}={v}")
+    return "\n".join(lines)
 
 
 # ------------------------------
@@ -202,42 +296,52 @@ def make_summary_text(
     if protein_id:
         lines.append(f"  Protein ID: {protein_id}")
     if plddt_stats:
-        lines.append(
-            "  pLDDT: min=" + fmt_float(plddt_stats.get("min"), 2) +
-            ", max=" + fmt_float(plddt_stats.get("max"), 2) +
-            ", avg=" + fmt_float(plddt_stats.get("avg"), 2)
-        )
+        lines.append(_format_block("pLDDT", plddt_stats))
     if fpocket_stats:
-        lines.append(
-            "  FPocket (mean): min=" + fmt_float(fpocket_stats.get("min"), 3) +
-            ", max=" + fmt_float(fpocket_stats.get("max"), 3) +
-            ", avg=" + fmt_float(fpocket_stats.get("avg"), 3)
-        )
+        lines.append(_format_block("FPocket", fpocket_stats))
     if sasa_stats:
-        total_area = fmt_float(sasa_stats.get("total_area"), 1)
-        lines.append(
-            "  SASA total: " + total_area + " Å²"
-            "(per-residue min=" + fmt_float(sasa_stats.get("min"), 2) +
-            ", max=" + fmt_float(sasa_stats.get("max"), 2) +
-            ", avg=" + fmt_float(sasa_stats.get("avg"), 2) + ")"
-        )
+        lines.append(_format_block("SASA", sasa_stats))
     if pi_stats:
-        lines.append(
-            "  Polarity Index: min=" + fmt_float(pi_stats.get("min"), 2) +
-            ", max=" + fmt_float(pi_stats.get("max"), 2) +
-            ", avg=" + fmt_float(pi_stats.get("avg"), 2)
-        )
+        lines.append(_format_block("Polarity Index", pi_stats))
     return "\n".join(lines)
 
 
+def make_full_summary(
+    gene_symbol: str,
+    uniprot_id: str,
+    protein_id: str,
+    pdb_file: str,
+    plddt_stats: Optional[Dict[str, float]],
+    fpocket_stats: Optional[Dict[str, float]],
+    sasa_stats: Optional[Dict[str, float]],
+    pi_stats: Optional[Dict[str, float]],
+    disorder_stats: Optional[Dict[str, float]],
+    morf_stats: Optional[Dict[str, float]] = None,
+    biolip2_summary: Optional[Dict[str, Any]] = None,
+) -> str:
+    parts: List[str] = []
+    parts.append(make_summary_text(
+        gene_symbol, uniprot_id, protein_id, pdb_file,
+        plddt_stats, fpocket_stats, sasa_stats, pi_stats
+    ))
+    if disorder_stats:
+        parts.append(_format_block("Disorder consensus", disorder_stats))
+    if morf_stats:
+        parts.append(_format_block("MoRF propensity", morf_stats))
+    if biolip2_summary:
+        parts.append("BioLiP2 ligand-binding evidence:")
+        parts.append(make_biolip2_summary(uniprot_id, biolip2_summary))
+    return "\n".join(p for p in parts if p)
+
+
 # ------------------------------
-# Flags and warnings (pLDDT only)
+# Flags and warnings
 # ------------------------------
 def derive_warning_flags(plddt_stats: Optional[Dict[str, float]]) -> List[str]:
     flags: List[str] = []
     try:
-        if plddt_stats and plddt_stats.get("avg") is not None and plddt_stats["avg"] < 70.0:
-            flags.append("Low mean pLDDT (<70).")
+        if plddt_stats and plddt_stats.get("avg") is not None and plddt_stats["avg"] < PLDDT_LOW_WARNING:
+            flags.append(f"Low mean pLDDT (<{PLDDT_LOW_WARNING}).")
     except Exception:
         pass
     return flags
@@ -265,7 +369,81 @@ def inject_frontend_assets(
     html = (
         html_template_text.replace("{{GENE_SYMBOL}}", genes_display)
         .replace("{{CSS_INLINE}}", "<style>\n" + css_text + "\n</style>")
-        .replace("{{JS_INLINE}}", "<script>\n" + js_text + "\n</script>")
-        .replace("</body>", data_script + "\n</body>")
+        .replace("{{JS_INLINE}}", data_script + "\n<script>\n" + js_text + "\n</script>")
     )
     return html
+
+
+# ------------------------------
+# BioLiP2 summary text
+# ------------------------------
+def make_biolip2_summary(
+    uniprot_id: str,
+    summary: Dict[str, Any],
+) -> str:
+    """
+    Format BioLiP2 ligand-binding evidence for text output.
+    Matches style of make_full_summary and biolip2.py pipeline.
+    """
+    if not summary:
+        return f"UniProt {uniprot_id}: No BioLiP2/ChEMBL evidence found."
+
+    lines: List[str] = []
+    lines.append(f"UniProt: {uniprot_id}")
+    lines.append(f"  Structures ({summary['n_structures']}): {', '.join(summary['pdb_ids'])}")
+
+    rs = summary.get("resolution") or {}
+    if rs:
+        lines.append(
+            f"  Resolution (min/max/avg): "
+            f"{fmt_float(rs.get('min'))}, {fmt_float(rs.get('max'))}, {fmt_float(rs.get('avg'))}"
+        )
+
+    lines.append(f"  Binding sites: {summary['n_binding_sites']}")
+
+    if summary.get("go_terms"):
+        lines.append(f"  GO terms: {', '.join(summary['go_terms'])}")
+    if summary.get("pubmed_ids"):
+        lines.append(f"  PubMed IDs: {', '.join(summary['pubmed_ids'])}")
+
+    if summary.get("ligands"):
+        lines.append("  Ligands (unique):")
+        for lg in summary["ligands"]:
+            lines.append(
+                f"    {lg.get('chembl_id','')}  {lg.get('pref_name','')}  "
+                f"{lg.get('inchikey','')}  comp:{lg.get('ligand_comp_id','')}"
+            )
+
+    if summary.get("sites"):
+        lines.append("  Experimental Binding site details:")
+        for bs_code, site in summary["sites"].items():
+            lines.append(f"    {bs_code}:")
+            if site.get("pdb_ids"):
+                lines.append(f"      PDBs: {', '.join(site['pdb_ids'])}")
+            if site.get("chains"):
+                lines.append(f"      Chains: {', '.join(site['chains'])}")
+            if site.get("residues"):
+                nres = site.get("n_residues", len(site['residues']))
+                res_preview = " ".join(site["residues"][:BIO_RESIDUE_PREVIEW_MAX])
+                suffix = " ..." if nres > BIO_RESIDUE_PREVIEW_MAX else ""
+                lines.append(f"      Residues ({nres}): {res_preview}{suffix}")
+            if site.get("ligands"):
+                lines.append("      Ligands:")
+                for lg in site["ligands"]:
+                    lines.append(
+                        f"        {lg.get('chembl_id','')}  {lg.get('pref_name','')}  "
+                        f"{lg.get('inchikey','')}  comp:{lg.get('ligand_comp_id','')}"
+                    )
+
+    excluded = summary.get("excluded", {})
+    if excluded and excluded.get("count", 0) > 0:
+        lines.append(
+            f"  [INFO] {excluded['count']} ligands excluded "
+            f"(ions/solvents or missing ChEMBL IDs)."
+        )
+        if excluded.get("ids"):
+            ids_preview = ", ".join(excluded['ids'][:BIO_EXCLUDED_IDS_MAX])
+            suffix = " ..." if len(excluded['ids']) > BIO_EXCLUDED_IDS_MAX else ""
+            lines.append(f"  Excluded ligand IDs: {ids_preview}{suffix}")
+
+    return "\n".join(lines)
