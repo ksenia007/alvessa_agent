@@ -2951,10 +2951,29 @@ ${
         safeRender("raw", () => renderRaw(STATE));
       }
 
-      // Theme toggle
+      // Broadcast theme change to iframes
+      function broadcastThemeToIframes() {
+        const isLight = document.body.classList.contains("light");
+        document.querySelectorAll("iframe.prot-frame").forEach((iframe) => {
+          try {
+            iframe.contentWindow?.postMessage(
+              { type: "theme", theme: isLight ? "light" : "dark" },
+              "*"
+            );
+          } catch (e) {
+            console.warn("Could not send theme to iframe:", e);
+          }
+        });
+      }
+
+      // Theme toggle button
       byId("themeToggle")?.addEventListener("click", () => {
         document.body.classList.toggle("light");
+        broadcastThemeToIframes();
       });
+
+      // Also broadcast once on load (so iframe background is correct on first render)
+      window.addEventListener("load", broadcastThemeToIframes);
 
       // Run actions
       function wireRun(button, input) {

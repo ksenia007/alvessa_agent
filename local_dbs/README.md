@@ -27,8 +27,16 @@ The following files must be downloaded before using the GWAS and Sei tools:
 -  Gencode annotaitons
 
 - `alvessa_proteins.db`   
-**Download Location:** https://drive.google.com/file/d/1YmZTGjNjmgWCbM2yKr_Ajp3YYeaHeFiE/view?usp=drive_link
-Contains pLDDT, SASA, Polarity Index and FPocket data for proteins, used by `tools.prot` to analyze and visualize protein structures and druggability.
+**Download Location:** https://drive.google.com/file/d/1p9gg-iogIIu7LAmwPBmoSVQtJbalDrTj/view?usp=drive_link  
+Database supporting protein structure visualization and druggability analysis (AlphaFold pLDDT, FPocket, SASA, IUPPred3, and BioLiP2 binding sites).
+
+- `DisProt_release_2025_06_with_ambiguous_evidences.json`  
+**Download Location:** https://drive.google.com/file/d/1sLM0mw3bu8rqOAX47Xurx32UujeLOVu4/view?usp=drive_link  
+DisProt v2025-06 dataset with ambiguous evidence annotations for protein disorder, used in disorder consensus overlays, used by `tools.prot`
+
+- `chembl_35.db`  
+**Download Location:** https://drive.google.com/file/d/1P5WMBrbpmW6aOIY9hP2a74-zmIEwM7eC/view?usp=drive_link  
+Local ChEMBL v35 database for querying drug–target, drug approval, trial, and assay bioactivity data.
 
 - `pdb.zip` (unzip into the `pdb/` folder)  
 **Download Location:** https://drive.google.com/file/d/17uZse6xB8T_U_XcUeVWdCntqfmHIsfv0/view?usp=drive_link  

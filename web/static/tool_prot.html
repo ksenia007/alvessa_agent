@@ -17,17 +17,30 @@
   <!-- Toolbar row with protein and style selectors -->
   <div id="toolbar">
     <div id="controls">
-      <label for="proteinSelect">Protein:</label>
+      <label for="proteinSelect">Gene:</label>
       <select id="proteinSelect"></select>
 
-      <label for="styleSelect">Style:</label>
+      <label for="styleSelect">Structural Overlay:</label>
       <select id="styleSelect">
-        <option value="cartoon">Cartoon</option>
-        <option value="surface-plddt">Surface (pLDDT)</option>
-        <option value="surface-fpocket">Surface (FPocket)</option>
-        <option value="surface-sasa">Surface (SASA/res)</option>
-        <option value="surface-pi">Surface (Polarity Index)</option>
+        <option value="cartoon">Protein Backbone</option>
+        <option value="surface-plddt">Confidence (AlphaFold pLDDT)</option>
+        <option value="surface-fpocket">Druggability (FPocket)</option>
+        <option value="surface-sasa">Exposure (FreeSASA)</option>
+        <option value="surface-pi">Polarity Index (FreeSASA)</option>
+        <option value="surface-disorder">Intrinsic Disorder (IUPred3 + DisProt)</option>
+        <option value="surface-morf">Disorder MoRF Hotspot (IUPred3)</option>
+        <option value="surface-biolip2">Exp. Binding Sites (BioLiP2)</option>
       </select>
+
+      <!-- Ligand selector (hidden by default, shown only if BioLiP2 selected) -->
+      <label for="ligandSelect" id="ligandLabel" style="display:none;">Ligands:</label>
+      <select id="ligandSelect" style="display:none;"></select>
+
+      <!-- Ligand name block (own line, consistent spacing with controls) -->
+      <div id="ligandNameBlock" style="display:none; width:100%; margin:0.5em 0;">
+        <label id="ligandNameLabel" style="display:none;">Ligand Name:</label>
+        <span id="ligandNameValue" style="display:none;"></span>
+      </div>
     </div>
 
     <!-- Legend inline with controls -->

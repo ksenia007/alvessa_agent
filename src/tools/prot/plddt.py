@@ -28,7 +28,7 @@ def fetch_plddt(conn, protein_id: str) -> Tuple[Optional[Dict[str, float]], List
     cur.execute(
         """
         SELECT residue_no, plddt
-        FROM data_plldt_residues
+        FROM data_plddt_residues
         WHERE protein_id=?
         ORDER BY residue_no
         """,
