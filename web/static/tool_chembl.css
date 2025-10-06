@@ -1,0 +1,342 @@
+/* ============================================================
+   ChEMBL Viewer Stylesheet (Unified with Alvessa UI Theme)
+   Clean, professional, flicker-free, consistent dark/light palette
+   ============================================================ */
+
+/* === Theme Variables === */
+:root {
+  --bg-main: #0b1020;          /* matches --bg */
+  --bg-card: #121832;          /* matches --card */
+  --bg-panel: #1a2347;         /* matches --pill-bg */
+  --text-main: #e6e8ef;        /* matches --fg */
+  --text-muted: #aab4d6;       /* matches --muted */
+  --border: #1e2a52;           /* matches --line */
+  --border-strong: #2a3a72;    /* matches --accent */
+  --accent: #2a3a72;           /* brand blue-accent */
+
+  /* High-contrast link colors for dark theme */
+  --link: #9cc9ff;
+  --link-hover: #d6e7ff;
+  --link-visited: #b9d6ff;
+  --focus-ring: 0 0 0 3px rgba(156, 201, 255, 0.35);
+}
+
+/* === Light Theme === */
+body.light {
+  --bg-main: #ffffff;
+  --bg-card: #ffffff;
+  --bg-panel: #f5f7fb;
+  --text-main: #0b1020;
+  --text-muted: #6b7280;
+  --border: #d8dce6;
+  --border-strong: #c8cfe0;
+  --accent: #1b2450;
+
+  /* Link palette for light theme */
+  --link: #1b45f0;
+  --link-hover: #0d36c7;
+  --link-visited: #5a3be6;
+  --focus-ring: 0 0 0 3px rgba(27, 69, 240, 0.25);
+}
+
+/* === Global Layout === */
+body {
+  font-family: "Segoe UI", Roboto, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-main);
+  margin: 0;
+  padding: 0;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+h1, h2 {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+h1 {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.25em;
+  margin-top: 0.75em;
+}
+
+/* === Global Link Styles === */
+a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.12s ease;
+}
+a:hover {
+  color: var(--link-hover);
+}
+a:visited {
+  color: var(--link-visited);
+}
+a:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 4px;
+}
+
+/* === Collapsible Section Headers === */
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.45em 0.8em;
+  margin: 0.5em 0 0.3em 0;
+  transition: none;
+}
+
+.collapsible-header:hover {
+  background: var(--bg-panel);
+  border-color: var(--border);
+}
+
+.collapsible-header .toggle-icon {
+  font-size: 1.1em;
+  margin-right: 0.6em;
+  color: var(--accent);
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.collapsible-header .title {
+  flex: 1;
+  font-size: 1.05em;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.collapsible-header .count {
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: 0.4em;
+}
+
+/* Rotated icon when expanded */
+.collapsible-header.open .toggle-icon {
+  transform: rotate(90deg);
+}
+
+/* === Collapsible Content === */
+.collapsible-content {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.25s ease;
+}
+
+.collapsible-content.open {
+  max-height: 2000px;
+  opacity: 1;
+  margin-top: 0.3em;
+}
+
+/* === Toolbar === */
+#toolbar {
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6em 1em;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+#controls label {
+  margin-right: 0.4em;
+  color: var(--text-muted);
+  font-size: 0.95em;
+}
+
+#geneSelect {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.95em;
+}
+
+/* === Viewer Container === */
+#viewer-container {
+  padding: 1em 2em;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* === Tables === */
+.chembl-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.4em;
+  background: var(--bg-card);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.chembl-table th,
+.chembl-table td {
+  border: 1px solid var(--border);
+  padding: 0.6em 0.8em;
+  text-align: left;
+  font-size: 0.95em;
+}
+
+.chembl-table th {
+  background: var(--bg-panel);
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.chembl-table tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Stable hover, no flicker */
+.chembl-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transition: none;
+}
+
+/* Table-specific links */
+.chembl-table td a,
+.chembl-table th a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.chembl-table td a:hover,
+.chembl-table th a:hover {
+  color: var(--link-hover);
+}
+
+/* === Molecule Thumbnail === */
+.mol-thumb {
+  display: inline-block;
+  vertical-align: middle;
+}
+.mol-thumb svg {
+  max-height: 80px;
+  width: auto;
+}
+.mol-thumb svg:hover {
+  cursor: zoom-in;
+}
+
+/* === Modal === */
+.mol-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 1000;
+}
+
+.mol-modal.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mol-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+}
+
+.mol-modal-content {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6);
+  max-width: 600px;
+  padding: 1em;
+  z-index: 1001;
+}
+
+.mol-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-bottom: 0.5em;
+  color: var(--text-main);
+}
+
+.mol-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.mol-modal-close:hover {
+  color: var(--accent);
+}
+
+.mol-modal-body {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1em;
+}
+.mol-modal-body svg {
+  width: 400px;
+  height: auto;
+}
+
+.mol-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9em;
+  margin-top: 0.5em;
+}
+
+/* Long molecule name handling */
+.mol-modal-footer #molName {
+  max-width: 420px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mol-modal-footer #molName a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.mol-modal-footer #molName a:hover {
+  color: var(--link-hover);
+}
+.mol-modal-footer #molName a:visited {
+  color: var(--link-visited);
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  #viewer-container {
+    padding: 1em;
+  }
+  .chembl-table th,
+  .chembl-table td {
+    font-size: 0.9em;
+    padding: 0.5em;
+  }
+  .mol-modal-body svg {
+    width: 280px;
+  }
+  .mol-modal-footer #molName {
+    max-width: 240px;
+  }
+}
