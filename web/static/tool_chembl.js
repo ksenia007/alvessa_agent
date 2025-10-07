@@ -1,12 +1,12 @@
 // src/tools/chembl/frontend/tool_chembl.js
 // Author: Dmitri Kosenkov
-// Updated: 2025-10-06
+// Updated: 2025-10-07
 //
 // Full revision:
 // - Adds collapsible sections (FDA-approved, Clinical, Bioactivity)
 // - Adds "Approval Year" column for FDA-approved drugs
 // - Synchronizes light/dark theme with parent UI (like tool_prot.js)
-// - Keeps all other functionality identical
+// - Filters out genes with no evidence from the dropdown
 
 let currentGene = null;
 let RDKit = null; // RDKit.js instance
@@ -115,12 +115,16 @@ async function openMolModal(svg, inchikey, smiles) {
     const { cid, title } = info;
     if (title?.length) {
       let displayTitle = title;
-      const MAX_LEN = 60;
+      const MAX_LEN = 55;
       if (displayTitle.length > MAX_LEN)
         displayTitle = displayTitle.slice(0, MAX_LEN - 3) + "…";
-      molNameElem.innerHTML = `<a href="${pubchemCidUrl(cid)}" target="_blank" rel="noopener" title="${title}">${displayTitle}</a>`;
+      molNameElem.innerHTML = `<a href="${pubchemCidUrl(
+        cid
+      )}" target="_blank" rel="noopener" title="${title}">${displayTitle}</a>`;
     } else if (cid) {
-      molNameElem.innerHTML = `<a href="${pubchemCidUrl(cid)}" target="_blank" rel="noopener">PubChem CID ${cid}</a>`;
+      molNameElem.innerHTML = `<a href="${pubchemCidUrl(
+        cid
+      )}" target="_blank" rel="noopener">PubChem CID ${cid}</a>`;
     } else molNameElem.style.display = "none";
   } else molNameElem.style.display = "none";
 }
@@ -202,8 +206,6 @@ async function buildTable(tableBody, rows, type) {
 async function populateGene(gene) {
   if (!chemblData[gene]) return;
   currentGene = gene;
-  /*document.getElementById("geneTitle").textContent =
-    `ChEMBL Drug-Target Data for ${gene}`;*/
 
   const sections = [
     { key: "approved_drugs", id: "approvedSection", tbl: "approvedTable", title: "FDA-approved Drugs" },
@@ -238,20 +240,39 @@ document.addEventListener("DOMContentLoaded", async () => {
   console.log("RDKit.js ready:", !!RDKit);
 
   const geneSelect = document.getElementById("geneSelect");
+  let validGenes = [];
+
+  // --- Filter only genes that have real evidence ---
   Object.keys(chemblData).forEach((g) => {
-    const opt = document.createElement("option");
-    opt.value = g;
-    opt.textContent = g;
-    geneSelect.appendChild(opt);
+    const d = chemblData[g];
+    const hasData =
+      (Array.isArray(d.approved_drugs) && d.approved_drugs.length > 0) ||
+      (Array.isArray(d.clinical_trials) && d.clinical_trials.length > 0) ||
+      (Array.isArray(d.bioactivity) && d.bioactivity.length > 0);
+
+    if (hasData) {
+      const opt = document.createElement("option");
+      opt.value = g;
+      opt.textContent = g;
+      geneSelect.appendChild(opt);
+      validGenes.push(g);
+    }
   });
 
-  if (Object.keys(chemblData).length) {
-    const firstGene = Object.keys(chemblData)[0];
+  // --- Default only if at least one valid gene ---
+  if (validGenes.length > 0) {
+    const firstGene = validGenes[0];
     geneSelect.value = firstGene;
     populateGene(firstGene);
+  } else {
+    // No valid genes — hide dropdown and all collapsible sections
+    geneSelect.style.display = "none";
+    document.querySelectorAll(".collapsible-section").forEach((sec) => {
+      sec.style.display = "none";
+    });
   }
 
-  // Collapsible section toggles
+  // --- Collapsible sections ---
   document.querySelectorAll(".collapsible-header").forEach((header) => {
     const section = header.closest(".collapsible-section");
     const content = section.querySelector(".collapsible-content");
@@ -263,7 +284,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       icon.textContent = isOpen ? "▾" : "▸";
     });
 
-    // start collapsed
     content.classList.remove("open");
     icon.textContent = "▸";
   });
@@ -284,7 +304,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const theme = event.data.theme;
     document.body.classList.toggle("light", theme === "light");
 
-    // Smooth transition for background and text colors
     const els = document.querySelectorAll(
       ".collapsible-header, .chembl-table, body"
     );
