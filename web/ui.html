@@ -1483,27 +1483,31 @@
       /********************
        * ChEMBL Viewer
        ********************/
+
       function renderChembl(st) {
         const mount = document.getElementById("chemblMount");
-        const card = document.getElementById("chemblCard");
+        const card  = document.getElementById("chemblCard");
         if (!mount || !card) return;
 
         const html = st?.chembl_html;
-        if (!html || typeof html !== "string" || !html.trim()) {
+        if (!html) {
           card.style.display = "none";
           mount.innerHTML = "";
           return;
         }
 
-        // Create iframe container (sandboxed like prot)
         mount.innerHTML = "";
+        card.style.display = "block";
+
         const frame = document.createElement("iframe");
-        frame.className = "prot-frame"; // reuse styling for consistent look
-        frame.setAttribute("sandbox", "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads");
+        frame.className = "prot-frame";
+        frame.setAttribute(
+          "sandbox",
+          "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
+        );
         frame.setAttribute("referrerpolicy", "no-referrer");
         frame.srcdoc = html;
 
-        // Optional: Add a small "Save HTML" button
         const saveBtn = document.createElement("button");
         saveBtn.className = "ghost";
         saveBtn.textContent = "Save HTML";
@@ -1520,7 +1524,6 @@
 
         mount.appendChild(saveBtn);
         mount.appendChild(frame);
-        card.style.display = "block";
 
         const isLight = document.body.classList.contains("light");
         frame.addEventListener("load", () => {
@@ -1530,7 +1533,6 @@
           );
         });
       }
-
       /********************
        * Renderers for Q/A, citations, evidence, raw 
        ********************/

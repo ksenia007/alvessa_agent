@@ -312,7 +312,26 @@ def inject_frontend_assets(
     """
     Inject inline CSS, JS, and JSON ChemBL data into HTML template.
     Produces a standalone HTML viewer (parallel to prot tool).
+    Returns empty HTML if all genes have empty evidence sets.
     """
+    # --- Check for non-empty evidence ---
+    has_data = False
+    for gene, data in (chembl_data_all or {}).items():
+        if not isinstance(data, dict):
+            continue
+        if (
+            (data.get("approved_drugs") and len(data["approved_drugs"]) > 0)
+            or (data.get("clinical_trials") and len(data["clinical_trials"]) > 0)
+            or (data.get("bioactivity") and len(data["bioactivity"]) > 0)
+        ):
+            has_data = True
+            break
+
+    # --- Return empty HTML if nothing to show ---
+    if not has_data:
+        return ""  # this disables card automatically
+
+    # --- Otherwise build full viewer ---
     css_inline = f"<style>\n{css_template}\n</style>"
     js_inline = (
         "<script>\n"

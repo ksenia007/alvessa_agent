@@ -1,7 +1,7 @@
 # src/tools/prot/node.py
 # Author: Dmitri Kosenkov
 # Created: 2025-09-20
-# Updated: 2025-10-01
+# Updated: 2025-10-07
 """
 node.py
 =======
@@ -64,6 +64,10 @@ from src.tools.prot.sasa_pi import fetch_sasa_pi
 from src.tools.prot.disorder import fetch_disorder
 from src.tools.prot.biolip2 import fetch_biolip2
 
+
+# ----------------------------------------------------------------------
+# Gene Preparation
+# ----------------------------------------------------------------------
 def _prepare_genes(state: "State") -> List[str]:
     """Resolve, deduplicate, and prepare gene symbols for downstream processing."""
     genes = state.get("genes") or []
@@ -88,15 +92,19 @@ def _prepare_genes(state: "State") -> List[str]:
         warnings.warn(f"Truncating gene list from {len(genes)} to {TOOL_PROT_MAX_GENES}")
         genes = genes[:TOOL_PROT_MAX_GENES]
 
-    # Ensure gene_entities dict exists and contains Gene objects
+    # Ensure gene_entities dict exists and contains Gene objects (corrected)
     gene_entities = state.get("gene_entities") or {}
     for g in genes:
         if not isinstance(gene_entities.get(g), Gene):
-            gene_entities[g] = Gene(symbol=g)
+            gene_entities[g] = Gene(identifiers=GeneIdentifiers(symbol=g))
     state["gene_entities"] = gene_entities
 
     return genes
 
+
+# ----------------------------------------------------------------------
+# Main Protein Agent
+# ----------------------------------------------------------------------
 def prot_agent(state: "State") -> "State":
     """Main agent pipeline: resolves UniProt IDs, fetches per-residue features,
        generates summaries, and builds interactive HTML for the frontend.
@@ -209,6 +217,10 @@ def prot_agent(state: "State") -> "State":
         state["prot_data_all"] = prot_data_all
     return state
 
+
+# ----------------------------------------------------------------------
+# Helper: Resolve Gene → Protein Mapping
+# ----------------------------------------------------------------------
 def _resolve_gene_to_protein(conn, gene_symbol: str):
     """Resolve a gene symbol to (uniprot_id, protein_id, pdb_file)."""
     import requests
@@ -250,7 +262,7 @@ if __name__ == "__main__":
 
     state = State({
         "genes": genes,
-        "gene_entities": {g: Gene(GeneIdentifiers(symbol=g)) for g in genes},
+        "gene_entities": {g: Gene(identifiers=GeneIdentifiers(symbol=g)) for g in genes},
     })
     result = prot_agent(state)
 

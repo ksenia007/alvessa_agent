@@ -1,10 +1,11 @@
 # src/tools/chembl/node.py
-#ChEMBL Drug–Target Summarization and Visualization Tool
-#=======================================================
+# ===========================================================
+# ChEMBL Drug–Target Summarization and Visualization Tool
+# ===========================================================
 #
-#Author: Dmitri Kosenkov
-#Created: 2025-09-25
-#Updated: 2025-10-06
+# Author: Dmitri Kosenkov
+# Created: 2025-09-25
+# Updated: 2025-10-07
 
 """
 Overview
@@ -21,75 +22,7 @@ genes, including FDA-approved drugs, clinical/preclinical candidates,
 and bioactivity assay data. An interactive HTML viewer renders 2D
 molecular structures using RDKit.js and supports collapsible sections
 for each evidence type.
-
-Main Components
----------------
-1. **Node Entrypoint (`chembl_agent`)**
-   - Resolves gene symbols to UniProt accessions via the UniProt REST API.
-   - Queries the local ChEMBL SQLite database for the corresponding target ID.
-   - Extracts and structures three major evidence layers:
-       * FDA-approved drugs (max_phase = 4)
-       * Clinical and preclinical trials (max_phase = 1-3 or 0)
-       * Bioactivity assays (IC50, Ki, EC50 normalized to nM)
-   - Produces a combined text summary with formatted molecule types and
-     potency data, then attaches it to the corresponding `Gene` object
-     within the Alvessa `State`.
-
-2. **Database Utilities (`utils.py`)**
-   - `get_connection()` — Validates and opens a ChEMBL SQLite connection.
-   - `fetch_target_info()` — Executes optimized SQL queries to extract all
-     relevant molecule data for a given UniProt ID. Returns structured
-     dictionaries of evidence:
-       * `approved_drugs`: chembl_id, molecule_type, inchikey, smiles, approval_year
-       * `clinical_trials`: chembl_id, phase, molecule_type, inchikey, smiles
-       * `bioactivity`: chembl_id, molecule_type, summary (IC50/Ki/EC50),
-         inchikey, smiles
-     Includes:
-       * Unit normalization to nM.
-       * Molecule type retention (Small molecule, Antibody, etc.).
-       * Sorting by potency or approval year.
-   - `make_summary_text()` — Generates concise human-readable summaries for logs
-     and plain-text output files.
-   - `interpretation_notes()` — Provides standardized explanatory notes on
-     normalization, assay units, and interpretation caveats.
-   - `inject_frontend_assets()` — Embeds inline CSS, JS, and JSON data into
-     the HTML template to create a standalone interactive viewer.
-
-3. **Frontend Viewer (HTML + CSS + JS)**
-   - Fully self-contained HTML output rendered via templates in
-     `HTML_TEMPLATE`, `CSS_TEMPLATE`, and `JS_TEMPLATE`.
-   - Key features:
-       **Collapsible Sections** — FDA-approved, Clinical/Preclinical,
-         and Bioactivity panels, each initially collapsed with dynamic
-         counts and smooth expand/collapse.
-       **RDKit.js 2D Rendering** — Canonical SMILES are rendered directly
-         as vector graphics, supporting zoom-in modal views.
-       **PubChem Enrichment** — Automatic lookup of compound names and
-         CIDs from InChIKeys for linked metadata.
-       **Dynamic Theming** — Dark/light theme synchronization with the
-         main Alvessa interface.
-       **Responsive Layout** — Optimized for desktop and tablet displays.
-
-4. **Output**
-   - **Text Report (`*_chembl.txt`)**
-       Human-readable summary of all compounds and assays per gene.
-   - **Interactive HTML Viewer (`*_chembl.html`)**
-       Fully self-contained file embedding CSS/JS/data for offline browsing.
-
-Typical Usage
--------------
-```python
-from src.tools.chembl.node import chembl_agent
-from src.state import State
-from src.alvessa.domain.gene_class import Gene
-
-state = State({"genes": ["TP53"], "gene_entities": {"TP53": Gene(symbol="TP53")}})
-state = chembl_agent(state)
-
-# Access results
-html_report = state["chembl_html"]
-text_summary = state["gene_entities"]["TP53"].text_summaries_from_tools"""
-
+"""
 
 import sys
 import warnings
@@ -140,11 +73,11 @@ def _prepare_genes_chembl(state: "State") -> List[str]:
             seen.add(g)
             unique_genes.append(g)
 
-    # Ensure Gene objects exist
+    # Ensure Gene objects exist (corrected instantiation)
     gene_entities = state.get("gene_entities") or {}
     for g in unique_genes:
         if not isinstance(gene_entities.get(g), Gene):
-            gene_entities[g] = Gene(symbol=g)
+            gene_entities[g] = Gene(identifiers=GeneIdentifiers(symbol=g))
     state["gene_entities"] = gene_entities
 
     return unique_genes
@@ -240,12 +173,14 @@ def chembl_agent(state: "State") -> "State":
 # CLI (testing mode)
 # ------------------------------
 if __name__ == "__main__":
-    genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "DRD2"]
+    #genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "DRD2"]
+    genes = sys.argv[1:] if len(sys.argv) > 1 else ["TMEM179", "C20orf85", "POTEM", "ZNF533", "WDR90"]
+    
     base_name = genes[0] if len(genes) == 1 else f"{genes[0]}_plus{len(genes)-1}"
 
     state = State({
         "genes": genes,
-        "gene_entities": {g: Gene(GeneIdentifiers(symbol=g)) for g in genes},
+        "gene_entities": {g: Gene(identifiers=GeneIdentifiers(symbol=g)) for g in genes},
     })
 
     result = chembl_agent(state)
