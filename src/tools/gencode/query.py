@@ -40,7 +40,6 @@ def annotate_variant(chrom: str, pos: int) -> Optional[Dict[str, Any]]:
     
     if not chrom.startswith("chr"):
         chrom = f"chr{chrom}"
-    
     chrom_data = gtf_df[gtf_df["seqname"] == chrom]
     matches = chrom_data[(chrom_data["start"] <= pos) & (chrom_data["end"] >= pos)]
     if matches.empty:
