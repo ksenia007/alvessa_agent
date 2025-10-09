@@ -1441,11 +1441,13 @@
 
         const frame = document.createElement("iframe");
         frame.className = "prot-frame";
-        frame.setAttribute("sandbox", "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads");
+        // Updated sandbox for full link functionality and downloads
+        frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
         frame.setAttribute("referrerpolicy", "no-referrer");
 
         if (html && typeof html === "string" && html.trim()) {
           frame.srcdoc = html;
+
           const saveBtn = document.createElement("button");
           saveBtn.className = "mini";
           saveBtn.textContent = "Save HTML";
@@ -1463,27 +1465,22 @@
         } else if (iframeUrl) {
           frame.src = iframeUrl;
         } else if (pdbId) {
-          frame.src = `https://www.ebi.ac.uk/pdbe/entry-files/molstar.html?structureId=${encodeURIComponent(
-            pdbId
-          )}`;
+          frame.src = `https://www.ebi.ac.uk/pdbe/entry-files/molstar.html?structureId=${encodeURIComponent(pdbId)}`;
         }
 
         mount.appendChild(frame);
         document.getElementById("protCard").style.display = "block";
 
+        // Updated theme broadcast after load
         const isLight = document.body.classList.contains("light");
         frame.addEventListener("load", () => {
-          frame.contentWindow?.postMessage(
-            { type: "theme", theme: isLight ? "light" : "dark" },
-            "*"
-          );
+          frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
         });
       }
 
       /********************
        * ChEMBL Viewer
        ********************/
-
       function renderChembl(st) {
         const mount = document.getElementById("chemblMount");
         const card  = document.getElementById("chemblCard");
@@ -1501,10 +1498,8 @@
 
         const frame = document.createElement("iframe");
         frame.className = "prot-frame";
-        frame.setAttribute(
-          "sandbox",
-          "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
-        );
+        // Same sandbox policy for full external link support
+        frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
         frame.setAttribute("referrerpolicy", "no-referrer");
         frame.srcdoc = html;
 
@@ -1525,14 +1520,14 @@
         mount.appendChild(saveBtn);
         mount.appendChild(frame);
 
+        // Updated theme sync
         const isLight = document.body.classList.contains("light");
         frame.addEventListener("load", () => {
-          frame.contentWindow?.postMessage(
-            { type: "theme", theme: isLight ? "light" : "dark" },
-            "*"
-          );
+          frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
         });
       }
+
+
       /********************
        * Renderers for Q/A, citations, evidence, raw 
        ********************/
