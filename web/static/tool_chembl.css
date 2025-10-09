@@ -19,6 +19,14 @@
   --link-hover: #d6e7ff;
   --link-visited: #b9d6ff;
   --focus-ring: 0 0 0 3px rgba(156, 201, 255, 0.35);
+
+  /* Status colors */
+  --withdrawn: #ff6b6b;        /* withdrawn highlight (dark) */
+
+  /* Modal placement defaults (used by .mol-modal.near) */
+  --modal-scale: 0.9;          /* 10% smaller by default */
+  --modal-left: 50%;
+  --modal-top: 50%;
 }
 
 /* === Light Theme === */
@@ -32,14 +40,25 @@ body.light {
   --border-strong: #c8cfe0;
   --accent: #1b2450;
 
-  /* Link palette for light theme */
   --link: #1b45f0;
   --link-hover: #0d36c7;
   --link-visited: #5a3be6;
   --focus-ring: 0 0 0 3px rgba(27, 69, 240, 0.25);
+
+  --withdrawn: #c22;           /* withdrawn highlight (light) */
 }
 
 /* === Global Layout === */
+/* Prevent layout shift when vertical scrollbar toggles */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Fallback for older browsers */
+@supports not (scrollbar-gutter: stable) {
+  body { overflow-y: scroll; } /* always show vertical scrollbar */
+}
+
 body {
   font-family: "Segoe UI", Roboto, sans-serif;
   background: var(--bg-main);
@@ -60,6 +79,22 @@ h1 {
   margin-top: 0.75em;
 }
 
+/* Utility lines under ChEMBL ID */
+.sub {
+  display: block;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+.sub.muted {
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+/* Withdrawn subline emphasis */
+.sub.withdrawn {
+  color: var(--withdrawn);
+  font-weight: 600;
+}
+
 /* === Global Link Styles === */
 a {
   color: var(--link);
@@ -67,12 +102,8 @@ a {
   text-underline-offset: 2px;
   transition: color 0.12s ease;
 }
-a:hover {
-  color: var(--link-hover);
-}
-a:visited {
-  color: var(--link-visited);
-}
+a:hover { color: var(--link-hover); }
+a:visited { color: var(--link-visited); }
 a:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
@@ -92,18 +123,21 @@ a:focus-visible {
   margin: 0.5em 0 0.3em 0;
   transition: none;
 }
-
 .collapsible-header:hover {
   background: var(--bg-panel);
   border-color: var(--border);
 }
+.collapsible-header:focus-visible {
+  box-shadow: var(--focus-ring);
+}
 
 .collapsible-header .toggle-icon {
-  font-size: 1.1em;
+  font-size: 1em;
   margin-right: 0.6em;
   color: var(--accent);
   flex-shrink: 0;
-  transition: transform 0.25s ease;
+  width: 1.2em;
+  text-align: center;
 }
 
 .collapsible-header .title {
@@ -120,11 +154,6 @@ a:focus-visible {
   margin-left: 0.4em;
 }
 
-/* Rotated icon when expanded */
-.collapsible-header.open .toggle-icon {
-  transform: rotate(90deg);
-}
-
 /* === Collapsible Content === */
 .collapsible-content {
   overflow: hidden;
@@ -132,11 +161,12 @@ a:focus-visible {
   opacity: 0;
   transition: max-height 0.25s ease, opacity 0.25s ease;
 }
-
+/* expanded: effectively no cap, no clipping */
 .collapsible-content.open {
-  max-height: 2000px;
+  max-height: 100000px;
   opacity: 1;
   margin-top: 0.3em;
+  overflow: visible;
 }
 
 /* === Toolbar === */
@@ -148,13 +178,11 @@ a:focus-visible {
   align-items: center;
   justify-content: flex-start;
 }
-
 #controls label {
   margin-right: 0.4em;
   color: var(--text-muted);
   font-size: 0.95em;
 }
-
 #geneSelect {
   background: var(--bg-card);
   color: var(--text-main);
@@ -180,7 +208,6 @@ a:focus-visible {
   border-radius: 8px;
   overflow: hidden;
 }
-
 .chembl-table th,
 .chembl-table td {
   border: 1px solid var(--border);
@@ -188,23 +215,19 @@ a:focus-visible {
   text-align: left;
   font-size: 0.95em;
 }
-
 .chembl-table th {
   background: var(--bg-panel);
   color: var(--text-main);
   font-weight: 600;
 }
-
 .chembl-table tr:nth-child(even) {
   background: rgba(255, 255, 255, 0.02);
 }
-
 /* Stable hover, no flicker */
 .chembl-table tr:hover {
   background: rgba(255, 255, 255, 0.05);
   transition: none;
 }
-
 /* Table-specific links */
 .chembl-table td a,
 .chembl-table th a {
@@ -218,23 +241,55 @@ a:focus-visible {
 }
 
 /* === Molecule Thumbnail === */
-.mol-thumb {
-  display: inline-block;
-  vertical-align: middle;
-}
-.mol-thumb svg {
-  max-height: 80px;
-  width: auto;
-}
-.mol-thumb svg:hover {
-  cursor: zoom-in;
+.mol-thumb { display: inline-block; vertical-align: middle; }
+.mol-thumb svg { max-height: 80px; width: auto; }
+.mol-thumb svg:hover { cursor: zoom-in; }
+
+/* === Withdrawn highlighting (ID cell only) === */
+tr.is-withdrawn td:first-child .id-link {
+  color: var(--withdrawn);
+  text-decoration: none;
 }
 
-/* === Modal === */
+/* === Black Box Warning Panel (shifted row) === */
+.bb-warning-row { background: transparent; }
+.bb-warning-row td { padding-left: 1.8em; }
+/* No extra indent on the first (empty) cell */
+.bb-warning-row td:first-child { padding-left: 0; }
+
+.bb-warning-box {
+  background: rgba(255, 80, 80, 0.08);
+  border-left: 4px solid #ff5050;
+  border-radius: 6px;
+  margin: 6px 0 10px 0;
+  padding: 8px 12px;
+  font-size: 0.9em;
+  line-height: 1.45;
+  color: var(--text-main);
+}
+body.light .bb-warning-box {
+  background: rgba(255, 70, 70, 0.08);
+  border-left-color: #e44;
+}
+.bb-warning-header {
+  font-weight: 600;
+  color: #ff6666;
+  margin-bottom: 4px;
+}
+body.light .bb-warning-header { color: #c22; }
+.bb-warning-text { color: var(--text-main); margin-bottom: 4px; }
+.bb-warning-link a {
+  color: var(--link);
+  text-decoration: underline;
+  font-size: 0.85em;
+}
+.bb-warning-link a:hover { color: var(--link-hover); }
+
+/* === Modal (revised: centered, viewport-bounded, body scrolls) === */
 .mol-modal {
-  position: fixed;
-  inset: 0;
-  display: flex;
+  position: fixed;               /* pinned to iframe viewport */
+  inset: 0;                      /* fill viewport */
+  display: flex;                 /* center content */
   align-items: center;
   justify-content: center;
   opacity: 0;
@@ -242,7 +297,6 @@ a:focus-visible {
   transition: opacity 0.25s ease;
   z-index: 1000;
 }
-
 .mol-modal.active {
   opacity: 1;
   pointer-events: auto;
@@ -257,56 +311,104 @@ a:focus-visible {
 
 .mol-modal-content {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(880px, 92vw);
+  max-height: 92vh;              /* never exceed viewport */
   background: var(--bg-card);
+  color: var(--text-main);
   border-radius: 12px;
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6);
-  max-width: 600px;
-  padding: 1em;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  overflow: hidden;              /* header/footer fixed */
   z-index: 1001;
+  transform-origin: center center;
+}
+body.light .mol-modal-content {
+  background: #ffffff;
+  color: #0b1020;
+  border-color: #e5e7eb;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+
+/* Default: make the dialog ~10% smaller, still centered */
+.mol-modal.active .mol-modal-content {
+  transform: scale(var(--modal-scale, 0.9));
+}
+
+/* “Near trigger” mode — position by CSS vars injected from JS */
+.mol-modal.near .mol-modal-content {
+  position: absolute;
+  left: var(--modal-left, 50%);
+  top: var(--modal-top, 50%);
+  transform: translate(-50%, -50%) scale(var(--modal-scale, 0.9));
+  max-width: min(880px, 92vw);
+  max-height: 92vh;
+  will-change: transform, left, top;
+}
+
+.mol-modal-header,
+.mol-modal-footer {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.mol-modal-footer {
+  border-bottom: 0;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+body.light .mol-modal-header,
+body.light .mol-modal-footer {
+  border-color: #e5e7eb;
 }
 
 .mol-modal-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-weight: bold;
-  font-size: 1.1em;
-  margin-bottom: 0.5em;
-  color: var(--text-main);
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 1.05em;
 }
 
 .mol-modal-close {
   background: none;
   border: none;
-  font-size: 1.5em;
   color: var(--text-muted);
+  font-size: 1.4em;
+  line-height: 1;
   cursor: pointer;
 }
-.mol-modal-close:hover {
-  color: var(--accent);
+.mol-modal-close:hover { color: var(--accent); }
+
+/* Only the body area scrolls when content is tall */
+.mol-modal-body {
+  padding: 12px;
+  overflow: auto;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.mol-modal-body {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1em;
-}
+/* RDKit SVG responsive inside modal */
 .mol-modal-body svg {
-  width: 400px;
+  width: 100%;
   height: auto;
+  max-width: 760px;              /* fits inside 880px dialog width */
+  display: block;
 }
 
 .mol-modal-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   font-size: 0.9em;
-  margin-top: 0.5em;
 }
 
 /* Long molecule name handling */
 .mol-modal-footer #molName {
-  max-width: 420px;
+  max-width: min(66ch, 60vw);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -316,27 +418,28 @@ a:focus-visible {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.mol-modal-footer #molName a:hover {
-  color: var(--link-hover);
-}
-.mol-modal-footer #molName a:visited {
-  color: var(--link-visited);
-}
+.mol-modal-footer #molName a:hover { color: var(--link-hover); }
+.mol-modal-footer #molName a:visited { color: var(--link-visited); }
 
 /* === Responsive === */
 @media (max-width: 768px) {
-  #viewer-container {
-    padding: 1em;
-  }
-  .chembl-table th,
-  .chembl-table td {
+  #viewer-container { padding: 1em; }
+  .chembl-table th, .chembl-table td {
     font-size: 0.9em;
     padding: 0.5em;
   }
+  .mol-modal-content {
+    width: 94vw;
+    max-height: 92vh;
+  }
   .mol-modal-body svg {
-    width: 280px;
+    max-width: 100%;
   }
   .mol-modal-footer #molName {
-    max-width: 240px;
+    max-width: 48vw;
+  }
+  /* Slightly larger (less shrink) on small screens for legibility */
+  .mol-modal.active .mol-modal-content {
+    --modal-scale: 0.92;
   }
 }

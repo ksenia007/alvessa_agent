@@ -19,18 +19,16 @@
   <div id="toolbar">
     <div id="controls">
       <label for="geneSelect">Gene:</label>
-      <select id="geneSelect"></select>
+      <select id="geneSelect" aria-label="Select gene"></select>
     </div>
   </div>
 
   <!-- Main viewer container -->
   <div id="viewer-container">
-    <!-- Title -->
-    <!-- <h1 id="geneTitle">ChEMBL Drug–Target Data</h1> -->
 
     <!-- FDA-approved drugs -->
     <section id="approvedSection" class="collapsible-section" style="display:none;">
-      <h2 class="collapsible-header">
+      <h2 class="collapsible-header" role="button" tabindex="0">
         <span class="toggle-icon">▸</span>
         <span class="title">FDA-approved Drugs</span>
         <span class="count"></span>
@@ -39,9 +37,11 @@
         <table class="chembl-table">
           <thead>
             <tr>
-              <th>ChEMBL ID</th>
+              <th>ChEMBL ID / Name</th>
               <th>Molecule Type</th>
-              <th>Approval Year</th>
+              <th>First Approval</th>
+              <th>Indications</th>
+              <th>Mechanism</th>
               <th>2D Structure</th>
             </tr>
           </thead>
@@ -50,9 +50,9 @@
       </div>
     </section>
 
-    <!-- Clinical/Preclinical trials -->
+    <!-- Clinical & Preclinical Trials -->
     <section id="clinicalSection" class="collapsible-section" style="display:none;">
-      <h2 class="collapsible-header">
+      <h2 class="collapsible-header" role="button" tabindex="0">
         <span class="toggle-icon">▸</span>
         <span class="title">Clinical &amp; Preclinical Trials</span>
         <span class="count"></span>
@@ -72,9 +72,9 @@
       </div>
     </section>
 
-    <!-- Bioactivity evidence -->
+    <!-- Bioactivity Evidence -->
     <section id="bioactivitySection" class="collapsible-section" style="display:none;">
-      <h2 class="collapsible-header">
+      <h2 class="collapsible-header" role="button" tabindex="0">
         <span class="toggle-icon">▸</span>
         <span class="title">Bioactivity Evidence</span>
         <span class="count"></span>
@@ -93,6 +93,7 @@
         </table>
       </div>
     </section>
+
   </div>
 </body>
 </html>
