@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
 from src.tools.biogrid.utils import _fetch_predictions_BioGRID
 
 LOCAL_DBS_DIR = ROOT / 'local_dbs'
+OUTPUT = ROOT / 'benchmarks_generation/benchmark_questions/BioGRID'
 
 with open(LOCAL_DBS_DIR / 'gene_names_list.txt', 'r') as f:
     gene_list = [line.strip() for line in f]
@@ -72,9 +73,8 @@ def biogrid_set1(count):
 
     output_df = pd.concat([output_df, pd.DataFrame(new_questions)], ignore_index=True)
     
-    output_path = 'benchmark_questions/BioGRID'
-    os.makedirs(output_path, exist_ok=True)
-    output_df.to_csv(f'{output_path}/set1.csv', index = False)
+    os.makedirs(OUTPUT, exist_ok=True)
+    output_df.to_csv(f'{OUTPUT}/set1.csv', index = False)
 
 ## Which of the following genes interacts both with gene X and gene Y?
 def biogrid_set2(count):
@@ -150,9 +150,8 @@ def biogrid_set2(count):
 
     output_df = pd.concat([output_df, pd.DataFrame(new_questions)], ignore_index=True)
     
-    output_path = 'benchmark_questions/BioGRID'
-    os.makedirs(output_path, exist_ok=True)
-    output_df.to_csv(f'{output_path}/set2.csv', index = False)
+    os.makedirs(OUTPUT, exist_ok=True)
+    output_df.to_csv(f'{OUTPUT}/set2.csv', index = False)
 
 ## Which of the following genes interacts with gene X through gene Y?
 def biogrid_set3(count):
@@ -227,19 +226,18 @@ def biogrid_set3(count):
 
     output_df = pd.concat([output_df, pd.DataFrame(new_questions)], ignore_index=True)
     
-    output_path = 'benchmark_questions/BioGRID'
-    os.makedirs(output_path, exist_ok=True)
-    output_df.to_csv(f'{output_path}/set3.csv', index = False)
+    os.makedirs(OUTPUT, exist_ok=True)
+    output_df.to_csv(f'{OUTPUT}/set3.csv', index = False)
 
 
 if __name__ == "__main__":
     num_questions = 20
-    # print("=== Generating BioGRID Question Set 1 ===")
-    # biogrid_set1(num_questions)
+    print("=== Generating BioGRID Question Set 1 ===")
+    biogrid_set1(num_questions)
     print("=== Generating BioGRID Question Set 2 ===")
     biogrid_set2(num_questions)
-    # print("=== Generating BioGRID Question Set 3 ===")
-    # biogrid_set3(num_questions)
+    print("=== Generating BioGRID Question Set 3 ===")
+    biogrid_set3(num_questions)
     
 
     

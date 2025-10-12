@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ChEMBL Viewer - {{GENE_SYMBOL}}</title>
+
+  <!-- Inline CSS injected by Python -->
+  {{CSS_INLINE}}
+
+  <!-- RDKit.js for 2D molecular rendering -->
+  <script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
+
+  <!-- Inline JS injected by Python -->
+  {{JS_INLINE}}
+</head>
+
+<body>
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <div id="controls">
+      <label for="geneSelect">Gene:</label>
+      <select id="geneSelect" aria-label="Select gene"></select>
+    </div>
+  </div>
+
+  <!-- Main viewer container -->
+  <div id="viewer-container">
+
+    <!-- FDA-approved drugs -->
+    <section id="approvedSection" class="collapsible-section" style="display:none;">
+      <h2 class="collapsible-header" role="button" tabindex="0">
+        <span class="toggle-icon">▸</span>
+        <span class="title">FDA-approved Drugs</span>
+        <span class="count"></span>
+      </h2>
+      <div class="collapsible-content">
+        <table class="chembl-table">
+          <thead>
+            <tr>
+              <th>ChEMBL ID / Name</th>
+              <th>Molecule Type</th>
+              <th>First Approval</th>
+              <th>Indications</th>
+              <th>Mechanism</th>
+              <th>2D Structure</th>
+            </tr>
+          </thead>
+          <tbody id="approvedTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Clinical & Preclinical Trials -->
+    <section id="clinicalSection" class="collapsible-section" style="display:none;">
+      <h2 class="collapsible-header" role="button" tabindex="0">
+        <span class="toggle-icon">▸</span>
+        <span class="title">Clinical &amp; Preclinical Trials</span>
+        <span class="count"></span>
+      </h2>
+      <div class="collapsible-content">
+        <table class="chembl-table">
+          <thead>
+            <tr>
+              <th>ChEMBL ID</th>
+              <th>Molecule Type</th>
+              <th>Phase</th>
+              <th>2D Structure</th>
+            </tr>
+          </thead>
+          <tbody id="clinicalTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Bioactivity Evidence -->
+    <section id="bioactivitySection" class="collapsible-section" style="display:none;">
+      <h2 class="collapsible-header" role="button" tabindex="0">
+        <span class="toggle-icon">▸</span>
+        <span class="title">Bioactivity Evidence</span>
+        <span class="count"></span>
+      </h2>
+      <div class="collapsible-content">
+        <table class="chembl-table">
+          <thead>
+            <tr>
+              <th>ChEMBL ID</th>
+              <th>Molecule Type</th>
+              <th>Evidence</th>
+              <th>2D Structure</th>
+            </tr>
+          </thead>
+          <tbody id="bioactivityTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

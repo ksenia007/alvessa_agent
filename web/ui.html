@@ -671,6 +671,12 @@
           <div id="protMount"></div>
         </div>
 
+        <!-- ChEMBL Drug–Target Data -->
+        <div id="chemblCard" class="card full" data-section style="display: none">
+        <div class="title">ChEMBL Drug–Target Data</div>
+        <div id="chemblMount"></div>
+        </div>
+
         <!-- Two-sample MR -->
         <div id="tsmrCard" class="card full" data-section style="display: none">
           <div class="title">Two-sample Mendelian Randomization</div>
@@ -1418,7 +1424,7 @@
       }
 
       /********************
-       * Protein 
+       * Protein Viewer
        ********************/
       function renderProt(st) {
         const mount = document.getElementById("protMount");
@@ -1435,11 +1441,13 @@
 
         const frame = document.createElement("iframe");
         frame.className = "prot-frame";
-        frame.setAttribute("sandbox", "allow-scripts");
+        // Updated sandbox for full link functionality and downloads
+        frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
         frame.setAttribute("referrerpolicy", "no-referrer");
 
         if (html && typeof html === "string" && html.trim()) {
           frame.srcdoc = html;
+
           const saveBtn = document.createElement("button");
           saveBtn.className = "mini";
           saveBtn.textContent = "Save HTML";
@@ -1457,22 +1465,68 @@
         } else if (iframeUrl) {
           frame.src = iframeUrl;
         } else if (pdbId) {
-          frame.src = `https://www.ebi.ac.uk/pdbe/entry-files/molstar.html?structureId=${encodeURIComponent(
-            pdbId
-          )}`;
+          frame.src = `https://www.ebi.ac.uk/pdbe/entry-files/molstar.html?structureId=${encodeURIComponent(pdbId)}`;
         }
 
         mount.appendChild(frame);
         document.getElementById("protCard").style.display = "block";
 
+        // Updated theme broadcast after load
         const isLight = document.body.classList.contains("light");
         frame.addEventListener("load", () => {
-          frame.contentWindow?.postMessage(
-            { type: "theme", theme: isLight ? "light" : "dark" },
-            "*"
-          );
+          frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
         });
       }
+
+      /********************
+       * ChEMBL Viewer
+       ********************/
+      function renderChembl(st) {
+        const mount = document.getElementById("chemblMount");
+        const card  = document.getElementById("chemblCard");
+        if (!mount || !card) return;
+
+        const html = st?.chembl_html;
+        if (!html) {
+          card.style.display = "none";
+          mount.innerHTML = "";
+          return;
+        }
+
+        mount.innerHTML = "";
+        card.style.display = "block";
+
+        const frame = document.createElement("iframe");
+        frame.className = "prot-frame";
+        // Same sandbox policy for full external link support
+        frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
+        frame.setAttribute("referrerpolicy", "no-referrer");
+        frame.srcdoc = html;
+
+        const saveBtn = document.createElement("button");
+        saveBtn.className = "ghost";
+        saveBtn.textContent = "Save HTML";
+        saveBtn.style.margin = "6px 0 10px";
+        saveBtn.onclick = () => {
+          const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "chembl_view.html";
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 800);
+        };
+
+        mount.appendChild(saveBtn);
+        mount.appendChild(frame);
+
+        // Updated theme sync
+        const isLight = document.body.classList.contains("light");
+        frame.addEventListener("load", () => {
+          frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
+        });
+      }
+
 
       /********************
        * Renderers for Q/A, citations, evidence, raw 
@@ -2946,6 +3000,7 @@ ${
         safeRender("geneSummary", () => renderGeneSummary(STATE)); // FILES first
         safeRender("variants", () => renderVariantSummary(STATE)); // FILES first
         safeRender("protein", () => renderProt(STATE)); 
+        safeRender("chembl", () => renderChembl(STATE));
         safeRender("twoSampleMR", () => renderTwoSampleMR(STATE));
         safeRender("evidence", () => renderEvidence(STATE));
         safeRender("raw", () => renderRaw(STATE));

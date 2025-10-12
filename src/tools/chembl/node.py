@@ -1,14 +1,20 @@
-# src/tools/chembl/node.py
+# ===========================================================
+# ChEMBL Drug–Target Summarization and Visualization Tool
+# ===========================================================
+#
 # Author: Dmitri Kosenkov
 # Created: 2025-09-25
-# Updated: 2025-09-26
+# Updated: 2025-10-08
 #
-# Main entry point for ChEMBL drug-target summarization tool.
+# This module queries a local ChEMBL v35+ database for drug–target evidence.
+# It summarizes FDA-approved, clinical, and bioactivity data per UniProt ID.
+# Added: FDA black-box warnings, withdrawn flags, indications, and mechanisms.
+#
 
 import sys
 import warnings
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 
 PACKAGE_ROOT = Path(__file__).resolve().parent
 REPO_ROOT = PACKAGE_ROOT.parents[2]
@@ -22,18 +28,19 @@ from src.tools.base import Node
 
 from src.tools.chembl.utils import (
     get_connection,
-    fetch_target_info,
+    fetch_target_info,        # includes InChIKeys, molecule types, black-box, withdrawn, indication, MoA
     make_summary_text,
     interpretation_notes,
     log,
+    inject_frontend_assets,   # chembl-local version (mirrors prot tool)
 )
-from src.tools.chembl import OUTPUT_DIR
+
+from src.tools.chembl import OUTPUT_DIR, HTML_TEMPLATE, CSS_TEMPLATE, JS_TEMPLATE
 
 
 # ------------------------------
-# Main agent
+# Gene preparation helper
 # ------------------------------
-
 def _prepare_genes_chembl(state: "State") -> List[str]:
     """Resolve, deduplicate, and prepare gene symbols for ChEMBL agent."""
     genes = state.get("genes") or []
@@ -45,33 +52,39 @@ def _prepare_genes_chembl(state: "State") -> List[str]:
         state["used_tools"] = state.get("used_tools", []) + ["chembl"]
         return []
 
-    # Deduplicate while preserving input order
-    seen = set()
     unique_genes = []
+    seen = set()
     for g in genes:
         if g not in seen:
             seen.add(g)
             unique_genes.append(g)
-    genes = unique_genes
 
-    # Ensure gene_entities dict exists and contains Gene objects
     gene_entities = state.get("gene_entities") or {}
-    for g in genes:
+    for g in unique_genes:
         if not isinstance(gene_entities.get(g), Gene):
-            gene_entities[g] = Gene(symbol=g)
+            gene_entities[g] = Gene(identifiers=GeneIdentifiers(symbol=g))
     state["gene_entities"] = gene_entities
 
-    return genes
+    return unique_genes
 
+
+# ------------------------------
+# Main ChEMBL agent
+# ------------------------------
 def chembl_agent(state: "State") -> "State":
-    """Resolve UniProt IDs, query ChEMBL for drug-target data, and return text summaries."""
-    # --- Gene handling via helper ---
+    """
+    Query ChEMBL for each gene in the state.
+    Retrieves FDA-approved, clinical, and bioactivity data.
+    Adds black-box warnings, withdrawn flags, indications, and mechanisms.
+    Generates both text and interactive HTML outputs.
+    """
     genes = _prepare_genes_chembl(state)
     if not genes:
         return state
 
     conn = get_connection()
     any_bioactivity = False
+    chembl_data_all: Dict[str, Dict[str, List]] = {}
 
     for gene_symbol in genes:
         log(f"Processing gene: {gene_symbol}")
@@ -100,18 +113,20 @@ def chembl_agent(state: "State") -> "State":
             log(f"Skipping {gene_symbol}: could not resolve UniProt ID")
             continue
 
+        # Fetch ChEMBL data (now includes black-box / withdrawn / MoA / indication)
         target_data = fetch_target_info(conn, uniprot_id)
         if target_data.get("bioactivity"):
             any_bioactivity = True
 
         summary = make_summary_text(gene_symbol, uniprot_id, target_data)
-        state["gene_entities"][gene_symbol].update_text_summaries(
-            "ChEMBL drug-target evidence:\n" + summary
-        )
+        gene_obj = state["gene_entities"][gene_symbol]
+        gene_obj.update_text_summaries("ChEMBL drug-target evidence:\n" + summary)
+
+        chembl_data_all[gene_symbol] = target_data
 
     conn.close()
 
-    # Add interpretation notes if bioactivity data was found
+    # Add interpretation notes if bioactivity data found
     if any_bioactivity and genes:
         last_gene = genes[-1]
         if state["gene_entities"].get(last_gene):
@@ -119,21 +134,47 @@ def chembl_agent(state: "State") -> "State":
                 interpretation_notes(include_bioactivity=True)
             )
 
+    # --- Build HTML frontend ---
+    try:
+        with open(HTML_TEMPLATE, "r", encoding="utf-8") as f:
+            html_template = f.read()
+        with open(CSS_TEMPLATE, "r", encoding="utf-8") as f:
+            css_template = f.read()
+        with open(JS_TEMPLATE, "r", encoding="utf-8") as f:
+            js_template = f.read()
+    except FileNotFoundError as e:
+        raise RuntimeError(f"Missing frontend template: {e.filename}")
+
+    html = inject_frontend_assets(
+        html_template, css_template, js_template, chembl_data_all, ", ".join(genes)
+    )
+
     state["used_tools"] = state.get("used_tools", []) + ["chembl"]
+    if chembl_data_all:
+        state["chembl_html"] = html
+
     return state
 
+
 # ------------------------------
-# CLI (testing)
+# CLI (testing mode)
 # ------------------------------
 if __name__ == "__main__":
-    genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "DRD2"]
+    # Example: python node.py TP53 EGFR DRD2
+    #genes = sys.argv[1:] if len(sys.argv) > 1 else ["TMEM179", "C20orf85", "POTEM", "ZNF533", "WDR90"]
+    #genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "DRD2", "ADRB2"]
+    genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "ADRB2"]
     base_name = genes[0] if len(genes) == 1 else f"{genes[0]}_plus{len(genes)-1}"
 
     state = State({
         "genes": genes,
-        "gene_entities": {g: Gene(GeneIdentifiers(symbol=g)) for g in genes},
+        "gene_entities": {g: Gene(identifiers=GeneIdentifiers(symbol=g)) for g in genes},
     })
+
     result = chembl_agent(state)
+
+    html_out = OUTPUT_DIR / f"{base_name}_chembl.html"
+    html_out.write_text(result.get("chembl_html", "<p>No HTML produced.</p>"), encoding="utf-8")
 
     txt_out = OUTPUT_DIR / f"{base_name}_chembl.txt"
     lines: List[str] = []
@@ -143,10 +184,10 @@ if __name__ == "__main__":
             lines.append(g)
             lines.extend(obj.text_summaries_from_tools)
             lines.append("")
-    with txt_out.open("w", encoding="utf-8") as f:
-        f.write("\n".join(lines) if lines else "No summaries produced.")
+    txt_out.write_text("\n".join(lines) if lines else "No summaries produced.", encoding="utf-8")
 
     print("[OK] Generated outputs:")
+    print(f"  * HTML file: {html_out.resolve()}")
     print(f"  * TXT file:  {txt_out.resolve()}")
     print(f"[INFO] Genes processed: {', '.join(genes)}")
 
@@ -160,9 +201,9 @@ NODES: tuple[Node, ...] = (
         entry_point=chembl_agent,
         description=(
             "Query ChEMBL for drug-target information about one or more genes. "
-            "For each gene -> UniProt ID, summarizes FDA-approved drugs, "
+            "For each gene: UniProt ID, summarizes FDA-approved drugs (with black-box, withdrawn, indication, MoA), "
             "clinical and preclinical trials, and assay bioactivity data. "
-            "Produces text summaries only, with interpretation notes for assays."
+            "Generates text summaries and an interactive HTML viewer with 2D molecular renderings."
         ),
     ),
 )

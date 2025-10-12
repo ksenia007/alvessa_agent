@@ -149,12 +149,15 @@ def variant_text_document(v: "Variant") -> str:
         
     # add text from text_summaries_from_tools field
 
-    for summary in (v.text_summaries_from_tools or []):
-        summary = str(summary).strip()
-        if summary and not summary.endswith("."):
-            summary += "."
-        if summary:
-            lines.append(summary)
+    try:
+        for summary in (v.text_summaries_from_tools or []):
+            summary = str(summary).strip()
+            if summary and not summary.endswith("."):
+                summary += "."
+            if summary:
+                lines.append(summary)
+    except:
+        pass
 
     # functional predictions: compress to short sentences by tool over genes
     if v.functional_predictions:
