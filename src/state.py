@@ -64,6 +64,9 @@ class State(TypedDict, total=False):
 
     # Protein structure and druggablility visualization
     prot_html: Annotated[str, operator.add]
+
+    # For ChemBL drug-target interactive viewer
+    chembl_html: Annotated[str, operator.add]
     
     # General free-text annotations (not tied to a specific gene)
     text_notes: Annotated[List[str], operator.add]

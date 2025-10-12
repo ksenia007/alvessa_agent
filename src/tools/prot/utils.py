@@ -358,6 +358,7 @@ def append_flags_to_summary_text(summary_text: str, flags: List[str]) -> str:
 # ------------------------------
 # HTML template injection helper
 # ------------------------------
+
 def inject_frontend_assets(
     html_template_text: str,
     css_text: str,
@@ -365,14 +366,53 @@ def inject_frontend_assets(
     data_obj: Dict,
     genes_display: str,
 ) -> str:
-    data_script = "<script>\nconst protData = " + json_dumps_compact(data_obj) + ";\n</script>"
+    """
+    Inject inline CSS, JS, and JSON protein data into HTML template.
+    Returns empty string if all provided genes have no usable feature data.
+    """
+
+    # --- Check for meaningful content in any gene ---
+    has_data = False
+    for gene, d in (data_obj or {}).items():
+        if not isinstance(d, dict):
+            continue
+
+        # skip completely empty dicts
+        if not d:
+            continue
+
+        # check arrays that carry actual per-residue data
+        feature_keys = ["plddt", "fpocket", "sasa", "pi", "disorder", "morf", "biolip2"]
+        if any(d.get(k) and len(d[k]) > 0 for k in feature_keys):
+            has_data = True
+            break
+
+        # if pdb text exists and is not empty, still count as data
+        if d.get("pdb"):
+            has_data = True
+            break
+
+    # --- No usable data: skip viewer entirely ---
+    if not has_data:
+        return ""  # returning empty HTML disables the Prot card automatically
+
+    # --- Build full viewer HTML ---
+    data_script = (
+        "<script>\nconst protData = "
+        + json_dumps_compact(data_obj)
+        + ";\n</script>"
+    )
+
     html = (
         html_template_text.replace("{{GENE_SYMBOL}}", genes_display)
         .replace("{{CSS_INLINE}}", "<style>\n" + css_text + "\n</style>")
-        .replace("{{JS_INLINE}}", data_script + "\n<script>\n" + js_text + "\n</script>")
+        .replace(
+            "{{JS_INLINE}}",
+            data_script + "\n<script>\n" + js_text + "\n</script>"
+        )
     )
-    return html
 
+    return html
 
 # ------------------------------
 # BioLiP2 summary text
