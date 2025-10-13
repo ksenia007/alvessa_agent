@@ -90,6 +90,40 @@ class InteractionProfile:
         return {source: dict(self.go_enrichment.get(source, {}))}
 
 @dataclass
+class MSigDBAnnotations:
+    """A container for MSigDB annotation data."""
+    msigdb_annotations: Dict[str, Any] = field(default_factory=dict)
+
+    def add_msigdb_annotation(self, category: str, terms: List[str]) -> None:
+        category = (category or "").strip()
+        if not category:
+            return
+
+        cleaned = []
+        seen = set()
+        for term in terms or []:
+            term_norm = (term or "").strip()
+            if not term_norm or term_norm in seen:
+                continue
+            cleaned.append(term_norm)
+            seen.add(term_norm)
+
+        self.msigdb_annotations[category] = cleaned
+
+@dataclass
+class OMIMAnnotations:
+    """A container for OMIM gene-phenotype annotations"""
+    phenotype_annotations: List[str] = field(default_factory=list)
+
+@dataclass
+class OpenTargetAnnotations:
+    """A container for Open Target annotations like disease associations, tissue-specific expression, tissue-specific essentiality, and genetic constraint."""
+    disease_annotations: List[str] = field(default_factory=list)
+    tissue_specific_expression: Dict[str, Any] = field(default_factory=dict)
+    is_essential: bool = field(default_factory=bool)
+    genetic_constraint: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
 class TranscriptomeProfile:
     """A container for transcript/isoform data and their derived stats."""
     # transcripts[transcript_id] = { "chrom": str, "start": int, "end": int, "strand": str, "exons": List[Tuple[int,int]] }

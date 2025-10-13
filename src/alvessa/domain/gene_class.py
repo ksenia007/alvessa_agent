@@ -10,6 +10,9 @@ from .gene_components import (
     GenomicLocation,
     FunctionalAnnotations,
     InteractionProfile,
+    MSigDBAnnotations,
+    OMIMAnnotations,
+    OpenTargetAnnotations,
     TranscriptomeProfile,
     GeneGWASProfile,
     GeneGWASTraitHit,
@@ -30,6 +33,9 @@ class Gene:
     location: Optional[GenomicLocation] = None
     annotations: FunctionalAnnotations = field(default_factory=FunctionalAnnotations)
     interactions: InteractionProfile = field(default_factory=InteractionProfile)
+    msigDB: MSigDBAnnotations = field(default_factory=MSigDBAnnotations)
+    omim: OMIMAnnotations = field(default_factory=OMIMAnnotations)
+    open_targets: OpenTargetAnnotations = field(default_factory=OpenTargetAnnotations)
     transcriptome: TranscriptomeProfile = field(default_factory=TranscriptomeProfile)
     gwas_profile: Optional[GeneGWASProfile] = None
 
@@ -272,6 +278,55 @@ class Gene:
 
     def has_interactions_collected(self) -> bool:
         return any(self.interactions.human_interactions.values())
+        
+    # ------------------------------------------------------------------
+    # MSigDB
+    # ------------------------------------------------------------------
+
+    def add_msigdb_annotated_terms(self, category: str, annotation_terms: List[str]) -> None:
+        self.msigDB.add_msigdb_annotation(category, annotation_terms)
+        
+    # ------------------------------------------------------------------
+    # OMIM
+    # ------------------------------------------------------------------
+
+    def add_omim_annotated_term(self, phenotype: str) -> None:
+        phenotype = (phenotype or "").strip()
+        if phenotype and phenotype not in self.omim.phenotype_annotations:
+            self.omim.phenotype_annotations.append(phenotype)
+            
+    def add_many_omim_annotated_terms(self, phenotypes: str) -> None:
+        for phenotype in phenotypes:
+            self.add_omim_annotated_term(phenotype)
+
+    # ------------------------------------------------------------------
+    # Open Targets
+    # ------------------------------------------------------------------
+
+    def add_direct_disease_association(self, disease: str) -> None:
+        disease = (disease or "").strip()
+        if disease and disease not in self.open_targets.disease_annotations:
+            self.open_targets.disease_annotations.append(disease)
+
+    def add_many_direct_disease_associations(self, diseases: List[str]) -> None:
+        for disease in diseases:
+            self.add_direct_disease_association(disease)
+
+    def add_tissue_expression(self, tissue: str, zscore: int) -> None:
+        tissue = (tissue or "").strip()
+        if tissue and tissue not in self.open_targets.tissue_specific_expression:
+            self.open_targets.tissue_specific_expression[tissue] = zscore
+
+    def add_many_tissues_expression(self, tissues: Dict[str, Any]) -> None:
+        for tissue, zscore in tissues.items():
+            self.add_tissue_expression(tissue, zscore)
+
+    def add_essentiality(self, is_essential) -> None:
+        self.open_targets.is_essential = is_essential
+
+    def add_constraint(self, score, constraint_type) -> None:
+        if constraint_type not in self.open_targets.genetic_constraint:
+            self.open_targets.genetic_constraint[constraint_type] = score
 
     # ------------------------------------------------------------------
     # Text summaries & traits
