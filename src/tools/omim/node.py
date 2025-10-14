@@ -58,7 +58,7 @@ def omim_agent(state: "State") -> "State":
         try:
             relevant_phenotypes = omim_df[omim_df['Approved Gene Symbol'] == gene.symbol]['extracted'].values[0].split(';')
 
-            if len(relevant_phenotypes > 0):
+            if len(relevant_phenotypes) > 0:
                 summary_lines.append("All phenotypes annotated to {gene.symbol} from OMIM: " + ";".join(relevant_phenotypes))
                 gene.add_many_omim_annotated_terms(relevant_phenotypes)
 
@@ -71,6 +71,7 @@ def omim_agent(state: "State") -> "State":
 
         except:
             print(gene)
+
 
         time.sleep(0.3)  # courteous pause
 
