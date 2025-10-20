@@ -146,19 +146,7 @@ def variant_text_document(v: "Variant") -> str:
     # traits (short)
     if v.traits:
         lines.append(f"Associated traits: {', '.join(sorted(set(map(str, v.traits))))}.")
-        
-    # add text from text_summaries_from_tools field
-
-    try:
-        for summary in (v.text_summaries_from_tools or []):
-            summary = str(summary).strip()
-            if summary and not summary.endswith("."):
-                summary += "."
-            if summary:
-                lines.append(summary)
-    except:
-        pass
-
+    
     # functional predictions: compress to short sentences by tool over genes
     if v.functional_predictions:
         for gene, tools in v.functional_predictions.items():
@@ -172,7 +160,7 @@ def variant_text_document(v: "Variant") -> str:
             if tool_bits:
                 lines.append(f"Functional predictions for {gene}: " + "; ".join(tool_bits) + ".")
 
-    # variant text summary lines (if present)
+    # variant text summary lines (if present) 
     for t in (v.variant_summaries or []):
         t = str(t).strip()
         if t and not t.endswith("."):
