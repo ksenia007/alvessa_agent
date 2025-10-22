@@ -296,6 +296,82 @@
         background: #ffffff;
         border-color: #cbd5e1;
       }
+
+      .blk-text {
+        white-space: normal;
+        line-height: 1.45;
+        font-size: 14px;     /* bump if you want it larger */
+      }
+      
+
+      /* bump global sizes */
+body { font-size: 16px; line-height: 1.55; }
+.muted { font-size: 14px; }
+
+/* section titles like “MSigDB”, “Open Targets”, etc. */
+.section-title {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 14px 0 6px;
+}
+
+/* details headers (“Functions”, “Diseases”, etc.) */
+details > summary.sect-hdr {
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* softer chips (no outline) for gene lists */
+.chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);   /* dark theme */
+}
+body.light .chip { background: rgba(0,0,0,0.06); }
+
+/* existing */
+.chip {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+    color: var(--fg);
+    font-size: 13px;
+    line-height: 1;
+    white-space: nowrap;        /* keep for short tags */
+  }
+  body.light .chip { background: rgba(0,0,0,.06); }
+  
+  /* NEW: let long note “chips” wrap cleanly */
+  .chip-note {
+    white-space: normal;        /* override nowrap */
+    line-height: 1.35;
+    padding: 8px 10px;          /* a bit more room for paragraphs */
+    max-width: 100%;
+    display: inline-block;
+    vertical-align: top;
+    word-break: break-word;     /* break very long tokens */
+    overflow-wrap: anywhere;
+    font-size: 12.5px;          /* optional: slightly smaller */
+  }
+  
+  body.light .chip { background: rgba(0,0,0,.06); }
+  
+  /* Longer notes look okay a hair smaller */
+  .chip-note { font-size: 12px; opacity: .9; }
+  
+  /* Section headers in <summary> look bigger and bolder */
+  .sect-hdr {
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 800;
+  }
+  
+  /* Make tables a tad larger for readability */
+  .vs-table th, .vs-table td { font-size: 14px; line-height: 1.35; }
+  
       
       
       
@@ -377,6 +453,12 @@
             <ol id="citations" class="refs-list"></ol>
           </div>
 
+          <div id="geneSummaryCard" class="card" style="display:none">
+            <div class="title">Gene Summary</div>
+            <div id="geneSummary"></div>
+          </div>
+          
+
           <div id="protCard" class="card full" data-section style="display: none">
             <div class="title">Protein Structure</div>
             <div id="protMount"></div>
@@ -402,6 +484,8 @@
     <script type="module">
         import { renderAnswerVerified } from "./static/answer.js";
         import { Wait } from "./static/waiting_module.js";
+        import { renderGeneSummary } from "./static/gene_summary.js";
+
 
       
         // ---- Helpers  ----
@@ -409,6 +493,11 @@
         const show = (id) => { const el = byId(id); if (!el) return; el.style.display = el.classList.contains("grid") ? "grid" : "block"; };
         const hide = (id) => { const el = byId(id); if (el) el.style.display = "none"; };
         const setText = (id, t) => { const el = byId(id); if (el) el.textContent = t ?? ""; };
+
+        function setArtifactBaseFromState(st){
+            const cand = st?.ui?.artifact_base || st?.artifact_base || st?.ui?.base_path || "";
+            if (cand) ARTIFACT_BASE = cand.endsWith("/") ? cand : (cand + "/");
+          }
       
         // ---- App state ----
         let STATE = null;
@@ -662,6 +751,13 @@
           
             renderQuestion(STATE);
             renderAnswerVerified(STATE);
+            await renderGeneSummary(STATE, {
+                byId,
+                show,
+                hide,
+                fetchTextCached,   // your existing files-first text loader (folder + network)
+                escapeHtml: (s) => String(s ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
+              });
             renderProt(STATE);
             renderChembl(STATE);
             renderRaw(STATE);
@@ -717,6 +813,8 @@ async function runServer(q){
 
     // THIS IS THE FINAL STATE — no need to poll /state
     STATE = await resp.json();
+    setArtifactBaseFromState(STATE);
+
 
     // Render
     await refresh(q);
@@ -750,7 +848,7 @@ async function runServer(q){
             const f = input.files?.[0]; if (!f) return;
             const reader = new FileReader();
             reader.onload = () => {
-              try { STATE = JSON.parse(String(reader.result||"{}")); ARTIFACT_BASE = ""; LOCAL_FILES.clear(); FILE_CACHE.clear(); refresh(); }
+              try { STATE = JSON.parse(String(reader.result||"{}")); LOCAL_FILES.clear(); FILE_CACHE.clear();setArtifactBaseFromState(STATE); refresh(); }
               catch { alert("Invalid JSON file."); }
             };
             reader.readAsText(f);
@@ -764,7 +862,7 @@ async function runServer(q){
             const f = input.files?.[0]; if (!f) return;
             const reader = new FileReader();
             reader.onload = () => {
-              try { STATE = JSON.parse(String(reader.result||"{}")); ARTIFACT_BASE = ""; LOCAL_FILES.clear(); FILE_CACHE.clear(); refresh(); }
+              try { STATE = JSON.parse(String(reader.result||"{}")); LOCAL_FILES.clear(); FILE_CACHE.clear();setArtifactBaseFromState(STATE); refresh(); }
               catch { alert("Invalid JSON file."); }
             };
             reader.readAsText(f);

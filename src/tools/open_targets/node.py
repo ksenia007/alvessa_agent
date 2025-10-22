@@ -69,7 +69,7 @@ def opentargets_agent(state: "State") -> "State":
             gene.add_many_direct_disease_associations(associated_disease_list)
 
             summary_lines.append(f"All direct disease associations for {gene.symbol} (from the Open Targets database): " 
-                        + ', '.join(associated_disease_list) + ".")
+                    + ', '.join(associated_disease_list) + ".")
 
             print(len(associated_disease_list))
         
@@ -80,13 +80,15 @@ def opentargets_agent(state: "State") -> "State":
             # Tissue-specific expression
             tissue_zscore = {}
             for tissues_list in expression_df[expression_df['target_symbol'] == gene.symbol]['tissues']:
+                if not tissues_list:
+                    continue
                 for tissue_dict in tissues_list:
                     label = tissue_dict.get('label', None)
                     zscore = tissue_dict.get('rna', {}).get('zscore', None)
                     if label is not None and zscore is not None:
                         tissue_zscore[label] = zscore
-                        
-            gene.add_many_tissues_expression(tissue_zscore)
+                    
+        gene.add_many_tissues_expression(tissue_zscore)
 
             summary_lines.append(f"Tissue-specific expression z-scores for {gene.symbol} (from the Open Targets database). A gene is considered to be tissue specific if the z-score for that tissue is greater than 0.674 (or the 75th percentile of a perfect normal distribution): " 
                         + str(tissue_zscore) + ".")
@@ -110,20 +112,23 @@ def opentargets_agent(state: "State") -> "State":
         try:       
             # Genetic Constraint
             gene_all_constraint = constraint_df[constraint_df['approvedSymbol'] == gene.symbol]['constraint'].values[0]
-            
-            for row in gene_all_constraint:
-                constraint_type_name = row['constraintType']
-                score = row['score']
+            if not gene_all_constraint:
+                if DEBUG:
+                    print(f"[Open Targets] Empty constraint data for {gene.symbol}")
+                    print(constraint_df[constraint_df['approvedSymbol'] == gene.symbol])
+            else:
+                for row in gene_all_constraint:
+                    constraint_type_name = row['constraintType']
+                    score = row['score']
 
-                gene.add_constraint(score, constraint_type_name)
-                summary_lines.append(f"Genetic constraint score for {constraint_type_name} variants ({CONSTRAINT_TYPES[constraint_type_name]}) in {gene.symbol} from the Open Targets database. A constraint score from -1 to 1 is given to genes depending on their LOEUF (loss-of-function observed/expected upper bound fraction) metric rank, with -1 being the least tolerant to LoF variation and 1 being the most tolerant.: " + str(score))
+                    gene.add_constraint(score, constraint_type_name)
+                    summary_lines.append(f"Genetic constraint score for {constraint_type_name} variants ({CONSTRAINT_TYPES[constraint_type_name]}) in {gene.symbol} from the Open Targets database. A constraint score from -1 to 1 is given to genes depending on their LOEUF (loss-of-function observed/expected upper bound fraction) metric rank, with -1 being the least tolerant to LoF variation and 1 being the most tolerant.: " + str(score))
 
-            if summary_lines:
-                gene.update_text_summaries(
-                    " ".join(summary_lines) + f" End of record for {gene.symbol} |"
-                )
-            
-                gene.add_tool("OpenTargets")
+        gene.update_text_summaries(
+            " ".join(summary_lines)
+        )
+    
+        gene.add_tool("OpenTargets")
 
         except Exception as e:
             print(f"Failed to pull constraint: {gene}, {e}")
