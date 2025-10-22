@@ -138,6 +138,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="OpenTargets",
         entry_point=opentargets_agent,
-        description="Fetches target-disease associations, tissue-specific expression, essentiality, and genetic constraint for synonymous, missense, and loss-of-function variants from Open Targets for the input genes.",
+        description="Tool that fetches detailed information on the target (gene)-disease associations, tissue-specific expression of the gene of interest (experimental), essentiality of the gene, and genetic constraint for synonymous, missense, and loss-of-function variants from Open Targets. This is a reliable and verified source for gene-disease associations and target annotations."
     ),
 )

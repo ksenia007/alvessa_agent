@@ -200,8 +200,8 @@ NODES: tuple[Node, ...] = (
         name="chembl",
         entry_point=chembl_agent,
         description=(
-            "Query ChEMBL for drug-target information about one or more genes. "
-            "For each gene: UniProt ID, summarizes FDA-approved drugs (with black-box, withdrawn, indication, MoA), "
+            "Query ChEMBL for drug-target information about one or more genes, finding whether there are any drugs targeting this gene and their status. "
+            "Specifically, this tool summarizes FDA-approved drugs (with black-box, withdrawn, indication, MoA), "
             "clinical and preclinical trials, and assay bioactivity data. "
             "Generates text summaries and an interactive HTML viewer with 2D molecular renderings."
         ),

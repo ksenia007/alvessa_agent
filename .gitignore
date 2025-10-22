@@ -24,4 +24,4 @@ out/
 alvessa_env/
 tmp_GENAL
 alvessa_agent.egg*
-
+benchmarks_generation/

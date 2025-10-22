@@ -261,61 +261,92 @@ def _collect_variant_docs(state: "State") -> tuple[list[dict], list[tuple[str, i
         manifest.append((title, len(manifest)))
     return docs, manifest
 
-def _anthropic_text_blocks(msg) -> list[str]:
+
+def _slice_span(doc_text_by_index: dict[int, str], idx, a, b, max_len: int = 10000) -> str | None:
+    if idx is None or a is None or b is None:
+        return None
+    try:
+        txt = doc_text_by_index.get(int(idx), "")
+        if not txt:
+            return None
+        a = max(0, int(a))
+        b = max(a, int(b))
+        snippet = txt[a:b].replace("\n", " ").strip()
+        if not snippet:
+            return None
+        return snippet if len(snippet) <= max_len else snippet[: max_len - 1].rstrip() + "…"
+    except Exception:
+        return None
+
+def _anthropic_join_text(
+    msg,
+    doc_text_by_index: dict[int, str] | None = None,
+    idx2title: dict[int, str] | None = None,
+) -> str:
+    def _as_dict(obj):
+        if isinstance(obj, dict):
+            return obj
+        return {
+            "type": getattr(obj, "type", None),
+            "text": getattr(obj, "text", None),
+            "citations": getattr(obj, "citations", None),
+        }
+
+    def _safe_str(x):
+        return "" if x is None else str(x)
+
+    def _short_proof(s: str, n: int = 240) -> str:
+        s = s.strip().replace("\n", " ")
+        return s if len(s) <= n else s[: n - 1].rstrip() + "…"
+
     parts = []
     content = getattr(msg, "content", []) or []
     for blk in content:
-        t = getattr(blk, "type", None) if not isinstance(blk, dict) else blk.get("type")
-        if t == "text":
-            txt = getattr(blk, "text", None) if not isinstance(blk, dict) else blk.get("text")
-            if txt:
-                parts.append(txt)
-    return parts
-
-def _anthropic_join_text(msg) -> str:
-    return "".join(_anthropic_text_blocks(msg))
-
-def _anthropic_collect_citations(msg) -> list[dict]:
-    """
-    Return a flat list of normalized citations.
-    Each item: {
-        'type': 'char_location' | 'page_location' | 'content_block_location',
-        'document_index': int,
-        'document_title': str | None,
-        'cited_text': str | None,
-        # char:
-        'start_char_index': int | None, 'end_char_index': int | None,
-        # page:
-        'start_page_number': int | None, 'end_page_number': int | None,
-        # block:
-        'start_block_index': int | None, 'end_block_index': int | None
-    }
-    """
-    out = []
-    content = getattr(msg, "content", []) or []
-    for blk in content:
-        citations = getattr(blk, "citations", None)
-        if isinstance(blk, dict):
-            citations = blk.get("citations")
-        if not citations:
+        b = _as_dict(blk)
+        if b.get("type") != "text":
             continue
+
+        text = _safe_str(b.get("text"))
+        proofs = []
+        citations = b.get("citations") or []
+
         for c in citations:
             isdict = isinstance(c, dict)
-            typ = (c.get("type") if isdict else getattr(c, "type", None)) or "unknown"
-            rec = {
-                "type": typ,
-                "document_index": c.get("document_index") if isdict else getattr(c, "document_index", None),
-                "document_title": c.get("document_title") if isdict else getattr(c, "document_title", None),
-                "cited_text": c.get("cited_text") if isdict else getattr(c, "cited_text", None),
-                "start_char_index": c.get("start_char_index") if isdict else getattr(c, "start_char_index", None),
-                "end_char_index": c.get("end_char_index") if isdict else getattr(c, "end_char_index", None),
-                "start_page_number": c.get("start_page_number") if isdict else getattr(c, "start_page_number", None),
-                "end_page_number": c.get("end_page_number") if isdict else getattr(c, "end_page_number", None),
-                "start_block_index": c.get("start_block_index") if isdict else getattr(c, "start_block_index", None),
-                "end_block_index": c.get("end_block_index") if isdict else getattr(c, "end_block_index", None),
-            }
-            out.append(rec)
-    return out
+            typ   = (c.get("type") if isdict else getattr(c, "type", None)) or "unknown"
+            d_idx = c.get("document_index") if isdict else getattr(c, "document_index", None)
+            a     = c.get("start_char_index") if isdict else getattr(c, "start_char_index", None)
+            b_    = c.get("end_char_index") if isdict else getattr(c, "end_char_index", None)
+            title = _safe_str(c.get("document_title") if isdict else getattr(c, "document_title", None)).strip()
+            cited = _safe_str(c.get("cited_text") if isdict else getattr(c, "cited_text", None)).strip()
+
+            # Prefer exact span when available
+            snippet = None
+            if typ == "char_location" and doc_text_by_index is not None:
+                snippet = _slice_span(doc_text_by_index, d_idx, a, b_, max_len=20000)
+
+            # Fallback to model-provided cited_text
+            if not snippet and cited:
+                snippet = _short_proof(cited, n=240)
+
+            # Resolve title via manifest if missing
+            if (not title) and idx2title is not None and d_idx is not None:
+                title = idx2title.get(int(d_idx), "")
+
+            if snippet:
+                # Include where-span so the join text is self-sufficient
+                where = ""
+                if typ == "char_location" and a is not None and b_ is not None:
+                    where = f" [chars {a}–{b_}]"
+                if title:
+                    proofs.append(f"\"{snippet}\"@{title}{where}")
+                else:
+                    proofs.append(f"\"{snippet}\"{where}")
+
+        proofs_repr = "NONE" if not proofs else "; ".join(proofs)
+        parts.append((proofs_repr, text))
+
+    return parts
+
 
 def _map_doc_index_to_title(manifest: list[dict]) -> dict[int, str]:
     # manifest items look like {'title': ..., 'index': ...}
@@ -324,47 +355,6 @@ def _map_doc_index_to_title(manifest: list[dict]) -> dict[int, str]:
 def _shorten(s: str, n: int = 140) -> str:
     s = (s or "").strip().replace("\n", " ")
     return s if len(s) <= n else s[: n - 1].rstrip() + "…"
-
-def _plaintext_evidence_from_citations(citations: list[dict], idx2title: dict[int, str]) -> list[str]:
-    """
-    Make compact human-readable evidence lines from citations.
-    Examples:
-      "GENE: FTO — “Symbol: FTO | Entrez: …” [chars 0–114]"
-      "VAR: rs123 — “Location GRCh38: chr1:12345, Ref=A, Alt=G”"
-      "GENE: TP53 — [pages 5–6]"
-    """
-    lines = []
-    seen = set()
-    for c in citations:
-        idx = c.get("document_index")
-        title = idx2title.get(idx, f"doc#{idx}") if idx is not None else "doc"
-        snippet = _shorten(c.get("cited_text") or "")
-        typ = c.get("type")
-
-        where = ""
-        if typ == "char_location":
-            a, b = c.get("start_char_index"), c.get("end_char_index")
-            if a is not None and b is not None:
-                where = f"[chars {a}–{b}]"
-        elif typ == "page_location":
-            a, b = c.get("start_page_number"), c.get("end_page_number")
-            if a is not None and b is not None:
-                where = f"[pages {a}–{b}]"
-        elif typ == "content_block_location":
-            a, b = c.get("start_block_index"), c.get("end_block_index")
-            if a is not None and b is not None:
-                where = f"[blocks {a}–{b}]"
-
-        # Compose and dedupe
-        if snippet:
-            line = f"{title} — “{snippet}” {where}".strip()
-        else:
-            line = f"{title} {where}".strip()
-
-        if line not in seen:
-            seen.add(line)
-            lines.append(line)
-    return lines
 
 
 def create_context_block(state: "State") -> str:
@@ -429,6 +419,17 @@ def create_context_block_with_citations(state: "State") -> tuple[list[dict], lis
     return blocks, manifest
 
 
+def _strip_citations(joined: List[tuple[str, str]]) -> str:
+    """
+    Input: text produced by _anthropic_join_text, i.e. tuples of (proofs, text)
+    We will join only the text parts, stripping out proof markup.
+    """
+    out_lines = ""
+    for proofs, text in joined:
+        out_lines += text
+    return out_lines
+
+
 
 def conditioned_claude_node(state: "State") -> "State":
     """
@@ -439,31 +440,73 @@ def conditioned_claude_node(state: "State") -> "State":
     """
     if DEBUG:
         print("[conditioned_claude_node_with_citations] building documents...")
-
+        
     # Build docs
     doc_blocks, manifest = create_context_block_with_citations(state)
 
-    # Instruction: keep it simple; ask Claude to use citations
+    # Map indices -> titles and texts (for span reconstruction inside joiner)
+    idx2title = _map_doc_index_to_title(manifest)
+    doc_text_by_index = {}
+    for m in manifest:
+        i = int(m["index"])
+        try:
+            src = doc_blocks[i]["source"]
+            if isinstance(src, dict) and src.get("type") == "text":
+                doc_text_by_index[i] = str(src.get("data", ""))
+            else:
+                doc_text_by_index[i] = ""
+        except Exception:
+            doc_text_by_index[i] = ""
+
+    # Instruction
     system_msg = state.get("prompt", "").strip()
     if not system_msg:
         system_msg = (
-            "You are a research scientist. Answer strictly based on the provided documents. "
-            "Be accurate and reason through the provided information step-by-step. "
-            "Make sure you only use citations to back up your answer. "
-            "No additional information should be added beyond what is in the documents. "
+            "You are a research assistant. Answer strictly from the provided documents.\n"
+            "Requirements:\n"
+            "- Every factual claim must be grounded in the documents and include citations.\n"
+            "- Do not add outside knowledge. If key information is missing, say so briefly.\n"
+            "- Write clear, smooth prose (no filler like 'Based on the documents') but no long recitation of incohorent facts either.\n"
+            "- Put the most important, directly question-answering facts first (lead with the answer), then expand with supporting details\n"
+            "  in decreasing order of importance; include brief connective synthesis where helpful, also cited.\n"
+            "- Length: write as much as needed for completeness and clarity—no artificial limit—stop when the key evidence is covered.\n"
+            "- Factoids (Who/What/When/Where/Which/How many): if a single sentence fully answers the question, provide that one sentence; "
+            "  otherwise, add only the minimal additional context needed, still fully cited."
+            "• At the end, you may include a short section labeled **Possible speculation:** "
+            "if—and only if—it is clearly marked as such and explicitly reasoned from the cited evidence."
         )
+        
+    # check if there is verification in State alwready that is non-empty and if it is, we get the answer_text and retry_feedback
+    prior_verification = state.get("verification", {})
+    added_feedback = ""
+    if prior_verification:
+        answer_text = prior_verification.get("answer_text", "")
+        retry_feedback = prior_verification.get("retry_feedback", "")
+        if answer_text and retry_feedback:
+            added_feedback = f" Previous answer: {answer_text}. It was declined as low quality, with feedback: {retry_feedback}."
+
 
     # Pull latest user question
     user_question = state["messages"][-1]["content"]
-
-    # User turn content: documents + question text
-    user_content = list(doc_blocks) + [
-        {
-            "type": "text",
-            "text": f"User asked: {user_question}\n Use provided information to answer."
-        }
-    ]
     
+    if added_feedback=="":
+        # User turn content: documents + question text
+        user_content = list(doc_blocks) + [
+            {
+                "type": "text",
+                "text": f"User asked: {user_question}\n Use provided information to answer."
+            }
+        ]
+    else:
+        # User turn content: documents + question text + feedback
+        user_content = list(doc_blocks) + [
+            {
+                "type": "text",
+                "text": f"User asked: {user_question}\n Use provided information to answer. Additionally, consider the following feedback as you tried to answer this quesiton before:\n {added_feedback}"
+            }
+        ]
+    
+    print('USER CONTENT')
     print(user_content)
     print('***')
 
@@ -477,30 +520,19 @@ def conditioned_claude_node(state: "State") -> "State":
     )
     print(raw)
 
-        
-    # 1) Plain text answer: join all text blocks
-    answer_text = _anthropic_join_text(raw)
-
-    # 2) Collect normalized citations
-    citations = _anthropic_collect_citations(raw)
-    
-
-    # 3) Map doc indices -> titles and make human evidence lines
-    idx2title = _map_doc_index_to_title(manifest)
-    evidence_lines = _plaintext_evidence_from_citations(citations, idx2title)
-
-    # 4) UI-friendly raw artifacts
-    #    - 'llm_raw_repr' keeps the full object repr for debugging
-    #    - 'llm_citations' is a compact, JSON-safe projection for your hyperlink UI
-    llm_raw_repr = repr(raw)  # safe, always string
-    llm_citations = ensure_json_safe(citations)  # JSON-safe list[dict]
+    answer_with_proofs = _anthropic_join_text(
+            raw,
+            doc_text_by_index=doc_text_by_index,
+            idx2title=idx2title,
+        )
+    # answer_with_proofs is a list of tuples (proofs, text)
+    answer_plain = _strip_citations(answer_with_proofs)
 
     parsed_resp = {
-    "answer": answer_text,
-    "evidence": evidence_lines,        
-    "doc_manifest": manifest,          
-    "citations": llm_raw_repr,        
-    "citations_enabled": True,        
+        "answer_with_proofs": answer_with_proofs,
+        "answer": answer_plain,
+        "manifest": manifest,          
+        "raw_answer": raw,
     }
     
-    return {'llm_json': parsed_resp}
+    return {"llm_json": parsed_resp}
