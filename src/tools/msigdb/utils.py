@@ -18,7 +18,6 @@ def create_gene_based_annotation_file():
             if collection_name not in gene_dict[gene]:
                 gene_dict[gene][collection_name] = []
             
-            # Add entry with gene set name included
             annotation_entry = {"geneSetName": gene_set_name}
             annotation_entry.update(new_info)
             gene_dict[gene][collection_name].append(annotation_entry)
@@ -28,11 +27,10 @@ def create_gene_based_annotation_file():
 
 
 def extract_geneSetNames(gene_dict, gene, collection_substring):
-    geneSetNames = []
+    geneSetNames = set()
     if gene in gene_dict:
         for collection, annotations in gene_dict[gene].items():
             if collection_substring in collection:
                 for annotation in annotations:
-                    geneSetNames.append(annotation["geneSetName"])
-    return geneSetNames
-
+                    geneSetNames.add(annotation["geneSetName"])
+    return list(geneSetNames)
