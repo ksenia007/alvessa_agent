@@ -83,7 +83,7 @@ function msigdbCategoryNote(cat) {
   }
   
   function normalizeDiseaseAnnotations(x){
-    // Accept array OR dict {'-': 'A', '1': 'B', ...} → return array of values
+    // Accept array OR dict {'-': 'A', '1': 'B', ...} -> return array of values
     if (!x) return [];
     if (Array.isArray(x)) return x.filter(Boolean).map(v => String(v));
     if (typeof x === "object") {
@@ -226,7 +226,6 @@ function msigdbCategoryNote(cat) {
     `;
   }
   
-  // Reuse your earlier general-localization helper
   function renderGeneralLocalizationSection(title, obj){
     const gl = obj.general_localization;
     if (!gl) return "";
@@ -603,8 +602,7 @@ sections.push(renderIsoformsSection(tx.isoforms));
       
         // SPECIAL CASE: Functions -> plain wrapped text (no chips)
         if (title === "Functions") {
-          // Join items into a single readable block. If each item is already a sentence,
-          // joining with " " keeps punctuation; adjust to ". " if your items lack periods.
+          // Join items into a single readable block. 
           const text = arr.map(x => String(x).trim()).filter(Boolean).join(" ");
           return `
             <details style="margin-top:8px;">

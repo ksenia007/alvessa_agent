@@ -300,7 +300,7 @@
       .blk-text {
         white-space: normal;
         line-height: 1.45;
-        font-size: 14px;     /* bump if you want it larger */
+        font-size: 14px;     
       }
       
 
@@ -326,7 +326,7 @@ details > summary.sect-hdr {
 .row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;               /* <-- all horizontal/vertical spacing comes from here */
+  gap: 6px;              
   align-items: center;
 }
 
@@ -335,7 +335,7 @@ details > summary.sect-hdr {
   display: flex; 
   flex-wrap: wrap; 
   column-gap: 6px;   /* horiz spacing */
-  row-gap: 3px;      /* ↓ smaller vertical stack spacing */
+  row-gap: 3px;      
   align-items: center;
 }
 
@@ -345,10 +345,10 @@ details > summary.sect-hdr {
   align-items: center;
   max-width: 100%;
   vertical-align: top;
-  padding: 2px 8px;          /* ↓ was 4px 10px */
+  padding: 2px 8px;          
   border-radius: 999px;
-  line-height: 1.1;          /* ↓ was 1.2/1.0 */
-  font-size: 12.5px;         /* a hair smaller */
+  line-height: 1.1;         
+  font-size: 12.5px;        
   color: var(--fg);
   background: rgba(255,255,255,0.08);
 }
@@ -366,7 +366,7 @@ body.light .chip, body.light .pill { background: rgba(0,0,0,0.06); }
   overflow-wrap: anywhere;
   line-height: 1.25;
   padding: 6px 8px;
-  max-width: 100%;         /* or min(520px, 100%) if you want a width cap */
+  max-width: 100%;        
   font-size: 12px;
   opacity: .9;
 }
@@ -788,7 +788,7 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
                 byId,
                 show,
                 hide,
-                fetchTextCached,   // your existing files-first text loader (folder + network)
+                fetchTextCached,  
                 escapeHtml: (s) => String(s ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
               });
             renderProt(STATE);

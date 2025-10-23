@@ -127,13 +127,6 @@ def _link_titles_to_indices(proofs: List[Dict[str, Any]], manifest: List[Dict[st
 def _deterministic_verdict(text: str, proofs: List[Dict[str, Any]], idx2title: Dict[int, str]) -> Tuple[str, List[str]]:
     reasons: List[str] = []
 
-    # 1) citation gate
-    # if not proofs:
-    #     if _WORD_RE.search(text) is None:
-    #         return "unsupported", ["no-citations", "no-words"]
-    #     reasons.append("no-citations")
-
-    # 2) doc integrity
     for p in proofs:
         di = p.get("document_index")
         if di is not None and di not in idx2title:
@@ -145,16 +138,6 @@ def _deterministic_verdict(text: str, proofs: List[Dict[str, Any]], idx2title: D
     union_all = (union_proof + " " + union_title).strip()
 
 
-    # # numeric coverage
-    # nums = _numbers(text)
-    # missing_nums = set()
-    # if nums and union_all:
-    #     for n in nums:
-    #         if n not in union_all:
-    #             missing_nums.add(n)
-    #     if missing_nums:
-    #         reasons.append(f"missing-numbers:{','.join(sorted(missing_nums))}")
-    
     # Verdict (categorical only)
     if "no-citations" in reasons:
         verdict = "unsupported"
@@ -166,7 +149,7 @@ def _deterministic_verdict(text: str, proofs: List[Dict[str, Any]], idx2title: D
     return verdict, reasons
 
 # -----------------------------------
-# Optional: get LLM feedback on the quality of the answer
+# Main feedback
 # -----------------------------------
 def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[Dict[str, Any]]:
     """
@@ -280,7 +263,7 @@ def verify_evidence_node(state: "State") -> "State":
 
     idx2title = {int(m["index"]): str(m["title"]) for m in manifest if "index" in m and "title" in m}
 
-    # 3) Deterministic categorical verdicts
+    # 3) Deterministic categorical verdicts (dropped most by now)
     verified: List[Dict[str, Any]] = []
     for s in statements:
         verdict, reasons = _deterministic_verdict(s["text"], s.get("proofs", []), idx2title)
