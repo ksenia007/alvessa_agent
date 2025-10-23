@@ -118,15 +118,15 @@ def opentargets_agent(state: "State") -> "State":
                 gene.add_constraint(score, constraint_type_name)
                 summary_lines.append(f"Genetic constraint score for {constraint_type_name} variants ({CONSTRAINT_TYPES[constraint_type_name]}) in {gene.symbol} from the Open Targets database. A constraint score from -1 to 1 is given to genes depending on their LOEUF (loss-of-function observed/expected upper bound fraction) metric rank, with -1 being the least tolerant to LoF variation and 1 being the most tolerant.: " + str(score))
 
-            if summary_lines:
-                gene.update_text_summaries(
-                    " ".join(summary_lines) + f" End of record for {gene.symbol} |"
-                )
-            
-                gene.add_tool("OpenTargets")
-
         except Exception as e:
             print(f"Failed to pull constraint: {gene}, {e}")
+
+        if summary_lines:
+            gene.update_text_summaries(
+                " ".join(summary_lines) + f" End of record for {gene.symbol} |"
+            )
+        
+            gene.add_tool("OpenTargets")
 
         time.sleep(0.3)  # courteous pause
 
