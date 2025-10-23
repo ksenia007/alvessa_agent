@@ -57,4 +57,3 @@ def add_gene_symbol_to_all_data():
     essentiality_merged.rename(columns={'approvedSymbol': 'target_symbol'}, inplace=True)
 
     essentiality_merged.to_parquet('../../../local_dbs/open_targets/final_target_essentiality/target_essentiality.parquet')
-
