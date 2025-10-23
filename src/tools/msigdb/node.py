@@ -65,7 +65,8 @@ def msigdb_agent(state: "State") -> "State":
         summary_lines: List[str] = []
 
         for collection, desc in CATEGORIES.items():
-            annots_list = extract_geneSetNames(msigdata, gene.symbol, collection)
+            annots_list = extract_geneSetNames(msigdata, gene.symbol, f'{collection}:')
+            
             summary_lines.append(f"All MSigDB annotations in the collection {collection}, which holds {desc}: " + ",".join(annots_list) + ".")
             gene.add_msigdb_annotated_terms(collection, annots_list)
 
