@@ -1,0 +1,3223 @@
+<!DOCTYPE html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="favicon.ico?v=10" />
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="32x32"
+    href="images/rocket_favicon_32.png?v=10"
+  />
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="64x64"
+    href="images/rocket_favicon_64.png?v=10"
+  />
+  <link
+    rel="apple-touch-icon"
+    sizes="180x180"
+    href="images/rocket_favicon_180.png?v=10"
+  />
+  <meta name="theme-color" content="#0b1020" />
+  <title>
+    Alvessa: An Agentic Evidence‑Grounded Research Assistant for Genomics
+  </title>
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --fg: #e6e8ef;
+      --card: #121832;
+      --muted: #aab4d6;
+      --line: #1e2a52;
+      --pill-bg: #1a2347;
+      --pill-line: #2a3a72;
+      --accent: #2a3a72;
+      --input: #0e1430;
+      --shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+      --radius: 16px;
+      --r-sm: 10px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+        Helvetica, Arial;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html,
+    body {
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--sans);
+      overflow-anchor: none;
+    }
+    a {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 3fr 1.2fr; /* main content + sidebar */
+      align-items: start;
+    }
+
+    /* Two-column grid with named areas */
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 3fr 1.2fr;
+  grid-template-areas:
+    "brand-header brand-header"
+    "main side";
+  align-items: start;
+}
+
+.brand-header { grid-area: brand-header; }
+.main-col     { grid-area: main;   min-width: 0; }
+.side-col     { grid-area: side;   position: sticky; top: 16px; align-self: start; height: fit-content; }
+
+/* Ensure .full only spans inside main column now (not across sidebar) */
+.main-col .full { grid-column: auto; }
+
+/* Prevent sidebar overlapping content when narrow */
+@media (max-width: 980px) {
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "brand-header"
+      "main"
+      "side";
+  }
+  .side-col { position: static; }
+}
+
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .mono {
+      font-family: var(--mono);
+    }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--pill-bg);
+      border: 1px solid var(--pill-line);
+      margin: 2px 6px 2px 0;
+      font-size: 12px;
+    }
+
+    /* Inputs */
+    button {
+      cursor: pointer;
+      background: #1b2450;
+      color: var(--fg);
+      border: 1px solid var(--pill-line);
+      border-radius: var(--r-sm);
+      padding: 8px 12px;
+    }
+    button.ghost {
+      background: transparent;
+    }
+    input[type="text"],
+    select {
+      background: var(--input);
+      color: var(--fg);
+      border: 1px solid var(--pill-line);
+      border-radius: var(--r-sm);
+      padding: 10px;
+    }
+    input[type="text"] {
+      width: 100%;
+    }
+
+    /* Brand */
+    .brand-header {
+      grid-column: 1/-1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 8px 0;
+    }
+    .logo-brand {
+      height: 44px;
+    }
+    .brand-title {
+      margin: 0;
+      font-weight: 800;
+      text-align: center;
+      font-size: clamp(24px, 3.2vw, 38px);
+      letter-spacing: 0.2px;
+    }
+
+    /* Hero */
+    #hero {
+      min-height: 50vh;
+      display: grid;
+      place-items: center;
+    }
+    #hero .card {
+      width: 100%;
+      max-width: 720px;
+      text-align: center;
+    }
+    #grid,
+    #toolbar {
+      display: none;
+    }
+
+    /* Spinner + status */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--accent);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    .spinner.big {
+      width: 28px;
+      height: 28px;
+      border-width: 3px;
+      margin-right: 8px;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    .statusline {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 72ch;
+    }
+
+    /* Variant Summary */
+    .vs-toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+      margin-bottom: 6px;
+    }
+    .vs-scroll {
+      overflow: auto;
+      max-height: 420px;
+    }
+
+    /* Protein viewer iframe */
+    .prot-frame {
+      width: 100%;
+      height: 720px;
+      border: 1px solid #1e2a52;
+      border-radius: 12px;
+      background: #0e1430;
+    }
+    body.light .prot-frame {
+      background: #ffffff;
+      border-color: #cbd5e1;
+    }
+
+    /* Citations */
+    .cite {
+      cursor: help;
+      user-select: none;
+      text-decoration: underline dotted;
+    }
+    .cite-tip {
+      position: fixed;
+      z-index: 9999;
+      max-width: 420px;
+      background: var(--input);
+      color: var(--fg);
+      border: 1px solid var(--pill-line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      line-height: 1.4;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.08s ease, transform 0.08s ease;
+    }
+    .cite-tip.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .refs-list {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+    .refs-list li {
+      margin: 6px 0;
+    }
+    .refs-list .muted {
+      margin-top: 2px;
+      display: block;
+    }
+
+    /* Light mode */
+    body.light {
+      background: #fff;
+      color: #0b1020;
+    }
+    body.light .card {
+      background: #fff;
+      border-color: #d8dce6;
+      color: #0b1020;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+    }
+    body.light input[type="text"],
+    body.light select {
+      background: #fff;
+      color: #0b1020;
+      border: 1px solid #c8cfe0;
+    }
+    body.light button {
+      background: #f3f5fb;
+      color: #0b1020;
+      border: 1px solid #c8cfe0;
+    }
+    body.light .muted {
+      color: #6b7280;
+    }
+    body.light .pill {
+      background: #eef1f7;
+      border: 1px solid #d6d9e6;
+      color: #0b1020;
+    }
+    body.light .vs-table thead th {
+      background: #f5f7fb;
+      color: #0b1020;
+    }
+    body.light .cite-tip {
+      background: #fff;
+      color: #0b1020;
+      border-color: #e5e7eb;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Markdown article styles */
+
+.answer.md {
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+.answer.md h1, .answer.md h2, .answer.md h3, .answer.md h4, .answer.md h5, .answer.md h6 {
+  line-height: 1.25;
+  margin: 1.2em 0 0.5em;
+  font-weight: 800;
+}
+.answer.md h1 { font-size: clamp(22px, 3vw, 28px); }
+.answer.md h2 { font-size: clamp(20px, 2.6vw, 24px); }
+.answer.md h3 { font-size: 18px; }
+.answer.md h4 { font-size: 16px; }
+
+.answer.md p { margin: 0.75em 0; }
+.answer.md ul, .answer.md ol { margin: 0.75em 0 0.75em 1.25em; }
+.answer.md li { margin: 0.25em 0; }
+
+.answer.md blockquote {
+  margin: 0.9em 0; padding: 8px 12px;
+  border-left: 3px solid var(--accent);
+  background: rgba(255,255,255,0.03);
+}
+body.light .answer.md blockquote { background: #f8fafc; }
+
+.answer.md pre {
+  background: #0e1430; color: var(--fg);
+  padding: 10px; border-radius: 10px; overflow:auto;
+  border: 1px solid var(--pill-line);
+}
+body.light .answer.md pre { background: #f6f8ff; color: #0b1020; border-color:#c8cfe0; }
+
+.answer.md code {
+  font-family: var(--mono);
+  background: rgba(0,0,0,0.18);
+  padding: 2px 5px; border-radius: 6px;
+}
+body.light .answer.md code { background: #eef1f7; }
+
+.answer.md hr {
+  border: 0; border-top: 1px solid var(--pill-line);
+  margin: 1.25em 0;
+}
+
+.sentence-block {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sentence-block.cited:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.sentence-block.active {
+  background-color: rgba(16, 185, 129, 0.25); /* greenish stripe */
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+
+mark.verify { background: none; padding: 0 .15em; border-radius: .2em; position: relative; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+mark.verify::before { content:""; position:absolute; inset:55% -0.12em 0; border-radius:.25em; opacity:.75; }
+mark.verify.supported::before   { background: rgba(16,185,129,.28); }
+mark.verify.partial::before     { background: rgba(234,179,8,.32); }
+mark.verify.unsupported::before { background: rgba(148,163,184,.34); }
+
+/* glow when linked citation is hovered */
+mark.verify.glow { outline: 2px solid var(--pill-line); outline-offset: 2px; }
+
+
+    /* Ensure section titles (Question / Answer / …) are card titles, not pill-like */
+    .card > .title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 10px;
+    }
+
+    /* Utility */
+    .hide {
+      display: none !important;
+    }
+    /* Let fixed layout honor column widths */
+    /* Make the variant table predictable and scrollable */
+    /* Variant table sane defaults */
+    .vs-scroll {
+      overflow: auto;
+      max-height: 520px;
+    }
+
+    .vs-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: auto; /* let browser size columns naturally */
+    }
+
+    /* Cells */
+    .vs-table th,
+    .vs-table td {
+      padding: 8px 10px;
+      font-size: 13px;
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: top;
+    }
+
+    .vs-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--card);
+      z-index: 1;
+    }
+
+    /* Allow wrapping for long text columns */
+    .vs-table th.wrap,
+    .vs-table td.wrap {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    /* Ref/Alt: monospace + wrap allowed */
+    .vs-table td.seq {
+      font-family: var(--mono);
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    /* Traits: pills wrap within cell */
+    .vs-table td.traits {
+      white-space: normal;
+    }
+    .vs-table td.traits .pill {
+      display: inline-block;
+      margin: 2px 6px 2px 0;
+      max-width: 100%;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    .vs-table td[data-has-tooltip="1"] {
+      text-decoration: underline dotted;
+      text-underline-offset: 2px;
+    }
+
+    /* Helpful min/max widths per column (optional) */
+    .vs-table th.col-gene,
+    .vs-table td.col-gene {
+      min-width: 120px;
+    }
+    .vs-table th.col-id,
+    .vs-table td.col-id {
+      min-width: 120px;
+    }
+    .vs-table th.col-pos,
+    .vs-table td.col-pos {
+      min-width: 90px;
+    }
+    .vs-table th.col-num,
+    .vs-table td.col-num {
+      min-width: 80px;
+      max-width: 120px;
+    }
+    .vs-table th.col-wide,
+    .vs-table td.col-wide {
+      min-width: 200px;
+    } /* for traits/expr */
+
+    #tsmr .mr-block {
+      margin-bottom: 14px;
+    }
+    #tsmr .mr-head {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    #tsmr .mr-sum {
+      margin: 6px 0 8px;
+    }
+    #tsmr .pill.ghost {
+      background: transparent;
+    }
+    #tsmr table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    #tsmr th,
+    #tsmr td {
+      border-bottom: 1px solid var(--line);
+      padding: 6px 8px;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #tsmr thead th {
+      position: sticky;
+      top: 0;
+      background: var(--card);
+      z-index: 1;
+    }
+    #tsmr .scroll {
+      overflow: auto;
+      max-height: 360px;
+    }
+
+
+  /* --- Answer (verification-driven) --- */
+  .answer-verified .stmt {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin: 8px 0;
+    transition: background 120ms ease, border-color 120ms ease;
+  }
+  .answer-verified .stmt-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .answer-verified .stmt-text {
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .answer-verified .stmt-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .answer-verified .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    border: 1px solid currentColor;
+  }
+  .answer-verified .btn-proof {
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+  .answer-verified .proofs {
+    margin-top: 8px;
+    display: grid;
+    gap: 8px;
+  }
+  .answer-verified .proof {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.04);
+  }
+  body.light .answer-verified .proof { background: #fff; }
+  .answer-verified .reasons {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .answer-verified .reason-pill {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--pill-line);
+    background: var(--pill-bg);
+  }
+  .answer-verified .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .answer-verified .topbar .left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .answer-verified .topbar .right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* Verdict backgrounds */
+  .stmt-supported  { background: rgba(16,185,129,0.08); } /* green-50 */
+  .stmt-partial    { background: rgba(234,179,8,0.10); }  /* yellow-50 */
+  .stmt-unsupported{ background: rgba(148,163,184,0.12);} /* slate-200 */
+  body.light .stmt-supported  { background: #ecfdf5; }
+  body.light .stmt-partial    { background: #fffbeb; }
+  body.light .stmt-unsupported{ background: #f1f5f9; }
+
+  /* Verdict badges */
+  .badge-supported  { color: #059669; background: rgba(16,185,129,0.18); border-color: rgba(5,150,105,0.35); }
+  .badge-partial    { color: #a16207; background: rgba(234,179,8,0.18); border-color: rgba(161,98,7,0.35); }
+  .badge-unsupported{ color: #334155; background: rgba(148,163,184,0.22); border-color: rgba(51,65,85,0.35); }
+
+  /* Speculation marker */
+  .badge-spec { color:#64748b; background: rgba(100,116,139,0.18); border-color: rgba(100,116,139,0.35); }
+
+
+  </style>
+
+  <body>
+    <div class="wrap">
+      <button
+        id="themeToggle"
+        aria-label="Toggle theme"
+        style="position: fixed; top: 12px; right: 12px; z-index: 999"
+      >
+        Toggle Theme
+      </button>
+      <button
+        id="savePageBtn"
+        aria-label="Save page"
+        style="position: fixed; top: 12px; right: 120px; z-index: 999"
+      >
+        Save HTML
+      </button>
+
+      <!-- Hero / landing (no auto-demo load) -->
+      <div id="hero" role="region" aria-label="Landing">
+        <div class="card">
+          <div
+            class="title"
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 8px;
+            "
+          >
+            <img
+              src="images/rocket_logo.png"
+              alt="Alvessa logo"
+              style="height: 40px"
+            />
+            <span
+              >Alvessa: An Agentic Evidence‑Grounded Research Assistant for
+              Genomics</span
+            >
+          </div>
+          <p class="muted" style="margin-bottom: 12px">
+            Load a JSON produced by Alvessa or ask a question (if the server
+            endpoint is wired).
+          </p>
+          <div
+            class="row"
+            style="justify-content: center; width: 100%; gap: 8px"
+          >
+            <input
+              id="q"
+              type="text"
+              placeholder="Ask a question… e.g., Genes interacting with TP53"
+              aria-label="Question"
+            />
+            <button id="runBtn" aria-label="Run query">Run</button>
+            <label class="pill" style="cursor: pointer">
+              Load JSON
+              <input
+                id="jsonFile"
+                type="file"
+                accept=".json,application/json"
+                style="display: none"
+              />
+            </label>
+            <label class="pill" style="cursor: pointer">
+              Load Folder
+              <input
+                id="folderPicker"
+                type="file"
+                webkitdirectory
+                directory
+                style="display: none"
+              />
+            </label>
+          </div>
+          <div class="row" style="justify-content: center; margin-top: 8px">
+            <select id="demoSelect">
+              <option value="">Load demo… (not auto‑selected)</option>
+              <option value="out/20250924-004900_ui/demo.json">
+                TP53 demo
+              </option>
+            </select>
+            <button id="downloadBtn" class="pill">Download JSON</button>
+          </div>
+          <div class="muted" style="margin-top: 8px">
+            Tip: nothing loads until you choose a file or click Run.
+          </div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div id="toolbar" class="card full">
+        <div class="row" style="justify-content: space-between; gap: 12px">
+          <div class="row">
+            <div class="muted" style="min-width: 160px">
+              Ask another question
+            </div>
+          </div>
+          <div class="row" style="flex: 1">
+            <input
+              id="q2"
+              type="text"
+              placeholder="Type another question… then press Enter"
+              aria-label="Another question"
+            />
+            <button id="runBtn2">Run</button>
+            <label class="pill" style="cursor: pointer">
+              Load JSON
+              <input
+                id="jsonFile2"
+                type="file"
+                accept=".json,application/json"
+                style="display: none"
+              />
+            </label>
+            <label class="pill" style="cursor: pointer">
+              Load Folder
+              <input
+                id="folderPicker2"
+                type="file"
+                webkitdirectory
+                directory
+                style="display: none"
+              />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main grid -->
+      <div id="grid" class="grid">
+        <div class="brand-header">
+          <img
+            src="images/rocket_logo.png"
+            alt="Alvessa logo"
+            class="logo-brand"
+          />
+          <h1 class="brand-title">
+            Alvessa: An Agentic Evidence‑Grounded Research Assistant for
+            Genomics
+          </h1>
+        </div>
+
+        <!-- NEW: sidebar container (right column) -->
+  <aside class="side-col">
+    <div id="verifierCard" class="card" style="display:none;">
+      <div class="title">Verification</div>
+      <div id="verifierPanel" class="answer-verified"></div>
+    </div>
+  </aside>
+
+  <!-- NEW: main content container (left column) -->
+  <div class="main-col">
+    <div class="card full">
+      <div class="title" id="questionTitle">Question</div>
+      <div id="question" style="font-size: 18px"></div>
+    </div>
+
+    <div id="answerCard" class="card full" data-section style="display:none">
+      <div class="title">Answer</div>
+      <div id="answer" class="answer"></div>
+      <ol id="citations" class="refs-list"></ol>
+    </div>
+
+    
+
+        <div
+          id="entitiesCard"
+          class="card full"
+          data-section
+          style="display: none"
+        >
+          <div class="title">Detected Entities</div>
+          <div id="entities"></div>
+        </div>
+
+        <div
+          id="geneSummaryCard"
+          class="card full"
+          data-section
+          style="display: none"
+        >
+          <div class="title">Gene Summary</div>
+          <div id="geneSummary"></div>
+        </div>
+
+        <!-- Variant Summary -->
+        <div
+          id="variantSummaryCard"
+          class="card full"
+          data-section
+          style="display: none"
+        >
+          <div class="title">Variant Summary</div>
+          <div id="variantSummary"></div>
+        </div>
+
+        <!-- Protein Visualization -->
+        <div id="protCard" class="card full" data-section style="display: none">
+          <div class="title">Protein Structure</div>
+          <div id="protMount"></div>
+        </div>
+
+        <!-- ChEMBL Drug–Target Data -->
+        <div id="chemblCard" class="card full" data-section style="display: none">
+        <div class="title">ChEMBL Drug–Target Data</div>
+        <div id="chemblMount"></div>
+        </div>
+
+        <!-- Two-sample MR -->
+        <div id="tsmrCard" class="card full" data-section style="display: none">
+          <div class="title">Two-sample Mendelian Randomization</div>
+          <div id="tsmr"></div>
+        </div>
+
+        <div
+          id="evidenceCard"
+          class="card full"
+          data-section
+          style="display: none"
+        >
+          <div class="title">Evidence</div>
+          <div id="evidence"></div>
+        </div>
+
+        <!-- Minimal debug (toggle-able) -->
+        <div id="rawCard" class="card full" data-section style="display: none">
+          <div class="title">Raw State (debug)</div>
+          <pre
+            id="raw"
+            class="mono"
+            style="max-height: 340px; overflow: auto"
+          ></pre>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /********************
+       * Utilities
+       ********************/
+
+       function verdictColorClass(verdict, isSpec) {
+        if (isSpec) return "stmt-unsupported"; // neutral-ish background for speculation
+        if (verdict === "supported") return "stmt-supported";
+        if (verdict === "partial") return "stmt-partial";
+        return "stmt-unsupported";
+      }
+      function verdictBadgeClass(verdict) {
+        if (verdict === "supported") return "badge badge-supported";
+        if (verdict === "partial") return "badge badge-partial";
+        return "badge badge-unsupported";
+      }
+      function humanizeReason(r) {
+        const [k, rest] = String(r||"").split(":", 2);
+        if (k === "missing-entities") return "Missing entities" + (rest ? `: ${rest}` : "");
+        if (k === "missing-numbers")  return "Missing numbers" + (rest ? `: ${rest}` : "");
+        if (k === "low-overlap")      return "Low lexical overlap" + (rest ? ` (${rest})` : "");
+        if (k === "negation-mismatch")return "Negation mismatch";
+        if (k === "bad-doc-index")    return "Broken doc ref";
+        if (k === "no-citations")     return "No citations";
+        if (k === "empty-text")       return "Empty line";
+        return r;
+      }
+      function escHtml(s){ return String(s ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+      function truncate(s, n=220){ const t=String(s||"").replace(/\s+/g," ").trim(); return t.length<=n?t:(t.slice(0,n-1).trimEnd()+"…"); }
+      function manifestTitleByIndex(manifest, idx){
+        try{
+          const m = (manifest||[]).find(x=>Number(x.index)===Number(idx));
+          return m ? (m.title || `doc#${idx}`) : `doc#${idx}`;
+        }catch(e){ return `doc#${idx}`; }
+      }
+      
+      const show = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = el.classList.contains("grid") ? "grid" : "block";
+      };
+      const hide = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "none";
+      };
+      const setText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text ?? "";
+      };
+      const setHTML = (id, html) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = html ?? "";
+      };
+      const byId = (id) => document.getElementById(id);
+
+      function escapeHtml(s) {
+        var map = {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        };
+        s = s == null ? "" : String(s);
+        return s.replace(/[&<>"']/g, function (ch) {
+          return map[ch];
+        });
+      }
+
+      function asPills(arr) {
+        return (arr || [])
+          .map((x) => `<span class="pill">${escapeHtml(x)}</span>`)
+          .join(" ");
+      }
+      function uc(s) {
+        return (s || "").toUpperCase();
+      }
+      function safeRender(name, fn) {
+        try {
+          fn();
+        } catch (e) {
+          console.warn(`[render:${name}]`, e);
+        }
+      }
+
+      /********************
+       * Global state
+       ********************/
+      let STATE = null; // current JSON state (if loaded)
+      let HERO_SHOWN = true;
+      let VS_ROWS_FOR_CSV = [];
+      const FILE_CACHE = new Map(); // text cache for CSV/TSV files
+
+      // Virtual FS for "Load Folder" mode
+      let LOCAL_FILES = new Map(); // key: normalized relative path (e.g., "genes/genes.index.csv")
+      let LOCAL_BASE_HINT = ""; // e.g., "out/20250924-004900_ui/"
+
+      // Normalize keys like the fetch calls ("genes/..."), regardless of real subdir names
+      function normKey(p) {
+        p = String(p || "").replace(/\\/g, "/");
+        // strip any leading "./" or leading slashes
+        p = p.replace(/^\.?\//, "");
+        // collapse multiple slashes
+        p = p.replace(/([^:]\/)\/+/g, "$1");
+        return p;
+      }
+
+      function saveFullPageSnapshot() {
+        try {
+          // Clone current DOM for a WYSIWYG snapshot
+          const htmlEl = document.documentElement.cloneNode(true);
+
+          // Remove transient UI bits that don't help when reopened (tooltips, etc.)
+          htmlEl.querySelectorAll(".cite-tip").forEach((n) => n.remove());
+
+          // Build a small bootstrap script to avoid network fetches and show the same view
+          const boot = document.createElement("script");
+          boot.type = "text/javascript";
+          const stateJson = JSON.stringify(STATE ?? {});
+          const localFilesJson = JSON.stringify(
+            Array.from(LOCAL_FILES.entries())
+          );
+          const fileCacheJson = JSON.stringify(
+            Array.from(FILE_CACHE.entries())
+          );
+          boot.textContent = `
+      (function(){
+        try{
+          // Prevent live fetching when opening the snapshot offline
+          window.SNAPSHOT_MODE = true;
+          window.STATE = ${stateJson};
+          // Rehydrate in-memory stores (for offline "folder" content already loaded)
+          try {
+            window.LOCAL_FILES = new Map(${localFilesJson});
+            window.FILE_CACHE  = new Map(${fileCacheJson});
+          } catch(_) {}
+
+          // No server fetch; just render what we have
+          if (typeof refresh === 'function') {
+            // Avoid re-hiding hero if we already showed the grid in the snapshot
+            try { window.HERO_SHOWN = false; } catch(_) {}
+            refresh();
+          }
+        }catch(e){ console.warn('Snapshot boot failed', e); }
+      })();
+    `;
+
+          // Inject the bootstrap before the closing </body> of the clone
+          const body = htmlEl.querySelector("body");
+          if (body) body.appendChild(boot);
+
+          // Serialize
+          const doctype = "<!doctype html>\n";
+          const htmlText = doctype + htmlEl.outerHTML;
+
+          // Download
+          const blob = new Blob([htmlText], {
+            type: "text/html;charset=utf-8",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "alvessa_snapshot.html";
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (e) {
+          alert("Could not create snapshot: " + e.message);
+        }
+      }
+
+      // Given a FileList from webkitdirectory, index files and infer base
+      async function indexFolderFiles(fileList) {
+        LOCAL_FILES.clear();
+        LOCAL_BASE_HINT = "";
+
+        if (!fileList || !fileList.length) return;
+
+        // Heuristic: find the *lowest* common dir that contains genes/ and/or variants/
+        const rels = [];
+        for (const f of fileList) {
+          // Chrome gives f.webkitRelativePath like: "out/20250924-004900_ui/genes/genes.index.csv"
+          const rel = f.webkitRelativePath || f.name;
+          if (rel) rels.push(rel.replace(/\\/g, "/"));
+        }
+        // Try to detect base folder that directly contains `genes/` and/or `variants/`
+        const candidates = new Set();
+        for (const r of rels) {
+          const m = r.match(/^(.*?)(genes|variants)\//);
+          if (m) candidates.add(m[1]); // prefix before "genes/"
+        }
+        // Prefer the shortest candidate
+        LOCAL_BASE_HINT =
+          Array.from(candidates).sort((a, b) => a.length - b.length)[0] || "";
+
+        // Index all files; store text for small ones, lazy-load via FileReader otherwise
+        const textPromises = [];
+        for (const f of fileList) {
+          const rel = f.webkitRelativePath || f.name;
+          if (!rel) continue;
+          let key = rel.replace(/\\/g, "/");
+          // If we detected a base, strip it so keys look like "genes/..." or "variants/..."
+          if (LOCAL_BASE_HINT && key.startsWith(LOCAL_BASE_HINT)) {
+            key = key.slice(LOCAL_BASE_HINT.length);
+          }
+          key = normKey(key);
+
+          // Only cache text for files we actually load in UI (.csv, .txt, .json)
+          if (/\.(csv|tsv|txt|json)$/i.test(key)) {
+            const p = f
+              .text()
+              .then((txt) => LOCAL_FILES.set(key, txt))
+              .catch(() => {});
+            textPromises.push(p);
+          }
+        }
+        await Promise.allSettled(textPromises);
+
+        // Also set ARTIFACT_BASE so relative fetches can still work
+        ARTIFACT_BASE = LOCAL_BASE_HINT; // e.g., "out/20250924-004900_ui/"
+      }
+
+      // Accepts a URL like "out/.../demo.json" and derives "out/.../"
+      function setArtifactBaseFromUrl(url) {
+        try {
+          // If absolute URL
+          const u = new URL(url, window.location.href);
+          const parts = u.pathname.split("/");
+          parts.pop(); // remove filename
+          ARTIFACT_BASE =
+            parts.join("/") + (parts.join("/").endsWith("/") ? "" : "/");
+          if (u.origin && !ARTIFACT_BASE.startsWith("http")) {
+            ARTIFACT_BASE = u.origin + ARTIFACT_BASE;
+          }
+        } catch {
+          // Relative pathname
+          const p = String(url || "").split("/");
+          p.pop();
+          ARTIFACT_BASE = (p.join("/") + "/").replace(/\/\/+/g, "/");
+        }
+      }
+
+      // Optionally derive from state if server provides it
+      function setArtifactBaseFromState(st) {
+        const cand =
+          st?.ui?.artifact_base ||
+          st?.ui?.base_path ||
+          st?.artifact_base ||
+          st?.base_path ||
+          ""; // empty means relative to page root
+        if (cand) {
+          // Ensure trailing slash
+          ARTIFACT_BASE = cand.endsWith("/") ? cand : cand + "/";
+        }
+      }
+
+      // Prefix helper
+      function withBase(path) {
+        if (!path) return path;
+        if (/^https?:\/\//i.test(path)) return path; // already absolute
+        if (!ARTIFACT_BASE) return path; // fall back to page-relative
+        return (ARTIFACT_BASE + path).replace(/([^:]\/)\/+/g, "$1");
+      }
+
+
+      // Very small Markdown renderer: headers, bold/italic, code, lists, links, hr, blockquotes.
+// Escapes first, then applies formatting safely.
+function renderMarkdown(md) {
+  md = String(md || "");
+
+  // Escape HTML
+  md = md.replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+
+  // Code fences ```lang\n...\n```
+  md = md.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code.trim()}</code></pre>`);
+
+  // Inline code `code`
+  md = md.replace(/`([^`]+?)`/g, (_, code) => `<code>${code}</code>`);
+
+  // Headings
+  md = md
+    .replace(/^######\s+(.*)$/gm, '<h6>$1</h6>')
+    .replace(/^#####\s+(.*)$/gm,  '<h5>$1</h5>')
+    .replace(/^####\s+(.*)$/gm,   '<h4>$1</h4>')
+    .replace(/^###\s+(.*)$/gm,    '<h3>$1</h3>')
+    .replace(/^##\s+(.*)$/gm,     '<h2>$1</h2>')
+    .replace(/^#\s+(.*)$/gm,      '<h1>$1</h1>');
+
+  // Horizontal rules
+  md = md.replace(/^\s*(?:-{3,}|_{3,}|\*{3,})\s*$/gm, '<hr>');
+
+  // Blockquotes
+  md = md.replace(/^(?:>\s?)(.*)$/gm, '<blockquote>$1</blockquote>');
+
+  // Bold / Italic
+  md = md.replace(/\*\*([^\*]+?)\*\*/g, '<strong>$1</strong>');
+  md = md.replace(/\*([^\*]+?)\*/g, '<em>$1</em>');
+  md = md.replace(/__([^_]+?)__/g, '<strong>$1</strong>');
+  md = md.replace(/_([^_]+?)_/g, '<em>$1</em>');
+
+  // Links [text](url)
+  md = md.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+  // Lists (very simple)
+  md = md
+    .replace(/^(?:\s*[-*+]\s+.+\n?)+/gm, block => {
+      const items = block.trim().split(/\n/).map(l => l.replace(/^\s*[-*+]\s+/, '').trim());
+      return `<ul>${items.map(it => `<li>${it}</li>`).join('')}</ul>`;
+    })
+    .replace(/^(?:\s*\d+\.\s+.+\n?)+/gm, block => {
+      const items = block.trim().split(/\n/).map(l => l.replace(/^\s*\d+\.\s+/, '').trim());
+      return `<ol>${items.map(it => `<li>${it}</li>`).join('')}</ol>`;
+    });
+
+  // Paragraphs: wrap stray lines (that aren't already block-level)
+  md = md
+    .split(/\n{2,}/)
+    .map(chunk => /<(h\d|ul|ol|pre|blockquote|hr)/i.test(chunk.trim()) ? chunk : `<p>${chunk.trim()}</p>`)
+    .join('\n');
+
+  return md;
+}
+
+      /********************
+       * Minimal CSV/TSV loader with cache
+       ********************/
+      async function fetchTextCached(path) {
+        // 1) Check in-memory folder first
+        const tryLocal = (p) => {
+          // exact
+          if (LOCAL_FILES.has(p)) return LOCAL_FILES.get(p);
+          // with base prefix (strip possible origin)
+          const baseNoOrigin = (ARTIFACT_BASE || "").replace(
+            /^https?:\/\/[^/]+/i,
+            ""
+          );
+          const withBase = (baseNoOrigin + p).replace(/(^|[^:])\/\/+/g, "$1/"); // normalize
+          if (LOCAL_FILES.has(withBase)) return LOCAL_FILES.get(withBase);
+          // ends-with match (robust if caller passed just "genes/…")
+          const k = Array.from(LOCAL_FILES.keys()).find(
+            (k) => k.endsWith("/" + p) || k === p
+          );
+          return k ? LOCAL_FILES.get(k) : null;
+        };
+
+        const local = tryLocal(path);
+        if (local != null) return local;
+
+        // 2) If not in LOCAL_FILES, fall back to network with ARTIFACT_BASE
+        const url = withBase(path);
+        if (FILE_CACHE.has(url)) return FILE_CACHE.get(url);
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Fetch failed: ${url} (${res.status})`);
+        const txt = await res.text();
+        FILE_CACHE.set(url, txt);
+        return txt;
+      }
+
+      function parseCSV(text, delimiter = ",") {
+        if (!text) return [];
+        const lines = text
+          .replace(/\r\n?/g, "\n")
+          .split("\n")
+          .filter((l) => l.trim().length > 0);
+        if (!lines.length) return [];
+        // naive CSV parse with quotes support
+        const parseLine = (line) => {
+          const out = [];
+          let cur = "",
+            inQ = false;
+          for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (inQ) {
+              if (ch === '"' && line[i + 1] === '"') {
+                cur += '"';
+                i++;
+              } else if (ch === '"') {
+                inQ = false;
+              } else cur += ch;
+            } else {
+              if (ch === '"') {
+                inQ = true;
+              } else if (ch === delimiter) {
+                out.push(cur);
+                cur = "";
+              } else cur += ch;
+            }
+          }
+          out.push(cur);
+          return out;
+        };
+        const header = parseLine(lines[0]).map((h) => h.trim());
+        return lines.slice(1).map((raw) => {
+          const parts = parseLine(raw);
+          const obj = {};
+          for (let i = 0; i < header.length; i++)
+            obj[header[i]] = (parts[i] ?? "").trim();
+          return obj;
+        });
+      }
+
+
+      function wireFolderPicker(input) {
+        if (!input) return;
+        input.addEventListener("change", async () => {
+          LOCAL_FILES.clear();
+
+          // Load all files into memory 
+          const files = Array.from(input.files || []);
+          for (const f of files) {
+            const path = f.webkitRelativePath || f.name; // e.g., "out/…/demo.json", "genes/PTEN/gene.json"
+            try {
+              const txt = await f.text();
+              LOCAL_FILES.set(path, txt);
+            } catch {
+              /* ignore */
+            }
+          }
+
+          // Derive a base (folder) from demo.json path (your state file)
+          // and parse STATE from that file right away.
+          const keys = Array.from(LOCAL_FILES.keys());
+
+          // pick the demo.json
+          const demoKey = keys.find((k) => /(^|\/)demo\.json$/i.test(k));
+          if (demoKey) {
+            try {
+              STATE = JSON.parse(LOCAL_FILES.get(demoKey) || "{}");
+            } catch {
+              alert("Could not parse demo.json");
+            }
+
+            // Compute a base prefix so "genes/…", "variants/…" resolve inside the same folder
+            // e.g. "out/20250924-004900_ui/"
+            const parts = demoKey.split("/");
+            parts.pop();
+            ARTIFACT_BASE = parts.join("/") + "/"; // we’ll use this in fetchTextCached
+          } else {
+            alert("Folder loaded, but no demo.json found.");
+          }
+
+          // Clear any old network cache for safety (optional)
+          FILE_CACHE.clear();
+
+          await refresh();
+          input.value = "";
+        });
+      }
+
+      /********************
+       * Protein Viewer
+       ********************/
+      function renderProt(st) {
+        const mount = document.getElementById("protMount");
+        if (!mount) return;
+
+        const html = st?.prot_html;
+        const iframeUrl = st?.prot_iframe_url;
+        const pdbId = st?.pdb_id;
+
+        mount.innerHTML = "";
+        if (!html && !iframeUrl && !pdbId) {
+          return (document.getElementById("protCard").style.display = "none");
+        }
+
+        const frame = document.createElement("iframe");
+        frame.className = "prot-frame";
+        // Updated sandbox for full link functionality and downloads
+        frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
+        frame.setAttribute("referrerpolicy", "no-referrer");
+
+        if (html && typeof html === "string" && html.trim()) {
+          frame.srcdoc = html;
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "mini";
+          saveBtn.textContent = "Save HTML";
+          saveBtn.style.margin = "6px 0 10px";
+          saveBtn.onclick = () => {
+            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "protein_view.html";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 800);
+          };
+          mount.appendChild(saveBtn);
+        } else if (iframeUrl) {
+          frame.src = iframeUrl;
+        } else if (pdbId) {
+          frame.src = `https://www.ebi.ac.uk/pdbe/entry-files/molstar.html?structureId=${encodeURIComponent(pdbId)}`;
+        }
+
+        mount.appendChild(frame);
+        document.getElementById("protCard").style.display = "block";
+
+        // Updated theme broadcast after load
+        const isLight = document.body.classList.contains("light");
+        frame.addEventListener("load", () => {
+          frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
+        });
+      }
+
+      // Returns full plain text for a doc index, from LOCAL_FILES or network.
+// Expects doc_manifest entries like: { index, title, path?, url? }
+async function getDocTextByIndex(manifest, idx) {
+  const m = (manifest || []).find(x => Number(x.index) === Number(idx));
+  if (!m) throw new Error(`No manifest entry for doc#${idx}`);
+  const src = m.path || m.url || m.href || m.file; // flexible
+  if (!src) throw new Error(`No path/url for doc#${idx}`);
+
+  // Try our cached fetcher (works for local folder + network)
+  const txt = await fetchTextCached(src);
+  return String(txt || "");
+}
+
+function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
+
+// Slice text with ±context and return {prefix, focus, suffix}
+function sliceWithContext(text, start, end, ctx=220) {
+  const N = text.length;
+  const s = clamp(start|0, 0, N);
+  const e = clamp(end|0, 0, N);
+  const pre  = clamp(s - ctx, 0, N);
+  const post = clamp(e + ctx, 0, N);
+  return {
+    prefix: text.slice(pre, s),
+    focus:  text.slice(s, e),
+    suffix: text.slice(e, post),
+    preIdx: pre, start: s, end: e, postIdx: post
+  };
+}
+
+// HTML-escape + minimal formatting for long doc snippets
+function renderDocExcerpt(prefix, focus, suffix) {
+  const esc = s => s.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  return `…${esc(prefix)}<mark>${esc(focus)}</mark>${esc(suffix)}…`;
+}
+
+// Try to hydrate a proof from offsets; fall back to provided cited_text.
+async function hydrateProofExcerpt(p, manifest, contextChars=220) {
+  // If no offsets, just return cited_text
+  const hasOffsets = Number.isFinite(p?.char_start) && Number.isFinite(p?.char_end);
+  if (!hasOffsets) {
+    return { html: p?.cited_text ? `“${escHtml(p.cited_text)}”` : `<span class="muted">No offsets; using provided quote.</span>` };
+  }
+
+  const idx = Number(p.document_index);
+  const text = await getDocTextByIndex(manifest, idx);
+  const slice = sliceWithContext(text, p.char_start, p.char_end, contextChars);
+  const html = renderDocExcerpt(slice.prefix, slice.focus, slice.suffix);
+  return { html, meta: { start: slice.start, end: slice.end } };
+}
+
+// Build a flat index of text across the answer DOM so we can use absolute char ranges.
+function indexTextNodes(root) {
+  const nodes = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(n) {
+      if (!n.nodeValue || !n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+      const tag = n.parentElement?.tagName || "";
+      if (/^(SCRIPT|STYLE|CODE|PRE)$/i.test(tag)) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  let pos = 0;
+  while (walker.nextNode()) {
+    const n = walker.currentNode;
+    const len = n.nodeValue.length;
+    nodes.push({ node: n, start: pos, end: pos + len });
+    pos += len;
+  }
+  return { nodes, length: nodes.length ? nodes.at(-1).end : 0 };
+}
+
+// Simple sentence boundary finder around a [start,end) match
+function expandToSentence(fullText, start, end) {
+  const t = fullText;
+  const left = t.lastIndexOf('.', start - 1);
+  const leftQ = t.lastIndexOf('?', start - 1);
+  const leftE = t.lastIndexOf('!', start - 1);
+  const leftNL = t.lastIndexOf('\n', start - 1);
+  const L = Math.max(left, leftQ, leftE, leftNL) + 1; // start after punctuation
+  let R = t.indexOf('.', end);
+  const Rq = t.indexOf('?', end);
+  const Re = t.indexOf('!', end);
+  const Rnl = t.indexOf('\n', end);
+  [Rq, Re, Rnl].forEach(x => { if (x !== -1 && (R === -1 || x < R)) R = x; });
+  if (R === -1) R = Math.min(t.length, end + 1);
+  return { s: Math.max(0, L), e: Math.min(t.length, R + 1) };
+}
+
+// Wrap absolute [s,e) in DOM with a <mark class="verify ...">. Returns the wrapper.
+function wrapAbsoluteRange(root, index, s, e, className, dataAttrs = {}) {
+  const r = document.createRange();
+  // find start node/offset
+  const sn = index.nodes.find(n => s >= n.start && s <= n.end);
+  const en = index.nodes.find(n => e >= n.start && e <= n.end);
+  if (!sn || !en) return null;
+  r.setStart(sn.node, s - sn.start);
+  r.setEnd(en.node, e - en.start);
+
+  const mark = document.createElement('mark');
+  mark.className = className;
+  Object.entries(dataAttrs).forEach(([k,v]) => mark.setAttribute(k, String(v)));
+  r.surroundContents(mark);
+  return mark;
+}
+
+// Try to find the first occurrence of a statement's text in the answer text
+function findFirstMatch(fullText, stmtText) {
+  if (!stmtText) return null;
+  // allow flexible whitespace
+  const rx = new RegExp(stmtText.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'), 'i');
+  const m = fullText.match(rx);
+  if (!m) return null;
+  const start = m.index;
+  return { start, end: start + m[0].length };
+}
+
+
+function parseTaggedAnswer(answerText) {
+  const out = [];
+  const rx = /<\*\s*\[([\s\S]*?)\]\s*(.*?)\/\*>/g; // <* [PROOFS] SENTENCE /*>
+  let m;
+  while ((m = rx.exec(String(answerText || ""))) !== null) {
+    const proofsRaw = (m[1] || "").trim();
+    const sentence  = (m[2] || "").trim();
+    const proofs = proofsRaw === "NONE" ? [] : proofsRaw.split(/\s*;\s*/).filter(Boolean);
+    out.push({ sentence, proofs });
+  }
+  return out;
+}
+
+function renderInteractiveAnswerFromTagged(answerText) {
+  const frag = document.createDocumentFragment();
+  const blocks = parseTaggedAnswer(answerText);
+  blocks.forEach((b, i) => {
+    const span = document.createElement("span");
+    span.className = "sentence-block" + (b.proofs.length ? " cited" : "");
+    span.dataset.idx = String(i);
+    span.dataset.proofs = JSON.stringify(b.proofs);
+    span.textContent = b.sentence + " ";
+    frag.appendChild(span);
+  });
+  return frag;
+}
+
+function renderAnswerVerified(st){
+  const card      = byId("answerCard");
+  const mount     = byId("answer");
+  const sidebar   = byId("verifierPanel");
+  const sideCard  = byId("verifierCard");
+  const modal     = byId("proofModal");
+  const modalBody = byId("proofModalBody");
+  if (!card || !mount || !sidebar || !sideCard) return;
+
+  const ver         = st?.verification || {};
+  const statements  = ver.statements || [];
+  const summary     = ver.summary || { supported:0, partial:0, unsupported:0 };
+  const verdictStr  = String(ver.verdict || "PASS").toUpperCase();
+
+  // 1) Render the answer from <* [...] /*>-tagged blocks (NO markdown)
+  const answerTagged = st?.llm_json?.answer || ver?.answer_text || st?.answer || "";
+  mount.classList.remove("md");
+  mount.innerHTML = "";
+  mount.appendChild(renderInteractiveAnswerFromTagged(answerTagged));
+  card.style.display = answerTagged.trim() ? "block" : "none";
+
+  // 2) Sidebar header
+  const verdictBadge = verdictStr === "PASS"
+    ? `<span class="badge badge-supported">VERIFIED: ${verdictStr}</span>`
+    : `<span class="badge badge-unsupported">VERIFIED: ${verdictStr}</span>`;
+  sidebar.innerHTML = `
+    <div class="topbar">
+      <div class="left">
+        ${verdictBadge}
+        <span class="pill">supported: <strong>${summary.supported||0}</strong></span>
+        <span class="pill">partial: <strong>${summary.partial||0}</strong></span>
+        <span class="pill">unsupported: <strong>${summary.unsupported||0}</strong></span>
+      </div>
+    </div>
+    <div class="muted" style="margin-top:4px;">Click a sentence to view its citations.</div>
+  `;
+  sideCard.style.display = "block";
+
+  // 3) Sentence click → highlight + show that sentence's proofs in the sidebar
+  function renderVerificationRows(){
+    return (statements || []).map((s, i) => {
+      const klass = s.is_speculation ? "badge-spec" : verdictBadgeClass(s.verdict);
+      const spec  = s.is_speculation ? `<span class="badge badge-spec">speculation</span>` : "";
+      const title = escHtml(s.text || "");
+      return `
+        <div class="row" style="align-items:flex-start; justify-content:space-between; gap:8px; margin:8px 0; border-bottom:1px dashed var(--pill-line); padding-bottom:8px;">
+          <div class="muted" style="flex:1; font-size:12px; line-height:1.45;">${title}</div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            ${spec}
+            <span class="${klass}">${escHtml(s.verdict)}</span>
+            <button class="ghost" data-open-proof="${i}" aria-label="Open proofs">Proofs</button>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  function showSentenceProofs(proofsArr){
+    const headerHTML = sidebar.querySelector(".topbar")?.outerHTML || "";
+    const helperText = `<div class="muted" style="margin-top:6px;">Citations for selected sentence:</div>`;
+    const listHTML   = (Array.isArray(proofsArr) && proofsArr.length)
+      ? `<ol class="refs-list" style="margin-top:6px">${proofsArr.map(p => `<li>${escHtml(String(p))}</li>`).join("")}</ol>`
+      : `<div class="muted" style="margin-top:6px;">No citations for this sentence.</div>`;
+    sidebar.innerHTML = headerHTML + helperText + listHTML + (statements.length ? `<div style="margin-top:10px;"></div>${renderVerificationRows()}` : "");
+    wireProofButtons(); // reattach modal handlers after re-render
+  }
+
+  mount.querySelectorAll(".sentence-block").forEach(span => {
+    span.addEventListener("click", () => {
+      mount.querySelectorAll(".sentence-block.active").forEach(x => x.classList.remove("active"));
+      span.classList.add("active");
+      const proofs = JSON.parse(span.dataset.proofs || "[]"); // set by renderInteractiveAnswerFromTagged
+      showSentenceProofs(proofs);
+    });
+  });
+
+  // Show verification rows initially so users can open modal even before clicking a sentence
+  if (statements.length) {
+    sidebar.innerHTML += renderVerificationRows();
+    wireProofButtons();
+  }
+
+  // 4) Proofs modal wiring (hydrates excerpts via manifest / char ranges)
+  function wireProofButtons(){
+    const manifest = Array.isArray(st?.llm_json?.doc_manifest) ? st.llm_json.doc_manifest : [];
+
+    sidebar.querySelectorAll("button[data-open-proof]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const idx    = Number(btn.getAttribute("data-open-proof"));
+        const s      = (statements || [])[idx] || {};
+        const proofs = s.proofs || [];
+
+        const blocks = [];
+        for (const p of proofs) {
+          const title = p.title || (Number.isFinite(p.document_index)
+            ? manifestTitleByIndex(manifest, p.document_index)
+            : "Document");
+
+          let excerptHtml = "";
+          try {
+            const hyd = await hydrateProofExcerpt(p, manifest, 260);
+            excerptHtml = hyd.html;
+          } catch {
+            excerptHtml = p?.cited_text ? `“${escHtml(p.cited_text)}”` : `<span class="muted">Could not load document text.</span>`;
+          }
+
+          const idxLabel = Number.isFinite(p.document_index) ? ` <span class="muted">doc#${p.document_index}</span>` : "";
+          const openLink = (manifest || []).find(x => Number(x.index)===Number(p.document_index))?.path;
+          blocks.push(`
+            <div class="proof">
+              <div style="font-weight:600; margin-bottom:4px;">${escHtml(title)}${idxLabel}</div>
+              <div style="white-space:pre-wrap;">${excerptHtml}</div>
+              <div class="row" style="gap:8px; margin-top:6px;">
+                <button class="ghost" data-expand-proof='${JSON.stringify({di:p.document_index, cs:p.char_start, ce:p.char_end})}'>More context</button>
+                ${ openLink ? `<a class="pill" href="${withBase(openLink)}" target="_blank" rel="noopener">Open document</a>` : "" }
+              </div>
+            </div>`);
+        }
+
+        modalBody.innerHTML = `
+          <div class="muted" style="margin-bottom:8px;">Statement</div>
+          <div style="margin-bottom:12px;">${escHtml(s.text||"")}</div>
+          <div class="proofs" style="display:grid; gap:8px;">${blocks.join("") || `<div class="muted">No proofs attached.</div>`}</div>
+          ${Array.isArray(s.reasons) && s.reasons.length ? `
+            <div class="muted" style="margin-top:10px;">Reasons</div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
+              ${s.reasons.map(r => `<span class="reason-pill">${escHtml(humanizeReason(r))}</span>`).join("")}
+            </div>` : "" }
+        `;
+
+        // “More context” expands to ±1000 chars
+        modalBody.querySelectorAll("button[data-expand-proof]").forEach(b => {
+          b.addEventListener("click", async () => {
+            try {
+              const { di, cs, ce } = JSON.parse(b.getAttribute("data-expand-proof") || "{}");
+              const text  = await getDocTextByIndex(manifest, di);
+              const slice = sliceWithContext(text, cs, ce, 1000);
+              const node  = b.closest(".proof")?.querySelector("div[style*='white-space']");
+              if (node) node.innerHTML = renderDocExcerpt(slice.prefix, slice.focus, slice.suffix);
+            } catch {
+              alert("Could not expand context for this proof.");
+            }
+          });
+        });
+
+        modal.style.display = "block";
+      });
+    });
+
+    byId("proofModalClose")?.addEventListener("click", () => modal.style.display = "none");
+    modal?.addEventListener("click", (ev) => { if (ev.target === modal) modal.style.display = "none"; });
+  }
+}
+      
+      /********************
+       * ChEMBL Viewer
+       ********************/
+      function renderChembl(st) {
+        const mount = document.getElementById("chemblMount");
+        const card  = document.getElementById("chemblCard");
+        if (!mount || !card) return;
+
+        const html = st?.chembl_html;
+        if (!html) {
+          card.style.display = "none";
+          mount.innerHTML = "";
+          return;
+        }
+
+        mount.innerHTML = "";
+        card.style.display = "block";
+
+        const frame = document.createElement("iframe");
+        frame.className = "prot-frame";
+        // Same sandbox policy for full external link support
+        frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
+        frame.setAttribute("referrerpolicy", "no-referrer");
+        frame.srcdoc = html;
+
+        const saveBtn = document.createElement("button");
+        saveBtn.className = "ghost";
+        saveBtn.textContent = "Save HTML";
+        saveBtn.style.margin = "6px 0 10px";
+        saveBtn.onclick = () => {
+          const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "chembl_view.html";
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 800);
+        };
+
+        mount.appendChild(saveBtn);
+        mount.appendChild(frame);
+
+        // Updated theme sync
+        const isLight = document.body.classList.contains("light");
+        frame.addEventListener("load", () => {
+          frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
+        });
+      }
+
+
+      /********************
+       * Renderers for Q/A, citations, evidence, raw 
+       ********************/
+      function renderQuestion(st) {
+        var msgs = (st && st.messages) || [];
+        var lastUser = null;
+        for (var i = msgs.length - 1; i >= 0; i--) {
+          if (msgs[i] && msgs[i].role === "user") {
+            lastUser = msgs[i];
+            break;
+          }
+        }
+        var q = (lastUser && lastUser.content) || (st && st.prompt) || "";
+        setText("question", q);
+        setText("questionTitle", "Question");
+      }
+      
+      function renderEvidence(st) {
+        const ev =
+          st?.evidence ||
+          st?.ui?.evidence ||
+          st?.llm_json?.evidence ||
+          st?.sources ||
+          [];
+        const items = [];
+        const pushItem = (obj) => {
+          if (typeof obj === "string") {
+            items.push(`<li>${escapeHtml(obj)}</li>`);
+            return;
+          }
+          if (!obj || typeof obj !== "object") return;
+          const title = obj.title
+            ? `<div><strong>${escapeHtml(obj.title)}</strong></div>`
+            : "";
+          const quote = obj.quote
+            ? `<div class=\"muted\">“${escapeHtml(obj.quote)}”</div>`
+            : "";
+          const url = obj.url
+            ? `<div class=\"muted\"><a href=\"${escapeHtml(
+                obj.url
+              )}\" target=\"_blank\" rel=\"noopener noreferrer\">${escapeHtml(
+                obj.url
+              )}</a></div>`
+            : "";
+          items.push(`<li>${title}${quote}${url}</li>`);
+        };
+        if (Array.isArray(ev)) ev.forEach(pushItem);
+        else if (typeof ev === "object")
+          Object.values(ev).forEach((v) => {
+            if (Array.isArray(v)) v.forEach(pushItem);
+            else pushItem(v);
+          });
+        if (items.length) {
+          setHTML("evidence", `<ol class="refs-list">${items.join("")}</ol>`);
+          show("evidenceCard");
+        } else hide("evidenceCard");
+      }
+      function renderRaw(st) {
+        const json = JSON.stringify(st ?? {}, null, 2);
+        if (json && json !== "{}") {
+          setText("raw", json);
+          show("rawCard");
+        } else hide("rawCard");
+      }
+
+      /********************
+       * Two-sample MR - need to remove
+       ********************/
+      function parsePandasLikeMRTable(txt) {
+        if (!txt || typeof txt !== "string") return { cols: [], rows: [] };
+        const lines = txt
+          .split(/\r?\n/)
+          .filter(
+            (l) =>
+              l.trim() &&
+              !/^\[\d+\s+rows\s+x\s+\d+\s+columns\]$/i.test(l.trim())
+          );
+        if (!lines.length) return { cols: [], rows: [] };
+        const header = lines[0]
+          .trim()
+          .replace(/\s{2,}/g, "\t")
+          .split("\t")
+          .map((s) => s.trim());
+        const keep = [
+          "exposure",
+          "outcome",
+          "method",
+          "Q_df",
+          "Q_pval",
+          "OR_95CI",
+        ];
+        const colIdx = header.reduce((acc, name, i) => {
+          acc[name] = i;
+          return acc;
+        }, {});
+        const cols = keep.filter((c) => colIdx[c] != null);
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+          let raw = lines[i].trim();
+          let parts = raw.replace(/\s{2,}/g, "\t").split("\t");
+          if (parts.length && /^\d+$/.test(parts[0])) parts.shift();
+          parts = parts.filter((p) => p.trim() !== "...");
+          const row = cols.map((c) => parts[colIdx[c]] ?? "—");
+          rows.push(row);
+        }
+        return { cols, rows };
+      }
+      function renderTwoSampleMR(st) {
+        const mount = document.getElementById("tsmr");
+        const card = document.getElementById("tsmrCard");
+        if (!mount || !card) return;
+
+        const block = st?.two_sample_mr_ui;
+        if (!block || typeof block !== "object" || !Object.keys(block).length) {
+          card.style.display = "none";
+          mount.innerHTML = "";
+          return;
+        }
+
+        const sections = [];
+        Object.entries(block).forEach(([key, obj]) => {
+          if (!obj || typeof obj !== "object") return;
+          const title = key;
+          const cohort = obj.cohort
+            ? `<span class="pill">${escapeHtml(String(obj.cohort))}</span>`
+            : "";
+          const gene = obj.gene
+            ? `<span class="pill">Gene: ${escapeHtml(String(obj.gene))}</span>`
+            : "";
+          const cis =
+            obj.cis === true || obj.cis === "true"
+              ? `<span class="pill">cis</span>`
+              : `<span class="pill ghost">trans</span>`;
+          const sum = obj.summary_text
+            ? `<div class="mr-sum">${escapeHtml(
+                String(obj.summary_text)
+              )}</div>`
+            : "";
+          const parsed = parsePandasLikeMRTable(
+            String(obj.results_table || "")
+          );
+          let tableHTML = `<div class="muted">No MR results table available.</div>`;
+          if (parsed.cols.length && parsed.rows.length) {
+            const thead = `<thead><tr>${parsed.cols
+              .map((c) => `<th>${escapeHtml(c)}</th>`)
+              .join("")}</tr></thead>`;
+            const tbody = `<tbody>${parsed.rows
+              .map(
+                (r) =>
+                  `<tr>${r
+                    .map(
+                      (v) =>
+                        `<td title="${escapeHtml(String(v))}">${escapeHtml(
+                          String(v)
+                        )}</td>`
+                    )
+                    .join("")}</tr>`
+              )
+              .join("")}</tbody>`;
+            const csv = [
+              parsed.cols.join(","),
+              ...parsed.rows.map((r) =>
+                r
+                  .map((x) => {
+                    const s = String(x ?? "");
+                    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+                  })
+                  .join(",")
+              ),
+            ].join("\n");
+            const btnId = `mrCsv_${Math.random().toString(36).slice(2, 9)}`;
+            tableHTML = `
+          <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div class="muted">${parsed.rows.length} row${
+              parsed.rows.length === 1 ? "" : "s"
+            } • columns: ${parsed.cols.length}</div>
+            <button id="${btnId}" class="ghost">Download CSV</button>
+          </div>
+          <div class="scroll"><table>${thead}${tbody}</table></div>
+        `;
+            sections.push({
+              html: `<div class="mr-block">
+             <div class="mr-head"><strong>${escapeHtml(
+               title
+             )}</strong> ${cohort} ${gene} ${cis}</div>
+             ${sum}
+             ${tableHTML}
+           </div>`,
+              btnId,
+              csv,
+            });
+            return;
+          }
+          sections.push({
+            html: `<div class="mr-block">
+           <div class="mr-head"><strong>${escapeHtml(
+             title
+           )}</strong> ${cohort} ${gene} ${cis}</div>
+           ${sum}
+           ${tableHTML}
+         </div>`,
+          });
+        });
+
+        mount.innerHTML = sections.map((s) => s.html).join("");
+        card.style.display = "block";
+
+        sections.forEach((s) => {
+          if (!s.btnId || !s.csv) return;
+          const btn = document.getElementById(s.btnId);
+          if (!btn) return;
+          btn.addEventListener("click", () => {
+            const blob = new Blob([s.csv], { type: "text/csv;charset=utf-8" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "two_sample_mr_results.csv";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 500);
+          });
+        });
+      }
+
+      /********************
+       * Gene Summary (FILES FIRST, then fallback to state)
+       ********************/
+      async function renderGeneSummary(st) {
+        const mount = byId("geneSummary");
+        const card = byId("geneSummaryCard");
+        if (!mount || !card) return;
+
+        // Try files first (genes.index.csv + per-gene JSON blobs)
+        let blocks = [];
+        try {
+          const idxText = await fetchTextCached("genes/genes.index.csv");
+          const rows = parseCSV(idxText, ",");
+          // Render up to 20 cards
+          const top = rows.slice(0, 20);
+
+          // Small helper to make pills
+          const pills = (arr) =>
+            (arr || [])
+              .slice(0, 10)
+              .map((x) => `<span class="pill">${escapeHtml(String(x))}</span>`)
+              .join(" ");
+
+          // Build cards
+          for (const r of top) {
+            const sym = r.symbol || r.gene_symbol || "";
+            if (!sym) continue;
+
+            // Load this gene's JSON
+            let g;
+            try {
+              const jtxt = await fetchTextCached(`genes/${sym}/gene.json`);
+              g = JSON.parse(jtxt);
+            } catch {
+              continue;
+            }
+
+            const id = g.identifiers || {};
+            const loc = g.location || {};
+            const anns = g.annotations || {};
+            const inter = g.interactions || {};
+            const gwas = g.gwas_profile || {};
+            const txp = g.transcriptome || {};
+            const pathways = (anns.pathways || []).slice(0, 8);
+            const pathHtml = pathways.length
+              ? `
+  <div class="muted" style="margin-top:6px;">Pathways</div>
+  <div>${pathways
+    .map((x) => `<span class="pill">${escapeHtml(String(x))}</span>`)
+    .join(" ")}</div>
+`
+              : "";
+
+            // Header line
+            const header = `
+          <div class="row" style="gap:6px;flex-wrap:wrap;">
+            <strong style="font-size:18px;">${escapeHtml(
+              (id.symbol || sym).toUpperCase()
+            )}</strong>
+            <span class="muted">
+              ${id.ensembl_id ? `• ${escapeHtml(id.ensembl_id)}` : ""}
+              ${id.entrez_id ? ` • Entrez:${escapeHtml(id.entrez_id)}` : ""}
+              ${id.uniprot_id ? ` • UniProt:${escapeHtml(id.uniprot_id)}` : ""}
+            </span>
+          </div>`;
+
+            // Location + transcript stats
+            const txCount =
+              txp.transcript_count ??
+              (txp.transcripts
+                ? Object.keys(txp.transcripts).length
+                : undefined);
+            const spanBP = txp.max_transcript_span_bp;
+            const meta = `
+          <div class="muted" style="margin-top:4px;">
+            chr${escapeHtml(loc.chrom || "?")} ${loc.start || "?"}–${
+              loc.end || "?"
+            } ${loc.strand || ""} •
+            ${
+              txCount != null
+                ? `Transcripts: ${escapeHtml(String(txCount))}`
+                : ""
+            }${spanBP ? ` • Max span: ${escapeHtml(String(spanBP))} bp` : ""}
+          </div>`;
+
+            // Functions (short preview)
+            const fn = Array.isArray(anns.functions) ? anns.functions[0] : "";
+            const fnPreview = fn
+              ? fn.split(". ").slice(0, 2).join(". ") +
+                (fn.includes(". ") ? "…" : "")
+              : "";
+            const fnHtml = fnPreview
+              ? `
+          <div class="muted" style="margin-top:6px;">Function</div>
+          <div class="mono" style="white-space:pre-wrap;">${escapeHtml(
+            fnPreview
+          )}</div>`
+              : "";
+
+            // Interactions summary (+ counts) — compact pills inside <details>
+            const human = inter.human_interactions || {};
+            const nonhuman = inter.nonhuman_interactions || {};
+
+            // helper: compact pill list
+            const pillList = (arr, max = 30) => {
+              const take = (arr || []).slice(0, max);
+              const overflow = (arr || []).length - take.length;
+              return (
+                take
+                  .map(
+                    (x) =>
+                      `<span class="pill" style="margin:2px 4px 2px 0;">${escapeHtml(
+                        String(x)
+                      )}</span>`
+                  )
+                  .join("") +
+                (overflow > 0
+                  ? `<span class="pill" title="+${overflow} more">+${overflow}</span>`
+                  : "")
+              );
+            };
+
+            // summarize counts per evidence type
+            const sumCount = (obj) =>
+              Object.values(obj).reduce(
+                (a, arr) => a + (Array.isArray(arr) ? arr.length : 0),
+                0
+              );
+            const nExpHuman = sumCount(human);
+            const nExpNon = sumCount(nonhuman);
+
+            // per-type dropdown content
+            const typeSection = (label, obj) => {
+              const types = Object.entries(obj || {}).filter(
+                ([, arr]) => Array.isArray(arr) && arr.length
+              );
+              if (!types.length) return "";
+              return types
+                .map(
+                  ([t, arr]) => `
+    <div style="margin:6px 0;">
+      <div class="muted" style="margin-bottom:4px;">${escapeHtml(t)} (${
+                    arr.length
+                  })</div>
+      <div>${pillList(arr, 36)}</div>
+    </div>
+  `
+                )
+                .join("");
+            };
+
+            const interHtml =
+              nExpHuman || nExpNon
+                ? `
+  <div class="muted" style="margin-top:6px;">Interactions</div>
+  <div>
+    ${nExpHuman ? `<span class="pill">Human: ${nExpHuman}</span>` : ""}
+    ${nExpNon ? `<span class="pill">Non-human: ${nExpNon}</span>` : ""}
+  </div>
+  <details style="margin-top:6px;">
+    <summary class="muted" style="cursor:pointer;">Show partners</summary>
+    <div style="margin-top:8px;">
+      ${typeSection("Human", human)}
+      ${typeSection("Non-human", nonhuman)}
+    </div>
+  </details>
+`
+                : "";
+
+            // GO enrichment toggle (default PAN) — NO inline <script>!
+            const enr = g.go_enrichment || g.interactions?.go_enrichment || {};
+            const pan = enr.pan_go || {};
+            const old = enr.old_go || {};
+            const blockId = `go_${sym}_${Math.random()
+              .toString(36)
+              .slice(2, 7)}`;
+
+            function goListHTML(obj) {
+              const sect = ["BP", "MF", "CC"]
+                .map((k) => {
+                  const arr = (obj && obj[k]) || [];
+                  return arr.length
+                    ? `<div style="margin-top:4px;"><strong>${k}</strong>: ${arr
+                        .slice(0, 8)
+                        .map((x) => escapeHtml(String(x)))
+                        .join("; ")}</div>`
+                    : "";
+                })
+                .join("");
+              return sect || `<div class="muted">No GO enrichment.</div>`;
+            }
+
+            const goHtml =
+              Object.keys(pan).length || Object.keys(old).length
+                ? `
+  <div class="muted" style="margin-top:6px;">GO Enrichment</div>
+  <div class="row" style="gap:6px; margin-bottom:6px;">
+    <label class="pill"><input type="radio" name="${blockId}" value="pan" checked> pan_go</label>
+    <label class="pill"><input type="radio" name="${blockId}" value="old"> old_go</label>
+  </div>
+  <div id="${blockId}_content"
+       class="mono"
+       data-go-block="${blockId}"
+       data-go-pan='${escapeHtml(JSON.stringify(pan))}'
+       data-go-old='${escapeHtml(JSON.stringify(old))}'
+       style="white-space:normal; line-height:1.35;">
+    ${goListHTML(pan)}
+  </div>
+`
+                : "";
+
+            // GWAS summary
+            // GWAS summary (pills + compact table)
+            const gwasHtml =
+              gwas && gwas.found
+                ? `
+<div class="muted" style="margin-top:6px;">GWAS</div>
+<div class="row" style="gap:6px;flex-wrap:wrap;">
+  <span class="pill">Assoc: ${escapeHtml(
+    String(gwas.total_associations || 0)
+  )}</span>
+  <span class="pill">Sig: ${escapeHtml(
+    String(gwas.significant_associations || 0)
+  )}</span>
+  <span class="pill">Studies: ${escapeHtml(
+    String(gwas.total_studies || 0)
+  )}</span>
+  <span class="pill">Variants: ${escapeHtml(
+    String(gwas.variant_count || 0)
+  )}</span>
+  <span class="pill">Traits: ${escapeHtml(
+    String(gwas.trait_link_count || 0)
+  )}</span>
+</div>
+${
+  Array.isArray(gwas.top_traits) && gwas.top_traits.length
+    ? (() => {
+        const rows = gwas.top_traits
+          .slice(0, 10)
+          .map((t) => {
+            const rs = String(t.rsid || "");
+            const rsLink =
+              rs && /^rs/i.test(rs)
+                ? `<a href="https://www.ncbi.nlm.nih.gov/snp/${encodeURIComponent(
+                    rs
+                  )}" target="_blank" rel="noopener">${escapeHtml(rs)}</a>`
+                : escapeHtml(rs || "—");
+            const pv = String(t.p_value ?? "—");
+            const risk = t.risk_score != null ? String(t.risk_score) : "—";
+            return `<tr>
+          <td class="wrap">${escapeHtml(String(t.trait || "—"))}</td>
+          <td>${rsLink}</td>
+          <td>${escapeHtml(pv)}</td>
+          <td>${escapeHtml(risk)}</td>
+        </tr>`;
+          })
+          .join("");
+        return `
+        <div style="margin-top:8px;">
+          <div class="muted" style="margin-bottom:6px;">Top traits (per gene)</div>
+          <div style="overflow:auto; max-height:240px;">
+            <table class="vs-table" style="table-layout:auto; width:100%;">
+              <thead>
+                <tr><th class="wrap">Trait</th><th>rsID</th><th>p-value</th><th>Risk</th></tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>`;
+      })()
+    : ""
+}
+`
+                : "";
+
+            blocks.push(
+              `<div class="card" style="margin-bottom:10px;">
+             ${header}
+             ${meta}
+             ${fnHtml}
+             ${pathHtml}
+             ${interHtml}
+             ${goHtml}
+             ${gwasHtml}
+           </div>`
+            );
+          }
+
+          if (blocks.length) {
+            mount.innerHTML = blocks.join("");
+            card.style.display = "block";
+            wireGoToggles();
+            return;
+          }
+        } catch (e) {
+          /* fall through to state-based rendering */
+        }
+
+        // Fallback: render from in-memory state 
+        const ge =
+          st?.gene_entities && typeof st.gene_entities === "object"
+            ? st.gene_entities
+            : {};
+        const basic = Object.entries(ge)
+          .map(([gene, obj]) => {
+            if (!obj || typeof obj !== "object") return "";
+            const id = obj.identifiers || {};
+            const sym = id.symbol || gene;
+            const ens = id.ensembl_id || "";
+            const uni = id.uniprot_id || "";
+            const entrez = id.entrez_id || "";
+            const tx = obj.transcriptome || {};
+            const nTx =
+              tx.transcript_count ??
+              (tx.transcripts ? Object.keys(tx.transcripts).length : undefined);
+            const spanMin =
+              tx.median_transcript_span_bp || tx.min_transcript_span_bp;
+            const spanMax = tx.max_transcript_span_bp;
+            const varCount =
+              obj.variants && typeof obj.variants === "object"
+                ? Object.keys(obj.variants).length
+                : 0;
+            const header = `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><strong>${escapeHtml(
+              (sym || "").toUpperCase()
+            )}</strong><span class="muted">${
+              ens ? `• ${escapeHtml(ens)}` : ""
+            }${entrez ? ` • Entrez:${escapeHtml(entrez)}` : ""}${
+              uni ? ` • UniProt:${escapeHtml(uni)}` : ""
+            }</span></div>`;
+            const meta = `<div class="muted" style="margin-top:4px;">${
+              nTx != null ? `Transcripts: ${nTx}` : ""
+            }${
+              spanMin || spanMax
+                ? ` • Span: ${escapeHtml(String(spanMin || "?"))}–${escapeHtml(
+                    String(spanMax || "?")
+                  )} bp`
+                : ""
+            } • Variants in state: ${varCount}</div>`;
+            return `<div style="margin-bottom:12px;">${header}${meta}</div>`;
+          })
+          .join("");
+        if (basic.trim()) {
+          setHTML("geneSummary", basic);
+          show("geneSummaryCard");
+        } else hide("geneSummaryCard");
+      }
+
+      /********************
+       * Variant Summary (FILES FIRST, then fallback to state)
+       ********************/
+      function normChrom(c) {
+        if (!c) return "";
+        c = String(c);
+        if (/^chr/i.test(c)) c = c.replace(/^chr/i, "");
+        if (/^m(t)?$/i.test(c)) return "MT";
+        return c;
+      }
+      function toFixedMaybe(x) {
+        const n = Number(x);
+        if (!Number.isFinite(n)) return x == null ? "" : String(x);
+        if (Math.abs(n) !== 0 && (Math.abs(n) < 1e-3 || Math.abs(n) >= 1e5))
+          return n.toExponential(3);
+        return n.toFixed(6);
+      }
+      async function loadVariantTables() {
+        const base = "variants/";
+        const [variantsTxt, locTxt, pgtTxt, pgcTxt, fpTxt, afTxt, sumTxt] =
+          await Promise.all([
+            fetchTextCached(base + "variants.csv"),
+            fetchTextCached(base + "locations.csv"),
+            fetchTextCached(base + "per_gene_traits.csv").catch(() => ""), // optional
+            fetchTextCached(base + "per_gene_context.csv").catch(() => ""), // optional
+            fetchTextCached(base + "functional_predictions.csv").catch(
+              () => ""
+            ), // optional
+            fetchTextCached(base + "allele_frequencies.csv").catch(() => ""), // optional
+            fetchTextCached(base + "summaries.csv").catch(() => ""), // optional
+          ]);
+        const V = parseCSV(variantsTxt);
+        const L = parseCSV(locTxt);
+        const T = pgtTxt ? parseCSV(pgtTxt) : [];
+        const C = pgcTxt ? parseCSV(pgcTxt) : [];
+        const FP = fpTxt ? parseCSV(fpTxt) : [];
+        const AF = afTxt ? parseCSV(afTxt) : [];
+        const SM = sumTxt ? parseCSV(sumTxt) : [];
+
+        // Index helpers
+        const locByVar = {};
+        for (const r of L) {
+          const vid = r.variant_id;
+          (locByVar[vid] ||= []).push(r);
+        }
+        const traitByVarGene = {}; // choose min p_value per gene
+        for (const r of T) {
+          const vid = r.variant_id,
+            gene = r.gene;
+          const p = Number(r.p_value);
+          if (!vid || !gene || Number.isNaN(p)) continue;
+          const key = vid + "|" + gene;
+          const cur = traitByVarGene[key];
+          if (!cur || p < cur.p) traitByVarGene[key] = { trait: r.trait, p };
+        }
+        const anyGeneByVar = {}; // fallback gene + context/category
+        for (const r of C) {
+          const vid = r.variant_id,
+            gene = r.gene;
+          if (!vid || !gene) continue;
+          if (!anyGeneByVar[vid])
+            anyGeneByVar[vid] = {
+              gene,
+              context: r.context || "",
+              category: r.variant_category || "",
+            };
+        }
+        const fpByVarGene = {}; // tool → score (stringified or first)
+        for (const r of FP) {
+          const vid = r.variant_id,
+            gene = r.gene,
+            tool = (r.tool || "").toLowerCase();
+          if (!vid || !gene || !tool) continue;
+          const key = vid + "|" + gene;
+          fpByVarGene[key] ||= {};
+          fpByVarGene[key][tool] = fpByVarGene[key][tool]
+            ? `${fpByVarGene[key][tool]}, ${r.score}`
+            : `${r.score}`;
+        }
+        const afByVar = {}; // prefer gnomad
+        for (const r of AF) {
+          const vid = r.variant_id;
+          if (!vid) continue;
+          const src = String(r.source || "");
+          if (/gnomad/i.test(src)) afByVar[vid] = r.af;
+          else if (!afByVar[vid]) afByVar[vid] = r.af;
+        }
+        const summaryByVar = {};
+        for (const r of SM) {
+          summaryByVar[r.variant_id] = r.summary_text;
+        }
+
+        return {
+          V,
+          locByVar,
+          traitByVarGene,
+          anyGeneByVar,
+          fpByVarGene,
+          afByVar,
+          summaryByVar,
+        };
+      }
+
+      function wireGoToggles() {
+        document.querySelectorAll("[data-go-block]").forEach((el) => {
+          const blockId = el.getAttribute("data-go-block");
+          const radios = document.querySelectorAll(`input[name="${blockId}"]`);
+          if (!radios.length) return;
+
+          const decode = (s) => {
+            try {
+              return JSON.parse(s || "{}");
+            } catch {
+              return {};
+            }
+          };
+          const pan = decode(el.getAttribute("data-go-pan"));
+          const old = decode(el.getAttribute("data-go-old"));
+
+          const render = (obj) => {
+            const html = ["BP", "MF", "CC"]
+              .map((k) => {
+                const arr = (obj && obj[k]) || [];
+                return arr.length
+                  ? `<div style="margin-top:4px;"><strong>${k}</strong>: ${arr
+                      .slice(0, 8)
+                      .map((x) => escapeHtml(String(x)))
+                      .join("; ")}</div>`
+                  : "";
+              })
+              .join("");
+            el.innerHTML = html || `<div class="muted">No GO enrichment.</div>`;
+          };
+
+          radios.forEach((r) => {
+            r.addEventListener("change", () =>
+              render(r.value === "pan" ? pan : old)
+            );
+          });
+        });
+      }
+
+      function pickBestLoc(locArr) {
+        // prefer GRCh38*, else GRCh37*
+        if (!Array.isArray(locArr) || !locArr.length)
+          return { chrom: "", pos: "", ref: "", alt: "" };
+        let best = null;
+        for (const r of locArr) {
+          const b = String(r.build || "").toLowerCase();
+          if (b.startsWith("grch38")) {
+            best = r;
+            break;
+          }
+          if (!best && b.startsWith("grch37")) best = r;
+        }
+        best = best || locArr[0];
+        const ref = ((r) => (Array.isArray(r) ? r.join(",") : String(r || "")))(
+          best.ref
+        );
+        const alt = ((r) => (Array.isArray(r) ? r.join(",") : String(r || "")))(
+          best.alt
+        );
+        return { chrom: normChrom(best.chrom), pos: best.pos || "", ref, alt };
+      }
+
+      async function renderVariantSummary(st) {
+        const root = document.getElementById("variantSummary");
+        const card = document.getElementById("variantSummaryCard");
+        if (!root || !card) return;
+
+        // Try FILES first
+        let rows = [];
+        try {
+          const {
+            V,
+            locByVar,
+            traitByVarGene,
+            anyGeneByVar,
+            fpByVarGene,
+            afByVar,
+          } = await loadVariantTables();
+          for (const v of V) {
+            const vid = v.variant_id;
+            const loc = pickBestLoc(locByVar[vid] || []);
+            // Choose a "top gene": min p over per_gene_traits; else any from per_gene_context
+            let gene = null,
+              topTrait = "—",
+              topP = null,
+              category = "—",
+              context = "—";
+            // sweep trait map to pick best p over all genes
+            let best = null;
+            for (const key in traitByVarGene) {
+              if (!key.startsWith(vid + "|")) continue;
+              const rec = traitByVarGene[key];
+              if (!best || rec.p < best.p) {
+                best = rec;
+                gene = key.split("|")[1];
+              }
+            }
+            if (best) {
+              topTrait = best.trait;
+              topP = best.p;
+            }
+            if (!gene && anyGeneByVar[vid]) {
+              gene = anyGeneByVar[vid].gene;
+              category = anyGeneByVar[vid].category || "—";
+              context = anyGeneByVar[vid].context || "—";
+            }
+            if (gene && anyGeneByVar[vid] && anyGeneByVar[vid].gene === gene) {
+              category = anyGeneByVar[vid].category || category;
+              context = anyGeneByVar[vid].context || context;
+            }
+            const fp = fpByVarGene[vid + "|" + (gene || "")] || {};
+            const am = fp["alphamissense"] || fp["alpha_missense"] || "—";
+            const sei = fp["sei"] || "—";
+            const af = afByVar[vid] != null ? toFixedMaybe(afByVar[vid]) : "—";
+
+            rows.push({
+              gene: gene || "—",
+              rsid: v.variant_id || "—",
+              chrom: loc.chrom || "—",
+              grch38: loc.pos || "—",
+              grch37: "", // could be filled by scanning non-best GRCh37 entry 
+              ref: loc.ref || "—",
+              alt: loc.alt || "—",
+              context,
+              category,
+              consequence: v.consequence || "—",
+              clinvar: v.clinvar || "—",
+              sei,
+              alphamissense: am,
+              expr: "—",
+              topTrait,
+              topP: topP == null ? "—" : String(topP),
+              gnomadAF: af,
+              traits: "—",
+            });
+          }
+        } catch (e) {
+          console.warn(
+            "File-based variant load failed, falling back to state:",
+            e
+          );
+          rows = buildVariantRowsFromGeneEntities(st || {});
+        }
+
+        // Nothing?
+        if (!rows.length) {
+          card.style.display = "none";
+          root.innerHTML = "";
+          return;
+        }
+
+        // Build table
+        // Dynamic column visibility (hide columns that are entirely "—"/empty)
+        // Columns used in the VISIBLE table
+        const UI_COL_KEYS = [
+          { key: "gene", label: "Gene" },
+          { key: "rsid", label: "RSID" },
+          { key: "chrom", label: "Chrom" },
+          { key: "grch38", label: "GRCh38 pos" },
+          { key: "grch37", label: "GRCh37 pos" },
+          { key: "context", label: "Context" },
+          { key: "category", label: "Category" },
+          { key: "consequence", label: "Consequence" },
+          { key: "clinvar", label: "ClinVar" },
+          { key: "sei", label: "SEI" },
+          { key: "alphamissense", label: "AlphaMissense" },
+          { key: "expr", label: "Expr preds" },
+          { key: "topTraitP", label: "Top trait (p)" },
+          { key: "gnomadAF", label: "GnomAD alt AF" },
+          { key: "traits", label: "Traits" },
+        ];
+
+        // Columns used in the CSV (includes Ref/Alt + separate p)
+        const CSV_COL_KEYS = [
+          { key: "gene", label: "Gene" },
+          { key: "rsid", label: "RSID" },
+          { key: "chrom", label: "Chrom" },
+          { key: "grch38", label: "GRCh38 pos" },
+          { key: "grch37", label: "GRCh37 pos" },
+          { key: "ref", label: "Ref" },
+          { key: "alt", label: "Alt" },
+          { key: "context", label: "Context" },
+          { key: "category", label: "Category" },
+          { key: "consequence", label: "Consequence" },
+          { key: "clinvar", label: "ClinVar" },
+          { key: "sei", label: "SEI" },
+          { key: "alphamissense", label: "AlphaMissense" },
+          { key: "expr", label: "Expr preds" },
+          { key: "topTrait", label: "Top trait (by p)" },
+          { key: "topP", label: "Top p-value" },
+          { key: "gnomadAF", label: "GnomAD alt AF" },
+          { key: "traits", label: "Traits" },
+        ];
+
+        // Keep a column if any row has a value that's not empty/"—"
+        const hasValue = (v) => {
+          if (v == null) return false;
+          const s = String(v).trim();
+          return s !== "" && s !== "—";
+        };
+        const activeCols = UI_COL_KEYS.filter((col) =>
+          rows.some((r) => hasValue(r[col.key]))
+        );
+        if (!activeCols.length) activeCols.push(UI_COL_KEYS[0], UI_COL_KEYS[1]); // safety
+        const cols = activeCols.map((c) => c.label); // (for convenience)
+
+        const toCSV = () => {
+          const header = CSV_COL_KEYS.map((c) => c.label).join(",");
+          const body = rows
+            .map((r) =>
+              CSV_COL_KEYS.map((c) => {
+                let v = r[c.key];
+                const s = String(v ?? "");
+                return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+              }).join(",")
+            )
+            .join("\n");
+          return header + "\n" + body;
+        };
+
+        const thead = `
+  <div class="vs-toolbar">
+    <input id="vsFilter" type="text" placeholder="Filter (gene, rsID, trait, consequence…)" aria-label="Filter variants" style="flex:1;max-width:360px;">
+    <button id="vsCsvBtn" class="ghost">Download CSV</button>
+  </div>
+  <div class="vs-scroll">
+    <table class="vs-table">
+      <colgroup>
+        ${activeCols
+          .map((c) => {
+            const cls = /^(Gene)$/.test(c.label)
+              ? "col-gene"
+              : /^(RSID)$/.test(c.label)
+              ? "col-id"
+              : /(pos)$/i.test(c.label)
+              ? "col-pos"
+              : /(AF|p-value)$/i.test(c.label)
+              ? "col-num"
+              : /(Ref|Alt)/.test(c.label)
+              ? "col-seq"
+              : "";
+            return `<col class="${cls}">`;
+          })
+          .join("")}
+      </colgroup>
+      <thead><tr>${activeCols
+        .map(
+          (c) =>
+            `<th class="${/(Ref|Alt)/.test(c.label) ? "seq" : ""}">${escapeHtml(
+              c.label
+            )}</th>`
+        )
+        .join("")}</tr></thead>
+      <tbody id="vsTbody"></tbody>
+    </table>
+  </div>
+`;
+        root.innerHTML = thead;
+
+        function renderBody(filtered) {
+          const tbody = byId("vsTbody");
+          const list = filtered || rows;
+
+          const rsLink = (rs) => {
+            const s = String(rs || "").trim();
+            if (!s) return "—";
+            return /^rs\d+$/i.test(s)
+              ? `<a href="https://www.ncbi.nlm.nih.gov/snp/${encodeURIComponent(
+                  s
+                )}" target="_blank" rel="noopener">${escapeHtml(s)}</a>`
+              : escapeHtml(s);
+          };
+
+          tbody.innerHTML = list
+            .map((r) => {
+              const tds = activeCols
+                .map((c) => {
+                  const k = c.key;
+                  if (k === "rsid") return `<td>${rsLink(r[k])}</td>`;
+
+                  // Position cells: show pos, but on hover reveal Ref/Alt via title
+                  if (k === "grch38" || k === "grch37") {
+                    const pos = r[k] || "—";
+                    const titleBits = [];
+                    if (hasValue(r.ref)) titleBits.push(`Ref: ${r.ref}`);
+                    if (hasValue(r.alt)) titleBits.push(`Alt: ${r.alt}`);
+                    const title = titleBits.length
+                      ? ` title="${escapeHtml(titleBits.join(" | "))}"`
+                      : "";
+                    return `<td${title}>${escapeHtml(pos)}</td>`;
+                  }
+
+                  if (k === "expr" || k === "topTraitP" || k === "traits")
+                    return `<td class="wrap">${escapeHtml(r[k] || "—")}</td>`;
+
+                  return `<td>${escapeHtml(r[k] || "—")}</td>`;
+                })
+                .join("");
+              return `<tr>${tds}</tr>`;
+            })
+            .join("");
+        }
+
+        renderBody(rows);
+        show("variantSummaryCard");
+
+        // Wire CSV + filter
+        byId("vsCsvBtn")?.addEventListener("click", () => {
+          const blob = new Blob([toCSV()], { type: "text/csv;charset=utf-8" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "variant_summary.csv";
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 500);
+        });
+        byId("vsFilter")?.addEventListener("input", (e) => {
+          const q = String(e.target.value || "")
+            .toLowerCase()
+            .trim();
+          if (!q) {
+            renderBody(rows);
+            return;
+          }
+          const filtered = rows.filter((r) => {
+            const hay = [
+              r.gene,
+              r.rsid,
+              r.chrom,
+              r.grch38,
+              r.grch37,
+              r.ref,
+              r.alt,
+              r.context,
+              r.category,
+              r.consequence,
+              r.clinvar,
+              r.sei,
+              r.alphamissense,
+              r.expr,
+              r.topTraitP,
+              r.topTrait,
+              r.topP,
+              r.gnomadAF,
+              r.traits,
+            ]
+              .map((x) => String(x ?? ""))
+              .join(" ")
+              .toLowerCase();
+            return hay.includes(q);
+          });
+
+          renderBody(filtered);
+        });
+      }
+
+      /********************
+       * Fallback builders from in-state variants (kept for resilience)
+       ********************/
+      function parseChrPos(s) {
+        s = String(s || "");
+        var m = s.match(/(?:chr)?([0-9]+|X|Y|MT)[:\s]+(\d+)/i);
+        return m ? { chrom: m[1], pos: Number(m[2]) } : {};
+      }
+      function toStrAllele(x) {
+        if (x == null) return "";
+        if (Array.isArray(x)) return x.join(",");
+        return String(x);
+      }
+      function pickBuild(loc_by_build, want) {
+        if (!loc_by_build || typeof loc_by_build !== "object") return null;
+        var keys = Object.keys(loc_by_build);
+        var wantLC = String(want).toLowerCase();
+        var k = keys.find((k) => String(k).toLowerCase().startsWith(wantLC));
+        if (!k && wantLC === "grch38")
+          k = keys.find((k) => String(k).toLowerCase().startsWith("grch37"));
+        if (!k && wantLC === "grch37")
+          k = keys.find((k) => String(k).toLowerCase().startsWith("grch38"));
+        return k ? loc_by_build[k] || null : null;
+      }
+      function compactKV(obj, keys) {
+        if (!obj || typeof obj !== "object") return "";
+        const parts = [];
+        for (const k of keys) {
+          const v = obj[k];
+          if (v == null) continue;
+          parts.push(
+            `${k}:${
+              typeof v === "number"
+                ? Math.abs(v) !== 0 &&
+                  (Math.abs(v) < 1e-3 || Math.abs(v) >= 1e5)
+                  ? v.toExponential(3)
+                  : v.toFixed(3)
+                : String(v)
+            }`
+          );
+        }
+        return parts.join(", ");
+      }
+      function topExprString(exRec) {
+        if (!exRec || typeof exRec !== "object") return "";
+        const flat = [];
+        for (const [k, v] of Object.entries(exRec)) {
+          let val = null;
+          if (typeof v === "number") val = v;
+          else if (v && typeof v === "object" && typeof v.z === "number")
+            val = v.z;
+          if (val == null) continue;
+          flat.push({ k, z: Number(val) });
+        }
+        flat.sort((a, b) => Math.abs(b.z) - Math.abs(a.z));
+        return flat
+          .slice(0, 3)
+          .map((e) => `${e.k}:${e.z.toFixed(2)}`)
+          .join(", ");
+      }
+
+      function getGeneMap(st) {
+        if (
+          st?.gene_entities &&
+          typeof st.gene_entities === "object" &&
+          Object.keys(st.gene_entities).length
+        ) {
+          return st.gene_entities;
+        }
+        const raw =
+          st?.variant_entities ?? st?.variants ?? st?.variant_list ?? [];
+        const arr = Array.isArray(raw) ? raw : Object.values(raw || {});
+        const gm = {};
+        for (const item of arr) {
+          const geneField =
+            item.genes ?? item.gene_symbols ?? item.gene ?? item.symbol ?? [];
+          const genes = Array.isArray(geneField)
+            ? geneField
+            : String(geneField || "")
+                .split(/[;,|]/)
+                .map((s) => s.trim())
+                .filter(Boolean);
+          if (!genes.length) genes.push("NA");
+          for (const g of genes) {
+            const G = (gm[g] ||= { variants: {} });
+            const id =
+              item.rsID ||
+              item.rsid ||
+              item.id ||
+              item.variant_id ||
+              [item.chrom || item.chr, item.pos || item.position || item.coord]
+                .filter(Boolean)
+                .join(":") ||
+              Math.random().toString(36).slice(2, 9);
+            const pgc =
+              (item.per_gene_context && item.per_gene_context[g]) ||
+              item.per_gene ||
+              {};
+            const pgt =
+              (item.per_gene_traits && item.per_gene_traits[g]) ||
+              (item.traits_by_gene && item.traits_by_gene[g]) ||
+              {};
+            G.variants[id] = {
+              ...item,
+              per_gene_context: { ...(item.per_gene_context || {}), [g]: pgc },
+              per_gene_traits: { ...(item.per_gene_traits || {}), [g]: pgt },
+            };
+          }
+        }
+        return gm;
+      }
+      function buildVariantRowsFromGeneEntities(st) {
+        var rows = [];
+        var ge = getGeneMap(st);
+        if (!ge || typeof ge !== "object") return rows;
+        for (var gene in ge) {
+          var gObj = ge[gene];
+          if (!gObj || typeof gObj !== "object") continue;
+          var vdict = gObj.variants;
+          if (!vdict || typeof vdict !== "object") continue;
+          for (var k in vdict) {
+            var v = vdict[k] || {};
+            var rsid = v.rsID || v.rsid || v.id || "";
+            var loc38 = pickBuild(v.loc_by_build, "GRCh38") || {};
+            var loc37 = pickBuild(v.loc_by_build, "GRCh37") || {};
+
+            var chrom = normChrom(
+              loc38.chrom || loc37.chrom || v.chrom || v.chr
+            );
+            var pos38 =
+              loc38.pos || v.pos38 || v.position_38 || v.hg38_position;
+            var pos37 =
+              loc37.pos || v.pos37 || v.position_37 || v.hg19_position;
+
+            if (!chrom || (!pos38 && !pos37)) {
+              var guess = parseChrPos(v.position || v.locus || v.coord || "");
+              if (!chrom && guess.chrom) chrom = normChrom(guess.chrom);
+              if (!pos38 && guess.pos) pos38 = guess.pos;
+            }
+
+            var ref = toStrAllele(
+              loc38.ref || loc37.ref || v.ref || v.reference || v.ref_allele
+            );
+            var alt = toStrAllele(
+              loc38.alt || loc37.alt || v.alt || v.alternate || v.alt_allele
+            );
+            var ctxRec = (v.per_gene_context && v.per_gene_context[gene]) || {};
+            var context = ctxRec.context || "";
+            var category = ctxRec.variant_category || ctxRec.category || "";
+            var consequence =
+              v.consequence ||
+              v.most_severe_consequence ||
+              v.vep_consequence ||
+              "";
+            var clinvar =
+              v.clinvar_significance || v.clin_sig || v.clinvar || "";
+            var am = "—";
+            var sei = "—";
+            var gnomadAF = "—";
+
+            rows.push({
+              gene,
+              rsid,
+              chrom,
+              grch38: pos38 || "—",
+              grch37: pos37 || "—",
+              ref: ref || "—",
+              alt: alt || "—",
+              context,
+              category,
+              consequence,
+              clinvar,
+              sei,
+              alphamissense: am,
+              expr: "—",
+              topTrait: "—",
+              topP: "—",
+              topTraitP:
+                topTrait && topP != null
+                  ? `${String(topTrait)} (p=${String(topP)})`
+                  : topTrait
+                  ? String(topTrait)
+                  : "—",
+              gnomadAF,
+              traits: Array.isArray(v.traits)
+                ? v.traits.join("; ")
+                : v.traits || "—",
+            });
+          }
+        }
+        rows.sort(function (a, b) {
+          var g = String(a.gene).localeCompare(String(b.gene));
+          if (g !== 0) return g;
+          var pa = a.top_p == null ? Infinity : a.top_p,
+            pb = b.top_p == null ? Infinity : b.top_p;
+          return pa - pb;
+        });
+        return rows;
+      }
+
+      function wireJsonFile(input) {
+        if (!input) return;
+        input.addEventListener("change", () => {
+          const f = input.files?.[0];
+          if (!f) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              STATE = JSON.parse(String(reader.result || "{}"));
+              ARTIFACT_BASE = ""; // do NOT assume sibling paths
+              LOCAL_FILES.clear(); // not in folder mode
+              refresh();
+            } catch {
+              alert("Invalid JSON file.");
+            }
+          };
+          reader.readAsText(f);
+          input.value = "";
+        });
+      }
+
+      /********************
+       * Entities 
+       ********************/
+      function renderEntities(st) {
+        function escapeHtml(s) {
+          return String(s ?? "").replace(
+            /[&<>"']/g,
+            (ch) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              }[ch])
+          );
+        }
+        function asPills(arr) {
+          return (arr || [])
+            .filter(Boolean)
+            .map((x) => `<span class="pill">${escapeHtml(String(x))}</span>`)
+            .join(" ");
+        }
+        var ge =
+          st && st.gene_entities && typeof st.gene_entities === "object"
+            ? Object.keys(st.gene_entities)
+            : [];
+        var genes = ge.length ? ge : st && st.genes ? st.genes : [];
+        var html = "";
+        if (genes && genes.length) {
+          html += asPills(genes);
+        }
+        var tools = [];
+        var candidates = [
+          st?.tools_used,
+          st?.ui?.tools_used,
+          st?.llm_json?.tools_used,
+          st?.tools,
+          st?.ui?.tools,
+          st?.pipeline?.tools,
+          st?.tool_calls,
+        ];
+        candidates.forEach(function (t) {
+          if (!t) return;
+          if (Array.isArray(t)) {
+            t.forEach(function (x) {
+              if (!x) return;
+              if (typeof x === "string") tools.push(x);
+              else if (typeof x === "object") {
+                tools.push(x.name || x.tool || x.id || x.type);
+              }
+            });
+          } else if (typeof t === "object") {
+            Object.keys(t).forEach(function (k) {
+              tools.push(k);
+            });
+          } else if (typeof t === "string") {
+            tools = tools.concat(t.split(/[,\s]+/));
+          }
+        });
+        tools = Array.from(new Set(tools.filter(Boolean)));
+        if (tools.length) {
+          if (html) html += '<div style="height:6px"></div>';
+          html +=
+            '<div class="muted" style="margin-bottom:4px;">Tools used</div>';
+          html += asPills(tools);
+        }
+        if (html) {
+          document.getElementById("entities").innerHTML = html;
+          document.getElementById("entitiesCard").style.display = "block";
+        } else {
+          document.getElementById("entitiesCard").style.display = "none";
+          document.getElementById("entities").innerHTML = "";
+        }
+      }
+
+      /********************
+       * IO helpers
+       ********************/
+      async function fetchState() {
+        try {
+          const res = await fetch("state", { cache: "no-store" });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch {
+          return null;
+        }
+      }
+      async function runServer(q) {
+        try {
+          await fetch("run?q=" + encodeURIComponent(q), { cache: "no-store" });
+        } catch {}
+        STATE = await fetchState();
+        setArtifactBaseFromState(STATE);
+        await refresh(q);
+      }
+
+      /********************
+       * Page wiring + refresh
+       ********************/
+      async function refresh(qOverride) {
+        if (!STATE) return;
+        if (HERO_SHOWN) {
+          HERO_SHOWN = false;
+          hide("hero");
+          show("grid");
+          show("toolbar");
+        }
+        if (qOverride) setText("question", qOverride);
+        safeRender("question", () => renderQuestion(STATE));
+        safeRender("answerVerified", () => renderAnswerVerified(STATE));
+        safeRender("entities", () => renderEntities(STATE));
+        safeRender("geneSummary", () => renderGeneSummary(STATE)); // FILES first
+        safeRender("variants", () => renderVariantSummary(STATE)); // FILES first
+        safeRender("protein", () => renderProt(STATE)); 
+        safeRender("chembl", () => renderChembl(STATE));
+        safeRender("twoSampleMR", () => renderTwoSampleMR(STATE));
+        safeRender("evidence", () => renderEvidence(STATE));
+        safeRender("raw", () => renderRaw(STATE));
+      }
+
+      // Broadcast theme change to iframes
+      function broadcastThemeToIframes() {
+        const isLight = document.body.classList.contains("light");
+        document.querySelectorAll("iframe.prot-frame").forEach((iframe) => {
+          try {
+            iframe.contentWindow?.postMessage(
+              { type: "theme", theme: isLight ? "light" : "dark" },
+              "*"
+            );
+          } catch (e) {
+            console.warn("Could not send theme to iframe:", e);
+          }
+        });
+      }
+
+      // Theme toggle button
+      byId("themeToggle")?.addEventListener("click", () => {
+        document.body.classList.toggle("light");
+        broadcastThemeToIframes();
+      });
+
+      // Also broadcast once on load (so iframe background is correct on first render)
+      window.addEventListener("load", broadcastThemeToIframes);
+
+      // Run actions
+      function wireRun(button, input) {
+        if (!button || !input) return;
+        const go = () => {
+          const q = input.value.trim();
+          if (!q) {
+            input.focus();
+            return;
+          }
+          runServer(q);
+        };
+        button.addEventListener("click", go);
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") go();
+        });
+      }
+      wireRun(byId("runBtn"), byId("q"));
+      wireRun(byId("runBtn2"), byId("q2"));
+
+      // Load JSON from file inputs
+      function wireJsonFile(input) {
+        if (!input) return;
+        input.addEventListener("change", () => {
+          const f = input.files?.[0];
+          if (!f) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              STATE = JSON.parse(String(reader.result || "{}"));
+              refresh();
+            } catch {
+              alert("Invalid JSON file.");
+            }
+          };
+          reader.readAsText(f);
+          input.value = "";
+        });
+      }
+      wireJsonFile(byId("jsonFile"));
+      wireJsonFile(byId("jsonFile2"));
+      wireFolderPicker(byId("folderPicker"));
+      wireFolderPicker(byId("folderPicker2"));
+
+      // Demo selector (manual)
+      byId("demoSelect")?.addEventListener("change", () => {
+        const v = byId("demoSelect").value;
+        if (!v) return;
+        fetch(v, { cache: "no-store" })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((j) => {
+            if (!j) {
+              alert("Could not load demo JSON.");
+              return;
+            }
+            STATE = j;
+            setArtifactBaseFromUrl(v);
+            refresh();
+          })
+          .catch(() => alert("Could not load demo JSON."));
+      });
+
+      // Download current state
+      byId("downloadBtn")?.addEventListener("click", () => {
+        if (!STATE) {
+          alert("No JSON loaded yet.");
+          return;
+        }
+        const blob = new Blob([JSON.stringify(STATE, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "alvessa_state.json";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      });
+
+      //saving
+      byId("savePageBtn")?.addEventListener("click", saveFullPageSnapshot);
+    </script>
+  </body>
+</html>

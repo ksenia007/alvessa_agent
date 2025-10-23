@@ -2,3114 +2,974 @@
 <html lang="en">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</title>
+
+  <!-- Favicon / icons -->
   <link rel="icon" href="favicon.ico?v=10" />
-  <link
-    rel="icon"
-    type="image/png"
-    sizes="32x32"
-    href="images/rocket_favicon_32.png?v=10"
-  />
-  <link
-    rel="icon"
-    type="image/png"
-    sizes="64x64"
-    href="images/rocket_favicon_64.png?v=10"
-  />
-  <link
-    rel="apple-touch-icon"
-    sizes="180x180"
-    href="images/rocket_favicon_180.png?v=10"
-  />
+  <link rel="icon" type="image/png" sizes="32x32" href="images/rocket_favicon_32.png?v=10" />
+  <link rel="icon" type="image/png" sizes="64x64" href="images/rocket_favicon_64.png?v=10" />
+  <link rel="apple-touch-icon" sizes="180x180" href="images/rocket_favicon_180.png?v=10" />
   <meta name="theme-color" content="#0b1020" />
-  <title>
-    Alvessa: An Agentic Evidence‑Grounded Research Assistant for Genomics
-  </title>
+
+  <!-- Markdown parser + sanitizer -->
+<script src="https://cdn.jsdelivr.net/npm/markdown-it@13/dist/markdown-it.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+
 
   <style>
     :root {
-      --bg: #0b1020;
-      --fg: #e6e8ef;
-      --card: #121832;
-      --muted: #aab4d6;
-      --line: #1e2a52;
-      --pill-bg: #1a2347;
-      --pill-line: #2a3a72;
-      --accent: #2a3a72;
-      --input: #0e1430;
-      --shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
-      --radius: 16px;
-      --r-sm: 10px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
-        Helvetica, Arial;
-    }
-    * {
-      box-sizing: border-box;
-    }
-    html,
-    body {
-      height: 100%;
-    }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--fg);
-      font-family: var(--sans);
-      overflow-anchor: none;
-    }
-    a {
-      color: inherit;
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-    .wrap {
-      max-width: 1100px;
-      margin: 24px auto;
-      padding: 0 16px;
-    }
-    .grid {
-      display: grid;
-      gap: 16px;
-      grid-template-columns: 1fr 1fr;
-    }
-    .full {
-      grid-column: 1 / -1;
-    }
-
-    /* Cards */
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 16px;
-      box-shadow: var(--shadow);
-    }
-    .title {
-      font-size: 20px;
-      font-weight: 700;
-      margin: 0 0 8px;
-    }
-    .muted {
-      color: var(--muted);
-      font-size: 12px;
-    }
-    .row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .mono {
-      font-family: var(--mono);
-    }
-    .pill {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: var(--pill-bg);
-      border: 1px solid var(--pill-line);
-      margin: 2px 6px 2px 0;
-      font-size: 12px;
-    }
-
-    /* Inputs */
-    button {
-      cursor: pointer;
-      background: #1b2450;
-      color: var(--fg);
-      border: 1px solid var(--pill-line);
-      border-radius: var(--r-sm);
-      padding: 8px 12px;
-    }
-    button.ghost {
-      background: transparent;
-    }
-    input[type="text"],
-    select {
-      background: var(--input);
-      color: var(--fg);
-      border: 1px solid var(--pill-line);
-      border-radius: var(--r-sm);
-      padding: 10px;
-    }
-    input[type="text"] {
-      width: 100%;
-    }
-
-    /* Brand */
-    .brand-header {
-      grid-column: 1/-1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 8px 0;
-    }
-    .logo-brand {
-      height: 44px;
-    }
-    .brand-title {
-      margin: 0;
-      font-weight: 800;
-      text-align: center;
-      font-size: clamp(24px, 3.2vw, 38px);
-      letter-spacing: 0.2px;
-    }
-
-    /* Hero */
-    #hero {
-      min-height: 50vh;
-      display: grid;
-      place-items: center;
-    }
-    #hero .card {
-      width: 100%;
-      max-width: 720px;
-      text-align: center;
-    }
-    #grid,
-    #toolbar {
-      display: none;
-    }
-
-    /* Spinner + status */
-    .spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid var(--accent);
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-      vertical-align: middle;
-      margin-right: 6px;
-    }
-    .spinner.big {
-      width: 28px;
-      height: 28px;
-      border-width: 3px;
-      margin-right: 8px;
-    }
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
+        /* DARK THEME (default) */
+        --bg: #0b1020;
+        --fg: #e6e8ef;
+        --card: #121832;
+        --muted: #aab4d6;
+        --line: #1e2a52;
+        --accent: #2a3a72;
+        --input: #0e1430;
+        --shadow: 0 6px 24px rgba(0,0,0,.2);
+        --radius: 16px;
+        --r-sm: 10px;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       }
-    }
-    .statusline {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 72ch;
-    }
+      body.light {
+        --bg: #ffffff;
+        --fg: #0b1020;
+        --card: #ffffff;
+        --muted: #6b7280;
+        --line: #d8dce6;
+        --input: #ffffff;
+        --shadow: 0 6px 24px rgba(0,0,0,.06);
+        --accent: #afc5ff; /* bright blue accent for light theme */
 
-    /* Variant Summary */
-    .vs-toolbar {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      justify-content: flex-end;
-      margin-bottom: 6px;
-    }
-    .vs-scroll {
-      overflow: auto;
-      max-height: 420px;
-    }
+      }
+      
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: var(--sans);
+        overflow-anchor: none;
+        transition: background 0.3s ease, color 0.3s ease;
+      }
+      a {
+        color: inherit;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      
+      /* GRID */
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "brand-header"
+          "main";
+        align-items: start;
+      }
+      .brand-header {
+        grid-area: brand-header;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 8px 0;
+      }
+      .logo-brand { height: 44px; }
+      .brand-title {
+        margin: 0;
+        font-weight: 800;
+        text-align: center;
+        font-size: clamp(24px,3.2vw,38px);
+        letter-spacing: .2px;
+      }
+      .main-col { grid-area: main; min-width: 0; }
+      
+      /* CARD */
+      .card {
+        background: var(--card);
+        border: none;
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: var(--shadow);
+        transition: transform .2s ease, box-shadow .2s ease;
+      }
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 36px rgba(0,0,0,.35);
+      }
+      body.light .card {
+        background: var(--card);
+        box-shadow: var(--shadow);
+      }
+      
+      /* TYPOGRAPHY */
+      .title { font-size: 22px; font-weight: 700; margin: 0 0 10px; }
+      .muted { color: var(--muted); font-size: 13px; }
+      .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      
+      /* INPUTS */
+      input[type="text"], select {
+        width: 100%;
+        padding: 12px 14px;
+        font-size: 15px;
+        border: none;
+        border-radius: 14px;
+        background: rgba(255,255,255,0.06);
+        color: var(--fg);
+        box-shadow: inset 0 1px 3px rgba(255,255,255,0.05);
+        transition: background .2s ease, box-shadow .2s ease;
+      }
+      input[type="text"]:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #4b6ef5;
+        background: rgba(255,255,255,0.1);
+      }
+      body.light input[type="text"] {
+        background: rgba(0,0,0,0.05);
+        color: var(--fg);
+      }
+      
+      /* BUTTONS */
+      button, label.pill {
+        padding: 10px 18px;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--fg);
+        background: var(--accent);
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,.2);
+      }
+      button:hover, label.pill:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(0,0,0,.3);
+      }
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      button.ghost {
+        background: transparent;
+        box-shadow: none;
+      }
+      
+      /* HERO */
+      #hero { min-height: 50vh; display: grid; place-items: center; }
+      #hero .card { width: 100%; max-width: 720px; text-align: center; }
+      
+      /* TOOLBAR */
+      #toolbar {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 14px 16px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      #toolbar .toolbar-title {
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: .5px;
+      }
+      #toolbar .toolbar-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+      }
+      #toolbar input[type="text"] {
+        flex: 1;
+        background: var(--input);
+        color: var(--fg);
+        border: none;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-size: 15px;
+        transition: box-shadow .2s ease, background .2s ease;
+      }
+      #toolbar input[type="text"]:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #4b6ef5;
+      }
+      #toolbar button {
+        background: var(--accent);
+        color: var(--fg);
+        border: none;
+        border-radius: 999px;
+        padding: 10px 18px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: transform .15s ease, background .15s ease;
+      }
+      #toolbar button:hover { transform: translateY(-1px); }
+      
+      /* FLOATING TOOLBAR */
+      .floating-ui {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        z-index: 999;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        background: rgba(20,24,45,0.5);
+        backdrop-filter: blur(10px) saturate(150%);
+        border-radius: 16px;
+        padding: 6px 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.3);
+      }
+      body.light .floating-ui {
+        background: rgba(255,255,255,0.7);
+        box-shadow: 0 2px 8px rgba(0,0,0,.1);
+      }
+      
+      /* THEME TOGGLE */
+      .theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+      }
+      .theme-toggle input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .theme-toggle .track {
+        width: 56px;
+        height: 28px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #1e274f, #141a39);
+        border: 1px solid var(--line);
+        position: relative;
+        transition: background .2s ease, border-color .2s ease;
+      }
+      .theme-toggle .thumb {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+        background: #0e1430;
+        color: #fff;
+        transition: transform .22s ease, background .2s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,.35);
+      }
+      .theme-toggle input:checked + .track {
+        background: #e9eefc;
+        border-color: #c8cfe0;
+      }
+      .theme-toggle input:checked + .track .thumb {
+        transform: translateX(28px);
+        background: #fff;
+        color: #111827;
+      }
 
-    /* Protein viewer iframe */
+       /* Protein viewer iframe */
     .prot-frame {
-      width: 100%;
-      height: 720px;
-      border: 1px solid #1e2a52;
-      border-radius: 12px;
-      background: #0e1430;
-    }
-    body.light .prot-frame {
-      background: #ffffff;
-      border-color: #cbd5e1;
-    }
+        width: 100%;
+        height: 720px;
+        border: 1px solid #1e2a52;
+        border-radius: 12px;
+        background: #0e1430;
+      }
+      body.light .prot-frame {
+        background: #ffffff;
+        border-color: #cbd5e1;
+      }
 
-    /* Citations */
-    .cite {
-      cursor: help;
-      user-select: none;
-      text-decoration: underline dotted;
-    }
-    .cite-tip {
-      position: fixed;
-      z-index: 9999;
-      max-width: 420px;
-      background: var(--input);
-      color: var(--fg);
-      border: 1px solid var(--pill-line);
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 12px;
-      line-height: 1.4;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      pointer-events: none;
-      opacity: 0;
-      transform: translateY(4px);
-      transition: opacity 0.08s ease, transform 0.08s ease;
-    }
-    .cite-tip.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .refs-list {
-      margin: 8px 0 0;
-      padding-left: 18px;
-    }
-    .refs-list li {
-      margin: 6px 0;
-    }
-    .refs-list .muted {
-      margin-top: 2px;
-      display: block;
-    }
+      .blk-text {
+        white-space: normal;
+        line-height: 1.45;
+        font-size: 14px;     
+      }
+      
 
-    /* Light mode */
-    body.light {
-      background: #fff;
-      color: #0b1020;
-    }
-    body.light .card {
-      background: #fff;
-      border-color: #d8dce6;
-      color: #0b1020;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
-    }
-    body.light input[type="text"],
-    body.light select {
-      background: #fff;
-      color: #0b1020;
-      border: 1px solid #c8cfe0;
-    }
-    body.light button {
-      background: #f3f5fb;
-      color: #0b1020;
-      border: 1px solid #c8cfe0;
-    }
-    body.light .muted {
-      color: #6b7280;
-    }
-    body.light .pill {
-      background: #eef1f7;
-      border: 1px solid #d6d9e6;
-      color: #0b1020;
-    }
-    body.light .vs-table thead th {
-      background: #f5f7fb;
-      color: #0b1020;
-    }
-    body.light .cite-tip {
-      background: #fff;
-      color: #0b1020;
-      border-color: #e5e7eb;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }
+      /* bump global sizes */
+body { font-size: 16px; line-height: 1.55; }
+.muted { font-size: 14px; }
 
-    /* Markdown-ish spacing */
-    /* Answer readability */
-    .answer {
-      line-height: 1.6; /* a bit more breathing room */
-      font-size: 16px; /* gentle bump, keeps it readable */
-    }
-    .answer p {
-      margin: 0.55em 0;
-    }
+/* section titles like “MSigDB”, “Open Targets”, etc. */
+.section-title {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 14px 0 6px;
+}
 
-    /* Smaller subheads inside the answer text */
-    .answer h2 {
-      font-size: 18px;
-      margin: 0.7em 0 0.35em;
-    }
-    .answer h3 {
-      font-size: 16px;
-      margin: 0.65em 0 0.3em;
-    }
-    .answer h4 {
-      font-size: 14px;
-      margin: 0.6em 0 0.25em;
-    }
+/* details headers (“Functions”, “Diseases”, etc.) */
+details > summary.sect-hdr {
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+}
 
-    /* Ensure section titles (Question / Answer / …) are card titles, not pill-like */
-    .card > .title {
-      font-size: 20px;
-      font-weight: 700;
-      margin: 0 0 10px;
-    }
+/* --- layout primitives --- */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;              
+  align-items: center;
+}
 
-    /* Utility */
-    .hide {
-      display: none !important;
-    }
-    /* Let fixed layout honor column widths */
-    /* Make the variant table predictable and scrollable */
-    /* Variant table sane defaults */
-    .vs-scroll {
-      overflow: auto;
-      max-height: 520px;
-    }
+/* rows: small vertical row-gap, normal horizontal gap */
+.row { 
+  display: flex; 
+  flex-wrap: wrap; 
+  column-gap: 6px;   /* horiz spacing */
+  row-gap: 3px;      
+  align-items: center;
+}
 
-    .vs-table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: auto; /* let browser size columns naturally */
-    }
+/* chips & pills: smaller + tighter */
+.chip, .pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  vertical-align: top;
+  padding: 2px 8px;          
+  border-radius: 999px;
+  line-height: 1.1;         
+  font-size: 12.5px;        
+  color: var(--fg);
+  background: rgba(255,255,255,0.08);
+}
+body.light .chip, body.light .pill { background: rgba(0,0,0,0.06); }
 
-    /* Cells */
-    .vs-table th,
-    .vs-table td {
-      padding: 8px 10px;
-      font-size: 13px;
-      line-height: 1.4;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      vertical-align: top;
-    }
+/* wrapping variants */
+.chip { white-space: nowrap; }
+.chip.wrap { white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
 
-    .vs-table thead th {
-      position: sticky;
-      top: 0;
-      background: var(--card);
-      z-index: 1;
-    }
+/* long notes still readable but compact */
+.chip-note{
+  display: inline-block;   /* switch from inline-flex so text wraps naturally */
+  white-space: normal;     /* override .chip's nowrap */
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+  padding: 6px 8px;
+  max-width: 100%;        
+  font-size: 12px;
+  opacity: .9;
+}
 
-    /* Allow wrapping for long text columns */
-    .vs-table th.wrap,
-    .vs-table td.wrap {
-      white-space: normal;
-      overflow: visible;
-      text-overflow: clip;
-    }
+/* header sizes: top vs inner */
+.sect-hdr { cursor: pointer; }
+.top-hdr  { font-weight: 700; font-size: 15px; }
+.sub      { font-size: 12px; }
 
-    /* Ref/Alt: monospace + wrap allowed */
-    .vs-table td.seq {
-      font-family: var(--mono);
-      white-space: normal;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-    }
+/* utility */
+.wrap { white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
 
-    /* Traits: pills wrap within cell */
-    .vs-table td.traits {
-      white-space: normal;
-    }
-    .vs-table td.traits .pill {
-      display: inline-block;
-      margin: 2px 6px 2px 0;
-      max-width: 100%;
-      white-space: normal;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-    }
-    .vs-table td[data-has-tooltip="1"] {
-      text-decoration: underline dotted;
-      text-underline-offset: 2px;
-    }
+/* tables (unchanged, just here for completeness) */
+.vs-table th, .vs-table td { font-size: 14px; line-height: 1.35; }
 
-    /* Helpful min/max widths per column (optional) */
-    .vs-table th.col-gene,
-    .vs-table td.col-gene {
-      min-width: 120px;
-    }
-    .vs-table th.col-id,
-    .vs-table td.col-id {
-      min-width: 120px;
-    }
-    .vs-table th.col-pos,
-    .vs-table td.col-pos {
-      min-width: 90px;
-    }
-    .vs-table th.col-num,
-    .vs-table td.col-num {
-      min-width: 80px;
-      max-width: 120px;
-    }
-    .vs-table th.col-wide,
-    .vs-table td.col-wide {
-      min-width: 200px;
-    } /* for traits/expr */
+      
 
-    #tsmr .mr-block {
-      margin-bottom: 14px;
-    }
-    #tsmr .mr-head {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    #tsmr .mr-sum {
-      margin: 6px 0 8px;
-    }
-    #tsmr .pill.ghost {
-      background: transparent;
-    }
-    #tsmr table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
-    #tsmr th,
-    #tsmr td {
-      border-bottom: 1px solid var(--line);
-      padding: 6px 8px;
-      text-align: left;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    #tsmr thead th {
-      position: sticky;
-      top: 0;
-      background: var(--card);
-      z-index: 1;
-    }
-    #tsmr .scroll {
-      overflow: auto;
-      max-height: 360px;
-    }
+/* keep page container margins */
+body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
+
+/* neutralize when .wrap is used on chips/pills */
+.chip.wrap,
+.pill.wrap {
+  margin: 0 !important;
+  padding-top: 2px;   /* whatever you like */
+  padding-bottom: 2px;
+}
+
+/* make .wrap mean 'text wrapping' ONLY when on chips */
+.chip.wrap,
+.pill.wrap {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* optional: ensure the row itself isn’t adding extra spacing */
+.row { display:flex; flex-wrap:wrap; column-gap:6px; row-gap:3px; align-items:center; }
+
+      
+      
   </style>
 
   <body>
+    <!-- Floating toolbar -->
+<div class="floating-ui" aria-label="Quick actions">
+    <button id="savePageBtn" class="btn-ghost" title="Download a snapshot of this page">Save HTML</button>
+  
+    <!-- Emoji theme slider -->
+    <label class="theme-toggle" title="Toggle theme">
+      <input id="themeCheckbox" type="checkbox" aria-label="Toggle theme (light/dark)">
+      <span class="track"><span class="thumb">🌙</span></span>
+    </label>
+  </div>
+  
     <div class="wrap">
-      <button
-        id="themeToggle"
-        aria-label="Toggle theme"
-        style="position: fixed; top: 12px; right: 12px; z-index: 999"
-      >
-        Toggle Theme
-      </button>
-      <button
-        id="savePageBtn"
-        aria-label="Save page"
-        style="position: fixed; top: 12px; right: 120px; z-index: 999"
-      >
-        Save HTML
-      </button>
-
-      <!-- Hero / landing (no auto-demo load) -->
+      <!-- Landing -->
       <div id="hero" role="region" aria-label="Landing">
         <div class="card">
-          <div
-            class="title"
-            style="
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: 8px;
-            "
-          >
-            <img
-              src="images/rocket_logo.png"
-              alt="Alvessa logo"
-              style="height: 40px"
-            />
-            <span
-              >Alvessa: An Agentic Evidence‑Grounded Research Assistant for
-              Genomics</span
-            >
+          <div class="title" style="display:flex; align-items:center; justify-content:center; gap:8px">
+            <img src="images/rocket_logo.png" alt="Alvessa logo" style="height:40px" />
+            <span>Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</span>
           </div>
-          <p class="muted" style="margin-bottom: 12px">
-            Load a JSON produced by Alvessa or ask a question (if the server
-            endpoint is wired).
+          <p class="muted" style="margin-bottom:12px">
+            Ask a question or load a folder 
           </p>
-          <div
-            class="row"
-            style="justify-content: center; width: 100%; gap: 8px"
-          >
-            <input
-              id="q"
-              type="text"
-              placeholder="Ask a question… e.g., Genes interacting with TP53"
-              aria-label="Question"
-            />
+          <div class="row" style="justify-content:center; width:100%; gap:12px; margin-bottom:8px">
+            <input id="q" type="text" placeholder="Ask a question… e.g., Genes interacting with TP53" aria-label="Question" />
             <button id="runBtn" aria-label="Run query">Run</button>
-            <label class="pill" style="cursor: pointer">
-              Load JSON
-              <input
-                id="jsonFile"
-                type="file"
-                accept=".json,application/json"
-                style="display: none"
-              />
-            </label>
-            <label class="pill" style="cursor: pointer">
-              Load Folder
-              <input
-                id="folderPicker"
-                type="file"
-                webkitdirectory
-                directory
-                style="display: none"
-              />
-            </label>
+            <button id="loadFolderBtn" aria-label="Load Folder">Load Folder</button>
+            <input id="folderPicker" type="file" webkitdirectory directory style="display:none" />
+
           </div>
-          <div class="row" style="justify-content: center; margin-top: 8px">
-            <select id="demoSelect">
-              <option value="">Load demo… (not auto‑selected)</option>
-              <option value="out/20250924-004900_ui/demo.json">
-                TP53 demo
-              </option>
-            </select>
-            <button id="downloadBtn" class="pill">Download JSON</button>
+          <div style="text-align:center; margin-top:12px">
+            <a id="tryDemoLink" href="#" style="font-size:14px; color:var(--accent); text-decoration:underline">Try Demo</a>
           </div>
-          <div class="muted" style="margin-top: 8px">
-            Tip: nothing loads until you choose a file or click Run.
-          </div>
+          <div class="muted" style="margin-top:8px">Tip: nothing loads until you choose a file, a folder, or click Run.</div>
         </div>
       </div>
 
-      <!-- Toolbar -->
-      <div id="toolbar" class="card full">
-        <div class="row" style="justify-content: space-between; gap: 12px">
-          <div class="row">
-            <div class="muted" style="min-width: 160px">
-              Ask another question
-            </div>
-          </div>
-          <div class="row" style="flex: 1">
-            <input
-              id="q2"
-              type="text"
-              placeholder="Type another question… then press Enter"
-              aria-label="Another question"
-            />
-            <button id="runBtn2">Run</button>
-            <label class="pill" style="cursor: pointer">
-              Load JSON
-              <input
-                id="jsonFile2"
-                type="file"
-                accept=".json,application/json"
-                style="display: none"
-              />
-            </label>
-            <label class="pill" style="cursor: pointer">
-              Load Folder
-              <input
-                id="folderPicker2"
-                type="file"
-                webkitdirectory
-                directory
-                style="display: none"
-              />
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Main grid -->
-      <div id="grid" class="grid">
+      <!-- App grid -->
+      <div id="grid" class="grid" style="display:none">
         <div class="brand-header">
-          <img
-            src="images/rocket_logo.png"
-            alt="Alvessa logo"
-            class="logo-brand"
-          />
-          <h1 class="brand-title">
-            Alvessa: An Agentic Evidence‑Grounded Research Assistant for
-            Genomics
-          </h1>
+          <img src="images/rocket_logo.png" alt="Alvessa logo" class="logo-brand" />
+          <h1 class="brand-title">Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</h1>
         </div>
 
-        <div class="card full">
-          <div class="title" id="questionTitle">Question</div>
-          <div id="question" style="font-size: 18px"></div>
-        </div>
+        <aside class="side-col">
+          <div id="verifierCard" class="card" style="display:none">
+            <div class="title">Verification</div>
+            <div id="verifierPanel" class="answer-verified"></div>
+          </div>
+        </aside>
 
-        <div
-          id="answerCard"
-          class="card full"
-          data-section
-          style="display: none"
-        >
-          <div class="title">Answer</div>
-          <div id="answer" class="answer"></div>
-          <ol id="citations" class="refs-list"></ol>
-        </div>
+        <div class="main-col">
+            <!-- Ask another question toolbar -->
+            <div id="toolbar" class="card" style="display:none">
+                <div class="toolbar-title">Ask another question</div>
+                <div class="toolbar-row">
+                  <input id="q2" type="text" placeholder="Type your next question..." aria-label="Another question" />
+                  <button id="runBtn2">Run</button>
+                  <label class="pill" style="cursor:pointer">
+                    Load Folder
+                    <input id="folderPicker2" type="file" webkitdirectory directory style="display:none" />
+                  </label>
+                </div>
+              </div>
+              
+          <div class="card">
+            <div class="title" id="questionTitle">Question</div>
+            <div id="question" style="font-size:18px"></div>
+          </div>
 
-        <div
-          id="entitiesCard"
-          class="card full"
-          data-section
-          style="display: none"
-        >
-          <div class="title">Detected Entities</div>
-          <div id="entities"></div>
-        </div>
+          <div id="answerCard" class="card" style="display:none">
+            <div class="title">Answer</div>
+            <div id="answer" class="answer"></div>
+            <ol id="citations" class="refs-list"></ol>
+          </div>
 
-        <div
-          id="geneSummaryCard"
-          class="card full"
-          data-section
-          style="display: none"
-        >
-          <div class="title">Gene Summary</div>
-          <div id="geneSummary"></div>
-        </div>
+          <div id="geneSummaryCard" class="card" style="display:none">
+            <div class="title">Gene Summary</div>
+            <div id="geneSummary"></div>
+          </div>
+          
 
-        <!-- Variant Summary -->
-        <div
-          id="variantSummaryCard"
-          class="card full"
-          data-section
-          style="display: none"
-        >
-          <div class="title">Variant Summary</div>
-          <div id="variantSummary"></div>
-        </div>
+          <div id="protCard" class="card full" data-section style="display: none">
+            <div class="title">Protein Structure</div>
+            <div id="protMount"></div>
+          </div>
+  
 
-        <!-- Protein Visualization -->
-        <div id="protCard" class="card full" data-section style="display: none">
-          <div class="title">Protein Structure</div>
-          <div id="protMount"></div>
-        </div>
+  <div id="chemblCard" class="card" style="display:none">
+    <div class="title">ChEMBL Data</div>
+    <div id="chemblMount"></div>
+  </div>
+  
+  
 
-        <!-- ChEMBL Drug–Target Data -->
-        <div id="chemblCard" class="card full" data-section style="display: none">
-        <div class="title">ChEMBL Drug–Target Data</div>
-        <div id="chemblMount"></div>
-        </div>
-
-        <!-- Two-sample MR -->
-        <div id="tsmrCard" class="card full" data-section style="display: none">
-          <div class="title">Two-sample Mendelian Randomization</div>
-          <div id="tsmr"></div>
-        </div>
-
-        <div
-          id="evidenceCard"
-          class="card full"
-          data-section
-          style="display: none"
-        >
-          <div class="title">Evidence</div>
-          <div id="evidence"></div>
-        </div>
-
-        <!-- Minimal debug (toggle-able) -->
-        <div id="rawCard" class="card full" data-section style="display: none">
-          <div class="title">Raw State (debug)</div>
-          <pre
-            id="raw"
-            class="mono"
-            style="max-height: 340px; overflow: auto"
-          ></pre>
+          <div id="rawCard" class="card" style="display:none">
+            <div class="title">Raw State (debug)</div>
+            <pre id="raw" class="mono" style="max-height:340px; overflow:auto"></pre>
+          </div>
         </div>
       </div>
     </div>
 
-    <script>
-      /********************
-       * Utilities
-       ********************/
-      const show = (id) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.style.display = el.classList.contains("grid") ? "grid" : "block";
-      };
-      const hide = (id) => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = "none";
-      };
-      const setText = (id, text) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = text ?? "";
-      };
-      const setHTML = (id, html) => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = html ?? "";
-      };
-      const byId = (id) => document.getElementById(id);
+    <!-- App boot + small utilities; Answer renderer is imported from static/answer.js -->
+    <script type="module">
+        import { renderAnswerVerified } from "./static/answer.js";
+        import { Wait } from "./static/waiting_module.js";
+        import { renderGeneSummary } from "./static/gene_summary.js";
 
-      function escapeHtml(s) {
-        var map = {
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;",
-        };
-        s = s == null ? "" : String(s);
-        return s.replace(/[&<>"']/g, function (ch) {
-          return map[ch];
-        });
-      }
 
-      function asPills(arr) {
-        return (arr || [])
-          .map((x) => `<span class="pill">${escapeHtml(x)}</span>`)
-          .join(" ");
-      }
-      function uc(s) {
-        return (s || "").toUpperCase();
-      }
-      function safeRender(name, fn) {
-        try {
-          fn();
-        } catch (e) {
-          console.warn(`[render:${name}]`, e);
-        }
-      }
+      
+        // ---- Helpers  ----
+        const byId = (id) => document.getElementById(id);
+        const show = (id) => { const el = byId(id); if (!el) return; el.style.display = el.classList.contains("grid") ? "grid" : "block"; };
+        const hide = (id) => { const el = byId(id); if (el) el.style.display = "none"; };
+        const setText = (id, t) => { const el = byId(id); if (el) el.textContent = t ?? ""; };
 
-      /********************
-       * Global state
-       ********************/
-      let STATE = null; // current JSON state (if loaded)
-      let HERO_SHOWN = true;
-      let VS_ROWS_FOR_CSV = [];
-      const FILE_CACHE = new Map(); // text cache for CSV/TSV files
-
-      // Virtual FS for "Load Folder" mode
-      let LOCAL_FILES = new Map(); // key: normalized relative path (e.g., "genes/genes.index.csv")
-      let LOCAL_BASE_HINT = ""; // e.g., "out/20250924-004900_ui/"
-
-      // Normalize keys like the fetch calls ("genes/..."), regardless of real subdir names
-      function normKey(p) {
-        p = String(p || "").replace(/\\/g, "/");
-        // strip any leading "./" or leading slashes
-        p = p.replace(/^\.?\//, "");
-        // collapse multiple slashes
-        p = p.replace(/([^:]\/)\/+/g, "$1");
-        return p;
-      }
-
-      function saveFullPageSnapshot() {
-        try {
-          // Clone current DOM for a WYSIWYG snapshot
-          const htmlEl = document.documentElement.cloneNode(true);
-
-          // Remove transient UI bits that don't help when reopened (tooltips, etc.)
-          htmlEl.querySelectorAll(".cite-tip").forEach((n) => n.remove());
-
-          // Build a small bootstrap script to avoid network fetches and show the same view
-          const boot = document.createElement("script");
-          boot.type = "text/javascript";
-          const stateJson = JSON.stringify(STATE ?? {});
-          const localFilesJson = JSON.stringify(
-            Array.from(LOCAL_FILES.entries())
-          );
-          const fileCacheJson = JSON.stringify(
-            Array.from(FILE_CACHE.entries())
-          );
-          boot.textContent = `
-      (function(){
-        try{
-          // Prevent live fetching when opening the snapshot offline
-          window.SNAPSHOT_MODE = true;
-          window.STATE = ${stateJson};
-          // Rehydrate in-memory stores (for offline "folder" content already loaded)
-          try {
-            window.LOCAL_FILES = new Map(${localFilesJson});
-            window.FILE_CACHE  = new Map(${fileCacheJson});
-          } catch(_) {}
-
-          // No server fetch; just render what we have
-          if (typeof refresh === 'function') {
-            // Avoid re-hiding hero if we already showed the grid in the snapshot
-            try { window.HERO_SHOWN = false; } catch(_) {}
-            refresh();
+        function setArtifactBaseFromState(st){
+            const cand = st?.ui?.artifact_base || st?.artifact_base || st?.ui?.base_path || "";
+            if (cand) ARTIFACT_BASE = cand.endsWith("/") ? cand : (cand + "/");
           }
-        }catch(e){ console.warn('Snapshot boot failed', e); }
-      })();
-    `;
-
-          // Inject the bootstrap before the closing </body> of the clone
-          const body = htmlEl.querySelector("body");
-          if (body) body.appendChild(boot);
-
-          // Serialize
-          const doctype = "<!doctype html>\n";
-          const htmlText = doctype + htmlEl.outerHTML;
-
-          // Download
-          const blob = new Blob([htmlText], {
-            type: "text/html;charset=utf-8",
-          });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "alvessa_snapshot.html";
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(url), 1000);
-        } catch (e) {
-          alert("Could not create snapshot: " + e.message);
-        }
-      }
-
-      // Given a FileList from webkitdirectory, index files and infer base
-      async function indexFolderFiles(fileList) {
-        LOCAL_FILES.clear();
-        LOCAL_BASE_HINT = "";
-
-        if (!fileList || !fileList.length) return;
-
-        // Heuristic: find the *lowest* common dir that contains genes/ and/or variants/
-        const rels = [];
-        for (const f of fileList) {
-          // Chrome gives f.webkitRelativePath like: "out/20250924-004900_ui/genes/genes.index.csv"
-          const rel = f.webkitRelativePath || f.name;
-          if (rel) rels.push(rel.replace(/\\/g, "/"));
-        }
-        // Try to detect base folder that directly contains `genes/` and/or `variants/`
-        const candidates = new Set();
-        for (const r of rels) {
-          const m = r.match(/^(.*?)(genes|variants)\//);
-          if (m) candidates.add(m[1]); // prefix before "genes/"
-        }
-        // Prefer the shortest candidate
-        LOCAL_BASE_HINT =
-          Array.from(candidates).sort((a, b) => a.length - b.length)[0] || "";
-
-        // Index all files; store text for small ones, lazy-load via FileReader otherwise
-        const textPromises = [];
-        for (const f of fileList) {
-          const rel = f.webkitRelativePath || f.name;
-          if (!rel) continue;
-          let key = rel.replace(/\\/g, "/");
-          // If we detected a base, strip it so keys look like "genes/..." or "variants/..."
-          if (LOCAL_BASE_HINT && key.startsWith(LOCAL_BASE_HINT)) {
-            key = key.slice(LOCAL_BASE_HINT.length);
-          }
-          key = normKey(key);
-
-          // Only cache text for files we actually load in UI (.csv, .txt, .json)
-          if (/\.(csv|tsv|txt|json)$/i.test(key)) {
-            const p = f
-              .text()
-              .then((txt) => LOCAL_FILES.set(key, txt))
-              .catch(() => {});
-            textPromises.push(p);
-          }
-        }
-        await Promise.allSettled(textPromises);
-
-        // Also set ARTIFACT_BASE so relative fetches can still work
-        ARTIFACT_BASE = LOCAL_BASE_HINT; // e.g., "out/20250924-004900_ui/"
-      }
-
-      // Accepts a URL like "out/.../demo.json" and derives "out/.../"
-      function setArtifactBaseFromUrl(url) {
-        try {
-          // If absolute URL
-          const u = new URL(url, window.location.href);
-          const parts = u.pathname.split("/");
-          parts.pop(); // remove filename
-          ARTIFACT_BASE =
-            parts.join("/") + (parts.join("/").endsWith("/") ? "" : "/");
-          if (u.origin && !ARTIFACT_BASE.startsWith("http")) {
-            ARTIFACT_BASE = u.origin + ARTIFACT_BASE;
-          }
-        } catch {
-          // Relative pathname
-          const p = String(url || "").split("/");
-          p.pop();
-          ARTIFACT_BASE = (p.join("/") + "/").replace(/\/\/+/g, "/");
-        }
-      }
-
-      // Optionally derive from state if server provides it
-      function setArtifactBaseFromState(st) {
-        const cand =
-          st?.ui?.artifact_base ||
-          st?.ui?.base_path ||
-          st?.artifact_base ||
-          st?.base_path ||
-          ""; // empty means relative to page root
-        if (cand) {
-          // Ensure trailing slash
-          ARTIFACT_BASE = cand.endsWith("/") ? cand : cand + "/";
-        }
-      }
-
-      // Prefix helper
-      function withBase(path) {
-        if (!path) return path;
-        if (/^https?:\/\//i.test(path)) return path; // already absolute
-        if (!ARTIFACT_BASE) return path; // fall back to page-relative
-        return (ARTIFACT_BASE + path).replace(/([^:]\/)\/+/g, "$1");
-      }
-
-      /********************
-       * Minimal CSV/TSV loader with cache
-       ********************/
-      async function fetchTextCached(path) {
-        // 1) Check in-memory folder first
-        const tryLocal = (p) => {
-          // exact
-          if (LOCAL_FILES.has(p)) return LOCAL_FILES.get(p);
-          // with base prefix (strip possible origin)
-          const baseNoOrigin = (ARTIFACT_BASE || "").replace(
-            /^https?:\/\/[^/]+/i,
-            ""
-          );
-          const withBase = (baseNoOrigin + p).replace(/(^|[^:])\/\/+/g, "$1/"); // normalize
-          if (LOCAL_FILES.has(withBase)) return LOCAL_FILES.get(withBase);
-          // ends-with match (robust if caller passed just "genes/…")
-          const k = Array.from(LOCAL_FILES.keys()).find(
-            (k) => k.endsWith("/" + p) || k === p
-          );
-          return k ? LOCAL_FILES.get(k) : null;
-        };
-
-        const local = tryLocal(path);
-        if (local != null) return local;
-
-        // 2) If not in LOCAL_FILES, fall back to network with ARTIFACT_BASE
-        const url = withBase(path);
-        if (FILE_CACHE.has(url)) return FILE_CACHE.get(url);
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) throw new Error(`Fetch failed: ${url} (${res.status})`);
-        const txt = await res.text();
-        FILE_CACHE.set(url, txt);
-        return txt;
-      }
-
-      function parseCSV(text, delimiter = ",") {
-        if (!text) return [];
-        const lines = text
-          .replace(/\r\n?/g, "\n")
-          .split("\n")
-          .filter((l) => l.trim().length > 0);
-        if (!lines.length) return [];
-        // naive CSV parse with quotes support
-        const parseLine = (line) => {
-          const out = [];
-          let cur = "",
-            inQ = false;
-          for (let i = 0; i < line.length; i++) {
-            const ch = line[i];
-            if (inQ) {
-              if (ch === '"' && line[i + 1] === '"') {
-                cur += '"';
-                i++;
-              } else if (ch === '"') {
-                inQ = false;
-              } else cur += ch;
-            } else {
-              if (ch === '"') {
-                inQ = true;
-              } else if (ch === delimiter) {
-                out.push(cur);
-                cur = "";
-              } else cur += ch;
-            }
-          }
-          out.push(cur);
-          return out;
-        };
-        const header = parseLine(lines[0]).map((h) => h.trim());
-        return lines.slice(1).map((raw) => {
-          const parts = parseLine(raw);
-          const obj = {};
-          for (let i = 0; i < header.length; i++)
-            obj[header[i]] = (parts[i] ?? "").trim();
-          return obj;
-        });
-      }
-
-      /********************
-       * Markdown + citations 
-       ********************/
-      function mdToHtml(md) {
-        var esc = function (s) {
-          s = s == null ? "" : String(s);
-          return s.replace(/[&<>"']/g, function (ch) {
-            return {
-              "&": "&amp;",
-              "<": "&lt;",
-              ">": "&gt;",
-              '"': "&quot;",
-              "'": "&#39;",
-            }[ch];
-          });
-        };
-        md = (md || "").replace(/\r\n?/g, "\n");
-        md = md.replace(
-          /```([\s\S]*?)```/g,
-          (_, code) => `<pre class="mono">${esc(code)}</pre>`
-        );
-        const lines = md.split("\n");
-        const out = [];
-        let inUL = false;
-        function closeUL() {
-          if (inUL) {
-            out.push("</ul>");
-            inUL = false;
-          }
-        }
-        for (let raw of lines) {
-          const line = raw;
-          if (/^#{1,6}\s/.test(line)) {
-            closeUL();
-            const level = Math.min(6, line.match(/^#+/)[0].length);
-            const text = line.replace(/^#{1,6}\s+/, "");
-            out.push(`<h${level}>${inlineMd(text, esc)}</h${level}>`);
-            continue;
-          }
-          if (/^[-*]\s+/.test(line)) {
-            if (!inUL) {
-              out.push("<ul>");
-              inUL = true;
-            }
-            const item = line.replace(/^[-*]\s+/, "");
-            out.push(`<li>${inlineMd(item, esc)}</li>`);
-            continue;
-          }
-          if (line.trim() === "") {
-            closeUL();
-            out.push("");
-            continue;
-          }
-          closeUL();
-          out.push(`<p>${inlineMd(line, esc)}</p>`);
-        }
-        closeUL();
-        return out.join("\n").replace(/\n{2,}/g, "\n");
-      }
-      function inlineMd(s, esc) {
-        s = esc(s);
-        s = s.replace(/`([^`]+)`/g, '<code class="mono">$1</code>');
-        s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-        s = s.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-        s = s.replace(
-          /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-          '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-        );
-        return s;
-      }
-      function scanBlocks(src, head) {
-        const out = [];
-        let i = 0;
-        if (!src) return out;
-        while ((i = src.indexOf(head + "(", i)) !== -1) {
-          let j = i + head.length + 1,
-            depth = 1,
-            q = null,
-            esc = false;
-          for (; j < src.length; j++) {
-            const ch = src[j];
-            if (q) {
-              esc
-                ? (esc = false)
-                : ch === "\\"
-                ? (esc = true)
-                : ch === q && (q = null);
-              continue;
-            }
-            if (ch === '"' || ch === "'") {
-              q = ch;
-              continue;
-            }
-            if (ch === "(") depth++;
-            else if (ch === ")") {
-              depth--;
-              if (!depth) {
-                j++;
-                break;
-              }
-            }
-          }
-          out.push(src.slice(i + head.length + 1, j - 1));
-          i = j;
-        }
-        return out;
-      }
-      function parseCites(block) {
-        const chunks = scanBlocks(block, "CitationCharLocation");
-        return chunks
-          .map((c) => ({
-            document_index: Number((c.match(/document_index=(\d+)/) || [])[1]),
-            document_title:
-              (c.match(/document_title=['\"]([\s\S]*?)['\"]/) || [])[1] || "",
-            cited_text:
-              (c.match(/cited_text=['\"]([\s\S]*?)['\"]/) || [])[1]?.replace(
-                /\\n/g,
-                " "
-              ) || null,
-          }))
-          .filter((x) => Number.isFinite(x.document_index));
-      }
-      function parseAnthropicCitationsFromString(rawStr) {
-        if (!rawStr || typeof rawStr !== "string") return [];
-        const tBlocks = scanBlocks(rawStr, "TextBlock");
-        const cites = [];
-        for (const b of tBlocks) {
-          const blockCites = parseCites(b) || [];
-          for (const c of blockCites) {
-            const cited = (c.cited_text || "").replace(/\s+/g, " ").trim();
-            cites.push({
-              document_index: c.document_index,
-              document_title: c.document_title,
-              cited_text: cited,
-            });
-          }
-        }
-        return cites;
-      }
-      function buildBibliography(blocks, st) {
-        const srcAny =
-          st?.ui?.sources ||
-          st?.sources ||
-          (Array.isArray(st?.llm_json?.doc_manifest)
-            ? Object.fromEntries(
-                st.llm_json.doc_manifest.map((x) => [
-                  x.index,
-                  { title: x.title, url: x.url },
-                ])
-              )
-            : null);
-        const lookup = (idx, fallback) => {
-          if (!srcAny) return { title: fallback };
-          if (Array.isArray(srcAny)) {
-            const s = srcAny[idx];
-            return s
-              ? { title: s.title || fallback, url: s.url, quote: s.quote }
-              : { title: fallback };
-          }
-          if (typeof srcAny === "object") {
-            const s = srcAny[idx];
-            return s
-              ? { title: s.title || fallback, url: s.url, quote: s.quote }
-              : { title: fallback };
-          }
-          return { title: fallback };
-        };
-        const bib = [];
-        const seen = new Map();
-        const key = (c) => `${c.document_index}|${c.document_title || ""}`;
-        for (const b of blocks) {
-          for (const c of b.citations || []) {
-            const k = key(c);
-            if (!seen.has(k)) {
-              const base = lookup(
-                c.document_index,
-                c.document_title || `Source ${c.document_index}`
-              );
-              const entry = {
-                num: bib.length + 1,
-                document_index: c.document_index,
-                document_title: c.document_title,
-                title: base.title,
-                url: base.url || null,
-                quote: base.quote || null,
-                snippets: [],
-              };
-              seen.set(k, entry.num);
-              bib.push(entry);
-            }
-          }
-        }
-        for (const b of blocks) {
-          for (const c of b.citations || []) {
-            const n = seen.get(key(c));
-            if (!n) continue;
-            const ref = bib[n - 1];
-            const snip = (c.cited_text || "").trim();
-            if (snip && !(ref.snippets || []).includes(snip)) {
-              (ref.snippets ||= []).push(snip);
-              if (ref.snippets.length > 3) ref.snippets.length = 3;
-            }
-          }
-        }
-        return {
-          bib,
-          numFor(c) {
-            return seen.get(key(c));
-          },
-        };
-      }
-      function replaceCitationPlaceholdersWithHtml(html) {
-        return String(html || "").replace(
-          /\s?\[\[CITE:(\d+)\]\]/g,
-          (_, n) =>
-            ` <sup class="cite" data-cite="${Number(
-              n
-            )}" aria-label="Reference ${Number(n)}">[${Number(n)}]</sup>`
-        );
-      }
-      function renderReferencesList(bibliography) {
-        const el = byId("citations");
-        const esc = (s) =>
-          (s ?? "").replace(
-            /[&<>"']/g,
-            (ch) =>
-              ({
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#39;",
-              }[ch])
-          );
-        const trunc = (s) => {
-          const t = String(s || "");
-          return t.length <= 260
-            ? t
-            : t.slice(0, 260).replace(/[,;:.\s]+$/, "") + "…";
-        };
-        el.innerHTML = bibliography
-          .map((r) => {
-            const title = esc(r.title || `Source ${r.document_index}`);
-            const snips = (r.snippets || [])
-              .map((s) => `<div class="muted">“${esc(trunc(s))}”</div>`)
-              .join("");
-            const quote = r.quote
-              ? `<div class="muted">“${esc(trunc(r.quote))}”</div>`
-              : "";
-            const url = r.url
-              ? `<div class="muted"><a href="${esc(
-                  r.url
-                )}" target="_blank" rel="noopener noreferrer">${esc(
-                  r.url
-                )}</a></div>`
-              : "";
-            return `<li value="${r.num}"><div><strong>${title}</strong></div>${snips}${quote}${url}</li>`;
-          })
-          .join("");
-      }
-      function wireCitationTooltips(containerEl, bibliography) {
-        const tip = document.createElement("div");
-        tip.className = "cite-tip";
-        document.body.appendChild(tip);
-        const esc = (s) =>
-          (s ?? "").replace(
-            /[&<>"']/g,
-            (c) =>
-              ({
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#39;",
-              }[c])
-          );
-        const trunc = (s) => {
-          const t = String(s || "");
-          return t.length <= 200
-            ? t
-            : t.slice(0, 200).replace(/[,;:.\s]+$/, "") + "…";
-        };
-        const contentFor = (n) => {
-          const ref = bibliography.find((r) => r.num === n);
-          if (!ref) return "";
-          const title = esc(
-            ref.title || ref.document_title || `Source ${ref.document_index}`
-          );
-          const cited = ref.snippets?.[0]
-            ? `<div class="muted" style="margin-top:4px;">“${esc(
-                trunc(ref.snippets[0])
-              )}”</div>`
-            : "";
-          const quote = ref.quote
-            ? `<div class="muted" style="margin-top:4px;">“${esc(
-                trunc(ref.quote)
-              )}”</div>`
-            : "";
-          const url = ref.url
-            ? `<div style="margin-top:4px;"><a href="${esc(
-                ref.url
-              )}" target="_blank" rel="noopener noreferrer">${esc(
-                ref.url
-              )}</a></div>`
-            : "";
-          return `<div style="font-weight:600;">[${n}] ${title}</div>${cited}${quote}${url}`;
-        };
-        const pos = (ev) => {
-          const pad = 10;
-          tip.style.left =
-            Math.max(
-              8,
-              Math.min(
-                window.innerWidth - tip.offsetWidth - pad,
-                ev.clientX + 14
-              )
-            ) + "px";
-          tip.style.top =
-            Math.max(
-              8,
-              Math.min(
-                window.innerHeight - tip.offsetHeight - pad,
-                ev.clientY + 16
-              )
-            ) + "px";
-        };
-        containerEl.querySelectorAll(".cite").forEach((el) => {
-          const n = Number(el.getAttribute("data-cite"));
-          let pinned = false;
-          el.addEventListener("mouseenter", (ev) => {
-            if (!pinned) {
-              tip.innerHTML = contentFor(n);
-              tip.classList.add("show");
-              pos(ev);
-            }
-          });
-          el.addEventListener("mousemove", pos);
-          el.addEventListener("mouseleave", () => {
-            if (!pinned) tip.classList.remove("show");
-          });
-          el.addEventListener("click", (ev) => {
-            ev.stopPropagation();
-            if (!pinned) {
-              tip.innerHTML = contentFor(n);
-              tip.classList.add("show");
-              pos(ev);
-              pinned = true;
-              document.addEventListener(
-                "click",
-                () => {
-                  pinned = false;
-                  tip.classList.remove("show");
-                },
-                { once: true }
-              );
-            } else {
-              pinned = false;
-              tip.classList.remove("show");
-            }
-          });
-        });
-      }
-      function wireFolderPicker(input) {
-        if (!input) return;
-        input.addEventListener("change", async () => {
-          LOCAL_FILES.clear();
-
-          // Load all files into memory 
-          const files = Array.from(input.files || []);
-          for (const f of files) {
-            const path = f.webkitRelativePath || f.name; // e.g., "out/…/demo.json", "genes/PTEN/gene.json"
-            try {
-              const txt = await f.text();
-              LOCAL_FILES.set(path, txt);
-            } catch {
-              /* ignore */
-            }
-          }
-
-          // Derive a base (folder) from demo.json path (your state file)
-          // and parse STATE from that file right away.
-          const keys = Array.from(LOCAL_FILES.keys());
-
-          // pick the demo.json
-          const demoKey = keys.find((k) => /(^|\/)demo\.json$/i.test(k));
-          if (demoKey) {
-            try {
-              STATE = JSON.parse(LOCAL_FILES.get(demoKey) || "{}");
-            } catch {
-              alert("Could not parse demo.json");
-            }
-
-            // Compute a base prefix so "genes/…", "variants/…" resolve inside the same folder
-            // e.g. "out/20250924-004900_ui/"
-            const parts = demoKey.split("/");
-            parts.pop();
-            ARTIFACT_BASE = parts.join("/") + "/"; // we’ll use this in fetchTextCached
-          } else {
-            alert("Folder loaded, but no demo.json found.");
-          }
-
-          // Clear any old network cache for safety (optional)
-          FILE_CACHE.clear();
-
-          await refresh();
-          input.value = "";
-        });
-      }
-
-      /********************
-       * Protein Viewer
-       ********************/
-      function renderProt(st) {
-        const mount = document.getElementById("protMount");
-        if (!mount) return;
-
-        const html = st?.prot_html;
-        const iframeUrl = st?.prot_iframe_url;
-        const pdbId = st?.pdb_id;
-
-        mount.innerHTML = "";
-        if (!html && !iframeUrl && !pdbId) {
-          return (document.getElementById("protCard").style.display = "none");
-        }
-
-        const frame = document.createElement("iframe");
-        frame.className = "prot-frame";
-        // Updated sandbox for full link functionality and downloads
-        frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
-        frame.setAttribute("referrerpolicy", "no-referrer");
-
-        if (html && typeof html === "string" && html.trim()) {
-          frame.srcdoc = html;
-
-          const saveBtn = document.createElement("button");
-          saveBtn.className = "mini";
-          saveBtn.textContent = "Save HTML";
-          saveBtn.style.margin = "6px 0 10px";
-          saveBtn.onclick = () => {
-            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-            const url = URL.createObjectURL(blob);
+      
+        // ---- App state ----
+        let STATE = null;
+        let HERO_SHOWN = true;
+        let ARTIFACT_BASE = "";
+        const FILE_CACHE = new Map();
+        const LOCAL_FILES = new Map();
+      
+        // ---- Save page (snapshot) ----
+        function saveFullPageSnapshot(){
+          try{
+            const htmlEl = document.documentElement.cloneNode(true);
+            htmlEl.querySelectorAll(".cite-tip").forEach(n => n.remove());
+      
+            const boot = document.createElement("script");
+            boot.type = "text/javascript";
+            const stateJson = JSON.stringify(STATE ?? {});
+            const localFilesJson = JSON.stringify(Array.from(LOCAL_FILES.entries()));
+            const fileCacheJson  = JSON.stringify(Array.from(FILE_CACHE.entries()));
+            const isLight = document.body.classList.contains("light");
+            boot.textContent = `
+              (function(){
+                try{
+                  window.STATE = ${stateJson};
+                  try{ window.LOCAL_FILES = new Map(${localFilesJson}); }catch(_){}
+                  try{ window.FILE_CACHE  = new Map(${fileCacheJson}); }catch(_){}
+                  if(${isLight}) document.body.classList.add('light'); else document.body.classList.remove('light');
+                  if (typeof refresh === 'function') refresh();
+                }catch(e){ console.warn('Snapshot boot failed', e); }
+              })();
+            `;
+            htmlEl.querySelector("body")?.appendChild(boot);
+      
+            const doctype = "<!doctype html>\n";
+            const htmlText = doctype + htmlEl.outerHTML;
+            const blob = new Blob([htmlText], { type: "text/html;charset=utf-8" });
+            const url  = URL.createObjectURL(blob);
             const a = document.createElement("a");
-            a.href = url;
-            a.download = "protein_view.html";
-            a.click();
+            a.href = url; a.download = "alvessa_snapshot.html"; a.click();
             setTimeout(() => URL.revokeObjectURL(url), 800);
-          };
-          mount.appendChild(saveBtn);
-        } else if (iframeUrl) {
-          frame.src = iframeUrl;
-        } else if (pdbId) {
-          frame.src = `https://www.ebi.ac.uk/pdbe/entry-files/molstar.html?structureId=${encodeURIComponent(pdbId)}`;
-        }
-
-        mount.appendChild(frame);
-        document.getElementById("protCard").style.display = "block";
-
-        // Updated theme broadcast after load
-        const isLight = document.body.classList.contains("light");
-        frame.addEventListener("load", () => {
-          frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
-        });
-      }
-
-      /********************
-       * ChEMBL Viewer
-       ********************/
-      function renderChembl(st) {
-        const mount = document.getElementById("chemblMount");
-        const card  = document.getElementById("chemblCard");
-        if (!mount || !card) return;
-
-        const html = st?.chembl_html;
-        if (!html) {
-          card.style.display = "none";
-          mount.innerHTML = "";
-          return;
-        }
-
-        mount.innerHTML = "";
-        card.style.display = "block";
-
-        const frame = document.createElement("iframe");
-        frame.className = "prot-frame";
-        // Same sandbox policy for full external link support
-        frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
-        frame.setAttribute("referrerpolicy", "no-referrer");
-        frame.srcdoc = html;
-
-        const saveBtn = document.createElement("button");
-        saveBtn.className = "ghost";
-        saveBtn.textContent = "Save HTML";
-        saveBtn.style.margin = "6px 0 10px";
-        saveBtn.onclick = () => {
-          const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "chembl_view.html";
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(url), 800);
-        };
-
-        mount.appendChild(saveBtn);
-        mount.appendChild(frame);
-
-        // Updated theme sync
-        const isLight = document.body.classList.contains("light");
-        frame.addEventListener("load", () => {
-          frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
-        });
-      }
-
-
-      /********************
-       * Renderers for Q/A, citations, evidence, raw 
-       ********************/
-      function renderQuestion(st) {
-        var msgs = (st && st.messages) || [];
-        var lastUser = null;
-        for (var i = msgs.length - 1; i >= 0; i--) {
-          if (msgs[i] && msgs[i].role === "user") {
-            lastUser = msgs[i];
-            break;
+          }catch(e){
+            alert("Could not create snapshot: " + e.message);
           }
         }
-        var q = (lastUser && lastUser.content) || (st && st.prompt) || "";
-        setText("question", q);
-        setText("questionTitle", "Question");
-      }
-      function renderAnswerAndCitations(st) {
-        const answerEl = byId("answer");
-        const refsEl = byId("citations");
-        answerEl.innerHTML = "";
-        refsEl.innerHTML = "";
-        const base = (
-          st?.llm_json?.answer ||
-          (Array.isArray(st?.messages)
-            ? st.messages
-                .filter((m) => m.role === "assistant" && m.content)
-                .at(-1)?.content || ""
-            : "") ||
-          ""
-        ).trim();
-        if (!base) {
-          hide("answerCard");
-          return;
+        byId("savePageBtn")?.addEventListener("click", saveFullPageSnapshot);
+      
+        // ---- Theme slider (emoji) ----
+        const themeCb = byId("themeCheckbox");
+        function applyTheme(light){
+          document.body.classList.toggle("light", !!light);
+          const thumb = document.querySelector(".theme-toggle .thumb");
+          if (thumb) thumb.textContent = light ? "☀️" : "🌙";
+          try{ localStorage.setItem("alvessa_theme", light ? "light" : "dark"); }catch(_){}
         }
-        const raw =
-          st?.llm_json?.citations ||
-          st?.ui?.llm_raw_repr ||
-          st?.llm_raw_repr ||
-          "";
-        const cites = parseAnthropicCitationsFromString(raw);
-        if (!cites.length) {
-          answerEl.innerHTML = mdToHtml(base);
-          show("answerCard");
-          refsEl.innerHTML = "";
-          return;
-        }
-        const { bib, numFor } = buildBibliography(
-          [{ text: "", citations: cites }],
-          st
-        );
-        function insertCitationsIntoText(text, citations, numFor) {
-          let out = text;
-          const lower = () => out.toLowerCase();
-          function tryInsert(snippet, n) {
-            if (!snippet) return false;
-            const sn = snippet.replace(/\s+/g, " ").trim();
-            if (!sn) return false;
-            let idx = lower().indexOf(sn.toLowerCase());
-            if (idx !== -1) {
-              const end = idx + sn.length;
-              out = out.slice(0, end) + ` [[CITE:${n}]]` + out.slice(end);
-              return true;
-            }
-            const words = sn.split(" ").filter(Boolean);
-            const short = words.slice(0, Math.min(12, words.length)).join(" ");
-            if (short.length >= 20) {
-              idx = lower().indexOf(short.toLowerCase());
-              if (idx !== -1) {
-                const end = idx + short.length;
-                out = out.slice(0, end) + ` [[CITE:${n}]]` + out.slice(end);
-                return true;
-              }
-            }
-            return false;
-          }
-          function fallbackInsert(cited, n) {
-            var sents = out.match(/[^.!?]+(?:[.!?]+|$)/g) || [out];
-            var keys = (cited || "")
-              .toLowerCase()
-              .split(/\s+/)
-              .filter(function (w) {
-                return w.length > 3;
-              });
-            var best = -1,
-              scoreBest = 0,
-              posEnd = 0;
-            for (var i = 0; i < sents.length; i++) {
-              var sLow = sents[i].toLowerCase();
-              var score = 0;
-              for (var k = 0; k < keys.length; k++)
-                if (sLow.indexOf(keys[k]) !== -1) score++;
-              if (score > scoreBest) {
-                scoreBest = score;
-                best = i;
-              }
-            }
-            if (best >= 0) {
-              for (var i2 = 0, p = 0; i2 <= best; i2++) {
-                p += sents[i2].length;
-                posEnd = p;
-              }
-              out =
-                out.slice(0, posEnd) +
-                " [[CITE:" +
-                n +
-                "]]" +
-                out.slice(posEnd);
-            } else {
-              out += " [[CITE:" + n + "]]";
-            }
-          }
-          for (const c of citations) {
-            const n = numFor(c);
-            if (!n) continue;
-            if (!tryInsert(c.cited_text, n)) fallbackInsert(c.cited_text, n);
-          }
-          return out;
-        }
-        const annotated = insertCitationsIntoText(base, cites, numFor);
-        let html = mdToHtml(annotated);
-        html = replaceCitationPlaceholdersWithHtml(html);
-        answerEl.innerHTML = html;
-        show("answerCard");
-        renderReferencesList(bib);
-        wireCitationTooltips(answerEl, bib);
-      }
-      function renderEvidence(st) {
-        const ev =
-          st?.evidence ||
-          st?.ui?.evidence ||
-          st?.llm_json?.evidence ||
-          st?.sources ||
-          [];
-        const items = [];
-        const pushItem = (obj) => {
-          if (typeof obj === "string") {
-            items.push(`<li>${escapeHtml(obj)}</li>`);
-            return;
-          }
-          if (!obj || typeof obj !== "object") return;
-          const title = obj.title
-            ? `<div><strong>${escapeHtml(obj.title)}</strong></div>`
-            : "";
-          const quote = obj.quote
-            ? `<div class=\"muted\">“${escapeHtml(obj.quote)}”</div>`
-            : "";
-          const url = obj.url
-            ? `<div class=\"muted\"><a href=\"${escapeHtml(
-                obj.url
-              )}\" target=\"_blank\" rel=\"noopener noreferrer\">${escapeHtml(
-                obj.url
-              )}</a></div>`
-            : "";
-          items.push(`<li>${title}${quote}${url}</li>`);
-        };
-        if (Array.isArray(ev)) ev.forEach(pushItem);
-        else if (typeof ev === "object")
-          Object.values(ev).forEach((v) => {
-            if (Array.isArray(v)) v.forEach(pushItem);
-            else pushItem(v);
-          });
-        if (items.length) {
-          setHTML("evidence", `<ol class="refs-list">${items.join("")}</ol>`);
-          show("evidenceCard");
-        } else hide("evidenceCard");
-      }
-      function renderRaw(st) {
-        const json = JSON.stringify(st ?? {}, null, 2);
-        if (json && json !== "{}") {
-          setText("raw", json);
-          show("rawCard");
-        } else hide("rawCard");
-      }
+        (function initTheme(){
+          let pref = null;
+          try{ pref = localStorage.getItem("alvessa_theme"); }catch(_){}
+          const startLight = pref ? (pref === "light") : false;
+          applyTheme(startLight);
+          if (themeCb) themeCb.checked = startLight;
+          broadcastThemeToIframes();
+        })();
 
-      /********************
-       * Two-sample MR - need to remove
-       ********************/
-      function parsePandasLikeMRTable(txt) {
-        if (!txt || typeof txt !== "string") return { cols: [], rows: [] };
-        const lines = txt
-          .split(/\r?\n/)
-          .filter(
-            (l) =>
-              l.trim() &&
-              !/^\[\d+\s+rows\s+x\s+\d+\s+columns\]$/i.test(l.trim())
-          );
-        if (!lines.length) return { cols: [], rows: [] };
-        const header = lines[0]
-          .trim()
-          .replace(/\s{2,}/g, "\t")
-          .split("\t")
-          .map((s) => s.trim());
-        const keep = [
-          "exposure",
-          "outcome",
-          "method",
-          "Q_df",
-          "Q_pval",
-          "OR_95CI",
-        ];
-        const colIdx = header.reduce((acc, name, i) => {
-          acc[name] = i;
-          return acc;
-        }, {});
-        const cols = keep.filter((c) => colIdx[c] != null);
-        const rows = [];
-        for (let i = 1; i < lines.length; i++) {
-          let raw = lines[i].trim();
-          let parts = raw.replace(/\s{2,}/g, "\t").split("\t");
-          if (parts.length && /^\d+$/.test(parts[0])) parts.shift();
-          parts = parts.filter((p) => p.trim() !== "...");
-          const row = cols.map((c) => parts[colIdx[c]] ?? "—");
-          rows.push(row);
-        }
-        return { cols, rows };
-      }
-      function renderTwoSampleMR(st) {
-        const mount = document.getElementById("tsmr");
-        const card = document.getElementById("tsmrCard");
-        if (!mount || !card) return;
-
-        const block = st?.two_sample_mr_ui;
-        if (!block || typeof block !== "object" || !Object.keys(block).length) {
-          card.style.display = "none";
-          mount.innerHTML = "";
-          return;
-        }
-
-        const sections = [];
-        Object.entries(block).forEach(([key, obj]) => {
-          if (!obj || typeof obj !== "object") return;
-          const title = key;
-          const cohort = obj.cohort
-            ? `<span class="pill">${escapeHtml(String(obj.cohort))}</span>`
-            : "";
-          const gene = obj.gene
-            ? `<span class="pill">Gene: ${escapeHtml(String(obj.gene))}</span>`
-            : "";
-          const cis =
-            obj.cis === true || obj.cis === "true"
-              ? `<span class="pill">cis</span>`
-              : `<span class="pill ghost">trans</span>`;
-          const sum = obj.summary_text
-            ? `<div class="mr-sum">${escapeHtml(
-                String(obj.summary_text)
-              )}</div>`
-            : "";
-          const parsed = parsePandasLikeMRTable(
-            String(obj.results_table || "")
-          );
-          let tableHTML = `<div class="muted">No MR results table available.</div>`;
-          if (parsed.cols.length && parsed.rows.length) {
-            const thead = `<thead><tr>${parsed.cols
-              .map((c) => `<th>${escapeHtml(c)}</th>`)
-              .join("")}</tr></thead>`;
-            const tbody = `<tbody>${parsed.rows
-              .map(
-                (r) =>
-                  `<tr>${r
-                    .map(
-                      (v) =>
-                        `<td title="${escapeHtml(String(v))}">${escapeHtml(
-                          String(v)
-                        )}</td>`
-                    )
-                    .join("")}</tr>`
-              )
-              .join("")}</tbody>`;
-            const csv = [
-              parsed.cols.join(","),
-              ...parsed.rows.map((r) =>
-                r
-                  .map((x) => {
-                    const s = String(x ?? "");
-                    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-                  })
-                  .join(",")
-              ),
-            ].join("\n");
-            const btnId = `mrCsv_${Math.random().toString(36).slice(2, 9)}`;
-            tableHTML = `
-          <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <div class="muted">${parsed.rows.length} row${
-              parsed.rows.length === 1 ? "" : "s"
-            } • columns: ${parsed.cols.length}</div>
-            <button id="${btnId}" class="ghost">Download CSV</button>
-          </div>
-          <div class="scroll"><table>${thead}${tbody}</table></div>
-        `;
-            sections.push({
-              html: `<div class="mr-block">
-             <div class="mr-head"><strong>${escapeHtml(
-               title
-             )}</strong> ${cohort} ${gene} ${cis}</div>
-             ${sum}
-             ${tableHTML}
-           </div>`,
-              btnId,
-              csv,
-            });
-            return;
-          }
-          sections.push({
-            html: `<div class="mr-block">
-           <div class="mr-head"><strong>${escapeHtml(
-             title
-           )}</strong> ${cohort} ${gene} ${cis}</div>
-           ${sum}
-           ${tableHTML}
-         </div>`,
-          });
-        });
-
-        mount.innerHTML = sections.map((s) => s.html).join("");
-        card.style.display = "block";
-
-        sections.forEach((s) => {
-          if (!s.btnId || !s.csv) return;
-          const btn = document.getElementById(s.btnId);
-          if (!btn) return;
-          btn.addEventListener("click", () => {
-            const blob = new Blob([s.csv], { type: "text/csv;charset=utf-8" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = "two_sample_mr_results.csv";
-            a.click();
-            setTimeout(() => URL.revokeObjectURL(a.href), 500);
-          });
-        });
-      }
-
-      /********************
-       * Gene Summary (FILES FIRST, then fallback to state)
-       ********************/
-      async function renderGeneSummary(st) {
-        const mount = byId("geneSummary");
-        const card = byId("geneSummaryCard");
-        if (!mount || !card) return;
-
-        // Try files first (genes.index.csv + per-gene JSON blobs)
-        let blocks = [];
-        try {
-          const idxText = await fetchTextCached("genes/genes.index.csv");
-          const rows = parseCSV(idxText, ",");
-          // Render up to 20 cards
-          const top = rows.slice(0, 20);
-
-          // Small helper to make pills
-          const pills = (arr) =>
-            (arr || [])
-              .slice(0, 10)
-              .map((x) => `<span class="pill">${escapeHtml(String(x))}</span>`)
-              .join(" ");
-
-          // Build cards
-          for (const r of top) {
-            const sym = r.symbol || r.gene_symbol || "";
-            if (!sym) continue;
-
-            // Load this gene's JSON
-            let g;
-            try {
-              const jtxt = await fetchTextCached(`genes/${sym}/gene.json`);
-              g = JSON.parse(jtxt);
-            } catch {
-              continue;
-            }
-
-            const id = g.identifiers || {};
-            const loc = g.location || {};
-            const anns = g.annotations || {};
-            const inter = g.interactions || {};
-            const gwas = g.gwas_profile || {};
-            const txp = g.transcriptome || {};
-            const pathways = (anns.pathways || []).slice(0, 8);
-            const pathHtml = pathways.length
-              ? `
-  <div class="muted" style="margin-top:6px;">Pathways</div>
-  <div>${pathways
-    .map((x) => `<span class="pill">${escapeHtml(String(x))}</span>`)
-    .join(" ")}</div>
-`
-              : "";
-
-            // Header line
-            const header = `
-          <div class="row" style="gap:6px;flex-wrap:wrap;">
-            <strong style="font-size:18px;">${escapeHtml(
-              (id.symbol || sym).toUpperCase()
-            )}</strong>
-            <span class="muted">
-              ${id.ensembl_id ? `• ${escapeHtml(id.ensembl_id)}` : ""}
-              ${id.entrez_id ? ` • Entrez:${escapeHtml(id.entrez_id)}` : ""}
-              ${id.uniprot_id ? ` • UniProt:${escapeHtml(id.uniprot_id)}` : ""}
-            </span>
-          </div>`;
-
-            // Location + transcript stats
-            const txCount =
-              txp.transcript_count ??
-              (txp.transcripts
-                ? Object.keys(txp.transcripts).length
-                : undefined);
-            const spanBP = txp.max_transcript_span_bp;
-            const meta = `
-          <div class="muted" style="margin-top:4px;">
-            chr${escapeHtml(loc.chrom || "?")} ${loc.start || "?"}–${
-              loc.end || "?"
-            } ${loc.strand || ""} •
-            ${
-              txCount != null
-                ? `Transcripts: ${escapeHtml(String(txCount))}`
-                : ""
-            }${spanBP ? ` • Max span: ${escapeHtml(String(spanBP))} bp` : ""}
-          </div>`;
-
-            // Functions (short preview)
-            const fn = Array.isArray(anns.functions) ? anns.functions[0] : "";
-            const fnPreview = fn
-              ? fn.split(". ").slice(0, 2).join(". ") +
-                (fn.includes(". ") ? "…" : "")
-              : "";
-            const fnHtml = fnPreview
-              ? `
-          <div class="muted" style="margin-top:6px;">Function</div>
-          <div class="mono" style="white-space:pre-wrap;">${escapeHtml(
-            fnPreview
-          )}</div>`
-              : "";
-
-            // Interactions summary (+ counts) — compact pills inside <details>
-            const human = inter.human_interactions || {};
-            const nonhuman = inter.nonhuman_interactions || {};
-
-            // helper: compact pill list
-            const pillList = (arr, max = 30) => {
-              const take = (arr || []).slice(0, max);
-              const overflow = (arr || []).length - take.length;
-              return (
-                take
-                  .map(
-                    (x) =>
-                      `<span class="pill" style="margin:2px 4px 2px 0;">${escapeHtml(
-                        String(x)
-                      )}</span>`
-                  )
-                  .join("") +
-                (overflow > 0
-                  ? `<span class="pill" title="+${overflow} more">+${overflow}</span>`
-                  : "")
-              );
-            };
-
-            // summarize counts per evidence type
-            const sumCount = (obj) =>
-              Object.values(obj).reduce(
-                (a, arr) => a + (Array.isArray(arr) ? arr.length : 0),
-                0
-              );
-            const nExpHuman = sumCount(human);
-            const nExpNon = sumCount(nonhuman);
-
-            // per-type dropdown content
-            const typeSection = (label, obj) => {
-              const types = Object.entries(obj || {}).filter(
-                ([, arr]) => Array.isArray(arr) && arr.length
-              );
-              if (!types.length) return "";
-              return types
-                .map(
-                  ([t, arr]) => `
-    <div style="margin:6px 0;">
-      <div class="muted" style="margin-bottom:4px;">${escapeHtml(t)} (${
-                    arr.length
-                  })</div>
-      <div>${pillList(arr, 36)}</div>
-    </div>
-  `
-                )
-                .join("");
-            };
-
-            const interHtml =
-              nExpHuman || nExpNon
-                ? `
-  <div class="muted" style="margin-top:6px;">Interactions</div>
-  <div>
-    ${nExpHuman ? `<span class="pill">Human: ${nExpHuman}</span>` : ""}
-    ${nExpNon ? `<span class="pill">Non-human: ${nExpNon}</span>` : ""}
-  </div>
-  <details style="margin-top:6px;">
-    <summary class="muted" style="cursor:pointer;">Show partners</summary>
-    <div style="margin-top:8px;">
-      ${typeSection("Human", human)}
-      ${typeSection("Non-human", nonhuman)}
-    </div>
-  </details>
-`
-                : "";
-
-            // GO enrichment toggle (default PAN) — NO inline <script>!
-            const enr = g.go_enrichment || g.interactions?.go_enrichment || {};
-            const pan = enr.pan_go || {};
-            const old = enr.old_go || {};
-            const blockId = `go_${sym}_${Math.random()
-              .toString(36)
-              .slice(2, 7)}`;
-
-            function goListHTML(obj) {
-              const sect = ["BP", "MF", "CC"]
-                .map((k) => {
-                  const arr = (obj && obj[k]) || [];
-                  return arr.length
-                    ? `<div style="margin-top:4px;"><strong>${k}</strong>: ${arr
-                        .slice(0, 8)
-                        .map((x) => escapeHtml(String(x)))
-                        .join("; ")}</div>`
-                    : "";
-                })
-                .join("");
-              return sect || `<div class="muted">No GO enrichment.</div>`;
-            }
-
-            const goHtml =
-              Object.keys(pan).length || Object.keys(old).length
-                ? `
-  <div class="muted" style="margin-top:6px;">GO Enrichment</div>
-  <div class="row" style="gap:6px; margin-bottom:6px;">
-    <label class="pill"><input type="radio" name="${blockId}" value="pan" checked> pan_go</label>
-    <label class="pill"><input type="radio" name="${blockId}" value="old"> old_go</label>
-  </div>
-  <div id="${blockId}_content"
-       class="mono"
-       data-go-block="${blockId}"
-       data-go-pan='${escapeHtml(JSON.stringify(pan))}'
-       data-go-old='${escapeHtml(JSON.stringify(old))}'
-       style="white-space:normal; line-height:1.35;">
-    ${goListHTML(pan)}
-  </div>
-`
-                : "";
-
-            // GWAS summary
-            // GWAS summary (pills + compact table)
-            const gwasHtml =
-              gwas && gwas.found
-                ? `
-<div class="muted" style="margin-top:6px;">GWAS</div>
-<div class="row" style="gap:6px;flex-wrap:wrap;">
-  <span class="pill">Assoc: ${escapeHtml(
-    String(gwas.total_associations || 0)
-  )}</span>
-  <span class="pill">Sig: ${escapeHtml(
-    String(gwas.significant_associations || 0)
-  )}</span>
-  <span class="pill">Studies: ${escapeHtml(
-    String(gwas.total_studies || 0)
-  )}</span>
-  <span class="pill">Variants: ${escapeHtml(
-    String(gwas.variant_count || 0)
-  )}</span>
-  <span class="pill">Traits: ${escapeHtml(
-    String(gwas.trait_link_count || 0)
-  )}</span>
-</div>
-${
-  Array.isArray(gwas.top_traits) && gwas.top_traits.length
-    ? (() => {
-        const rows = gwas.top_traits
-          .slice(0, 10)
-          .map((t) => {
-            const rs = String(t.rsid || "");
-            const rsLink =
-              rs && /^rs/i.test(rs)
-                ? `<a href="https://www.ncbi.nlm.nih.gov/snp/${encodeURIComponent(
-                    rs
-                  )}" target="_blank" rel="noopener">${escapeHtml(rs)}</a>`
-                : escapeHtml(rs || "—");
-            const pv = String(t.p_value ?? "—");
-            const risk = t.risk_score != null ? String(t.risk_score) : "—";
-            return `<tr>
-          <td class="wrap">${escapeHtml(String(t.trait || "—"))}</td>
-          <td>${rsLink}</td>
-          <td>${escapeHtml(pv)}</td>
-          <td>${escapeHtml(risk)}</td>
-        </tr>`;
-          })
-          .join("");
-        return `
-        <div style="margin-top:8px;">
-          <div class="muted" style="margin-bottom:6px;">Top traits (per gene)</div>
-          <div style="overflow:auto; max-height:240px;">
-            <table class="vs-table" style="table-layout:auto; width:100%;">
-              <thead>
-                <tr><th class="wrap">Trait</th><th>rsID</th><th>p-value</th><th>Risk</th></tr>
-              </thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>
-        </div>`;
-      })()
-    : ""
-}
-`
-                : "";
-
-            blocks.push(
-              `<div class="card" style="margin-bottom:10px;">
-             ${header}
-             ${meta}
-             ${fnHtml}
-             ${pathHtml}
-             ${interHtml}
-             ${goHtml}
-             ${gwasHtml}
-           </div>`
-            );
-          }
-
-          if (blocks.length) {
-            mount.innerHTML = blocks.join("");
-            card.style.display = "block";
-            wireGoToggles();
-            return;
-          }
-        } catch (e) {
-          /* fall through to state-based rendering */
-        }
-
-        // Fallback: render from in-memory state 
-        const ge =
-          st?.gene_entities && typeof st.gene_entities === "object"
-            ? st.gene_entities
-            : {};
-        const basic = Object.entries(ge)
-          .map(([gene, obj]) => {
-            if (!obj || typeof obj !== "object") return "";
-            const id = obj.identifiers || {};
-            const sym = id.symbol || gene;
-            const ens = id.ensembl_id || "";
-            const uni = id.uniprot_id || "";
-            const entrez = id.entrez_id || "";
-            const tx = obj.transcriptome || {};
-            const nTx =
-              tx.transcript_count ??
-              (tx.transcripts ? Object.keys(tx.transcripts).length : undefined);
-            const spanMin =
-              tx.median_transcript_span_bp || tx.min_transcript_span_bp;
-            const spanMax = tx.max_transcript_span_bp;
-            const varCount =
-              obj.variants && typeof obj.variants === "object"
-                ? Object.keys(obj.variants).length
-                : 0;
-            const header = `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><strong>${escapeHtml(
-              (sym || "").toUpperCase()
-            )}</strong><span class="muted">${
-              ens ? `• ${escapeHtml(ens)}` : ""
-            }${entrez ? ` • Entrez:${escapeHtml(entrez)}` : ""}${
-              uni ? ` • UniProt:${escapeHtml(uni)}` : ""
-            }</span></div>`;
-            const meta = `<div class="muted" style="margin-top:4px;">${
-              nTx != null ? `Transcripts: ${nTx}` : ""
-            }${
-              spanMin || spanMax
-                ? ` • Span: ${escapeHtml(String(spanMin || "?"))}–${escapeHtml(
-                    String(spanMax || "?")
-                  )} bp`
-                : ""
-            } • Variants in state: ${varCount}</div>`;
-            return `<div style="margin-bottom:12px;">${header}${meta}</div>`;
-          })
-          .join("");
-        if (basic.trim()) {
-          setHTML("geneSummary", basic);
-          show("geneSummaryCard");
-        } else hide("geneSummaryCard");
-      }
-
-      /********************
-       * Variant Summary (FILES FIRST, then fallback to state)
-       ********************/
-      function normChrom(c) {
-        if (!c) return "";
-        c = String(c);
-        if (/^chr/i.test(c)) c = c.replace(/^chr/i, "");
-        if (/^m(t)?$/i.test(c)) return "MT";
-        return c;
-      }
-      function toFixedMaybe(x) {
-        const n = Number(x);
-        if (!Number.isFinite(n)) return x == null ? "" : String(x);
-        if (Math.abs(n) !== 0 && (Math.abs(n) < 1e-3 || Math.abs(n) >= 1e5))
-          return n.toExponential(3);
-        return n.toFixed(6);
-      }
-      async function loadVariantTables() {
-        const base = "variants/";
-        const [variantsTxt, locTxt, pgtTxt, pgcTxt, fpTxt, afTxt, sumTxt] =
-          await Promise.all([
-            fetchTextCached(base + "variants.csv"),
-            fetchTextCached(base + "locations.csv"),
-            fetchTextCached(base + "per_gene_traits.csv").catch(() => ""), // optional
-            fetchTextCached(base + "per_gene_context.csv").catch(() => ""), // optional
-            fetchTextCached(base + "functional_predictions.csv").catch(
-              () => ""
-            ), // optional
-            fetchTextCached(base + "allele_frequencies.csv").catch(() => ""), // optional
-            fetchTextCached(base + "summaries.csv").catch(() => ""), // optional
-          ]);
-        const V = parseCSV(variantsTxt);
-        const L = parseCSV(locTxt);
-        const T = pgtTxt ? parseCSV(pgtTxt) : [];
-        const C = pgcTxt ? parseCSV(pgcTxt) : [];
-        const FP = fpTxt ? parseCSV(fpTxt) : [];
-        const AF = afTxt ? parseCSV(afTxt) : [];
-        const SM = sumTxt ? parseCSV(sumTxt) : [];
-
-        // Index helpers
-        const locByVar = {};
-        for (const r of L) {
-          const vid = r.variant_id;
-          (locByVar[vid] ||= []).push(r);
-        }
-        const traitByVarGene = {}; // choose min p_value per gene
-        for (const r of T) {
-          const vid = r.variant_id,
-            gene = r.gene;
-          const p = Number(r.p_value);
-          if (!vid || !gene || Number.isNaN(p)) continue;
-          const key = vid + "|" + gene;
-          const cur = traitByVarGene[key];
-          if (!cur || p < cur.p) traitByVarGene[key] = { trait: r.trait, p };
-        }
-        const anyGeneByVar = {}; // fallback gene + context/category
-        for (const r of C) {
-          const vid = r.variant_id,
-            gene = r.gene;
-          if (!vid || !gene) continue;
-          if (!anyGeneByVar[vid])
-            anyGeneByVar[vid] = {
-              gene,
-              context: r.context || "",
-              category: r.variant_category || "",
-            };
-        }
-        const fpByVarGene = {}; // tool → score (stringified or first)
-        for (const r of FP) {
-          const vid = r.variant_id,
-            gene = r.gene,
-            tool = (r.tool || "").toLowerCase();
-          if (!vid || !gene || !tool) continue;
-          const key = vid + "|" + gene;
-          fpByVarGene[key] ||= {};
-          fpByVarGene[key][tool] = fpByVarGene[key][tool]
-            ? `${fpByVarGene[key][tool]}, ${r.score}`
-            : `${r.score}`;
-        }
-        const afByVar = {}; // prefer gnomad
-        for (const r of AF) {
-          const vid = r.variant_id;
-          if (!vid) continue;
-          const src = String(r.source || "");
-          if (/gnomad/i.test(src)) afByVar[vid] = r.af;
-          else if (!afByVar[vid]) afByVar[vid] = r.af;
-        }
-        const summaryByVar = {};
-        for (const r of SM) {
-          summaryByVar[r.variant_id] = r.summary_text;
-        }
-
-        return {
-          V,
-          locByVar,
-          traitByVarGene,
-          anyGeneByVar,
-          fpByVarGene,
-          afByVar,
-          summaryByVar,
-        };
-      }
-
-      function wireGoToggles() {
-        document.querySelectorAll("[data-go-block]").forEach((el) => {
-          const blockId = el.getAttribute("data-go-block");
-          const radios = document.querySelectorAll(`input[name="${blockId}"]`);
-          if (!radios.length) return;
-
-          const decode = (s) => {
-            try {
-              return JSON.parse(s || "{}");
-            } catch {
-              return {};
-            }
-          };
-          const pan = decode(el.getAttribute("data-go-pan"));
-          const old = decode(el.getAttribute("data-go-old"));
-
-          const render = (obj) => {
-            const html = ["BP", "MF", "CC"]
-              .map((k) => {
-                const arr = (obj && obj[k]) || [];
-                return arr.length
-                  ? `<div style="margin-top:4px;"><strong>${k}</strong>: ${arr
-                      .slice(0, 8)
-                      .map((x) => escapeHtml(String(x)))
-                      .join("; ")}</div>`
-                  : "";
-              })
-              .join("");
-            el.innerHTML = html || `<div class="muted">No GO enrichment.</div>`;
-          };
-
-          radios.forEach((r) => {
-            r.addEventListener("change", () =>
-              render(r.value === "pan" ? pan : old)
-            );
-          });
-        });
-      }
-
-      function pickBestLoc(locArr) {
-        // prefer GRCh38*, else GRCh37*
-        if (!Array.isArray(locArr) || !locArr.length)
-          return { chrom: "", pos: "", ref: "", alt: "" };
-        let best = null;
-        for (const r of locArr) {
-          const b = String(r.build || "").toLowerCase();
-          if (b.startsWith("grch38")) {
-            best = r;
-            break;
-          }
-          if (!best && b.startsWith("grch37")) best = r;
-        }
-        best = best || locArr[0];
-        const ref = ((r) => (Array.isArray(r) ? r.join(",") : String(r || "")))(
-          best.ref
-        );
-        const alt = ((r) => (Array.isArray(r) ? r.join(",") : String(r || "")))(
-          best.alt
-        );
-        return { chrom: normChrom(best.chrom), pos: best.pos || "", ref, alt };
-      }
-
-      async function renderVariantSummary(st) {
-        const root = document.getElementById("variantSummary");
-        const card = document.getElementById("variantSummaryCard");
-        if (!root || !card) return;
-
-        // Try FILES first
-        let rows = [];
-        try {
-          const {
-            V,
-            locByVar,
-            traitByVarGene,
-            anyGeneByVar,
-            fpByVarGene,
-            afByVar,
-          } = await loadVariantTables();
-          for (const v of V) {
-            const vid = v.variant_id;
-            const loc = pickBestLoc(locByVar[vid] || []);
-            // Choose a "top gene": min p over per_gene_traits; else any from per_gene_context
-            let gene = null,
-              topTrait = "—",
-              topP = null,
-              category = "—",
-              context = "—";
-            // sweep trait map to pick best p over all genes
-            let best = null;
-            for (const key in traitByVarGene) {
-              if (!key.startsWith(vid + "|")) continue;
-              const rec = traitByVarGene[key];
-              if (!best || rec.p < best.p) {
-                best = rec;
-                gene = key.split("|")[1];
-              }
-            }
-            if (best) {
-              topTrait = best.trait;
-              topP = best.p;
-            }
-            if (!gene && anyGeneByVar[vid]) {
-              gene = anyGeneByVar[vid].gene;
-              category = anyGeneByVar[vid].category || "—";
-              context = anyGeneByVar[vid].context || "—";
-            }
-            if (gene && anyGeneByVar[vid] && anyGeneByVar[vid].gene === gene) {
-              category = anyGeneByVar[vid].category || category;
-              context = anyGeneByVar[vid].context || context;
-            }
-            const fp = fpByVarGene[vid + "|" + (gene || "")] || {};
-            const am = fp["alphamissense"] || fp["alpha_missense"] || "—";
-            const sei = fp["sei"] || "—";
-            const af = afByVar[vid] != null ? toFixedMaybe(afByVar[vid]) : "—";
-
-            rows.push({
-              gene: gene || "—",
-              rsid: v.variant_id || "—",
-              chrom: loc.chrom || "—",
-              grch38: loc.pos || "—",
-              grch37: "", // could be filled by scanning non-best GRCh37 entry 
-              ref: loc.ref || "—",
-              alt: loc.alt || "—",
-              context,
-              category,
-              consequence: v.consequence || "—",
-              clinvar: v.clinvar || "—",
-              sei,
-              alphamissense: am,
-              expr: "—",
-              topTrait,
-              topP: topP == null ? "—" : String(topP),
-              gnomadAF: af,
-              traits: "—",
+        function broadcastThemeToIframes() {
+            const isLight = document.body.classList.contains("light");
+            document.querySelectorAll("iframe").forEach((frame) => {
+              try {
+                frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
+              } catch (_) {}
             });
           }
-        } catch (e) {
-          console.warn(
-            "File-based variant load failed, falling back to state:",
-            e
-          );
-          rows = buildVariantRowsFromGeneEntities(st || {});
-        }
-
-        // Nothing?
-        if (!rows.length) {
-          card.style.display = "none";
-          root.innerHTML = "";
-          return;
-        }
-
-        // Build table
-        // Dynamic column visibility (hide columns that are entirely "—"/empty)
-        // Columns used in the VISIBLE table
-        const UI_COL_KEYS = [
-          { key: "gene", label: "Gene" },
-          { key: "rsid", label: "RSID" },
-          { key: "chrom", label: "Chrom" },
-          { key: "grch38", label: "GRCh38 pos" },
-          { key: "grch37", label: "GRCh37 pos" },
-          { key: "context", label: "Context" },
-          { key: "category", label: "Category" },
-          { key: "consequence", label: "Consequence" },
-          { key: "clinvar", label: "ClinVar" },
-          { key: "sei", label: "SEI" },
-          { key: "alphamissense", label: "AlphaMissense" },
-          { key: "expr", label: "Expr preds" },
-          { key: "topTraitP", label: "Top trait (p)" },
-          { key: "gnomadAF", label: "GnomAD alt AF" },
-          { key: "traits", label: "Traits" },
-        ];
-
-        // Columns used in the CSV (includes Ref/Alt + separate p)
-        const CSV_COL_KEYS = [
-          { key: "gene", label: "Gene" },
-          { key: "rsid", label: "RSID" },
-          { key: "chrom", label: "Chrom" },
-          { key: "grch38", label: "GRCh38 pos" },
-          { key: "grch37", label: "GRCh37 pos" },
-          { key: "ref", label: "Ref" },
-          { key: "alt", label: "Alt" },
-          { key: "context", label: "Context" },
-          { key: "category", label: "Category" },
-          { key: "consequence", label: "Consequence" },
-          { key: "clinvar", label: "ClinVar" },
-          { key: "sei", label: "SEI" },
-          { key: "alphamissense", label: "AlphaMissense" },
-          { key: "expr", label: "Expr preds" },
-          { key: "topTrait", label: "Top trait (by p)" },
-          { key: "topP", label: "Top p-value" },
-          { key: "gnomadAF", label: "GnomAD alt AF" },
-          { key: "traits", label: "Traits" },
-        ];
-
-        // Keep a column if any row has a value that's not empty/"—"
-        const hasValue = (v) => {
-          if (v == null) return false;
-          const s = String(v).trim();
-          return s !== "" && s !== "—";
-        };
-        const activeCols = UI_COL_KEYS.filter((col) =>
-          rows.some((r) => hasValue(r[col.key]))
-        );
-        if (!activeCols.length) activeCols.push(UI_COL_KEYS[0], UI_COL_KEYS[1]); // safety
-        const cols = activeCols.map((c) => c.label); // (for convenience)
-
-        const toCSV = () => {
-          const header = CSV_COL_KEYS.map((c) => c.label).join(",");
-          const body = rows
-            .map((r) =>
-              CSV_COL_KEYS.map((c) => {
-                let v = r[c.key];
-                const s = String(v ?? "");
-                return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-              }).join(",")
-            )
-            .join("\n");
-          return header + "\n" + body;
-        };
-
-        const thead = `
-  <div class="vs-toolbar">
-    <input id="vsFilter" type="text" placeholder="Filter (gene, rsID, trait, consequence…)" aria-label="Filter variants" style="flex:1;max-width:360px;">
-    <button id="vsCsvBtn" class="ghost">Download CSV</button>
-  </div>
-  <div class="vs-scroll">
-    <table class="vs-table">
-      <colgroup>
-        ${activeCols
-          .map((c) => {
-            const cls = /^(Gene)$/.test(c.label)
-              ? "col-gene"
-              : /^(RSID)$/.test(c.label)
-              ? "col-id"
-              : /(pos)$/i.test(c.label)
-              ? "col-pos"
-              : /(AF|p-value)$/i.test(c.label)
-              ? "col-num"
-              : /(Ref|Alt)/.test(c.label)
-              ? "col-seq"
-              : "";
-            return `<col class="${cls}">`;
-          })
-          .join("")}
-      </colgroup>
-      <thead><tr>${activeCols
-        .map(
-          (c) =>
-            `<th class="${/(Ref|Alt)/.test(c.label) ? "seq" : ""}">${escapeHtml(
-              c.label
-            )}</th>`
-        )
-        .join("")}</tr></thead>
-      <tbody id="vsTbody"></tbody>
-    </table>
-  </div>
-`;
-        root.innerHTML = thead;
-
-        function renderBody(filtered) {
-          const tbody = byId("vsTbody");
-          const list = filtered || rows;
-
-          const rsLink = (rs) => {
-            const s = String(rs || "").trim();
-            if (!s) return "—";
-            return /^rs\d+$/i.test(s)
-              ? `<a href="https://www.ncbi.nlm.nih.gov/snp/${encodeURIComponent(
-                  s
-                )}" target="_blank" rel="noopener">${escapeHtml(s)}</a>`
-              : escapeHtml(s);
-          };
-
-          tbody.innerHTML = list
-            .map((r) => {
-              const tds = activeCols
-                .map((c) => {
-                  const k = c.key;
-                  if (k === "rsid") return `<td>${rsLink(r[k])}</td>`;
-
-                  // Position cells: show pos, but on hover reveal Ref/Alt via title
-                  if (k === "grch38" || k === "grch37") {
-                    const pos = r[k] || "—";
-                    const titleBits = [];
-                    if (hasValue(r.ref)) titleBits.push(`Ref: ${r.ref}`);
-                    if (hasValue(r.alt)) titleBits.push(`Alt: ${r.alt}`);
-                    const title = titleBits.length
-                      ? ` title="${escapeHtml(titleBits.join(" | "))}"`
-                      : "";
-                    return `<td${title}>${escapeHtml(pos)}</td>`;
-                  }
-
-                  if (k === "expr" || k === "topTraitP" || k === "traits")
-                    return `<td class="wrap">${escapeHtml(r[k] || "—")}</td>`;
-
-                  return `<td>${escapeHtml(r[k] || "—")}</td>`;
-                })
-                .join("");
-              return `<tr>${tds}</tr>`;
-            })
-            .join("");
-        }
-
-        renderBody(rows);
-        show("variantSummaryCard");
-
-        // Wire CSV + filter
-        byId("vsCsvBtn")?.addEventListener("click", () => {
-          const blob = new Blob([toCSV()], { type: "text/csv;charset=utf-8" });
-          const a = document.createElement("a");
-          a.href = URL.createObjectURL(blob);
-          a.download = "variant_summary.csv";
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(a.href), 500);
-        });
-        byId("vsFilter")?.addEventListener("input", (e) => {
-          const q = String(e.target.value || "")
-            .toLowerCase()
-            .trim();
-          if (!q) {
-            renderBody(rows);
-            return;
-          }
-          const filtered = rows.filter((r) => {
-            const hay = [
-              r.gene,
-              r.rsid,
-              r.chrom,
-              r.grch38,
-              r.grch37,
-              r.ref,
-              r.alt,
-              r.context,
-              r.category,
-              r.consequence,
-              r.clinvar,
-              r.sei,
-              r.alphamissense,
-              r.expr,
-              r.topTraitP,
-              r.topTrait,
-              r.topP,
-              r.gnomadAF,
-              r.traits,
-            ]
-              .map((x) => String(x ?? ""))
-              .join(" ")
-              .toLowerCase();
-            return hay.includes(q);
+          
+          themeCb?.addEventListener("change", (e) => {
+            applyTheme(e.target.checked);
+            broadcastThemeToIframes();
           });
-
-          renderBody(filtered);
-        });
-      }
-
-      /********************
-       * Fallback builders from in-state variants (kept for resilience)
-       ********************/
-      function parseChrPos(s) {
-        s = String(s || "");
-        var m = s.match(/(?:chr)?([0-9]+|X|Y|MT)[:\s]+(\d+)/i);
-        return m ? { chrom: m[1], pos: Number(m[2]) } : {};
-      }
-      function toStrAllele(x) {
-        if (x == null) return "";
-        if (Array.isArray(x)) return x.join(",");
-        return String(x);
-      }
-      function pickBuild(loc_by_build, want) {
-        if (!loc_by_build || typeof loc_by_build !== "object") return null;
-        var keys = Object.keys(loc_by_build);
-        var wantLC = String(want).toLowerCase();
-        var k = keys.find((k) => String(k).toLowerCase().startsWith(wantLC));
-        if (!k && wantLC === "grch38")
-          k = keys.find((k) => String(k).toLowerCase().startsWith("grch37"));
-        if (!k && wantLC === "grch37")
-          k = keys.find((k) => String(k).toLowerCase().startsWith("grch38"));
-        return k ? loc_by_build[k] || null : null;
-      }
-      function compactKV(obj, keys) {
-        if (!obj || typeof obj !== "object") return "";
-        const parts = [];
-        for (const k of keys) {
-          const v = obj[k];
-          if (v == null) continue;
-          parts.push(
-            `${k}:${
-              typeof v === "number"
-                ? Math.abs(v) !== 0 &&
-                  (Math.abs(v) < 1e-3 || Math.abs(v) >= 1e5)
-                  ? v.toExponential(3)
-                  : v.toFixed(3)
-                : String(v)
-            }`
-          );
-        }
-        return parts.join(", ");
-      }
-      function topExprString(exRec) {
-        if (!exRec || typeof exRec !== "object") return "";
-        const flat = [];
-        for (const [k, v] of Object.entries(exRec)) {
-          let val = null;
-          if (typeof v === "number") val = v;
-          else if (v && typeof v === "object" && typeof v.z === "number")
-            val = v.z;
-          if (val == null) continue;
-          flat.push({ k, z: Number(val) });
-        }
-        flat.sort((a, b) => Math.abs(b.z) - Math.abs(a.z));
-        return flat
-          .slice(0, 3)
-          .map((e) => `${e.k}:${e.z.toFixed(2)}`)
-          .join(", ");
-      }
-
-      function getGeneMap(st) {
-        if (
-          st?.gene_entities &&
-          typeof st.gene_entities === "object" &&
-          Object.keys(st.gene_entities).length
-        ) {
-          return st.gene_entities;
-        }
-        const raw =
-          st?.variant_entities ?? st?.variants ?? st?.variant_list ?? [];
-        const arr = Array.isArray(raw) ? raw : Object.values(raw || {});
-        const gm = {};
-        for (const item of arr) {
-          const geneField =
-            item.genes ?? item.gene_symbols ?? item.gene ?? item.symbol ?? [];
-          const genes = Array.isArray(geneField)
-            ? geneField
-            : String(geneField || "")
-                .split(/[;,|]/)
-                .map((s) => s.trim())
-                .filter(Boolean);
-          if (!genes.length) genes.push("NA");
-          for (const g of genes) {
-            const G = (gm[g] ||= { variants: {} });
-            const id =
-              item.rsID ||
-              item.rsid ||
-              item.id ||
-              item.variant_id ||
-              [item.chrom || item.chr, item.pos || item.position || item.coord]
-                .filter(Boolean)
-                .join(":") ||
-              Math.random().toString(36).slice(2, 9);
-            const pgc =
-              (item.per_gene_context && item.per_gene_context[g]) ||
-              item.per_gene ||
-              {};
-            const pgt =
-              (item.per_gene_traits && item.per_gene_traits[g]) ||
-              (item.traits_by_gene && item.traits_by_gene[g]) ||
-              {};
-            G.variants[id] = {
-              ...item,
-              per_gene_context: { ...(item.per_gene_context || {}), [g]: pgc },
-              per_gene_traits: { ...(item.per_gene_traits || {}), [g]: pgt },
-            };
-          }
-        }
-        return gm;
-      }
-      function buildVariantRowsFromGeneEntities(st) {
-        var rows = [];
-        var ge = getGeneMap(st);
-        if (!ge || typeof ge !== "object") return rows;
-        for (var gene in ge) {
-          var gObj = ge[gene];
-          if (!gObj || typeof gObj !== "object") continue;
-          var vdict = gObj.variants;
-          if (!vdict || typeof vdict !== "object") continue;
-          for (var k in vdict) {
-            var v = vdict[k] || {};
-            var rsid = v.rsID || v.rsid || v.id || "";
-            var loc38 = pickBuild(v.loc_by_build, "GRCh38") || {};
-            var loc37 = pickBuild(v.loc_by_build, "GRCh37") || {};
-
-            var chrom = normChrom(
-              loc38.chrom || loc37.chrom || v.chrom || v.chr
-            );
-            var pos38 =
-              loc38.pos || v.pos38 || v.position_38 || v.hg38_position;
-            var pos37 =
-              loc37.pos || v.pos37 || v.position_37 || v.hg19_position;
-
-            if (!chrom || (!pos38 && !pos37)) {
-              var guess = parseChrPos(v.position || v.locus || v.coord || "");
-              if (!chrom && guess.chrom) chrom = normChrom(guess.chrom);
-              if (!pos38 && guess.pos) pos38 = guess.pos;
-            }
-
-            var ref = toStrAllele(
-              loc38.ref || loc37.ref || v.ref || v.reference || v.ref_allele
-            );
-            var alt = toStrAllele(
-              loc38.alt || loc37.alt || v.alt || v.alternate || v.alt_allele
-            );
-            var ctxRec = (v.per_gene_context && v.per_gene_context[gene]) || {};
-            var context = ctxRec.context || "";
-            var category = ctxRec.variant_category || ctxRec.category || "";
-            var consequence =
-              v.consequence ||
-              v.most_severe_consequence ||
-              v.vep_consequence ||
-              "";
-            var clinvar =
-              v.clinvar_significance || v.clin_sig || v.clinvar || "";
-            var am = "—";
-            var sei = "—";
-            var gnomadAF = "—";
-
-            rows.push({
-              gene,
-              rsid,
-              chrom,
-              grch38: pos38 || "—",
-              grch37: pos37 || "—",
-              ref: ref || "—",
-              alt: alt || "—",
-              context,
-              category,
-              consequence,
-              clinvar,
-              sei,
-              alphamissense: am,
-              expr: "—",
-              topTrait: "—",
-              topP: "—",
-              topTraitP:
-                topTrait && topP != null
-                  ? `${String(topTrait)} (p=${String(topP)})`
-                  : topTrait
-                  ? String(topTrait)
-                  : "—",
-              gnomadAF,
-              traits: Array.isArray(v.traits)
-                ? v.traits.join("; ")
-                : v.traits || "—",
-            });
-          }
-        }
-        rows.sort(function (a, b) {
-          var g = String(a.gene).localeCompare(String(b.gene));
-          if (g !== 0) return g;
-          var pa = a.top_p == null ? Infinity : a.top_p,
-            pb = b.top_p == null ? Infinity : b.top_p;
-          return pa - pb;
-        });
-        return rows;
-      }
-
-      function wireJsonFile(input) {
-        if (!input) return;
-        input.addEventListener("change", () => {
-          const f = input.files?.[0];
-          if (!f) return;
-          const reader = new FileReader();
-          reader.onload = () => {
-            try {
-              STATE = JSON.parse(String(reader.result || "{}"));
-              ARTIFACT_BASE = ""; // do NOT assume sibling paths
-              LOCAL_FILES.clear(); // not in folder mode
-              refresh();
-            } catch {
-              alert("Invalid JSON file.");
-            }
-          };
-          reader.readAsText(f);
-          input.value = "";
-        });
-      }
-
-      /********************
-       * Entities 
-       ********************/
-      function renderEntities(st) {
-        function escapeHtml(s) {
-          return String(s ?? "").replace(
-            /[&<>"']/g,
-            (ch) =>
-              ({
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#39;",
-              }[ch])
-          );
-        }
-        function asPills(arr) {
-          return (arr || [])
-            .filter(Boolean)
-            .map((x) => `<span class="pill">${escapeHtml(String(x))}</span>`)
-            .join(" ");
-        }
-        var ge =
-          st && st.gene_entities && typeof st.gene_entities === "object"
-            ? Object.keys(st.gene_entities)
-            : [];
-        var genes = ge.length ? ge : st && st.genes ? st.genes : [];
-        var html = "";
-        if (genes && genes.length) {
-          html += asPills(genes);
-        }
-        var tools = [];
-        var candidates = [
-          st?.tools_used,
-          st?.ui?.tools_used,
-          st?.llm_json?.tools_used,
-          st?.tools,
-          st?.ui?.tools,
-          st?.pipeline?.tools,
-          st?.tool_calls,
-        ];
-        candidates.forEach(function (t) {
-          if (!t) return;
-          if (Array.isArray(t)) {
-            t.forEach(function (x) {
-              if (!x) return;
-              if (typeof x === "string") tools.push(x);
-              else if (typeof x === "object") {
-                tools.push(x.name || x.tool || x.id || x.type);
-              }
-            });
-          } else if (typeof t === "object") {
-            Object.keys(t).forEach(function (k) {
-              tools.push(k);
-            });
-          } else if (typeof t === "string") {
-            tools = tools.concat(t.split(/[,\s]+/));
-          }
-        });
-        tools = Array.from(new Set(tools.filter(Boolean)));
-        if (tools.length) {
-          if (html) html += '<div style="height:6px"></div>';
-          html +=
-            '<div class="muted" style="margin-bottom:4px;">Tools used</div>';
-          html += asPills(tools);
-        }
-        if (html) {
-          document.getElementById("entities").innerHTML = html;
-          document.getElementById("entitiesCard").style.display = "block";
-        } else {
-          document.getElementById("entitiesCard").style.display = "none";
-          document.getElementById("entities").innerHTML = "";
-        }
-      }
-
-      /********************
-       * IO helpers
-       ********************/
-      async function fetchState() {
-        try {
-          const res = await fetch("state", { cache: "no-store" });
-          if (!res.ok) return null;
-          return await res.json();
-        } catch {
-          return null;
-        }
-      }
-      async function runServer(q) {
-        try {
-          await fetch("run?q=" + encodeURIComponent(q), { cache: "no-store" });
-        } catch {}
-        STATE = await fetchState();
-        setArtifactBaseFromState(STATE);
-        await refresh(q);
-      }
-
-      /********************
-       * Page wiring + refresh
-       ********************/
-      async function refresh(qOverride) {
-        if (!STATE) return;
-        if (HERO_SHOWN) {
-          HERO_SHOWN = false;
-          hide("hero");
-          show("grid");
-          show("toolbar");
-        }
-        if (qOverride) setText("question", qOverride);
-        safeRender("question", () => renderQuestion(STATE));
-        safeRender("answer", () => renderAnswerAndCitations(STATE));
-        safeRender("entities", () => renderEntities(STATE));
-        safeRender("geneSummary", () => renderGeneSummary(STATE)); // FILES first
-        safeRender("variants", () => renderVariantSummary(STATE)); // FILES first
-        safeRender("protein", () => renderProt(STATE)); 
-        safeRender("chembl", () => renderChembl(STATE));
-        safeRender("twoSampleMR", () => renderTwoSampleMR(STATE));
-        safeRender("evidence", () => renderEvidence(STATE));
-        safeRender("raw", () => renderRaw(STATE));
-      }
-
-      // Broadcast theme change to iframes
-      function broadcastThemeToIframes() {
-        const isLight = document.body.classList.contains("light");
-        document.querySelectorAll("iframe.prot-frame").forEach((iframe) => {
+          
+          
+        function setArtifactBaseFromUrl(url){
           try {
-            iframe.contentWindow?.postMessage(
-              { type: "theme", theme: isLight ? "light" : "dark" },
-              "*"
-            );
-          } catch (e) {
-            console.warn("Could not send theme to iframe:", e);
+            const u = new URL(url, window.location.href);
+            const parts = u.pathname.split("/"); parts.pop();
+            ARTIFACT_BASE = parts.join("/") + "/";
+            if (u.origin && !/^https?:\/\//.test(ARTIFACT_BASE)) ARTIFACT_BASE = u.origin + ARTIFACT_BASE;
+          } catch {
+            const p = String(url || "").split("/"); p.pop();
+            ARTIFACT_BASE = (p.join("/") + "/").replace(/\/\/+/g, "/");
           }
-        });
-      }
-
-      // Theme toggle button
-      byId("themeToggle")?.addEventListener("click", () => {
-        document.body.classList.toggle("light");
-        broadcastThemeToIframes();
-      });
-
-      // Also broadcast once on load (so iframe background is correct on first render)
-      window.addEventListener("load", broadcastThemeToIframes);
-
-      // Run actions
-      function wireRun(button, input) {
-        if (!button || !input) return;
-        const go = () => {
-          const q = input.value.trim();
-          if (!q) {
-            input.focus();
-            return;
+        }
+        function withBase(path){
+          if (!path) return path;
+          if (/^https?:\/\//i.test(path)) return path;
+          if (!ARTIFACT_BASE) return path;
+          return (ARTIFACT_BASE + path).replace(/([^:]\/)\/+/g, "$1");
+        }
+        async function fetchTextCached(path){
+          if (LOCAL_FILES.has(path)) return LOCAL_FILES.get(path);
+          // ends-with match for folder loads
+          for (const k of LOCAL_FILES.keys()) {
+            if (k.endsWith("/"+path) || k === path) return LOCAL_FILES.get(k);
           }
-          runServer(q);
-        };
-        button.addEventListener("click", go);
-        input.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") go();
-        });
-      }
-      wireRun(byId("runBtn"), byId("q"));
-      wireRun(byId("runBtn2"), byId("q2"));
-
-      // Load JSON from file inputs
-      function wireJsonFile(input) {
-        if (!input) return;
-        input.addEventListener("change", () => {
-          const f = input.files?.[0];
-          if (!f) return;
-          const reader = new FileReader();
-          reader.onload = () => {
-            try {
-              STATE = JSON.parse(String(reader.result || "{}"));
-              refresh();
-            } catch {
-              alert("Invalid JSON file.");
+          const url = withBase(path);
+          if (FILE_CACHE.has(url)) return FILE_CACHE.get(url);
+          const res = await fetch(url, { cache:"no-store" });
+          if (!res.ok) throw new Error(`Fetch failed: ${url} (${res.status})`);
+          const txt = await res.text();
+          FILE_CACHE.set(url, txt);
+          return txt;
+        }
+      
+        // ---- Renderers ----
+        function setBusy(busy) {
+            const ids = ["runBtn", "runBtn2", "loadFolderBtn"];
+            for (const id of ids) {
+              const el = byId(id);
+              if (el) { el.disabled = !!busy; el.style.opacity = busy ? 0.7 : 1; el.style.pointerEvents = busy ? "none" : "auto"; }
             }
-          };
-          reader.readAsText(f);
-          input.value = "";
-        });
-      }
-      wireJsonFile(byId("jsonFile"));
-      wireJsonFile(byId("jsonFile2"));
-      wireFolderPicker(byId("folderPicker"));
-      wireFolderPicker(byId("folderPicker2"));
+          }
 
-      // Demo selector (manual)
-      byId("demoSelect")?.addEventListener("change", () => {
-        const v = byId("demoSelect").value;
-        if (!v) return;
-        fetch(v, { cache: "no-store" })
-          .then((r) => (r.ok ? r.json() : null))
-          .then((j) => {
-            if (!j) {
-              alert("Could not load demo JSON.");
-              return;
+        function renderQuestion(st){
+          const msgs = st?.messages || [];
+          const lastUser = [...msgs].reverse().find(m => m?.role === "user");
+          const q = lastUser?.content || st?.prompt || "";
+          setText("question", q || "");
+          setText("questionTitle", "Question");
+        }
+        function renderProt(st) {
+            const mount = document.getElementById("protMount");
+            if (!mount) return;
+    
+            const html = st?.prot_html;
+            const iframeUrl = st?.prot_iframe_url;
+            const pdbId = st?.pdb_id;
+    
+            mount.innerHTML = "";
+            if (!html && !iframeUrl && !pdbId) {
+              return (document.getElementById("protCard").style.display = "none");
             }
-            STATE = j;
+    
+            const frame = document.createElement("iframe");
+            frame.className = "prot-frame";
+            // Updated sandbox for full link functionality and downloads
+            frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
+            frame.setAttribute("referrerpolicy", "no-referrer");
+    
+            if (html && typeof html === "string" && html.trim()) {
+              frame.srcdoc = html;
+    
+              const saveBtn = document.createElement("button");
+              saveBtn.className = "mini";
+              saveBtn.textContent = "Save HTML";
+              saveBtn.style.margin = "6px 0 10px";
+              saveBtn.onclick = () => {
+                const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "protein_view.html";
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 800);
+              };
+              mount.appendChild(saveBtn);
+            } else if (iframeUrl) {
+              frame.src = iframeUrl;
+            } else if (pdbId) {
+              frame.src = `https://www.ebi.ac.uk/pdbe/entry-files/molstar.html?structureId=${encodeURIComponent(pdbId)}`;
+            }
+    
+            mount.appendChild(frame);
+
+            document.getElementById("protCard").style.display = "block";
+    
+            // Updated theme broadcast after load
+            const isLight = document.body.classList.contains("light");
+            frame.addEventListener("load", () => {
+              frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
+            });
+          }
+        
+          function renderChembl(st) {
+            const mount = document.getElementById("chemblMount");
+            const card  = document.getElementById("chemblCard");
+            if (!mount || !card) return;
+          
+            const rawHtml   = st?.chembl_html || st?.ui?.chembl_html;           // srcdoc (preferred)
+            const iframeUrl = st?.chembl_iframe_url || st?.ui?.chembl_iframe_url;
+          
+            if (!rawHtml && !iframeUrl) { card.style.display = "none"; mount.innerHTML = ""; return; }
+          
+            mount.innerHTML = "";
+            card.style.display = "block";
+          
+            const frame = document.createElement("iframe");
+            frame.className = "prot-frame";
+            frame.setAttribute("sandbox","allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
+            frame.setAttribute("referrerpolicy","no-referrer");
+          
+            if (rawHtml && typeof rawHtml === "string") {
+              const isLight = document.body.classList.contains("light");
+          
+              // Inject starting theme directly into the child HTML to avoid a flash
+              const html = isLight
+                ? rawHtml.replace(/<body(\s|>)/i, '<body class="light"$1')
+                : rawHtml;
+          
+              frame.srcdoc = html;
+          
+              const saveBtn = document.createElement("button");
+              saveBtn.className = "ghost";
+              saveBtn.textContent = "Save HTML";
+              saveBtn.style.margin = "6px 0 10px";
+              saveBtn.onclick = () => {
+                const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = "chembl_view.html"; a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 800);
+              };
+              mount.appendChild(saveBtn);
+            } else {
+              frame.src = iframeUrl;
+            }
+          
+            mount.appendChild(frame);
+          
+            const isLightNow = document.body.classList.contains("light");
+            frame.addEventListener("load", () => {
+              frame.contentWindow?.postMessage({ type:"theme", theme: isLightNow ? "light" : "dark" }, "*");
+            });
+          }
+          
+          function renderRaw(st){
+          const card = byId("rawCard");
+          if (!st) { card.style.display = "none"; return; }
+          byId("raw").textContent = JSON.stringify(st, null, 2);
+          card.style.display = "block";
+        }
+      
+        async function refresh(qOverride){
+            if (!STATE) return;
+          
+            if (HERO_SHOWN){ 
+              HERO_SHOWN = false; 
+              hide("hero"); 
+              show("grid"); 
+            }
+            if (qOverride) setText("question", qOverride);
+          
+            // show the “Ask another question” bar
+            show("toolbar");
+          
+            renderQuestion(STATE);
+            renderAnswerVerified(STATE);
+            await renderGeneSummary(STATE, {
+                byId,
+                show,
+                hide,
+                fetchTextCached,  
+                escapeHtml: (s) => String(s ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
+              });
+            renderProt(STATE);
+            renderChembl(STATE);
+            renderRaw(STATE);
+            broadcastThemeToIframes();
+          }
+
+                
+        // ---- Run (server) ----
+        let WAITER = null;
+let LOG_TIMER = null;
+let LOG_POS = 0;
+
+function startLogFollower(onLine) {
+  stopLogFollower();
+  LOG_POS = 0;
+  LOG_TIMER = setInterval(async () => {
+    try {
+      const r = await fetch("log?pos=" + LOG_POS, { cache: "no-store" });
+      if (!r.ok) return;
+      const { pos, data } = await r.json();
+      if (typeof pos === "number") LOG_POS = pos;
+      if (typeof data === "string") {
+        const lines = data.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        const last = lines[lines.length - 1];
+        if (last && typeof onLine === "function") onLine(last);
+      }
+    } catch {}
+  }, 900);
+}
+function stopLogFollower() { if (LOG_TIMER) clearInterval(LOG_TIMER); LOG_TIMER = null; }
+
+async function runServer(q){
+  if (!WAITER) WAITER = Wait.attach();
+  setBusy(true);
+  WAITER.start("Submitting…", "Starting pipeline");
+
+  // Follow the live log WHILE /run is executing
+  startLogFollower((line) => WAITER.setMessage(line.slice(0, 220)));
+
+  try {
+    // Kick off the run and WAIT for the final JSON (server is synchronous)
+    const resp = await fetch("run?q=" + encodeURIComponent(q), { cache: "no-store" });
+
+    // If the server refused because another run is active
+    if (resp.status === 409) {
+      WAITER.setError("A run is already in progress.");
+      return;
+    }
+    if (!resp.ok) {
+      WAITER.setError("Run failed (" + resp.status + ")");
+      return;
+    }
+
+    // THIS IS THE FINAL STATE — no need to poll /state
+    STATE = await resp.json();
+    setArtifactBaseFromState(STATE);
+
+
+    // Render
+    await refresh(q);
+
+  } catch (err) {
+    console.error(err);
+    WAITER.setError(err?.message || String(err));
+  } finally {
+    stopLogFollower();
+    WAITER.stop();
+    setBusy(false);
+  }
+}
+
+        
+        function wireRun(btnId, inputId){
+          const btn = byId(btnId), inp = byId(inputId);
+          if (!btn || !inp) return;
+          const go = () => { const q = inp.value.trim(); if (!q) { inp.focus(); return; } runServer(q); };
+          btn.addEventListener("click", go);
+          inp.addEventListener("keydown", (e) => e.key === "Enter" && go());
+        }
+        wireRun("runBtn", "q");
+        wireRun("runBtn2", "q2");  
+      
+        // ---- Load JSON (both inputs) ----
+        (function wireJson(id){
+          const input = byId(id);
+          if (!input) return;
+          input.addEventListener("change", () => {
+            const f = input.files?.[0]; if (!f) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+              try { STATE = JSON.parse(String(reader.result||"{}")); LOCAL_FILES.clear(); FILE_CACHE.clear();setArtifactBaseFromState(STATE); refresh(); }
+              catch { alert("Invalid JSON file."); }
+            };
+            reader.readAsText(f);
+            input.value = "";
+          });
+        })("jsonFile");
+        (function wireJson2(id){
+          const input = byId(id);
+          if (!input) return;
+          input.addEventListener("change", () => {
+            const f = input.files?.[0]; if (!f) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+              try { STATE = JSON.parse(String(reader.result||"{}")); LOCAL_FILES.clear(); FILE_CACHE.clear();setArtifactBaseFromState(STATE); refresh(); }
+              catch { alert("Invalid JSON file."); }
+            };
+            reader.readAsText(f);
+            input.value = "";
+          });
+        })("jsonFile2");
+      
+        // ---- Load Folder (both pickers) ----
+        function wireFolder(id){
+          const picker = byId(id);
+          if (!picker) return;
+          picker.addEventListener("change", async () => {
+            LOCAL_FILES.clear(); FILE_CACHE.clear(); ARTIFACT_BASE = "";
+            const files = Array.from(picker.files || []);
+            let demoKey = null;
+            for (const f of files) {
+              const key = (f.webkitRelativePath || f.name).replace(/\\/g,"/");
+              const txt = await f.text().catch(()=>null);
+              if (txt != null) LOCAL_FILES.set(key, txt);
+              if (/\/demo\.json$/i.test(key) || /^demo\.json$/i.test(key)) demoKey = key;
+            }
+            if (!demoKey){ alert("Folder loaded, but no demo.json found."); return; }
+            try { STATE = JSON.parse(LOCAL_FILES.get(demoKey) || "{}"); }
+            catch { alert("Could not parse demo.json"); return; }
+            const parts = demoKey.split("/"); parts.pop();
+            ARTIFACT_BASE = parts.length ? parts.join("/") + "/" : "";
+            await refresh();
+            picker.value = "";
+          });
+        }
+        wireFolder("folderPicker");
+        wireFolder("folderPicker2");
+      
+        // ---- Demo select ----
+        byId("demoSelect")?.addEventListener("change", async () => {
+          const v = byId("demoSelect").value;
+          if (!v) return;
+          try {
+            const r = await fetch(v, { cache:"no-store" });
+            if (!r.ok) throw new Error("fetch failed");
+            STATE = await r.json();
             setArtifactBaseFromUrl(v);
             refresh();
-          })
-          .catch(() => alert("Could not load demo JSON."));
-      });
-
-      // Download current state
-      byId("downloadBtn")?.addEventListener("click", () => {
-        if (!STATE) {
-          alert("No JSON loaded yet.");
-          return;
-        }
-        const blob = new Blob([JSON.stringify(STATE, null, 2)], {
-          type: "application/json",
+          } catch { alert("Could not load demo JSON."); }
         });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "alvessa_state.json";
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      });
+      
+        // ---- Download current STATE ----
+        byId("downloadBtn")?.addEventListener("click", () => {
+          if (!STATE) { alert("No JSON loaded yet."); return; }
+          const blob = new Blob([JSON.stringify(STATE, null, 2)], { type:"application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a"); a.href = url; a.download = "alvessa_state.json"; a.click();
+          setTimeout(()=>URL.revokeObjectURL(url), 800);
+        });
 
-      //saving
-      byId("savePageBtn")?.addEventListener("click", saveFullPageSnapshot);
-    </script>
+
+const DEMO_PATH = "out/20250924-004900_ui/demo.json";  // the hardwired demo folder
+byId("tryDemoLink").addEventListener("click", async (e) => {
+  e.preventDefault();
+  try {
+    const r = await fetch(DEMO_PATH, { cache:"no-store" });
+    if (!r.ok) throw new Error("failed");
+    STATE = await r.json();
+    setArtifactBaseFromUrl(DEMO_PATH);
+    refresh();
+  } catch(err) {
+    alert("Could not load demo: " + err.message);
+  }
+});
+byId("loadFolderBtn").addEventListener("click", () => {
+  byId("folderPicker").click();
+});
+
+      </script>
+      
   </body>
 </html>

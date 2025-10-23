@@ -174,7 +174,7 @@ def select_tools(state: "State") -> "State":
             f"Do not repeat tools already used.\n"
             f"IMPORTANT: if no additional tools are needed, return [] with no explanation.\n"
             f"Overall, NO explanation, downatream parser can only work with a list of tools.\n\n"
-            f"Current context block:\n{current_context_block}\n\n ANY OTHER WORD INCLUDED IN THE RESPONSE WILL BE CONSIDERED INVALID."
+            f"Current context block:\n{current_context_block}\n\n No other words should be included in the response."
             f"{system_msg_base}"
         )
         if len(system_msg) > N_CHARS:

@@ -116,14 +116,13 @@ def _handle_question(args: argparse.Namespace) -> int:
 
     llm_json = result.get("llm_json", {}) or {}
     answer = llm_json.get("answer", "")
-    evidence = llm_json.get("evidence", []) or []
 
     print("\n=== Answer ===")
     print(answer if answer else "(empty response)")
-    if evidence:
-        print("\n=== Evidence ===")
-        for item in evidence:
-            print(f"- {item}")
+    
+    verification = result.get("verification", "")
+    print("\n=== Evidence ===")
+    print(verification)
 
     return 0
 

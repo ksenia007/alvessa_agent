@@ -43,6 +43,8 @@ if not WEB_DIR.exists():  # pragma: no cover - early failure for misconfigured i
 APP = FastAPI()
 APP.mount("/images", StaticFiles(directory=WEB_DIR / "images"), name="images")
 APP.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
+RUNS_DIR = REPO_ROOT / "out"
+APP.mount("/runs", StaticFiles(directory=RUNS_DIR), name="runs")
 
 CURRENT_RUN_DIR = get_latest_run_directory()
 CURRENT_OUTPUTS = build_output_paths(CURRENT_RUN_DIR) if CURRENT_RUN_DIR else None
@@ -221,6 +223,10 @@ def run(q: str = Query(..., description="User question")):
 
         # 3) sanitize NaN/Inf
         state_json = sanitize_json(state_json)
+        
+        state_json.setdefault("ui", {})
+        state_json["ui"]["run_id"] = run_dir.name
+        state_json["ui"]["artifact_base"] = f"/runs/{run_dir.name}/"
 
         # 4) write a safe file (optionally enforce allow_nan=False)
         outputs["json"].write_text(json.dumps(state_json, indent=2, allow_nan=False), encoding="utf-8")

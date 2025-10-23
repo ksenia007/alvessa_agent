@@ -27,7 +27,6 @@ const SURFACE_OPACITY = {
   "pi": 1.0, "disorder": 0.85, "morf": 0.85
 };
 
-// === Utility Functions ===
 function lerpColor(palette, value) {
   value = Math.min(1, Math.max(0, value || 0));
   const idx = value * (palette.length - 1);

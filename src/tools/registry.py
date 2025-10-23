@@ -30,7 +30,7 @@ Note these are only examples, and in real life you may need to run combinations 
 
 Respond *ONLY* with a Python list of tool names. Example: ["humanbase_functions", "uniprot_base"] or ["humanbase_functions", "uniprot_base", "query_gwas_by_gene"] or ["query_gwas_by_gene", "BioGRID"]
 
-IF YOU INCLUDE ANYTHING OTHER THAN A LIST OF TOOLS, YOU WILL BE CONSIDERED INVALID.
+Do not include any explanations or extra text outside the list.
 """
 
 PACKAGE_NAME = __name__.rsplit(".", 1)[0]
