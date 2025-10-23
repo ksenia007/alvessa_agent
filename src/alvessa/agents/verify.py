@@ -317,7 +317,7 @@ def verify_evidence_node(state: "State") -> "State":
     per_stmt_feedback = overall_feedback.get("per_statement") or {}
     for i, s in enumerate(verified):
         fdbk = per_stmt_feedback.get(str(i)) or {}
-        s["llm_label"] = fdbk.get("label")
+        s["verdict"] = fdbk.get("label")
         s["llm_feedback"] = fdbk.get("feedback")
 
     verification = {

@@ -60,81 +60,86 @@ def opentargets_agent(state: "State") -> "State":
     for gene_name, gene in gene_entities.items():
         if not gene_name:
             continue
-
-        summary_lines: List[str] = []
-
-        # Disease annotations
-        if gene.symbol not in target_disease_df['target_symbol'].values:
-            if DEBUG:
-                print(f"[Open Targets] No disease association data for {gene.symbol}")
-        else:
-            associated_disease_list = target_disease_df[target_disease_df['target_symbol'] == gene.symbol]['disease_name'].tolist()
-            gene.add_many_direct_disease_associations(associated_disease_list)
-
-            summary_lines.append(f"All direct disease associations for {gene.symbol} (from the Open Targets database): " 
-                    + ', '.join(associated_disease_list) + ".")
-
         
-        # Tissue-specific expression
-        print(expression_df[expression_df['target_symbol'] == gene.symbol])
-        if gene.symbol not in expression_df['target_symbol'].values:
-            if DEBUG:
-                print(f"[Open Targets] No expression data for {gene.symbol}")
-        else:
-            tissue_zscore = {}
-            for tissues_list in expression_df[expression_df['target_symbol'] == gene.symbol]['tissues']:
-                if not tissues_list:
-                    continue
-                for tissue_dict in tissues_list:
-                    label = tissue_dict.get('label', None)
-                    zscore = tissue_dict.get('rna', {}).get('zscore', None)
-                    if label is not None and zscore is not None:
-                        tissue_zscore[label] = zscore
-                    
-            gene.add_many_tissues_expression(tissue_zscore)
+        try:
 
-            summary_lines.append(f"Tissue-specific expression z-scores for {gene.symbol} (from the Open Targets database). A gene is considered to be tissue specific if the z-score for that tissue is greater than 0.674 (or the 75th percentile of a perfect normal distribution): " 
-                        + str(tissue_zscore) + ".")
-        
-        # DepMap Essentiality
-        if gene.symbol not in essentiality_df['target_symbol'].values:
-            if DEBUG:
-                print(f"[Open Targets] No essentiality data for {gene.symbol}")
-        else:
-            try:
-                gene_is_essential = essentiality_df[essentiality_df['target_symbol'] == gene.symbol]['geneEssentiality'].values[0][0]['isEssential']
-                gene.add_essentiality(gene_is_essential)
+            summary_lines: List[str] = []
 
-                if gene_is_essential:
-                    summary_lines.append(f"{gene.symbol} is a core essential gene, meaning that it is unlikely to tolerate inhibition and is susceptible to causing adverse events if modulated. The gene is crucial for basic cellular function in many tissue types.")
-                else:
-                    summary_lines.append(f"{gene.symbol} is not a core essential gene, meaning that inhibition or knockout of this gene does not consistently result in cell death across the majority of cell lines tested. The gene's function is not universally vital for cell survival in diverse tissues, as determined by large-scale cell fitness and depletion assays.")
-            except:
+            # Disease annotations
+            if gene.symbol not in target_disease_df['target_symbol'].values:
                 if DEBUG:
-                    print(f"[Open Targets] Essentiality data format issue for {gene.symbol}")
-        # Genetic Constraint
-        if gene.symbol not in constraint_df['approvedSymbol'].values:
-            if DEBUG:
-                print(f"[Open Targets] No constraint data for {gene.symbol}")
-                print(constraint_df.head())
-        else:
-            gene_all_constraint = constraint_df[constraint_df['approvedSymbol'] == gene.symbol]['constraint'].values[0]
-            if not gene_all_constraint:
-                if DEBUG:
-                    print(f"[Open Targets] Empty constraint data for {gene.symbol}")
-                    print(constraint_df[constraint_df['approvedSymbol'] == gene.symbol])
+                    print(f"[Open Targets] No disease association data for {gene.symbol}")
             else:
-                for row in gene_all_constraint:
-                    constraint_type_name = row['constraintType']
-                    score = row['score']
+                associated_disease_list = target_disease_df[target_disease_df['target_symbol'] == gene.symbol]['disease_name'].tolist()
+                gene.add_many_direct_disease_associations(associated_disease_list)
 
-                    gene.add_constraint(score, constraint_type_name)
-                    summary_lines.append(f"Genetic constraint score for {constraint_type_name} variants ({CONSTRAINT_TYPES[constraint_type_name]}) in {gene.symbol} from the Open Targets database. A constraint score from -1 to 1 is given to genes depending on their LOEUF (loss-of-function observed/expected upper bound fraction) metric rank, with -1 being the least tolerant to LoF variation and 1 being the most tolerant.: " + str(score))
+                summary_lines.append(f"All direct disease associations for {gene.symbol} (from the Open Targets database): " 
+                        + ', '.join(associated_disease_list) + ".")
 
-        gene.update_text_summaries(
-            " ".join(summary_lines)
-        )
-    
+            
+            # Tissue-specific expression
+            print(expression_df[expression_df['target_symbol'] == gene.symbol])
+            if gene.symbol not in expression_df['target_symbol'].values:
+                if DEBUG:
+                    print(f"[Open Targets] No expression data for {gene.symbol}")
+            else:
+                tissue_zscore = {}
+                for tissues_list in expression_df[expression_df['target_symbol'] == gene.symbol]['tissues']:
+                    if not tissues_list:
+                        continue
+                    for tissue_dict in tissues_list:
+                        label = tissue_dict.get('label', None)
+                        zscore = tissue_dict.get('rna', {}).get('zscore', None)
+                        if label is not None and zscore is not None:
+                            tissue_zscore[label] = zscore
+                        
+                gene.add_many_tissues_expression(tissue_zscore)
+
+                summary_lines.append(f"Tissue-specific expression z-scores for {gene.symbol} (from the Open Targets database). A gene is considered to be tissue specific if the z-score for that tissue is greater than 0.674 (or the 75th percentile of a perfect normal distribution): " 
+                            + str(tissue_zscore) + ".")
+            
+            # DepMap Essentiality
+            if gene.symbol not in essentiality_df['target_symbol'].values:
+                if DEBUG:
+                    print(f"[Open Targets] No essentiality data for {gene.symbol}")
+            else:
+                try:
+                    gene_is_essential = essentiality_df[essentiality_df['target_symbol'] == gene.symbol]['geneEssentiality'].values[0][0]['isEssential']
+                    gene.add_essentiality(gene_is_essential)
+
+                    if gene_is_essential:
+                        summary_lines.append(f"{gene.symbol} is a core essential gene, meaning that it is unlikely to tolerate inhibition and is susceptible to causing adverse events if modulated. The gene is crucial for basic cellular function in many tissue types.")
+                    else:
+                        summary_lines.append(f"{gene.symbol} is not a core essential gene, meaning that inhibition or knockout of this gene does not consistently result in cell death across the majority of cell lines tested. The gene's function is not universally vital for cell survival in diverse tissues, as determined by large-scale cell fitness and depletion assays.")
+                except:
+                    if DEBUG:
+                        print(f"[Open Targets] Essentiality data format issue for {gene.symbol}")
+            # Genetic Constraint
+            if gene.symbol not in constraint_df['approvedSymbol'].values:
+                if DEBUG:
+                    print(f"[Open Targets] No constraint data for {gene.symbol}")
+                    print(constraint_df.head())
+            else:
+                gene_all_constraint = constraint_df[constraint_df['approvedSymbol'] == gene.symbol]['constraint'].values[0]
+                if not gene_all_constraint:
+                    if DEBUG:
+                        print(f"[Open Targets] Empty constraint data for {gene.symbol}")
+                        print(constraint_df[constraint_df['approvedSymbol'] == gene.symbol])
+                else:
+                    for row in gene_all_constraint:
+                        constraint_type_name = row['constraintType']
+                        score = row['score']
+
+                        gene.add_constraint(score, constraint_type_name)
+                        summary_lines.append(f"Genetic constraint score for {constraint_type_name} variants ({CONSTRAINT_TYPES[constraint_type_name]}) in {gene.symbol} from the Open Targets database. A constraint score from -1 to 1 is given to genes depending on their LOEUF (loss-of-function observed/expected upper bound fraction) metric rank, with -1 being the least tolerant to LoF variation and 1 being the most tolerant.: " + str(score))
+
+            gene.update_text_summaries(
+                " ".join(summary_lines)
+            )
+        except:
+            if DEBUG:
+                print(f"[Open Targets] Error processing {gene.symbol}")
+            continue
         gene.add_tool("OpenTargets")
 
         time.sleep(0.3)  # courteous pause

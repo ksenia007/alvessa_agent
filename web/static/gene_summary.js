@@ -13,7 +13,8 @@
 
 
 const GENE_RENDER_MODE = "chips"; // "chips" | "comma"
-const SECT_SUMMARY_STYLE = "class='muted sect-hdr'";
+const SECT_SUMMARY_STYLE = "class='muted sect-hdr sub'";
+const TOP_SUMMARY_STYLE = "class='sect-hdr top-hdr'";  
 
 
 function renderGeneList(genes) {
@@ -22,7 +23,7 @@ function renderGeneList(genes) {
     return defaultEscapeHtml(genes.join(", "));
   }
   // chips
-  return genes.map(g => `<span class="chip" style="margin:2px 6px 2px 0;">${defaultEscapeHtml(String(g))}</span>`).join("");
+  return genes.map(g => `<span class="chip wrap">${defaultEscapeHtml(String(g))}</span>`).join("");
 }
 
 
@@ -41,10 +42,10 @@ function msigdbCategoryNote(cat) {
     return m[cat] || "";
   }
   
-  function renderMsigdbSection(msigdb_annotations) {
+  function renderMsigdbBlock(msigdb_annotations) {
     if (!msigdb_annotations || typeof msigdb_annotations !== "object") return "";
     const order = ["H","C1","C2","C3","C4","C5","C6","C7","C8"];
-    const blocks = [];
+    const inner = [];
   
     for (const cat of order) {
       const arr = msigdb_annotations[cat];
@@ -52,26 +53,30 @@ function msigdbCategoryNote(cat) {
   
       const list = arr.map(x => defaultEscapeHtml(String(x))).join(", ");
       const note = msigdbCategoryNote(cat);
-      const sectId = `msig_${cat}_${Math.random().toString(36).slice(2,8)}`;
   
-      blocks.push(`
-        <details style="margin-top:8px;">
+      inner.push(`
+        <details style="margin-top:6px;">
           <summary ${SECT_SUMMARY_STYLE}>
-            MSigDB ${cat}${note ? ` — ${defaultEscapeHtml(note)}` : ""} (${arr.length})
+            ${`MSigDB ${cat}${note ? ` — ${defaultEscapeHtml(note)}` : ""}`} (${arr.length})
           </summary>
-          <div id="${sectId}" style="margin-top:6px; white-space:normal; line-height:1.4;">
+          <div style="margin-top:6px; white-space:normal; line-height:1.4;">
             ${list}
           </div>
         </details>
       `);
     }
   
-    if (!blocks.length) return "";
+    if (!inner.length) return "";
     return `
-      <div class="muted" style="margin-top:8px;">MSigDB</div>
-      ${blocks.join("\n")}
+      <details style="margin-top:8px;">
+        <summary ${TOP_SUMMARY_STYLE}>MSigDB</summary>
+        <div style="margin-top:6px;">
+          ${inner.join("\n")}
+        </div>
+      </details>
     `;
   }
+  
   
   function isNonEmptyObject(o){
     return o && typeof o === "object" && Object.keys(o).length > 0;
@@ -138,7 +143,7 @@ function msigdbCategoryNote(cat) {
   
     return `
       <details style="margin-top:8px;">
-        <summary ${SECT_SUMMARY_STYLE}>Transcripts (${rows.length})</summary>
+        <summary ${TOP_SUMMARY_STYLE}>Transcripts (${rows.length})</summary>
         <div style="margin-top:6px;">
           ${renderMiniTable(header, body)}
         </div>
@@ -197,10 +202,9 @@ function msigdbCategoryNote(cat) {
              ${info.notes.map(n => `<span class="chip chip-note">${escapeInline(String(n))}</span>`).join("")}
            </div>`
         : "";
-  
       return `
         <div class="card" style="margin:8px 0; padding:12px;">
-          <div style="font-weight:700;">${escapeInline(id)}${name}</div>
+          <div class="muted" style="font-weight:700;">${escapeInline(id)}${name}</div>
           ${status ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:4px;">${status}</div>` : ""}
           ${aliases}
           ${locs}
@@ -213,7 +217,7 @@ function msigdbCategoryNote(cat) {
   
     return `
       <details style="margin-top:8px;">
-        <summary ${SECT_SUMMARY_STYLE}>Isoforms${total ? ` (${total})` : ""}</summary>
+        <summary ${TOP_SUMMARY_STYLE}>Isoforms${total ? ` (${total})` : ""}</summary>
         <div style="margin-top:6px;">
           ${glBlock}
           ${cards}
@@ -243,7 +247,7 @@ function msigdbCategoryNote(cat) {
   
     return `
       <div class="card" style="margin:8px 0; padding:12px;">
-        <div class="muted" style="font-weight:700; margin-bottom:6px;">${escapeInline(title)} — General localization</div>
+        <div class="muted" style="font-weight:700; margin-bottom:6px;">${escapeInline(title)} - General localization</div>
         ${meta.length ? `<div class="muted" style="margin-bottom:6px;">${meta.join(" • ")}</div>` : ""}
         ${locRow || `<div class="muted">No locations reported.</div>`}
         ${noteRow}
@@ -252,23 +256,18 @@ function msigdbCategoryNote(cat) {
   }
   
   
-  function renderOpenTargetsSection(ot){
+  function renderOpenTargetsBlock(ot){
     if (!ot || typeof ot !== "object") return "";
   
-    // Specific handling for disease_annotations
     const diseases = normalizeDiseaseAnnotations(ot.disease_annotations);
-    const diseaseBlock = diseases.length
-      ? `
-        <details style="margin-top:12px;">
-          <summary class="muted" style="cursor:pointer;">Open Targets — disease annotations (${diseases.length})</summary>
-          <div style="margin-top:6px; white-space:normal; line-height:1.4;">
-            ${defaultEscapeHtml(diseases.join(", "))}
-          </div>
-        </details>
-      `
-      : "";
+    const diseaseInner = diseases.length ? `
+      <details style="margin-top:6px;">
+        <summary ${SECT_SUMMARY_STYLE}>Disease annotations (${diseases.length})</summary>
+        <div style="margin-top:6px; white-space:normal; line-height:1.4;">
+          ${defaultEscapeHtml(diseases.join(", "))}
+        </div>
+      </details>` : "";
   
-    // Show other non-empty fields (except is_essential & disease_annotations)
     const otherBlocks = [];
     for (const [k, v] of Object.entries(ot)) {
       if (k === "is_essential" || k === "disease_annotations") continue;
@@ -276,16 +275,16 @@ function msigdbCategoryNote(cat) {
       if (!hasVal) continue;
   
       if (Array.isArray(v)) {
-        const list = v.map(x => `<span class="pill">${defaultEscapeHtml(String(x))}</span>`).join(" ");
+        const list = v.map(x => `<span class="pill wrap">${defaultEscapeHtml(String(x))}</span>`).join(" ");
         otherBlocks.push(`
-          <details style="margin-top:8px;">
+          <details style="margin-top:6px;">
             <summary ${SECT_SUMMARY_STYLE}>${defaultEscapeHtml(k)}</summary>
             <div style="margin-top:6px;">${list}</div>
           </details>
         `);
       } else if (typeof v === "object") {
         otherBlocks.push(`
-          <details style="margin-top:8px;">
+          <details style="margin-top:6px;">
             <summary ${SECT_SUMMARY_STYLE}>${defaultEscapeHtml(k)}</summary>
             <div style="margin-top:6px;">${objectToTable(v, defaultEscapeHtml)}</div>
           </details>
@@ -293,20 +292,149 @@ function msigdbCategoryNote(cat) {
       }
     }
   
-    const anyOther = !!(diseaseBlock || otherBlocks.length);
-    const essentialBadge = (anyOther && typeof ot.is_essential === "boolean")
-    ? `<span class="pill" style="font-size:11px; padding:2px 6px;" title="from Open Targets">is_essential:&nbsp;<strong>${ot.is_essential ? "true" : "false"}</strong></span>`
-    : "";
+    const essentialBadge = (typeof ot.is_essential === "boolean")
+    ? `<span class="pill wrap" title="from Open Targets">is_essential:&nbsp;<strong>${ot.is_essential ? "true" : "false"}</strong></span>`    
+      : "";
   
-    if (!anyOther) return ""; // nothing to show at all
+    const inner = [diseaseInner, ...otherBlocks].filter(Boolean).join("\n");
+    if (!inner) return "";
   
     return `
-      <div class="muted" style="margin-top:8px;">Open Targets</div>
-      ${essentialBadge ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin:4px 0 6px;">${essentialBadge}</div>` : ""}
-      ${diseaseBlock}
-      ${otherBlocks.join("\n")}
+      <details style="margin-top:8px;">
+        <summary ${TOP_SUMMARY_STYLE}>Open Targets</summary>
+        <div style="margin-top:6px;">
+        ${essentialBadge ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:6px;">${essentialBadge}</div>` : ""}
+           ${inner}
+        </div>
+      </details>
     `;
   }
+
+  function renderGwasTraitsBlock(gwasObj, traitsArr){
+    const hasGwas = gwasObj && typeof gwasObj === "object" && Object.keys(gwasObj).length;
+    const hasTraits = Array.isArray(traitsArr) && traitsArr.length > 0;
+  
+    if (!hasGwas && !hasTraits) return "";
+
+    const { top_traits, ...gwasSlim } = gwasObj || {};
+  
+    const gwasPart = hasGwas ? `
+      <details style="margin-top:6px;">
+        <summary ${SECT_SUMMARY_STYLE}>GWAS profile</summary>
+        <div style="margin-top:6px;">${objectToTable(gwasSlim, defaultEscapeHtml)}</div>
+      </details>` : "";
+  
+    const traitsPart = hasTraits ? `
+      <details style="margin-top:6px;">
+        <summary ${SECT_SUMMARY_STYLE}>Traits (${traitsArr.length})</summary>
+        <div style="margin-top:6px;">${traitsArr.map(t => `<span class="chip wrap">${escapeInline(String(t))}</span>`).join(" ")}</div>
+      </details>` : "";
+  
+    return `
+      <details style="margin-top:8px;">
+        <summary ${TOP_SUMMARY_STYLE}>GWAS & Traits</summary>
+        <div style="margin-top:6px;">
+          ${gwasPart}
+          ${traitsPart}
+        </div>
+      </details>
+    `;
+  }
+
+  function renderInteractionsBlock({ sym, humanTSV, nonTSV, humanCount, nonhumanCount, goEnrichment }) {
+    const inner = renderInteractionsInner({ sym, humanTSV, nonTSV, humanCount, nonhumanCount, goEnrichment });
+    if (!inner) return "";
+    return `
+      <details style="margin-top:8px;">
+        <summary ${TOP_SUMMARY_STYLE}>BioGRID Interactions</summary>
+        <div style="margin-top:6px;">
+          ${inner}
+        </div>
+      </details>
+    `;
+  }
+  
+  function renderInteractionsInner({ sym, humanTSV, nonTSV, humanCount, nonhumanCount, goEnrichment }) {
+    const parts = [];
+  
+    // helper: parse TSV → { experiment_type -> Set(partner_symbol) }
+    function groupInteractions(tsv) {
+      const { header, rows } = parseTSVToTable(tsv);
+      if (!header.length || !rows.length) return {};
+      const idxType = header.findIndex(h => /experiment[_\s-]*type/i.test(h));
+      const idxGene = header.findIndex(h => /(partner|interactor).*symbol/i.test(h));
+      const map = {};
+      rows.forEach(r => {
+        const et = (r[idxType] || "").trim();
+        const gene = (r[idxGene] || "").trim();
+        if (!et || !gene) return;
+        (map[et] ||= new Set()).add(gene);
+      });
+      return map;
+    }
+  
+    function renderGrouped(kindLabel, tsv) {
+      const groups = groupInteractions(tsv);
+      const types = Object.keys(groups).sort((a,b) => a.localeCompare(b));
+      if (!types.length) return "";
+  
+      const blocks = types.map(et => {
+        const genes = Array.from(groups[et]).sort();
+        const count = genes.length;
+        const pills = renderGeneList(genes);
+        return `
+          <div style="margin:8px 0;">
+            <div class="muted" style="font-weight:700; margin-bottom:4px;">${defaultEscapeHtml(et)} — ${count} gene${count===1?"":"s"}</div>
+            <div class="row" style="gap:6px;flex-wrap:wrap;">${pills}</div>
+          </div>`;
+      }).join("");
+  
+      const totalPartners = types.reduce((a, et) => a + groups[et].size, 0);
+      return `
+        <details style="margin-top:8px;">
+          <summary class="muted sect-hdr">
+            ${defaultEscapeHtml(kindLabel)} (${types.length} types, ${totalPartners} partners)
+          </summary>
+          <div style="margin-top:6px;">${blocks}</div>
+        </details>`;
+    }
+  
+    // counts row (no extra "Interactions" header; parent summary already names section)
+    if (humanCount > 0 || nonhumanCount > 0) {
+      parts.push(`
+        <div class="row" style="gap:6px; flex-wrap:wrap; margin-top:8px;">
+          ${humanCount    > 0 ? `<span class="pill wrap">Human interactions: ${humanCount}</span>` : ""}
+          ${nonhumanCount > 0 ? `<span class="pill wrap">Non-human interactions: ${nonhumanCount}</span>` : ""}
+        </div>
+      `);
+    }
+  
+    if (humanCount > 0)    parts.push(renderGrouped("Human interactions", humanTSV));
+    if (nonhumanCount > 0) parts.push(renderGrouped("Non-human interactions", nonTSV));
+  
+    // GO enrichment
+    if (goEnrichment && (hasAny(goEnrichment.pan_go) || hasAny(goEnrichment.old_go))) {
+      const blockId = `go_${sym}_${rand7()}`;
+      const pan = goEnrichment.pan_go || {};
+      const old = goEnrichment.old_go || {};
+      parts.push(`
+        <div class="muted" style="margin-top:8px;">GO Enrichment</div>
+        <div class="row" style="gap:6px; margin-bottom:6px;">
+          <label class="pill"><input type="radio" name="${blockId}" value="pan" checked> pan_go</label>
+          <label class="pill"><input type="radio" name="${blockId}" value="old"> old_go</label>
+        </div>
+        <div id="${blockId}_content" data-go-block="${blockId}"
+             data-go-pan='${jsonAttr(pan)}'
+             data-go-old='${jsonAttr(old)}'
+             class="mono" style="white-space:normal; line-height:1.35;">
+          ${renderGoTriplet(pan, defaultEscapeHtml)}
+        </div>
+      `);
+    }
+  
+    return parts.length ? parts.join("\n") : "";
+  }
+   
   
 
 export async function renderGeneSummary(st, deps = {}) {
@@ -379,13 +507,12 @@ export async function renderGeneSummary(st, deps = {}) {
       sections.push(renderArraySection("Predicted disease",g.annotations?.predicted_disease));
   
       // MSigDB + OMIM
-sections.push(renderMsigdbSection(g.msigDB?.msigdb_annotations));
-
+      sections.push(renderMsigdbBlock(g.msigDB?.msigdb_annotations));
 // OMIM 
 sections.push(renderArraySection("OMIM phenotypes", g.omim?.phenotype_annotations));
 
 // OpenTargets (disease dict/array + other fields + conditional is_essential)
-sections.push(renderOpenTargetsSection(g.open_targets));
+sections.push(renderOpenTargetsBlock(g.open_targets));
       sections.push(renderObjectSection("Tissue-specific expression", g.open_targets?.tissue_specific_expression));
   
       // Genetic constraint (object)
@@ -397,18 +524,13 @@ sections.push(renderIsoformsSection(tx.isoforms));
 
   
       // GWAS profile (object) — if present
-      if (g.gwas_profile && Object.keys(g.gwas_profile || {}).length) {
-        sections.push(renderObjectSection("GWAS profile", g.gwas_profile));
-      }
-  
-      // “Other” buckets you mentioned — render if present
-      sections.push(renderObjectSection("Variants", g.variants));
-      sections.push(renderArraySection("Traits",   g.traits));
+      sections.push(renderGwasTraitsBlock(g.gwas_profile, g.traits));
+      
       sections.push(renderObjectSection("Binding peaks", g.binding_peaks));
       sections.push(renderObjectSection("miRNA targets", g.mirna_targets));
   
       // Interactions: TSV counts + collapsible previews + special GO enrichment toggle
-      const interactionsBlock = renderInteractions({
+      const interactionsBlock = renderInteractionsBlock({
         sym, humanTSV, nonTSV, humanCount, nonhumanCount, goEnrichment: g.interactions?.go_enrichment
       });
   
@@ -486,10 +608,10 @@ sections.push(renderIsoformsSection(tx.isoforms));
           const text = arr.map(x => String(x).trim()).filter(Boolean).join(" ");
           return `
             <details style="margin-top:8px;">
-              <summary ${SECT_SUMMARY_STYLE}>
+              <summary ${TOP_SUMMARY_STYLE}>
                 ${escapeInline(title)} (${arr.length})
               </summary>
-              <div class="blk-text" style="margin-top:6px;">
+              <div class="blk-text" style="margin-top:6px; white-space:normal; line-height:1.4; word-break:break-word; overflow-wrap:anywhere;">
                 ${escapeInline(text)}
               </div>
             </details>
@@ -497,13 +619,13 @@ sections.push(renderIsoformsSection(tx.isoforms));
         }
       
         // Default: render as chips
-        const list = arr.map(x => `<span class="chip">${escapeInline(String(x))}</span>`).join(" ");
+        const list = arr.map(x => `<span class="chip wrap">${escapeInline(String(x))}</span>`).join(" ");
         return `
-          <details style="margin-top:8px;">
-            <summary ${SECT_SUMMARY_STYLE}>
+          <details style="margin-top:6px;">
+            <summary ${TOP_SUMMARY_STYLE}>
               ${escapeInline(title)} (${arr.length})
             </summary>
-            <div style="margin-top:6px;">${list || `<div class="muted">No items.</div>`}</div>
+<div class="row" style="margin-top:4px;">${list || `<div class="muted">No items.</div>`}</div>
           </details>
         `;
       }
@@ -513,99 +635,16 @@ sections.push(renderIsoformsSection(tx.isoforms));
         if (!obj || typeof obj !== "object" || Object.keys(obj).length === 0) return "";
         const table = objectToTable(obj, esc);
         return `
-          <details style="margin-top:8px;">
-            <summary ${SECT_SUMMARY_STYLE}>
+          <details style="margin-top:6px;">
+            <summary ${TOP_SUMMARY_STYLE}>
               ${esc(title)}
             </summary>
             <div style="margin-top:6px;">${table}</div>
           </details>
         `;
       }
-  
-      function renderInteractions({ sym, humanTSV, nonTSV, humanCount, nonhumanCount, goEnrichment }) {
-        const parts = [];
-      
-        // helper: parse TSV → { experiment_type -> Set(partner_symbol) }
-        function groupInteractions(tsv) {
-          const { header, rows } = parseTSVToTable(tsv);
-          if (!header.length || !rows.length) return {};
-          const idxType = header.findIndex(h => /experiment[_\s-]*type/i.test(h));
-          const idxGene = header.findIndex(h => /(partner|interactor).*symbol/i.test(h));
-          const map = {};
-          rows.forEach(r => {
-            const et = (r[idxType] || "").trim();
-            const gene = (r[idxGene] || "").trim();
-            if (!et || !gene) return;
-            (map[et] ||= new Set()).add(gene);
-          });
-          return map;
-        }
-      
-        function renderGrouped(kindLabel, tsv) {
-            const groups = groupInteractions(tsv);
-            const types = Object.keys(groups).sort((a,b) => a.localeCompare(b));
-            if (!types.length) return "";
-          
-            const blocks = types.map(et => {
-              const genes = Array.from(groups[et]).sort();
-              const count = genes.length;
-              const pills = renderGeneList(genes); 
-              return `
-                <div style="margin:8px 0;">
-                  <div class="muted" style="font-weight:700; margin-bottom:4px;">${esc(et)} — ${count} gene${count===1?"":"s"}</div>
-                  <div>${pills}</div>
-                </div>`;
-            }).join("");
-          
-            const totalPartners = types.reduce((a, et) => a + groups[et].size, 0);
-            return `
-              <details style="margin-top:8px;">
-                <summary class="muted sect-hdr">
-                  ${kindLabel} (${types.length} types, ${totalPartners} partners)
-                </summary>
-                <div style="margin-top:6px;">${blocks}</div>
-              </details>`;
-          }
-          
-      
-        // overall header row (counts)
-        if (humanCount > 0 || nonhumanCount > 0) {
-          parts.push(`
-            <div class="muted" style="margin-top:8px;">Interactions</div>
-            <div class="row" style="gap:6px; flex-wrap:wrap;">
-              ${humanCount    > 0 ? `<span class="pill">Human rows: ${humanCount}</span>` : ""}
-              ${nonhumanCount > 0 ? `<span class="pill">Non-human rows: ${nonhumanCount}</span>` : ""}
-            </div>
-          `);
-        }
-      
-        if (humanCount > 0)    parts.push(renderGrouped("Human interactions", humanTSV));
-        if (nonhumanCount > 0) parts.push(renderGrouped("Non-human interactions", nonTSV));
-      
-        // GO enrichment
-        if (goEnrichment && (hasAny(goEnrichment.pan_go) || hasAny(goEnrichment.old_go))) {
-          const blockId = `go_${sym}_${rand7()}`;
-          const pan = goEnrichment.pan_go || {};
-          const old = goEnrichment.old_go || {};
-          parts.push(`
-            <div class="muted" style="margin-top:8px;">GO Enrichment</div>
-            <div class="row" style="gap:6px; margin-bottom:6px;">
-              <label class="pill"><input type="radio" name="${blockId}" value="pan" checked> pan_go</label>
-              <label class="pill"><input type="radio" name="${blockId}" value="old"> old_go</label>
-            </div>
-            <div id="${blockId}_content" data-go-block="${blockId}"
-                 data-go-pan='${jsonAttr(pan)}'
-                 data-go-old='${jsonAttr(old)}'
-                 class="mono" style="white-space:normal; line-height:1.35;">
-              ${renderGoTriplet(pan, esc)}
-            </div>
-          `);
-        }
-      
-        return parts.length ? parts.join("\n") : "";
       }
       
-  }
   
   /* ---------------- behaviors ---------------- */
   

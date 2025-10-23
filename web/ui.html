@@ -322,57 +322,90 @@ details > summary.sect-hdr {
   font-weight: 700;
 }
 
-/* softer chips (no outline) for gene lists */
-.chip {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);   /* dark theme */
+/* --- layout primitives --- */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;               /* <-- all horizontal/vertical spacing comes from here */
+  align-items: center;
 }
-body.light .chip { background: rgba(0,0,0,0.06); }
 
-/* existing */
-.chip {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.08);
-    color: var(--fg);
-    font-size: 13px;
-    line-height: 1;
-    white-space: nowrap;        /* keep for short tags */
-  }
-  body.light .chip { background: rgba(0,0,0,.06); }
-  
-  /* NEW: let long note “chips” wrap cleanly */
-  .chip-note {
-    white-space: normal;        /* override nowrap */
-    line-height: 1.35;
-    padding: 8px 10px;          /* a bit more room for paragraphs */
-    max-width: 100%;
-    display: inline-block;
-    vertical-align: top;
-    word-break: break-word;     /* break very long tokens */
-    overflow-wrap: anywhere;
-    font-size: 12.5px;          /* optional: slightly smaller */
-  }
-  
-  body.light .chip { background: rgba(0,0,0,.06); }
-  
-  /* Longer notes look okay a hair smaller */
-  .chip-note { font-size: 12px; opacity: .9; }
-  
-  /* Section headers in <summary> look bigger and bolder */
-  .sect-hdr {
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 800;
-  }
-  
-  /* Make tables a tad larger for readability */
-  .vs-table th, .vs-table td { font-size: 14px; line-height: 1.35; }
-  
+/* rows: small vertical row-gap, normal horizontal gap */
+.row { 
+  display: flex; 
+  flex-wrap: wrap; 
+  column-gap: 6px;   /* horiz spacing */
+  row-gap: 3px;      /* ↓ smaller vertical stack spacing */
+  align-items: center;
+}
+
+/* chips & pills: smaller + tighter */
+.chip, .pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  vertical-align: top;
+  padding: 2px 8px;          /* ↓ was 4px 10px */
+  border-radius: 999px;
+  line-height: 1.1;          /* ↓ was 1.2/1.0 */
+  font-size: 12.5px;         /* a hair smaller */
+  color: var(--fg);
+  background: rgba(255,255,255,0.08);
+}
+body.light .chip, body.light .pill { background: rgba(0,0,0,0.06); }
+
+/* wrapping variants */
+.chip { white-space: nowrap; }
+.chip.wrap { white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
+
+/* long notes still readable but compact */
+.chip-note{
+  display: inline-block;   /* switch from inline-flex so text wraps naturally */
+  white-space: normal;     /* override .chip's nowrap */
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+  padding: 6px 8px;
+  max-width: 100%;         /* or min(520px, 100%) if you want a width cap */
+  font-size: 12px;
+  opacity: .9;
+}
+
+/* header sizes: top vs inner */
+.sect-hdr { cursor: pointer; }
+.top-hdr  { font-weight: 700; font-size: 15px; }
+.sub      { font-size: 12px; }
+
+/* utility */
+.wrap { white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
+
+/* tables (unchanged, just here for completeness) */
+.vs-table th, .vs-table td { font-size: 14px; line-height: 1.35; }
+
       
+
+/* keep page container margins */
+body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
+
+/* neutralize when .wrap is used on chips/pills */
+.chip.wrap,
+.pill.wrap {
+  margin: 0 !important;
+  padding-top: 2px;   /* whatever you like */
+  padding-bottom: 2px;
+}
+
+/* make .wrap mean 'text wrapping' ONLY when on chips */
+.chip.wrap,
+.pill.wrap {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* optional: ensure the row itself isn’t adding extra spacing */
+.row { display:flex; flex-wrap:wrap; column-gap:6px; row-gap:3px; align-items:center; }
+
       
       
   </style>
