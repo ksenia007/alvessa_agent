@@ -65,13 +65,18 @@ def opentargets_agent(state: "State") -> "State":
 
         try:
             # Disease annotations
-            associated_disease_list = target_disease_df[target_disease_df['target_symbol'] == gene.symbol]['disease_name'].tolist()
+            associated_disease_list = list(set(target_disease_df[target_disease_df['target_symbol'] == gene.symbol]['disease_name'].tolist()))
             gene.add_many_direct_disease_associations(associated_disease_list)
 
             summary_lines.append(f"All direct disease associations for {gene.symbol} (from the Open Targets database): " 
                         + ', '.join(associated_disease_list) + ".")
 
-            
+            print(len(associated_disease_list))
+        
+        except Exception as e:
+            print(f"Failed to pull disease annotations: {gene}, {e}")
+
+        try:
             # Tissue-specific expression
             tissue_zscore = {}
             for tissues_list in expression_df[expression_df['target_symbol'] == gene.symbol]['tissues']:
@@ -86,6 +91,10 @@ def opentargets_agent(state: "State") -> "State":
             summary_lines.append(f"Tissue-specific expression z-scores for {gene.symbol} (from the Open Targets database). A gene is considered to be tissue specific if the z-score for that tissue is greater than 0.674 (or the 75th percentile of a perfect normal distribution): " 
                         + str(tissue_zscore) + ".")
             
+        except Exception as e:
+            print(f"Failed to pull tissue expression: {gene}, {e}")
+        
+        try:
             # DepMap Essentiality
             gene_is_essential = essentiality_df[essentiality_df['target_symbol'] == gene.symbol]['geneEssentiality'].values[0][0]['isEssential']
             gene.add_essentiality(gene_is_essential)
@@ -94,7 +103,11 @@ def opentargets_agent(state: "State") -> "State":
                 summary_lines.append(f"{gene.symbol} is a core essential gene, meaning that it is unlikely to tolerate inhibition and is susceptible to causing adverse events if modulated. The gene is crucial for basic cellular function in many tissue types.")
             else:
                 summary_lines.append(f"{gene.symbol} is not a core essential gene, meaning that inhibition or knockout of this gene does not consistently result in cell death across the majority of cell lines tested. The gene's function is not universally vital for cell survival in diverse tissues, as determined by large-scale cell fitness and depletion assays.")
+        
+        except Exception as e:
+            print(f"Failed to pull essentiality: {gene}, {e}")
 
+        try:       
             # Genetic Constraint
             gene_all_constraint = constraint_df[constraint_df['approvedSymbol'] == gene.symbol]['constraint'].values[0]
             
@@ -112,8 +125,8 @@ def opentargets_agent(state: "State") -> "State":
             
                 gene.add_tool("OpenTargets")
 
-        except:
-            print(gene)
+        except Exception as e:
+            print(f"Failed to pull constraint: {gene}, {e}")
 
         time.sleep(0.3)  # courteous pause
 
