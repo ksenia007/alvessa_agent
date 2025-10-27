@@ -18,16 +18,17 @@ from src.tools.base import Node
 from .utils import read_all_parquet_in_folder
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence
+import pickle
 
 DEBUG = True
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 LOCAL_DBS = REPO_ROOT / "local_dbs"
 OPEN_TARGETS = LOCAL_DBS / "open_targets"
-TARGET_DISEASE_DATA = OPEN_TARGETS / "final_association_overall_direct"
-EXPRESSION_DATA = OPEN_TARGETS / "final_expression"
-ESSENTIALITY_DATA = OPEN_TARGETS / "final_target_essentiality"
-CONSTRAINT_DATA = OPEN_TARGETS / "target"
+TARGET_DISEASE_DATA = OPEN_TARGETS / "final_association_overall_direct/target_disease_direct_associations.pkl" 
+EXPRESSION_DATA = OPEN_TARGETS / "final_expression/expression.pkl"
+ESSENTIALITY_DATA = OPEN_TARGETS / "final_target_essentiality/target_essentiality.pkl"
+CONSTRAINT_DATA = OPEN_TARGETS / "final_constraint/constraint.pkl"
 
 CONSTRAINT_TYPES = {
     'syn': "Synonymous (silent) variants - don't change amino acid sequence of a protein",
@@ -52,10 +53,17 @@ def opentargets_agent(state: "State") -> "State":
     """
     gene_entities = state.get("gene_entities") or {}
 
-    target_disease_df = read_all_parquet_in_folder(TARGET_DISEASE_DATA)
-    expression_df = read_all_parquet_in_folder(EXPRESSION_DATA)
-    essentiality_df = read_all_parquet_in_folder(ESSENTIALITY_DATA)
-    constraint_df = read_all_parquet_in_folder(CONSTRAINT_DATA)
+    with open(TARGET_DISEASE_DATA, 'rb') as file:
+        target_disease_dict = pickle.load(file)
+
+    with open(EXPRESSION_DATA, 'rb') as file:
+        expression_dict = pickle.load(file)
+
+    with open(ESSENTIALITY_DATA, 'rb') as file:
+        essentiality_dict = pickle.load(file)
+
+    with open(CONSTRAINT_DATA, 'rb') as file:
+        constraint_dict = pickle.load(file)
 
     for gene_name, gene in gene_entities.items():
         if not gene_name:
@@ -65,7 +73,7 @@ def opentargets_agent(state: "State") -> "State":
 
         try:
             # Disease annotations
-            associated_disease_list = list(set(target_disease_df[target_disease_df['target_symbol'] == gene.symbol]['disease_name'].tolist()))
+            associated_disease_list = target_disease_dict[gene.symbol]
             gene.add_many_direct_disease_associations(associated_disease_list)
 
             summary_lines.append(f"All direct disease associations for {gene.symbol} (from the Open Targets database): " 
@@ -78,13 +86,7 @@ def opentargets_agent(state: "State") -> "State":
 
         try:
             # Tissue-specific expression
-            tissue_zscore = {}
-            for tissues_list in expression_df[expression_df['target_symbol'] == gene.symbol]['tissues']:
-                for tissue_dict in tissues_list:
-                    label = tissue_dict.get('label', None)
-                    zscore = tissue_dict.get('rna', {}).get('zscore', None)
-                    if label is not None and zscore is not None:
-                        tissue_zscore[label] = zscore
+            tissue_zscore = expression_dict[gene.symbol]
                         
             gene.add_many_tissues_expression(tissue_zscore)
 
@@ -96,7 +98,7 @@ def opentargets_agent(state: "State") -> "State":
         
         try:
             # DepMap Essentiality
-            gene_is_essential = essentiality_df[essentiality_df['target_symbol'] == gene.symbol]['geneEssentiality'].values[0][0]['isEssential']
+            gene_is_essential = essentiality_dict[gene.symbol]
             gene.add_essentiality(gene_is_essential)
 
             if gene_is_essential:
@@ -109,12 +111,9 @@ def opentargets_agent(state: "State") -> "State":
 
         try:       
             # Genetic Constraint
-            gene_all_constraint = constraint_df[constraint_df['approvedSymbol'] == gene.symbol]['constraint'].values[0]
+            gene_all_constraint = constraint_dict[gene.symbol]
             
-            for row in gene_all_constraint:
-                constraint_type_name = row['constraintType']
-                score = row['score']
-
+            for constraint_type_name, score in gene_all_constraint.items():
                 gene.add_constraint(score, constraint_type_name)
                 summary_lines.append(f"Genetic constraint score for {constraint_type_name} variants ({CONSTRAINT_TYPES[constraint_type_name]}) in {gene.symbol} from the Open Targets database. A constraint score from -1 to 1 is given to genes depending on their LOEUF (loss-of-function observed/expected upper bound fraction) metric rank, with -1 being the least tolerant to LoF variation and 1 being the most tolerant.: " + str(score))
 
