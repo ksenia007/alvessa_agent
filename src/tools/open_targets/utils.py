@@ -1,5 +1,16 @@
 import pandas as pd
 import os
+from pathlib import Path
+import pprint
+import pickle
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+LOCAL_DBS = REPO_ROOT / "local_dbs"
+OPEN_TARGETS = LOCAL_DBS / "open_targets"
+TARGET_DISEASE_DATA = OPEN_TARGETS / "final_association_overall_direct"
+EXPRESSION_DATA = OPEN_TARGETS / "final_expression"
+ESSENTIALITY_DATA = OPEN_TARGETS / "final_target_essentiality"
+CONSTRAINT_DATA = OPEN_TARGETS / "target"
 
 def read_all_parquet_in_folder(folder_path):
     all_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.parquet')]
@@ -57,3 +68,60 @@ def add_gene_symbol_to_all_data():
     essentiality_merged.rename(columns={'approvedSymbol': 'target_symbol'}, inplace=True)
 
     essentiality_merged.to_parquet('../../../local_dbs/open_targets/final_target_essentiality/target_essentiality.parquet')
+
+def convert_final_dfs_to_dicts():
+
+    target_disease_df = read_all_parquet_in_folder(TARGET_DISEASE_DATA)
+
+    gene_disease_dict = (target_disease_df.groupby('target_symbol')['disease_name'].unique().apply(list).to_dict())
+
+    with open('../../../local_dbs/open_targets/final_association_overall_direct/target_disease_direct_associations.pkl', 'wb') as file:
+        pickle.dump(gene_disease_dict, file)
+
+
+    expression_df = read_all_parquet_in_folder(EXPRESSION_DATA)
+
+    gene_tissue_zscore = {}
+    for symbol, group_df in expression_df.groupby('target_symbol'):
+        tissue_zscore = {}
+        for tissues_list in group_df['tissues']:
+            for tissue_dict in tissues_list:
+                label = tissue_dict.get('label', None)
+                zscore = tissue_dict.get('rna', {}).get('zscore', None)
+                if label is not None and zscore is not None:
+                    tissue_zscore[label] = zscore
+        gene_tissue_zscore[symbol] = tissue_zscore
+
+    with open('../../../local_dbs/open_targets/final_expression/expression.pkl', 'wb') as file:
+        pickle.dump(gene_tissue_zscore, file)
+
+
+    essentiality_df = read_all_parquet_in_folder(ESSENTIALITY_DATA)
+
+    gene_essentiality = {}
+    for _, row in essentiality_df.iterrows():
+        symbol = row['target_symbol']
+        is_essential = row['geneEssentiality'][0]['isEssential']
+        gene_essentiality[symbol] = is_essential
+
+    with open('../../../local_dbs/open_targets/final_target_essentiality/target_essentiality.pkl', 'wb') as file:
+        pickle.dump(gene_essentiality, file)
+
+    
+    constraint_df = read_all_parquet_in_folder(CONSTRAINT_DATA)
+
+    gene_constraint = {}
+    for _, row in constraint_df.iterrows():
+        symbol = row['approvedSymbol']
+        constraints = {}
+        all_constraints = row['constraint']
+        if all_constraints is not None:
+            for constraint_row in all_constraints:
+                constraint_type_name = constraint_row['constraintType']
+                score = constraint_row['score']
+                constraints[constraint_type_name] = score
+        gene_constraint[symbol] = constraints
+
+    with open('../../../local_dbs/open_targets/final_constraint/constraint.pkl', 'wb') as file:
+        pickle.dump(gene_constraint, file)
+
