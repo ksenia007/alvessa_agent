@@ -176,6 +176,31 @@
         background: transparent;
         box-shadow: none;
       }
+      .variant-controls .vs-link.active {
+        background: rgba(148,163,184,0.22);
+        border-color: rgba(148,163,184,0.6);
+      }
+      .variant-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .variant-controls__sorts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .variant-controls__download {
+        margin-left: auto;
+      }
+      @media (max-width: 640px) {
+        .variant-controls__download {
+          margin-left: 0;
+        }
+      }
       
       /* HERO */
       #hero { min-height: 50vh; display: grid; place-items: center; }
@@ -393,7 +418,16 @@ body.light .chip, body.light .pill { background: rgba(0,0,0,0.06); }
 .wrap { white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
 
 /* tables (unchanged, just here for completeness) */
-.vs-table th, .vs-table td { font-size: 14px; line-height: 1.35; }
+.vs-table {
+  border-collapse: separate;
+  border-spacing: 0 8px; /* add air between rows without changing line spacing */
+}
+.vs-table th,
+.vs-table td {
+  font-size: 14px;
+  line-height: 1.35;
+  padding: 10px 14px;
+}
 
       
 

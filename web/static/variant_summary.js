@@ -2,6 +2,8 @@
 // Mirrors structure used by static/gene_summary.js
 
 const MAX_VARIANT_ROWS = 400;
+const TRAIT_SUMMARY_LIMIT = 4;
+const MISSING_TEXT = "-";
 
 export async function renderVariantSummary(st, deps = {}) {
   const byId      = deps.byId || ((id) => document.getElementById(id));
@@ -45,11 +47,16 @@ export async function renderVariantSummary(st, deps = {}) {
     fetchText,
     parseCSV,
   });
-  const alleleData = await loadAlleleFrequencies({ fetchText, parseCSV });
-  const traitData  = await loadTraitData({ fetchText, parseCSV });
+  const [alleleData, traitData] = await Promise.all([
+    loadAlleleFrequencies({ fetchText, parseCSV }),
+    loadTraitData({ fetchText, parseCSV }),
+  ]);
+  const loadAlleleRows = createAlleleRowsLoader(fetchText, parseCSV);
+  const loadTraitRows  = createTraitRowsLoader(fetchText, parseCSV);
 
   const variantIds = baseOrder.length ? baseOrder : uniquePreserve([...entries.keys()]);
   const rows = [];
+  let rowCounter = 0;
   for (const vid of variantIds) {
     const genes = entries.get(vid);
     if (!genes || !genes.size) continue;
@@ -57,15 +64,24 @@ export async function renderVariantSummary(st, deps = {}) {
     const chrom = meta.chrom || meta.primary_chrom || "";
     const pos = meta.pos || meta.primary_pos || "";
     const locationLabel = formatLocationLabel(chrom, pos);
+    const alleleInfo = alleleData.get(vid);
     const geneList = Array.from(genes.values()).sort((a, b) => a.label.localeCompare(b.label));
     for (const entry of geneList) {
+      const rowMeta = {
+        index: rowCounter++,
+        topMed: Number.isFinite(alleleInfo?.topmed) ? alleleInfo.topmed : null,
+        expectoMax: null,
+        alphaClass: null,
+      };
+      const geneName = entry.label || entry.geneKey || MISSING_TEXT;
       const cells = [
-        vid,
-        locationLabel,
+        plainCell(geneName),
+        plainCell(vid),
+        plainCell(locationLabel),
       ];
-      cells.push(renderAlleleCell(vid, locationLabel, alleleData.get(vid), alleleStore));
-      cells.push(renderTraitCell(vid, entry.geneKey, traitData, traitStore, entry.label));
-      if (hasContext) cells.push(displayValue(entry.context));
+      cells.push(renderAlleleCell(vid, locationLabel, alleleInfo, alleleStore, rowMeta, loadAlleleRows));
+      cells.push(renderTraitCell(vid, entry.geneKey, traitData, traitStore, entry.label, rowMeta, loadTraitRows));
+      if (hasContext) cells.push(plainCell(displayValue(entry.context)));
       for (const tool of toolNames) {
         cells.push(formatPredictionCell(
           tool,
@@ -75,13 +91,14 @@ export async function renderVariantSummary(st, deps = {}) {
             variantId: vid,
             variantLabel: vid,
             locationLabel,
-            geneLabel: entry.label || entry.geneKey || "—",
-          }
+            geneLabel: entry.label || entry.geneKey || MISSING_TEXT,
+          },
+          rowMeta
         ));
       }
       rows.push({
-        gene: entry.label || entry.geneKey || "—",
         cells,
+        meta: rowMeta,
       });
     }
   }
@@ -94,6 +111,8 @@ export async function renderVariantSummary(st, deps = {}) {
 
   const header = [];
   const columnStyles = [];
+  header.push("Gene");
+  columnStyles.push("min-width:160px; white-space:nowrap;");
   header.push("Variant");
   columnStyles.push("min-width:160px; white-space:nowrap; font-family:var(--mono, ui-monospace);");
   header.push("Location");
@@ -113,40 +132,109 @@ export async function renderVariantSummary(st, deps = {}) {
     columnStyles.push("min-width:150px;");
   }
 
-  const limitedRows = rows.slice(0, MAX_VARIANT_ROWS);
-  const byGene = new Map();
-  for (const row of limitedRows) {
-    if (!byGene.has(row.gene)) byGene.set(row.gene, []);
-    byGene.get(row.gene).push(row.cells);
-  }
-  const geneSections = Array.from(byGene.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  const tablesHtml = geneSections.map(([gene, geneRows]) => `
-    <div style="margin-top:12px;">
-      <div class="muted" style="font-weight:600; border-top:1px dashed var(--line); padding-top:8px;">
-        ${esc(gene)} (${geneRows.length})
-      </div>
-      <div style="margin-top:6px;">
-        ${renderMiniTable(header, geneRows, columnStyles)}
-      </div>
-    </div>
-  `).join("");
-
   const extraNote = rows.length > MAX_VARIANT_ROWS
     ? `<div class="muted" style="margin-top:6px;">Showing first ${MAX_VARIANT_ROWS} of ${rows.length} variant-gene rows.</div>`
     : "";
-  const toolsList = toolNames.length ? toolNames.map(toolLabel).join(", ") : "—";
+  const toolsList = toolNames.length ? toolNames.map(toolLabel).join(", ") : MISSING_TEXT;
 
+  const headerLabels = [...header];
   mount.innerHTML = `
     <div class="muted" style="margin-bottom:8px;">
-      Variant-gene rows: ${rows.length}. Genes rendered: ${geneSections.length}. Tools detected: ${esc(toolsList)}.
+      Variant-gene rows: ${rows.length}. Tools detected: ${esc(toolsList)}.
     </div>
-    ${tablesHtml || `<div class="muted">No gene-level variant rows to display.</div>`}
+    <div class="variant-controls" id="variantControls">
+      <div class="variant-controls__sorts">
+        <span class="muted">Sort by:</span>
+        <button type="button" class="vs-link active" data-variant-sort="default">Default</button>
+        <button type="button" class="vs-link" data-variant-sort="topmed">TopMed AF</button>
+        <button type="button" class="vs-link" data-variant-sort="expecto">ExpectoSC |score|</button>
+        <button type="button" class="vs-link" data-variant-sort="alpha">AlphaMissense</button>
+      </div>
+      <button type="button" class="vs-link variant-controls__download" id="variantDownloadBtn">Download CSV</button>
+    </div>
+    <div id="variantTableWrap"></div>
     ${extraNote}
   `;
   show("variantSummaryCard");
-  wireExpectoPanels(mount, expectoStore);
-  wireAllelePanels(mount, alleleStore);
-  wireTraitPanels(mount, traitStore);
+
+  const tableWrap = byId("variantTableWrap");
+  const sortButtons = mount.querySelectorAll("[data-variant-sort]");
+  const downloadBtn = byId("variantDownloadBtn");
+  let currentSort = "default";
+
+  const renderTables = (sortKey = "default") => {
+    const sortedRows = applySort(rows, sortKey).slice(0, MAX_VARIANT_ROWS);
+    const rowArrays = sortedRows.map((row) => row.cells);
+    tableWrap.innerHTML = renderMiniTable(header, rowArrays, columnStyles);
+    wireExpectoPanels(tableWrap, expectoStore);
+    wireAllelePanels(tableWrap, alleleStore);
+    wireTraitPanels(tableWrap, traitStore);
+    currentSort = sortKey;
+    updateSortButtons(sortKey);
+  };
+
+  const applySort = (list, sortKey) => {
+    const arr = [...list];
+    const desc = (a, b) => {
+      const av = Number.isFinite(a) ? a : -Infinity;
+      const bv = Number.isFinite(b) ? b : -Infinity;
+      if (bv === av) return 0;
+      return bv > av ? 1 : -1;
+    };
+    switch (sortKey) {
+      case "topmed":
+        arr.sort((a, b) => desc(a.meta.topMed, b.meta.topMed) || a.meta.index - b.meta.index);
+        break;
+      case "expecto":
+        arr.sort((a, b) => desc(a.meta.expectoMax, b.meta.expectoMax) || a.meta.index - b.meta.index);
+        break;
+      case "alpha":
+        arr.sort((a, b) => {
+          const norm = (val) => {
+            if (!val || val === MISSING_TEXT) return "";
+            return String(val).toLowerCase();
+          };
+          const av = norm(a.meta.alphaClass);
+          const bv = norm(b.meta.alphaClass);
+          const cmp = bv.localeCompare(av);
+          return cmp || a.meta.index - b.meta.index;
+        });
+        break;
+      default:
+        arr.sort((a, b) => a.meta.index - b.meta.index);
+    }
+    return arr;
+  };
+
+  const updateSortButtons = (activeKey) => {
+    sortButtons.forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.variantSort === activeKey);
+    });
+  };
+
+  sortButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.variantSort || "default";
+      renderTables(key);
+    });
+  });
+
+  downloadBtn?.addEventListener("click", () => {
+    downloadVariantCsv(currentSort);
+  });
+
+  const downloadVariantCsv = (sortKey) => {
+    const sortedRows = applySort(rows, sortKey).slice(0, MAX_VARIANT_ROWS);
+    const csvLines = [];
+    csvLines.push(headerLabels.map((h) => escapeCsv(h)).join(","));
+    sortedRows.forEach((row) => {
+      const line = row.cells.map((cell) => escapeCsv(extractCellText(cell))).join(",");
+      csvLines.push(line);
+    });
+    downloadText(csvLines.join("\n"), `variant_summary_${sortKey}.csv`, "text/csv");
+  };
+
+  renderTables("default");
 
   async function loadCsvSafe(path) {
     try {
@@ -183,7 +271,7 @@ async function buildVariantGeneEntries({ fetchText, parseCSV }) {
     if (!vid || !geneKey || !tool) continue;
     const entry = ensureEntry(entries, vid, geneKey, row.gene);
     const score = (row.score || "").trim();
-    entry.predictions.set(tool, score || "—");
+    entry.predictions.set(tool, score || MISSING_TEXT);
     toolSet.add(tool);
   }
 
@@ -206,7 +294,7 @@ async function buildVariantGeneEntries({ fetchText, parseCSV }) {
 function ensureEntry(entries, variantId, geneKey, label) {
   if (!entries.has(variantId)) entries.set(variantId, new Map());
   const genes = entries.get(variantId);
-  const key = geneKey || label || "—";
+  const key = geneKey || label || MISSING_TEXT;
   if (!genes.has(key)) {
     genes.set(key, {
       geneKey: key,
@@ -221,25 +309,22 @@ function ensureEntry(entries, variantId, geneKey, label) {
 }
 
 async function loadAlleleFrequencies({ fetchText, parseCSV }) {
-  const rows = await (async () => {
-    try {
-      const txt = await fetchText("variants/allele_frequencies.csv");
-      return parseCSV(txt, ",");
-    } catch {
-      return [];
-    }
-  })();
+  let rows = [];
+  try {
+    const txt = await fetchText("variants/allele_frequencies.csv");
+    rows = parseCSV(txt, ",");
+  } catch {
+    rows = [];
+  }
   const map = new Map();
-  for (const row of rows) {
+  for (let i = 0; i < rows.length; i++) {
+    if (i % 800 === 0) await yieldToBrowser();
+    const row = rows[i];
     const vid = normVariant(row.variant_id);
     if (!vid) continue;
-    if (!map.has(vid)) map.set(vid, { rows: [], topmed: null });
+    if (!map.has(vid)) map.set(vid, { topmed: null });
     const bucket = map.get(vid);
     const raw = safeJson(row.raw_json) || {};
-    const study = raw.study_name || row.source || row.population || "Study";
-    const alleleFreq = parseNumber(row.af) ?? parseNumber(raw.allele_frequency);
-    const alleleCount = parseNumber(row.ac) ?? parseNumber(raw.allele_count);
-    const totalCount  = parseNumber(row.an) ?? parseNumber(raw.total_count);
     const obs = (() => {
       const rawObs = raw.observations ?? raw.observation;
       if (Array.isArray(rawObs)) return rawObs[0] || {};
@@ -247,103 +332,118 @@ async function loadAlleleFrequencies({ fetchText, parseCSV }) {
     })();
     const ref = obs.deleted_sequence || row.ref || "";
     const alt = obs.inserted_sequence || row.alt || "";
-    const keepRow = !ref || !alt || ref !== alt;
-    if (keepRow) {
-      bucket.rows.push({
-        study,
-        allele_frequency: alleleFreq,
-        allele_count: alleleCount,
-        total_count: totalCount,
-        population: row.population || raw.population || "",
-        source: row.source || raw.source || "",
-        ref,
-        alt,
-      });
-      if (bucket.topmed == null && String(study || "").toUpperCase() === "TOPMED" && Number.isFinite(alleleFreq)) {
-        bucket.topmed = alleleFreq;
-      }
+    if (ref && alt && ref === alt) continue;
+    const study = raw.study_name || row.source || row.population || "";
+    const alleleFreq = parseNumber(row.af) ?? parseNumber(raw.allele_frequency);
+    if (bucket.topmed == null && String(study || "").toUpperCase() === "TOPMED" && Number.isFinite(alleleFreq)) {
+      bucket.topmed = alleleFreq;
     }
   }
   return map;
 }
 
 async function loadTraitData({ fetchText, parseCSV }) {
-  const rows = await (async () => {
-    try {
-      const txt = await fetchText("variants/per_gene_traits.csv");
-      return parseCSV(txt, ",");
-    } catch {
-      return [];
-    }
-  })();
+  let rows = [];
+  try {
+    const txt = await fetchText("variants/per_gene_traits.csv");
+    rows = parseCSV(txt, ",");
+  } catch {
+    rows = [];
+  }
   const map = new Map();
-  for (const row of rows) {
+  for (let i = 0; i < rows.length; i++) {
+    if (i % 800 === 0) await yieldToBrowser();
+    const row = rows[i];
     const vid = normVariant(row.variant_id);
     const geneKey = normGene(row.gene);
     if (!vid || !geneKey) continue;
     if (!map.has(vid)) map.set(vid, new Map());
     const geneMap = map.get(vid);
-    if (!geneMap.has(geneKey)) geneMap.set(geneKey, []);
-    const trait = row.trait || row.trait_name || "";
-    const pVal = parseNumber(row.p_value);
-    const risk = parseNumber(row.risk_score);
-    geneMap.get(geneKey).push({
-      trait,
-      p_value: pVal,
-      risk_score: risk,
+    if (!geneMap.has(geneKey)) geneMap.set(geneKey, { list: [], hasMore: false });
+    const entry = geneMap.get(geneKey);
+    entry.list.push({
+      trait: row.trait || row.trait_name || "",
+      p_value: parseNumber(row.p_value),
+      risk_score: parseNumber(row.risk_score),
     });
+    entry.list.sort((a, b) => {
+      const riskA = parseNumber(a.risk_score);
+      const riskB = parseNumber(b.risk_score);
+      if (Number.isFinite(riskA) || Number.isFinite(riskB)) {
+        return (riskB ?? -Infinity) - (riskA ?? -Infinity);
+      }
+      const pA = parseNumber(a.p_value);
+      const pB = parseNumber(b.p_value);
+      if (Number.isFinite(pA) || Number.isFinite(pB)) {
+        return (pA ?? Infinity) - (pB ?? Infinity);
+      }
+      return 0;
+    });
+    if (entry.list.length > TRAIT_SUMMARY_LIMIT) {
+      entry.list.length = TRAIT_SUMMARY_LIMIT;
+      entry.hasMore = true;
+    }
   }
   return map;
 }
 
-function renderAlleleCell(variantId, locationLabel, data, store) {
-  if (!data || !Array.isArray(data.rows) || data.rows.length === 0) {
-    return "—";
-  }
-  const filtered = dedupeAlleleRows(
-    data.rows.filter((rec) => !rec.ref || !rec.alt || rec.ref !== rec.alt)
-  );
-  if (!filtered.length) return "—";
-
-  const topmed = Number.isFinite(data.topmed) ? formatPercent(data.topmed) : "—";
+function renderAlleleCell(variantId, locationLabel, data = {}, store, meta = null, loadRows) {
+  const topmedText = Number.isFinite(data?.topmed) ? formatFraction(data.topmed) : MISSING_TEXT;
+  if (meta && Number.isFinite(data?.topmed)) meta.topMed = data.topmed;
   const id = `af_${rand7()}`;
-  store.set(id, {
-    variant: variantId,
-    location: locationLabel,
-    rows: filtered,
-  });
+  const hasLoader = typeof loadRows === "function";
+  if (hasLoader) {
+    store.set(id, {
+      variant: variantId,
+      location: locationLabel,
+      loadRows: () => loadRows(variantId),
+    });
+  }
+  const button = hasLoader
+    ? `<button type="button" class="vs-link" data-af-id="${escapeInline(id)}">All studies</button>`
+    : `<button type="button" class="vs-link" disabled style="opacity:.5;cursor:not-allowed;">All studies</button>`;
   return {
     __html: `
       <div style="display:flex;flex-direction:column;gap:4px;">
-        <div>${escapeInline(topmed)}</div>
-        <button type="button" class="vs-link" data-af-id="${escapeInline(id)}">All studies</button>
+        <div>${escapeInline(topmedText)}</div>
+        ${button}
       </div>
     `,
+    text: topmedText,
   };
 }
 
-function renderTraitCell(variantId, geneKey, traitData, store, geneLabel = "") {
+function renderTraitCell(variantId, geneKey, traitData, store, geneLabel = "", meta = null, loadRows) {
   const geneMap = traitData.get(variantId);
-  const traits = geneMap?.get(normGene(geneKey)) || [];
-  if (!traits.length) return "—";
-  const sorted = sortTraits(traits);
-  const topTwo = sorted.slice(0, 2);
+  const entry = geneMap?.get(normGene(geneKey));
+  const traits = entry?.list || [];
+  if (!traits.length) return plainCell(MISSING_TEXT);
+  const topTwo = traits.slice(0, 2);
   const summary = topTwo
     .map((t) => `${escapeInline(t.trait || "Trait")} (${formatRisk(t.risk_score)}, p=${formatPValue(t.p_value)})`)
     .join("<br>");
   const id = `trait_${rand7()}`;
-  store.set(id, {
-    variant: variantId,
-    gene: geneLabel || geneKey,
-    rows: sorted,
-  });
+  const hasLoader = typeof loadRows === "function";
+  if (hasLoader) {
+    store.set(id, {
+      variant: variantId,
+      gene: geneLabel || geneKey,
+      loadRows: () => loadRows(variantId, geneKey),
+    });
+  }
+  const summaryText = topTwo
+    .map((t) => `${t.trait || "Trait"} (risk ${formatRisk(t.risk_score)}, p=${formatPValue(t.p_value)})`)
+    .join("; ");
+  if (meta) meta.traitSummary = summaryText;
+  const hasMore = entry?.hasMore;
   return {
     __html: `
       <div style="display:flex;flex-direction:column;gap:4px;">
-        <div>${summary || "—"}</div>
-        <button type="button" class="vs-link" data-trait-id="${escapeInline(id)}">All traits</button>
+        <div>${summary || MISSING_TEXT}</div>
+        ${hasMore && hasLoader ? `<button type="button" class="vs-link" data-trait-id="${escapeInline(id)}">All traits</button>` : ""}
       </div>
     `,
+    text: summaryText,
   };
 }
 
@@ -352,7 +452,7 @@ function wireAllelePanels(root, store) {
   root.querySelectorAll("[data-af-id]").forEach((btn) => {
     const id = btn.getAttribute("data-af-id");
     const payload = store.get(id);
-    if (!id || !payload) return;
+    if (!id || !payload || !payload.loadRows) return;
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       openAlleleModal(payload);
@@ -365,7 +465,7 @@ function wireTraitPanels(root, store) {
   root.querySelectorAll("[data-trait-id]").forEach((btn) => {
     const id = btn.getAttribute("data-trait-id");
     const payload = store.get(id);
-    if (!id || !payload) return;
+    if (!id || !payload || !payload.loadRows) return;
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       openTraitModal(payload);
@@ -373,10 +473,10 @@ function wireTraitPanels(root, store) {
   });
 }
 
-function openAlleleModal(data) {
+async function openAlleleModal(data) {
   const subtitle = data.location ? `Location: ${data.location}` : "";
   const { body } = showVariantModal({
-    title: `${data.variant} — allele frequencies`,
+    title: `${data.variant} - allele frequencies`,
     subtitle,
     width: 720,
   });
@@ -406,8 +506,19 @@ function openAlleleModal(data) {
   body.appendChild(tableWrap);
 
   let sortKey = "total";
-  const render = () => {
-    tableWrap.innerHTML = renderAlleleTable(data.rows, sortKey);
+  let rows = [];
+  const render = async () => {
+    if (!rows.length) {
+      tableWrap.innerHTML = `<div class="muted">Loading…</div>`;
+      try {
+        rows = (await data.loadRows?.()) || [];
+      } catch (err) {
+        tableWrap.innerHTML = `<div class="muted">Could not load allele frequencies.</div>`;
+        console.error(err);
+        return;
+      }
+    }
+    tableWrap.innerHTML = renderAlleleTable(rows, sortKey);
     sortButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.sortKey === sortKey));
   };
 
@@ -418,7 +529,7 @@ function openAlleleModal(data) {
     });
   });
 
-  render();
+  render().catch(() => {});
 }
 
 function renderAlleleTable(rows, sortKey) {
@@ -430,9 +541,9 @@ function renderAlleleTable(rows, sortKey) {
     .map((rec) => `
       <tr>
         <td class="wrap">${escapeInline(rec.study || "Study")}</td>
-        <td class="wrap" style="text-align:center;">${escapeInline(rec.ref || "—")}</td>
-        <td class="wrap" style="text-align:center;">${escapeInline(rec.alt || "—")}</td>
-        <td class="wrap" style="text-align:right;">${formatPercent(rec.allele_frequency)}</td>
+        <td class="wrap" style="text-align:center;">${escapeInline(rec.ref || MISSING_TEXT)}</td>
+        <td class="wrap" style="text-align:center;">${escapeInline(rec.alt || MISSING_TEXT)}</td>
+        <td class="wrap" style="text-align:right;">${formatFraction(rec.allele_frequency)}</td>
         <td class="wrap" style="text-align:right;">${formatInteger(rec.total_count)}</td>
       </tr>
     `)
@@ -455,35 +566,42 @@ function renderAlleleTable(rows, sortKey) {
   `;
 }
 
-function openTraitModal(data) {
+async function openTraitModal(data) {
   const { body } = showVariantModal({
-    title: `${data.variant} — ${data.gene} traits`,
+    title: `${data.variant} - ${data.gene} traits`,
     subtitle: "",
     width: 720,
   });
-  const table = data.rows
-    .map((rec) => `
-      <tr>
-        <td class="wrap">${escapeInline(rec.trait || "Trait")}</td>
-        <td class="wrap" style="text-align:right;">${formatRisk(rec.risk_score)}</td>
-        <td class="wrap" style="text-align:right;">${formatPValue(rec.p_value)}</td>
-      </tr>
-    `)
-    .join("");
-  body.innerHTML = `
-    <div style="max-height:420px; overflow:auto;">
-      <table class="vs-table">
-        <thead>
-          <tr>
-            <th class="wrap">Trait</th>
-            <th class="wrap" style="text-align:right;">Risk Score</th>
-            <th class="wrap" style="text-align:right;">p-value</th>
-          </tr>
-        </thead>
-        <tbody>${table}</tbody>
-      </table>
-    </div>
-  `;
+  body.innerHTML = `<div class="muted">Loading…</div>`;
+  try {
+    const rows = (await data.loadRows?.()) || [];
+    const table = rows
+      .map((rec) => `
+        <tr>
+          <td class="wrap">${escapeInline(rec.trait || "Trait")}</td>
+          <td class="wrap" style="text-align:right;">${formatRisk(rec.risk_score)}</td>
+          <td class="wrap" style="text-align:right;">${formatPValue(rec.p_value)}</td>
+        </tr>
+      `)
+      .join("");
+    body.innerHTML = `
+      <div style="max-height:420px; overflow:auto;">
+        <table class="vs-table">
+          <thead>
+            <tr>
+              <th class="wrap">Trait</th>
+              <th class="wrap" style="text-align:right;">Risk Score</th>
+              <th class="wrap" style="text-align:right;">p-value</th>
+            </tr>
+          </thead>
+          <tbody>${table}</tbody>
+        </table>
+      </div>
+    `;
+  } catch (err) {
+    console.error(err);
+    body.innerHTML = `<div class="muted">Could not load trait data.</div>`;
+  }
 }
 
 function showVariantModal({ title, subtitle, width = 680 }) {
@@ -549,13 +667,121 @@ function showVariantModal({ title, subtitle, width = 680 }) {
   return { body, close: cleanup };
 }
 
-function formatPredictionCell(tool, rawValue, store, meta = {}) {
-  if (!tool) return displayValue(rawValue);
-  if (String(tool).toLowerCase() !== "expectosc" || !rawValue || rawValue === "—") {
-    return displayValue(rawValue);
+function createAlleleRowsLoader(fetchText, parseCSV) {
+  let parsedPromise = null;
+  async function ensureParsed() {
+    if (!parsedPromise) parsedPromise = parseAll();
+    return parsedPromise;
+  }
+  async function parseAll() {
+    try {
+      const txt = await fetchText("variants/allele_frequencies.csv");
+      const rows = parseCSV(txt, ",");
+      const map = new Map();
+      for (const row of rows) {
+        const vid = normVariant(row.variant_id);
+        if (!vid) continue;
+        if (!map.has(vid)) map.set(vid, []);
+        const raw = safeJson(row.raw_json) || {};
+        const study = raw.study_name || row.source || row.population || "Study";
+        const alleleFreq = parseNumber(row.af) ?? parseNumber(raw.allele_frequency);
+        const alleleCount = parseNumber(row.ac) ?? parseNumber(raw.allele_count);
+        const totalCount  = parseNumber(row.an) ?? parseNumber(raw.total_count);
+        const obs = (() => {
+          const rawObs = raw.observations ?? raw.observation;
+          if (Array.isArray(rawObs)) return rawObs[0] || {};
+          return rawObs || {};
+        })();
+        const ref = obs.deleted_sequence || row.ref || "";
+        const alt = obs.inserted_sequence || row.alt || "";
+        if (ref && alt && ref === alt) continue;
+        map.get(vid).push({
+          study,
+          allele_frequency: alleleFreq,
+          allele_count: alleleCount,
+          total_count: totalCount,
+          population: row.population || raw.population || "",
+          source: row.source || raw.source || "",
+          ref,
+          alt,
+        });
+      }
+      for (const [vid, list] of map.entries()) {
+        map.set(vid, dedupeAlleleRows(list));
+      }
+      return map;
+    } catch {
+      return new Map();
+    }
+  }
+  return async (variantId) => {
+    const map = await ensureParsed();
+    return map.get(variantId) || [];
+  };
+}
+
+function createTraitRowsLoader(fetchText, parseCSV) {
+  let parsedPromise = null;
+  async function ensureParsed() {
+    if (!parsedPromise) parsedPromise = parseAll();
+    return parsedPromise;
+  }
+  async function parseAll() {
+    try {
+      const txt = await fetchText("variants/per_gene_traits.csv");
+      const rows = parseCSV(txt, ",");
+      const map = new Map();
+      for (const row of rows) {
+        const vid = normVariant(row.variant_id);
+        const geneKey = normGene(row.gene);
+        if (!vid || !geneKey) continue;
+        if (!map.has(vid)) map.set(vid, new Map());
+        if (!map.get(vid).has(geneKey)) map.get(vid).set(geneKey, []);
+        map.get(vid).get(geneKey).push({
+          trait: row.trait || row.trait_name || "",
+          p_value: parseNumber(row.p_value),
+          risk_score: parseNumber(row.risk_score),
+        });
+      }
+      for (const geneMap of map.values()) {
+        for (const [gene, arr] of geneMap.entries()) {
+          geneMap.set(gene, sortTraits(arr));
+        }
+      }
+      return map;
+    } catch {
+      return new Map();
+    }
+  }
+  return async (variantId, geneKey) => {
+    const map = await ensureParsed();
+    return map.get(variantId)?.get(normGene(geneKey)) || [];
+  };
+}
+
+function yieldToBrowser() {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(() => resolve());
+    } else {
+      setTimeout(resolve, 0);
+    }
+  });
+}
+
+function formatPredictionCell(tool, rawValue, store, meta = {}, rowMeta = null) {
+  if (!tool) return plainCell(displayValue(rawValue));
+  const toolKey = String(tool).toLowerCase();
+  if (toolKey !== "expectosc" || !rawValue || rawValue === MISSING_TEXT) {
+    if (toolKey === "alphamissense" && rowMeta) {
+      const text = displayValue(rawValue);
+      rowMeta.alphaClass = text || rowMeta.alphaClass;
+      return plainCell(text);
+    }
+    return plainCell(displayValue(rawValue));
   }
   const parsed = typeof rawValue === "string" ? safeJson(rawValue) : rawValue;
-  if (!parsed) return displayValue(rawValue);
+  if (!parsed) return plainCell(displayValue(rawValue));
   const scores = Array.isArray(parsed.scores)
     ? parsed.scores
         .map((rec) => ({
@@ -578,8 +804,22 @@ function formatPredictionCell(tool, rawValue, store, meta = {}) {
     location_label: meta.locationLabel || "",
     gene_label: meta.geneLabel || "",
   });
+  const summaryText = `Up: ${topUp ? formatScore(topUp.score) : MISSING_TEXT}; Down: ${
+    topDown ? formatScore(topDown.score) : MISSING_TEXT
+  }`;
+  if (rowMeta) {
+    const maxAbs = Math.max(
+      topUp ? Math.abs(topUp.score) : 0,
+      topDown ? Math.abs(topDown.score) : 0,
+      ...scores.map((s) => Math.abs(s.score)).filter(Number.isFinite)
+    );
+    if (Number.isFinite(maxAbs)) {
+      rowMeta.expectoMax = Math.max(rowMeta.expectoMax ?? -Infinity, maxAbs);
+    }
+  }
   return {
     __html: renderExpectoCellHtml(id, topUp, topDown),
+    text: summaryText,
   };
 }
 
@@ -588,8 +828,8 @@ function renderExpectoCellHtml(id, topUp, topDown) {
   const downScore = topDown ? topDown.score : null;
   const upColor = expectoChipColor(upScore);
   const downColor = expectoChipColor(downScore);
-  const upText = topUp ? `↑ ${formatScore(upScore)}` : "↑ —";
-  const downText = topDown ? `↓ ${formatScore(downScore)}` : "↓ —";
+  const upText = `Up ${topUp ? formatScore(upScore) : MISSING_TEXT}`;
+  const downText = `Down ${topDown ? formatScore(downScore) : MISSING_TEXT}`;
   return `
     <div class="expecto-cell" data-exp-id="${escapeInline(id)}" style="display:flex;gap:8px;">
       <span class="exp-chip exp-up" data-exp-toggle style="flex:1;display:flex;justify-content:center;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;background:${upColor.bg};color:${upColor.fg};border:${upColor.border};">
@@ -707,8 +947,8 @@ function renderExpectoBars(scores, mode = "gte1") {
 }
 
 function scoreLabel(score) {
-  if (!Number.isFinite(score)) return "—";
-  return score >= 0 ? `↑ ${formatScore(score)}` : `↓ ${formatScore(score)}`;
+  if (!Number.isFinite(score)) return MISSING_TEXT;
+  return score >= 0 ? `Up ${formatScore(score)}` : `Down ${formatScore(score)}`;
 }
 
 function renderMiniTable(header, rows, columnStyles = []) {
@@ -722,8 +962,11 @@ function renderMiniTable(header, rows, columnStyles = []) {
 }
 
 function renderCellValue(v) {
-  if (v && typeof v === "object" && v.__html) return v.__html;
-  return escapeInline(v);
+  if (v && typeof v === "object") {
+    if (v.__html != null) return v.__html;
+    if (v.text != null) return escapeInline(v.text);
+  }
+  return escapeInline(v ?? "");
 }
 
 function safeJson(str) {
@@ -742,7 +985,7 @@ function safeJson(str) {
 }
 
 function formatScore(score) {
-  if (!Number.isFinite(score)) return "—";
+  if (!Number.isFinite(score)) return MISSING_TEXT;
   return Number(score).toFixed(2);
 }
 
@@ -1125,10 +1368,10 @@ function normGene(s) {
 
 function formatChrom(chrom) {
   const c = String(chrom || "").trim();
-  return c ? (c.startsWith("chr") ? c : `chr${c}`) : "—";
+  return c ? (c.startsWith("chr") ? c : `chr${c}`) : MISSING_TEXT;
 }
 function formatPos(pos) {
-  if (pos == null || pos === "") return "—";
+  if (pos == null || pos === "") return MISSING_TEXT;
   const num = Number(pos);
   if (Number.isFinite(num)) return num.toLocaleString("en-US");
   return String(pos);
@@ -1137,19 +1380,24 @@ function formatPos(pos) {
 function formatLocationLabel(chrom, pos) {
   const chromStr = formatChrom(chrom);
   const posStr = pos == null || pos === "" ? "" : String(pos).replace(/,/g, "");
-  if (!posStr || chromStr === "—") return "—";
+  if (!posStr || chromStr === MISSING_TEXT) return MISSING_TEXT;
   return `${chromStr}:${posStr}`;
 }
 
 function displayValue(val) {
-  if (val == null) return "—";
+  if (val == null) return MISSING_TEXT;
   const str = String(val).trim();
-  if (!str) return "—";
+  if (!str) return MISSING_TEXT;
   return str.replace(/_/g, " ");
 }
 
 function toolLabel(name) {
   return name ? name.replace(/_/g, " ") : "";
+}
+
+function plainCell(value) {
+  const text = value == null || value === "" ? MISSING_TEXT : String(value);
+  return { __html: escapeInline(text), text };
 }
 
 function parseNumber(val) {
@@ -1171,13 +1419,6 @@ function dedupeAlleleRows(rows) {
   return result;
 }
 
-function renderAlleleChange(ref, alt) {
-  if (!ref && !alt) return "—";
-  if (!ref) return `→ ${alt}`;
-  if (!alt) return `${ref} →`;
-  return `${ref}→${alt}`;
-}
-
 function sortTraits(traits) {
   return [...traits].sort((a, b) => {
     const riskA = parseNumber(a.risk_score);
@@ -1194,25 +1435,48 @@ function sortTraits(traits) {
   });
 }
 
-function formatPercent(val) {
-  if (!Number.isFinite(val)) return "—";
-  return `${(val * 100).toFixed(2).replace(/\.00$/, "")}%`;
+function formatFraction(val) {
+  if (!Number.isFinite(val)) return MISSING_TEXT;
+  if (val === 0) return "0";
+  if (Math.abs(val) >= 1) return val.toString();
+  if (Math.abs(val) >= 1e-3) return val.toPrecision(4).replace(/0+$/, "").replace(/\.$/, "");
+  return val.toExponential(2);
 }
 
 function formatInteger(val) {
-  if (!Number.isFinite(val)) return "—";
+  if (!Number.isFinite(val)) return MISSING_TEXT;
   return Number(val).toLocaleString("en-US");
 }
 
 function formatRisk(val) {
-  if (!Number.isFinite(val)) return "—";
+  if (!Number.isFinite(val)) return MISSING_TEXT;
   if (Math.abs(val) >= 100) return val.toFixed(1);
   return val.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
 }
 
 function formatPValue(val) {
-  if (!Number.isFinite(val)) return "—";
+  if (!Number.isFinite(val)) return MISSING_TEXT;
   if (val === 0) return "0";
   if (val < 1e-4) return val.toExponential(2);
   return val.toPrecision(3);
+}
+
+function extractCellText(cell) {
+  if (cell && typeof cell === "object") {
+    if (cell.text != null) return String(cell.text);
+    if (cell.__html != null) return stripHtml(String(cell.__html));
+  }
+  return String(cell ?? "");
+}
+
+function stripHtml(html) {
+  return String(html || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
+
+function escapeCsv(val) {
+  const text = String(val ?? "");
+  if (/[",\n]/.test(text)) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
 }
