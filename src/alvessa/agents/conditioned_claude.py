@@ -152,6 +152,7 @@ def variant_text_document(v: "Variant") -> str:
         for gene, tools in v.functional_predictions.items():
             tool_bits = []
             for tool, scores in (tools or {}).items():
+                if tool=='expectosc_predictions_agent': continue  # skip long Expecto outputs, they are added in summary
                 # shorten large lists conservatively
                 s = scores if isinstance(scores, list) else [scores]
                 s_str = ", ".join(map(lambda x: str(x)[:24], s[:5]))

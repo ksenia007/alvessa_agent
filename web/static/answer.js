@@ -68,11 +68,11 @@ export function renderAnswerVerified(st) {
     `;
   
  // --- build body (statement-based, no manual <br>) ---
-const HIGHLIGHT_MIN_WORDS = 5;
+const HIGHLIGHT_MIN_WORDS = 3;
 body.innerHTML = "";
 const frag = document.createDocumentFragment();
 
-const isBlockyMdStart = (txt) => /^(#{1,6}\s+|[-*]\s|\d+\.\s|>|\s*```)/.test(txt);
+const isBlockyMdStart = (txt) => /^(#{1,6}\s+|[-*]\s|\d+\.\s|>|\s*```|={3,}\s*$|-{3,}\s*$)/m.test(txt.trimStart());
 
 // track previous inline chip so we can glue punctuation & preserve boundary spaces
 let prevSpan = null;
@@ -567,6 +567,54 @@ function normalizeRawText(src) {
   body.light .answer .stmt-unsupported { background: rgba(220,38,38,.22);  outline: 1px solid rgba(220,38,38,.28); }
   body.light .answer .stmt-llm-unsupported { background: rgba(159,18,57,.26); outline: 1px solid rgba(159,18,57,.30); }
   
+  /* Markdown blocks rendered inline */
+  .answer-block-md {
+    margin: 0.65em 0;
+    padding: 0.4em 0;
+  }
+  .answer-block-md h1,
+  .answer-block-md h2,
+  .answer-block-md h3,
+  .answer-block-md h4,
+  .answer-block-md h5,
+  .answer-block-md h6 {
+    margin: 0.4em 0 0.35em;
+    font-weight: 700;
+  }
+  .answer-block-md h3,
+  .answer-block-md h4 {
+    border-bottom: 1px solid rgba(148,163,184,.25);
+    padding-bottom: 4px;
+  }
+  .answer-block-md ul,
+  .answer-block-md ol {
+    margin: 0.35em 0 0.35em 1.3em;
+  }
+  .answer-block-md pre {
+    background: rgba(15,23,42,0.85);
+    border-radius: 10px;
+    padding: 10px 12px;
+    overflow: auto;
+    font-size: 13px;
+    line-height: 1.4;
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .answer-block-md code {
+    background: rgba(148,163,184,.18);
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 13px;
+  }
+  .answer-block-md blockquote {
+    border-left: 3px solid rgba(148,163,184,.35);
+    margin: 8px 0;
+    padding: 4px 10px;
+    color: var(--muted,#94a3b8);
+    font-style: italic;
+    background: rgba(148,163,184,.12);
+    border-radius: 6px;
+  }
+
   /* Inline code & links inside chips */
   .answer .hl-chip a { text-decoration: underline; }
   .answer .hl-chip .md-code-inline {
