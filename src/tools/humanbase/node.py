@@ -10,6 +10,7 @@ Description:
 Helpers to query HumanBase and MyGene.info. The latter is used to convert to entrez IDs, needed in HB"""
 
 from __future__ import annotations
+import json
 import requests
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -223,13 +224,13 @@ def describe_variant_in_celltypes_HB(df: Optional[pd.DataFrame],
     
 
     text_description = (
-        f"Scores: min={min_score:.4f}, median={median_score:.4f}, max={max_score:.4f}, "
+        f"Scores across cell types: min={min_score:.4f}, median={median_score:.4f}, max={max_score:.4f}, "
         f"{top_tissues}"
         f"{bottom_tissues}"
         # f"Overall, this variant's mean effect is {relative_effect} compared to other variants for this gene."
     )
 
-    return stats_dict, text_description
+    return stats_dict, text_description, sub[["tissue", "score"]].to_dict("records")
 
 
 
@@ -274,14 +275,44 @@ def expectosc_predictions_agent(state: "State") -> "State":
         hits = 0
         for alt in alts:
             try:
-                _, text = describe_variant_in_celltypes_HB(df, chr_str, pos, alt, var_id)
+                dict_summary, text, variant_rows = describe_variant_in_celltypes_HB(df, chr_str, pos, alt, var_id)
             except Exception:
+                print(f"[ExpectoSC] describe failed for var {var_id} {chr_str}:{pos}>{alt}")
                 continue
             if not text:
+                print(f"[ExpectoSC] no data for var {var_id} {chr_str}:{pos}>{alt}")
                 continue
-            # very short, readable line
-            # var_obj.add_functional_prediction(gene_sym, "ExpectoSC", text)
-            var_obj.update_text_summaries(f"Cell-type specific GE disruption (target = {gene_sym}): {text}")
+            var_obj.update_text_summaries(f"Cell-type specific predicted GE disruption (target = {gene_sym}): {text}")
+            if not dict_summary:
+                continue
+
+            compact_top = [
+                {"tissue": rec.get("tissue"), "score": float(rec.get("score", 0))}
+                for rec in (dict_summary.get("top_tissues") or [])
+                if rec and rec.get("tissue") is not None and rec.get("score") is not None
+            ]
+            compact_bottom = [
+                {"tissue": rec.get("tissue"), "score": float(rec.get("score", 0))}
+                for rec in (dict_summary.get("bottom_tissues") or [])
+                if rec and rec.get("tissue") is not None and rec.get("score") is not None
+            ]
+            numeric_summary = {
+                "top_tissues": compact_top,
+                "bottom_tissues": compact_bottom,
+                "scores": [
+                    {
+                        "tissue": rec.get("tissue"),
+                        "score": float(rec.get("score", 0)),
+                    }
+                    for rec in (variant_rows or [])
+                    if rec and rec.get("tissue") is not None and rec.get("score") is not None
+                ],
+            }
+            try:
+                payload = json.dumps(numeric_summary, ensure_ascii=False)
+            except Exception:
+                payload = json.dumps({"top_tissues": [], "bottom_tissues": [], "scores": []})
+            var_obj.add_functional_prediction(gene_sym, "ExpectoSC", payload)
             hits += 1
         return hits
 
@@ -304,7 +335,7 @@ def expectosc_predictions_agent(state: "State") -> "State":
         if df is None or df.empty:
             continue
         
-        gobj.update_text_summaries("Values for cell type specific gene expression disruption are predicted by ExpectoSC, scaled z-scores relative to common 1000Genomes variants; positive - increased expression, and negative - decreased. Scores with abs() <1 are not provided; above 3 is high confidence. Predicts for variants +/- 20kbp around TSS, could be a coding variant.")
+        gobj.update_text_summaries("Values for cell type specific gene expression disruption are predicted by ExpectoSC, scaled z-scores relative to common 1000Genomes variants; positive - increased expression, and negative - decreased. Scores above 3 is high confidence, and is all scores below abs(1) top tissues are not provided. Predicts for variants +/- 20kbp around TSS, could be a coding variant.")
         
         # annotate any variant that lists this gene
         for var_id, var_obj in variants.items():

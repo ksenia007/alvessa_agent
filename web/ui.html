@@ -159,6 +159,19 @@
         outline: 2px solid var(--accent);
         outline-offset: 2px;
       }
+      .vs-link {
+        border: 1px solid var(--line);
+        background: rgba(148,163,184,0.08);
+        color: inherit;
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .vs-link.active {
+        background: rgba(148,163,184,0.2);
+        border-color: rgba(148,163,184,0.5);
+      }
       button.ghost {
         background: transparent;
         box-shadow: none;
@@ -491,6 +504,11 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
             <div id="geneSummary"></div>
           </div>
           
+          <div id="variantSummaryCard" class="card" style="display:none">
+            <div class="title">Variant Summary</div>
+            <div id="variantSummary"></div>
+          </div>
+          
 
           <div id="protCard" class="card full" data-section style="display: none">
             <div class="title">Protein Structure</div>
@@ -518,6 +536,7 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
         import { renderAnswerVerified } from "./static/answer.js";
         import { Wait } from "./static/waiting_module.js";
         import { renderGeneSummary } from "./static/gene_summary.js";
+        import { renderVariantSummary } from "./static/variant_summary.js";
 
 
       
@@ -791,6 +810,13 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
                 fetchTextCached,  
                 escapeHtml: (s) => String(s ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
               });
+            await renderVariantSummary(STATE, {
+                byId,
+                show,
+                hide,
+                fetchTextCached,
+                escapeHtml: (s) => String(s ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
+              });
             renderProt(STATE);
             renderChembl(STATE);
             renderRaw(STATE);
@@ -847,6 +873,7 @@ async function runServer(q){
     // THIS IS THE FINAL STATE — no need to poll /state
     STATE = await resp.json();
     setArtifactBaseFromState(STATE);
+    FILE_CACHE.clear();
 
 
     // Render
