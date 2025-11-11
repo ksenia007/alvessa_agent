@@ -11,6 +11,8 @@ TARGET_DISEASE_DATA = OPEN_TARGETS / "final_association_overall_direct"
 EXPRESSION_DATA = OPEN_TARGETS / "final_expression"
 ESSENTIALITY_DATA = OPEN_TARGETS / "final_target_essentiality"
 CONSTRAINT_DATA = OPEN_TARGETS / "target"
+PHARMACOVIGILANCE_DATA = OPEN_TARGETS / "final_target_pharmacovigilance"
+PHARMACOGENOMICS_DATA = OPEN_TARGETS /  "pharmacogenomics"
 
 def read_all_parquet_in_folder(folder_path):
     all_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.parquet')]
@@ -50,6 +52,7 @@ def add_gene_symbol_to_all_data():
     expression = read_all_parquet_in_folder('../../../local_dbs/open_targets/expression')
     essentiality = read_all_parquet_in_folder('../../../local_dbs/open_targets/target_essentiality')
     targets = read_all_parquet_in_folder('../../../local_dbs/open_targets/target')
+    adrs = read_all_parquet_in_folder('../../../local_dbs/open_targets/openfda_significant_adverse_target_reactions')
 
     target_disease_merged = pd.merge(associations, targets[['id', 'approvedSymbol']], left_on='targetId', right_on='id', how='left')
     target_disease_merged = target_disease_merged.loc[:,['diseaseId', 'disease_name', 'targetId', 'approvedSymbol', 'score', 'evidenceCount']]
@@ -68,6 +71,13 @@ def add_gene_symbol_to_all_data():
     essentiality_merged.rename(columns={'approvedSymbol': 'target_symbol'}, inplace=True)
 
     essentiality_merged.to_parquet('../../../local_dbs/open_targets/final_target_essentiality/target_essentiality.parquet')
+
+    adrs_merged = pd.merge(adrs, targets[['id', 'approvedSymbol']], left_on='targetId', right_on='id', how='left')
+    adrs_merged = adrs_merged.loc[:, ['id', 'approvedSymbol', 'event']]
+    adrs_merged.rename(columns={'approvedSymbol': 'target_symbol'}, inplace=True)
+    
+    adrs_merged.to_parquet('../../../local_dbs/open_targets/final_target_pharmacovigilance/target_adrs.parquet')
+
 
 def convert_final_dfs_to_dicts():
 
@@ -125,3 +135,17 @@ def convert_final_dfs_to_dicts():
     with open('../../../local_dbs/open_targets/final_constraint/constraint.pkl', 'wb') as file:
         pickle.dump(gene_constraint, file)
 
+
+    target_adrs_df = read_all_parquet_in_folder(PHARMACOVIGILANCE_DATA)
+
+    gene_adrs_dict = (target_adrs_df.groupby('target_symbol')['event'].unique().apply(list).to_dict())
+
+    with open('../../../local_dbs/open_targets/final_target_pharmacovigilance/target_adrs.pkl', 'wb') as file:
+        pickle.dump(gene_adrs_dict, file)
+
+    variant_effect_df = read_all_parquet_in_folder(PHARMACOGENOMICS_DATA)
+
+    variant_effect_dict = (variant_effect_df.groupby('variantRsId')['genotypeAnnotationText'].unique().apply(list).to_dict())
+
+    with open('../../../local_dbs/open_targets/final_variant_pharmacogenomics/variant_pharmacogenomics.pkl', 'wb') as file:
+        pickle.dump(variant_effect_dict, file)

@@ -117,11 +117,12 @@ class OMIMAnnotations:
 
 @dataclass
 class OpenTargetAnnotations:
-    """A container for Open Target annotations like disease associations, tissue-specific expression, tissue-specific essentiality, and genetic constraint."""
+    """A container for Open Target annotations like disease associations, tissue-specific expression, tissue-specific essentiality, genetic constraint, and adverse reactions."""
     disease_annotations: List[str] = field(default_factory=list)
     tissue_specific_expression: Dict[str, Any] = field(default_factory=dict)
     is_essential: bool = field(default_factory=bool)
     genetic_constraint: Dict[str, Any] = field(default_factory=dict)
+    pharmacovigilance: List[str] = field(default_factory=list)
 
 @dataclass
 class TranscriptomeProfile:
