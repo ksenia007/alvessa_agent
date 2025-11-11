@@ -328,6 +328,15 @@ class Gene:
         if constraint_type not in self.open_targets.genetic_constraint:
             self.open_targets.genetic_constraint[constraint_type] = score
 
+    def add_adverse_reaction(self, adr: str) -> None:
+        adr = (adr or "").strip()
+        if adr and adr not in self.open_targets.pharmacovigilance:
+            self.open_targets.pharmacovigilance.append(adr)
+
+    def add_many_adverse_reactions(self, adrs: List[str]) -> None:
+        for adr in adrs:
+            self.add_adverse_reaction(adr)
+
     # ------------------------------------------------------------------
     # Text summaries & traits
     # ------------------------------------------------------------------

@@ -33,7 +33,7 @@ class Variant:
     af_freqs: Optional[List[Dict[str, Any]]] = field(default_factory=list)  # List of allele frequencies from various populations/databases
     variant_summaries: Optional[List[str]] = field(default_factory=list)  # List of textual summaries from various tools
     functional_predictions: Optional[Dict[str, Dict[str, Any]]] = field(default_factory=dict)  # e.g., {gene: {'AM': [score], 'CADD': score, 'expecto': score}}
-    
+    drug_response_effects: List[str] = field(default_factory=list) # variant effect on drug responses from OpenTargets
     
     def update_text_summaries(self, new_summary: str):
         """Add a new text summary to the variant"""
@@ -128,6 +128,15 @@ class Variant:
             if build.lower() in b.lower() or b.lower() in build.lower():
                 return self.loc_by_build[b]
         return None
+    
+    def add_drug_response_effect(self, variant_effect: str) -> None:
+        variant_effect = (variant_effect or "").strip()
+        if variant_effect and variant_effect not in self.drug_response_effects:
+            self.drug_response_effects.append(variant_effect)
+
+    def add_many_drug_response_effects(self, variant_effects: List[str]) -> None:
+        for variant_effect in variant_effects:
+            self.add_drug_response_effect(variant_effect)
     
     def get_related_genes(self) -> List[str]:
         """Return a list of genes related to this variant."""   
