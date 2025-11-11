@@ -155,7 +155,7 @@ def variant_text_document(v: "Variant") -> str:
                 if tool=='expectosc_predictions_agent': continue  # skip long Expecto outputs, they are added in summary
                 # shorten large lists conservatively
                 s = scores if isinstance(scores, list) else [scores]
-                s_str = ", ".join(map(lambda x: str(x)[:24], s[:5]))
+                s_str = ", ".join(map(lambda x: str(x), s))
                 extra = "" if len(s) <= 5 else f" (+{len(s)-5} more)"
                 tool_bits.append(f"{tool}: {s_str}{extra}")
             if tool_bits:
@@ -464,6 +464,7 @@ def conditioned_claude_node(state: "State") -> "State":
     if not system_msg:
         system_msg = (
             "You are a research assistant. Answer strictly from the provided documents.\n"
+            "But be thorough and point out all relevant and potentially interesting information."
             "Requirements:\n"
             "- Every factual claim must be grounded in the documents and include citations.\n"
             "- Do not add outside knowledge. If key information is missing, say so briefly.\n"

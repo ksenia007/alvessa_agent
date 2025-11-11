@@ -16,7 +16,7 @@ import math
 from typing import Any, Dict, List, Tuple, Iterable, Set, Optional
 
 from src.alvessa.clients.claude import claude_call
-from src.config import VERIFY_MODEL, DEBUG, CONDITIONED_MODEL
+from src.config import VERIFY_MODEL, DEBUG, CONDITIONED_MODEL, MAX_TOKENS
 from src.state import State
 
 # -----------------------------
@@ -60,9 +60,15 @@ def _parse_one_proof(p: str) -> Dict[str, Any]:
     title = None
     char_range = None
 
-    q = re.search(r'"(.*?)"', p, flags=re.DOTALL)
-    if q:
-        snippet = q.group(1).strip()
+    first_quote = p.find('"')
+    closing_marker = '"@'
+    last_quote_before_title = p.rfind(closing_marker)
+    if first_quote != -1 and last_quote_before_title != -1 and last_quote_before_title > first_quote:
+        snippet = p[first_quote + 1:last_quote_before_title].strip()
+    else:
+        q = re.search(r'"(.*?)"', p, flags=re.DOTALL)
+        if q:
+            snippet = q.group(1).strip()
 
     t = re.search(r'@([^\[]+)$', p)  # everything after @ up to before '['
     if t:
@@ -180,7 +186,7 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
 
     system_msg = (
         "You are a meticulous research assitant. Provide qualitative feedback on whether each sentence of the following statement is well supported "
-        "by the quoted snippets (proofs). Do NOT invent facts or add citations.\n"
+        "by the quoted snippets (proofs). Do NOT invent facts or add citations, and double check the numbers.\n"
         "Special case: statements that begin with 'Possible speculation:' are allowed as cautious synthesis IF they are "
         "clearly grounded in the cited evidence. Flag only if they overreach or contradict the proofs.\n"
         "Return STRICT JSON with this schema:\n"
@@ -204,15 +210,58 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
         "- speculation-overreach: starts with 'Possible speculation:' BUT extends beyond or contradicts the proofs.\n"
         "Avoid any numeric scoring."
     )
-    user_msg = json.dumps({
+    payload = {
         "question": question,
-        "statements": pack
-    }, ensure_ascii=True)
+        "statements": pack,
+    }
+    user_msg = json.dumps(payload, ensure_ascii=True)
+    
+    # check the length of user_msg, and if it exceeds MAX_TOKENS, we will split and make multiple calls
+    # approx tokens as # words * 1.33
+    approx_tokens = int(len(user_msg.split()) * 1.33)
+    if approx_tokens > MAX_TOKENS:
+        if DEBUG:
+            print(f"[_llm_feedback] Warning: user_msg approx tokens {approx_tokens} exceeds MAX_TOKENS {MAX_TOKENS}. Truncating statements.")
+        # split into 2 or 3 chunks, and if still too long, truncate each statement text; call LLM on each chunk and aggregate results
+        n_chunks = max(1, math.ceil(approx_tokens / MAX_TOKENS))
+        chunk_size = max(1, math.ceil(len(pack) / n_chunks))
+        all_parsed: List[Dict[str, Any]] = []
+        for start in range(0, len(pack), chunk_size):
+            chunk_pack = pack[start:start + chunk_size]
+            chunk_payload = {
+                "question": question,
+                "statements": chunk_pack,
+            }
+            chunk_user_msg = json.dumps(chunk_payload, ensure_ascii=True)
+            raw_chunk = claude_call(
+                model=CONDITIONED_MODEL,
+                temperature=0,
+                max_tokens=13000,
+                system=system_msg,
+                messages=[{"role": "user", "content": chunk_user_msg}],
+            )
+            txt_chunk = ""
+            content_chunk = getattr(raw_chunk, "content", None)
+            if content_chunk and isinstance(content_chunk, list) and getattr(content_chunk[0], "type", None) == "text":
+                txt_chunk = getattr(content_chunk[0], "text", "") or ""
+            else:
+                txt_chunk = str(raw_chunk)
+            cleaned_chunk = re.sub(r"```json\s*", "", txt_chunk)
+            cleaned_chunk = re.sub(r"```", "", cleaned_chunk)
+            try:
+                parsed_chunk = json.loads(cleaned_chunk)
+                all_parsed.append(parsed_chunk)
+            except Exception:
+                if DEBUG:
+                    print("[_llm_feedback] JSON parse error in chunk verifier")
+        if all_parsed:
+            return _merge_chunked_feedback(all_parsed)
+        return {}
 
     raw = claude_call(
         model=CONDITIONED_MODEL,
         temperature=0,
-        max_tokens=10000,
+        max_tokens=13000,
         system=system_msg,
         messages=[{"role": "user", "content": user_msg}],
     )
@@ -235,6 +284,42 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
             print("[_llm_feedback] JSON parse errorin verifier")
         parsed = {}    
     return parsed
+
+
+def _merge_chunked_feedback(chunks: List[Dict[str, Any]] | None) -> Dict[str, Any]:
+    if not chunks:
+        return {}
+    if len(chunks) == 1:
+        return chunks[0]
+    combined: Dict[str, Any] = {
+        "overall": {},
+        "per_statement": {},
+    }
+    for chunk in chunks:
+        if not isinstance(chunk, dict):
+            continue
+        per_stmt = chunk.get("per_statement")
+        if isinstance(per_stmt, dict):
+            combined["per_statement"].update(per_stmt)
+        overall = chunk.get("overall")
+        if not isinstance(overall, dict):
+            continue
+        base = combined["overall"]
+        if not base:
+            combined["overall"] = dict(overall)
+            continue
+        # concatenate lists where applicable
+        summary = overall.get("summary")
+        if summary:
+            prev = base.get("summary", "")
+            base["summary"] = (prev + " " + str(summary)).strip()
+        if overall.get("support_quality") and not base.get("support_quality"):
+            base["support_quality"] = overall["support_quality"]
+        base.setdefault("concerns", [])
+        base.setdefault("suggestions", [])
+        base["concerns"].extend(overall.get("concerns") or [])
+        base["suggestions"].extend(overall.get("suggestions") or [])
+    return combined
 
 
 
@@ -263,7 +348,7 @@ def verify_evidence_node(state: "State") -> "State":
 
     idx2title = {int(m["index"]): str(m["title"]) for m in manifest if "index" in m and "title" in m}
 
-    # 3) Deterministic categorical verdicts (dropped most by now)
+    # 3) Deterministic categorical verdicts
     verified: List[Dict[str, Any]] = []
     for s in statements:
         verdict, reasons = _deterministic_verdict(s["text"], s.get("proofs", []), idx2title)
