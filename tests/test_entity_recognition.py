@@ -209,11 +209,40 @@ def test_entity_extraction_node_merged(mock_claude, mock_flair, mock_gliner):
     assert result['variants'] == expected_variants
     assert result['chr_pos_variants'] == expected_chr_pos
 
+
+@patch('src.alvessa.agents.entity_extraction._extract_entities_with_gliner')
+@patch('src.alvessa.agents.entity_extraction._extract_entities_with_flair')
+@patch('src.alvessa.agents.entity_extraction._extract_entities_with_claude')
+def test_entity_extraction_detects_drugs(mock_claude, mock_flair, mock_gliner):
+    """Ensures small-molecule parsing captures product names, synonyms, and metadata."""
+    mock_claude.return_value = {"genes": [], "traits": []}
+    mock_flair.return_value = {"genes": [], "proteins": [], "traits": []}
+    mock_gliner.return_value = {"genes": [], "proteins": [], "traits": []}
+
+    input_text = "Vonoprazan (also called TAK-438 free base) was combined with ML162 during screening."
+    initial_state = {"messages": [{"content": input_text}]}
+
+    result = entity_extraction.entity_extraction_node(initial_state)
+
+    assert set(result["drugs"]) == {"Vonoprazan", "ML162"}
+
+    von_key = entity_extraction._canon_drug_key("Vonoprazan")
+    ml_key = entity_extraction._canon_drug_key("ML162")
+
+    assert von_key in result["drug_entities"]
+    assert ml_key in result["drug_entities"]
+
+    von_entry = result["drug_entities"][von_key]
+    mention_terms = {m["text"] for m in von_entry["mentions"]}
+    assert any("TAK-438" in term for term in mention_terms)
+    assert von_entry["catalog_number"] == "HY-100007"
+    assert "TAK-438 (free base)" in von_entry["synonyms"]
+
 # --- Test Edge Condition Helpers using @pytest.mark.parametrize ---
 
-state_with_all = {"genes": ["BRCA1"], "traits": ["cancer"], "variants": {"rs123": {}}, "proteins": ["P53"], "transcripts": ["ENST123"]}
-state_with_genes_only = {"genes": ["BRCA1"], "traits": [], "variants": {}, "proteins": [], "transcripts": []}
-state_with_nothing = {"genes": [], "traits": [], "variants": {}, "proteins": [], "transcripts": []}
+state_with_all = {"genes": ["BRCA1"], "traits": ["cancer"], "variants": {"rs123": {}}, "proteins": ["P53"], "drugs": ["Vonoprazan"], "transcripts": ["ENST123"]}
+state_with_genes_only = {"genes": ["BRCA1"], "traits": [], "variants": {}, "proteins": [], "drugs": [], "transcripts": []}
+state_with_nothing = {"genes": [], "traits": [], "variants": {}, "proteins": [], "drugs": [], "transcripts": []}
 
 @pytest.mark.parametrize("func, state, expected_result", [
     (entity_extraction.has_genes, state_with_all, True),
@@ -235,6 +264,10 @@ state_with_nothing = {"genes": [], "traits": [], "variants": {}, "proteins": [],
     (entity_extraction.has_transcripts, state_with_all, True),
     (entity_extraction.has_transcripts, state_with_genes_only, False),
     (entity_extraction.has_transcripts, state_with_nothing, False),
+
+    (entity_extraction.has_drugs, state_with_all, True),
+    (entity_extraction.has_drugs, state_with_genes_only, False),
+    (entity_extraction.has_drugs, state_with_nothing, False),
 ])
 def test_has_entities_conditions(func, state, expected_result):
     """Tests the edge condition helpers for all entity types."""
