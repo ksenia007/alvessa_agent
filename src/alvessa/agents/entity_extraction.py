@@ -2,11 +2,12 @@ from __future__ import annotations
 from typing import List, Dict, Any, Optional, Tuple, Set
 import csv
 import difflib
+import json
 import re
 import requests
 from pathlib import Path
 from src.alvessa.clients.claude import claude_call
-from src.config import DEBUG, GENE_EXTRACT_MODEL, GLINER_MODEL, GLINER_THRESHOLD, GLINER_ENTITY_LABELS
+from src.config import DEBUG, GENE_EXTRACT_MODEL, GLINER_MODEL, GLINER_THRESHOLD, GLINER_ENTITY_LABELS, VERIFY_MODEL
 from src.state import State
 from flair.data import Sentence
 from src.alvessa.domain.gene_class import Gene, canon_gene_key
@@ -318,6 +319,77 @@ def _extract_drug_entities(text: str) -> Dict[str, Dict[str, Any]]:
     return matches
 
 
+def _verify_genes_in_query(text: str, candidate_genes: List[str]) -> List[str]:
+    """Uses Claude Haiku to ensure reported genes actually appear in the query."""
+    unique_candidates = list(dict.fromkeys(g for g in candidate_genes if g))
+    if not unique_candidates:
+        return []
+
+    def _fallback() -> List[str]:
+        lowered_text = text.lower()
+        filtered = []
+        for gene in unique_candidates:
+            if re.search(r"\b" + re.escape(gene) + r"\b", text, re.IGNORECASE):
+                filtered.append(gene)
+            elif gene.lower() in lowered_text:
+                filtered.append(gene)
+        return filtered or unique_candidates
+
+    system_message = (
+        "You are validating extracted gene symbols. Return a JSON array of the genes that appear verbatim "
+        "(case-insensitive exact match) in the provided user query. If none, return an empty JSON array."
+    )
+    user_message = (
+        "User query:\n<<<\n"
+        f"{text}\n"
+        ">>>\n\n"
+        "Candidate genes (comma-separated):\n"
+        f"{', '.join(unique_candidates)}\n"
+        "Respond ONLY with a JSON array, e.g., [\"BRCA1\", \"TP53\"]."
+    )
+
+    try:
+        response = claude_call(
+            model=VERIFY_MODEL,
+            max_tokens=100,
+            temperature=0,
+            system=system_message,
+            messages=[{"role": "user", "content": user_message}],
+        )
+        raw_text = response.content[0].text.strip()
+        parsed: Any = None
+        try:
+            parsed = json.loads(raw_text)
+        except json.JSONDecodeError:
+            bracket = re.search(r"\[[\s\S]*\]", raw_text)
+            if bracket:
+                parsed = json.loads(bracket.group(0))
+        if not isinstance(parsed, list):
+            return _fallback()
+
+        normalized_candidates = {g.lower(): g for g in unique_candidates}
+        lowered_text = text.lower()
+        verified: List[str] = []
+        for item in parsed:
+            if not isinstance(item, str):
+                continue
+            gene = item.strip()
+            if not gene:
+                continue
+            gene_lower = gene.lower()
+            if gene_lower not in normalized_candidates:
+                continue
+            if gene_lower not in lowered_text:
+                continue
+            verified.append(normalized_candidates[gene_lower])
+
+        return verified or _fallback()
+    except Exception as exc:
+        if DEBUG:
+            print(f"[_verify_genes_in_query] Verification failed: {exc}")
+        return _fallback()
+
+
 # --- Core Extraction Logic ---
 
 def _extract_entities_with_claude(text: str) -> Dict[str, List[str]]:
@@ -491,7 +563,8 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
     processed_entities = _post_process_entities(expanded_genes, raw_traits)
     
     final_result = {
-        "genes": processed_entities["genes"],
+        # Added the verification step to the extracted gene list
+        "genes": _verify_genes_in_query(text, processed_entities["genes"]),
         "traits": processed_entities["traits"],
         "proteins": sorted(list(set(raw_proteins))),
         "transcripts": sorted(list(set(regex_result.get("ensembl_transcripts", [])))),
