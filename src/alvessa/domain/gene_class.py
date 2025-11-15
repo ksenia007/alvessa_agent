@@ -12,6 +12,7 @@ from .gene_components import (
     InteractionProfile,
     MSigDBAnnotations,
     OMIMAnnotations,
+    DisGeNetAnnotations,
     OpenTargetAnnotations,
     TranscriptomeProfile,
     GeneGWASProfile,
@@ -35,6 +36,7 @@ class Gene:
     interactions: InteractionProfile = field(default_factory=InteractionProfile)
     msigDB: MSigDBAnnotations = field(default_factory=MSigDBAnnotations)
     omim: OMIMAnnotations = field(default_factory=OMIMAnnotations)
+    disgenet: DisGeNetAnnotations = field(default_factory=DisGeNetAnnotations)
     open_targets: OpenTargetAnnotations = field(default_factory=OpenTargetAnnotations)
     transcriptome: TranscriptomeProfile = field(default_factory=TranscriptomeProfile)
     gwas_profile: Optional[GeneGWASProfile] = None
@@ -298,6 +300,19 @@ class Gene:
     def add_many_omim_annotated_terms(self, phenotypes: str) -> None:
         for phenotype in phenotypes:
             self.add_omim_annotated_term(phenotype)
+
+    # ------------------------------------------------------------------
+    # DisGeNet
+    # ------------------------------------------------------------------
+
+    def add_disgenet_disease(self, disease: str) -> None:
+        disease = (disease or "").strip()
+        if disease and disease not in self.disgenet.disease_annotations:
+            self.disgenet.disease_annotations.append(disease)
+            
+    def add_many_disgenet_diseases(self, diseases: str) -> None:
+        for disease in diseases:
+            self.add_disgenet_disease(disease)
 
     # ------------------------------------------------------------------
     # Open Targets

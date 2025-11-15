@@ -116,6 +116,11 @@ class OMIMAnnotations:
     phenotype_annotations: List[str] = field(default_factory=list)
 
 @dataclass
+class DisGeNetAnnotations:
+    """A container for DisGeNet gene-disease annotations"""
+    disease_annotations: List[str] = field(default_factory=list)
+
+@dataclass
 class OpenTargetAnnotations:
     """A container for Open Target annotations like disease associations, tissue-specific expression, tissue-specific essentiality, genetic constraint, and adverse reactions."""
     disease_annotations: List[str] = field(default_factory=list)

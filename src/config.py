@@ -42,6 +42,7 @@ TOOL_SELECTOR_MODEL: str = "claude-sonnet-4-5"
 
 ANTHROPIC_API_KEY: str = os.environ["ANTHROPIC_API_KEY"]
 BioGRID_API_KEY: str = os.environ["BIOGRID_API_KEY"]
+DISGENET_API_KEY: str = os.environ["DISGENET_API_KEY"]
 
 # -----------------------------------------------------------------------------
 # Protein tool configuration
