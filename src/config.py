@@ -9,6 +9,7 @@ import os
 DEBUG: bool = True
 N_CHARS: int = 100_000
 RATE_LIMIT: int = 60  # Claude calls per rolling minute
+MAX_TOKENS: int = 170_000  # Max tokens per Claude call
 
 # -----------------------------------------------------------------------------
 # dbSNP Configuration

@@ -172,8 +172,11 @@ def select_tools(state: "State") -> "State":
             f"{system_msg_base}\n\n"
             f"Already used tools: {used_tools_str}\n"
             f"Do not repeat tools already used.\n"
+            f"Based on the current context block, select ADDITIONAL tools needed to answer the question.\n"
+            f"Be inclusive in tool selection. Include tools with possible relevance, not just certain relevance."
+            f" For example in variant questions be thorough and unless specified use all variant models available.\n"
             f"IMPORTANT: if no additional tools are needed, return [] with no explanation.\n"
-            f"Overall, NO explanation, downatream parser can only work with a list of tools.\n\n"
+            f"Overall, NO explanation, downstream parser can only work with a list of tools.\n\n"
             f"Current context block:\n{current_context_block}\n\n No other words should be included in the response."
             f"{system_msg_base}"
         )

@@ -906,8 +906,9 @@ async function runServer(q){
 
     // THIS IS THE FINAL STATE — no need to poll /state
     STATE = await resp.json();
-    setArtifactBaseFromState(STATE);
+    LOCAL_FILES.clear();
     FILE_CACHE.clear();
+    setArtifactBaseFromState(STATE);
 
 
     // Render
