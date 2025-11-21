@@ -9,26 +9,22 @@ ROOT = Path(__file__).resolve().parents[2]
 LOCAL_DBS = ROOT / "local_dbs"
 MSIGDB = LOCAL_DBS / "gene_centered_msigdb.v2025.1.Hs.json.txt"
 
-OUTPUT = ROOT / 'benchmarks_generation/benchmark_questions/MSigDB'
+OUTPUT = ROOT / 'benchmarks_generation/benchmark_questions/MSigDB_test'
 
 with open(MSIGDB, "r") as file:
     msigdata = json.load(file)
 
 all_genes = list(set(msigdata.keys()))
 
-import json
-
-
 gene_set_names_c1 = set()
 gene_set_names_c6 = set()
 
-for gene, collections in msigdata.items():
-    if "C1" in collections:
-        for entry in collections["C1"]:
-            gene_set_names_c1.add(entry.get("geneSetName"))
-    if "C6" in collections:
-        for entry in collections["C6"]:
-            gene_set_names_c6.add(entry.get("geneSetName"))
+for gene, gene_sets in msigdata.items():
+    for gene_set_name, collection in gene_sets.items():
+        if "C1" in collection:
+            gene_set_names_c1.add(gene_set_name)
+        elif "C6" in collection:
+            gene_set_names_c6.add(gene_set_name)
 
 gene_set_names_c1 = list(gene_set_names_c1)
 gene_set_names_c6 = list(gene_set_names_c6)
@@ -48,13 +44,13 @@ def msigdb_set1(count):
 
         gene_annotations = set()
 
-        if "C1" not in msigdata[curr_gene]:
-            continue 
-
-        collection = msigdata[curr_gene]['C1']
-        for entry in collection:
-            gene_annotations.add(entry.get("geneSetName"))
+        for gene_set, collection in msigdata[curr_gene].items():
+            if collection == 'C1':
+                gene_annotations.add(gene_set)
         gene_annotations = list(gene_annotations)
+
+        if len(gene_annotations) == 0:
+            continue
 
         random_annotation_idx = random.sample(range(len(gene_annotations)), 1)[0]
 
@@ -102,13 +98,13 @@ def msigdb_set2(count):
 
         gene_annotations = set()
 
-        if "C6" not in msigdata[curr_gene]:
-            continue 
-
-        collection = msigdata[curr_gene]['C6']
-        for entry in collection:
-            gene_annotations.add(entry.get("geneSetName"))
+        for gene_set, collection in msigdata[curr_gene].items():
+            if collection == 'C6':
+                gene_annotations.add(gene_set)
         gene_annotations = list(gene_annotations)
+
+        if len(gene_annotations) == 0:
+            continue
 
         random_annotation_idx = random.sample(range(len(gene_annotations)), 1)[0]
 
