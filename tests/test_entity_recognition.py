@@ -181,16 +181,44 @@ def test_flair_entity_extraction_node(mock_get_flair):
         assert result["proteins"] == ["AKT1"]
         assert result["traits"] == ["cystic fibrosis"]
 
+
+@patch('src.alvessa.agents.entity_extraction.claude_call')
+def test_verify_genes_in_query_parses_json(mock_claude):
+    """Verifier should honor JSON lists from Claude and map back to canonical casing."""
+    mock_response = MagicMock()
+    mock_chunk = MagicMock()
+    mock_chunk.text = '["BRCA1", "TP53"]'
+    mock_response.content = [mock_chunk]
+    mock_claude.return_value = mock_response
+
+    query = "We studied BRCA1 and TP53 expression patterns."
+    genes = ["BRCA1", "TP53", "EGFR"]
+
+    result = entity_extraction._verify_genes_in_query(query, genes)
+    assert result == ["BRCA1", "TP53"]
+
+
+@patch('src.alvessa.agents.entity_extraction.claude_call', side_effect=RuntimeError("LLM offline"))
+def test_verify_genes_in_query_fallback(mock_claude):
+    """Verifier should fall back to text matching if Claude fails."""
+    query = "Only TP53 was mentioned explicitly."
+    genes = ["BRCA1", "TP53"]
+
+    result = entity_extraction._verify_genes_in_query(query, genes)
+    assert result == ["TP53"]
+
 # --- Test Merged Node ---
 
+@patch('src.alvessa.agents.entity_extraction._verify_genes_in_query')
 @patch('src.alvessa.agents.entity_extraction._extract_entities_with_gliner')
 @patch('src.alvessa.agents.entity_extraction._extract_entities_with_flair')
 @patch('src.alvessa.agents.entity_extraction._extract_entities_with_claude')
-def test_entity_extraction_node_merged(mock_claude, mock_flair, mock_gliner):
+def test_entity_extraction_node_merged(mock_claude, mock_flair, mock_gliner, mock_verify):
     """Tests the main merged node, ensuring results are combined and deduplicated correctly."""
     mock_claude.return_value = {"genes": ["BRCA1", "TP53"], "traits": []}
     mock_flair.return_value = {"genes": ["TP53"], "proteins": ["AKT1"], "traits": ["hereditary breast cancer", "cancer"]}
     mock_gliner.return_value = {"genes": ["BRCA2"], "proteins": ["AKT1", "P53"], "traits": ["cancer"]}
+    mock_verify.return_value = ["BRCA1", "TP53", "BRCA2", "ENSG00000157764"]
 
     input_text = "Discussion on genes, proteins, cancer risk, rs12345, chr1:123:A>G, and ENSG00000157764."
     initial_state = {"messages": [{"content": input_text}]}
@@ -209,11 +237,42 @@ def test_entity_extraction_node_merged(mock_claude, mock_flair, mock_gliner):
     assert result['variants'] == expected_variants
     assert result['chr_pos_variants'] == expected_chr_pos
 
+
+@patch('src.alvessa.agents.entity_extraction._verify_genes_in_query')
+@patch('src.alvessa.agents.entity_extraction._extract_entities_with_gliner')
+@patch('src.alvessa.agents.entity_extraction._extract_entities_with_flair')
+@patch('src.alvessa.agents.entity_extraction._extract_entities_with_claude')
+def test_entity_extraction_detects_drugs(mock_claude, mock_flair, mock_gliner, mock_verify):
+    """Ensures small-molecule parsing captures product names, synonyms, and metadata."""
+    mock_claude.return_value = {"genes": [], "traits": []}
+    mock_flair.return_value = {"genes": [], "proteins": [], "traits": []}
+    mock_gliner.return_value = {"genes": [], "proteins": [], "traits": []}
+    mock_verify.return_value = []
+
+    input_text = "Vonoprazan (also called TAK-438 free base) was combined with ML162 during screening."
+    initial_state = {"messages": [{"content": input_text}]}
+
+    result = entity_extraction.entity_extraction_node(initial_state)
+
+    assert {"Vonoprazan", "ML162"}.issubset(set(result["drugs"]))
+
+    von_key = entity_extraction._canon_drug_key("Vonoprazan")
+    ml_key = entity_extraction._canon_drug_key("ML162")
+
+    assert von_key in result["drug_entities"]
+    assert ml_key in result["drug_entities"]
+
+    von_entry = result["drug_entities"][von_key]
+    mention_terms = {m["text"] for m in von_entry["mentions"]}
+    assert any("TAK-438" in term for term in mention_terms)
+    assert von_entry["catalog_number"] == "HY-100007"
+    assert "TAK-438 (free base)" in von_entry["synonyms"]
+
 # --- Test Edge Condition Helpers using @pytest.mark.parametrize ---
 
-state_with_all = {"genes": ["BRCA1"], "traits": ["cancer"], "variants": {"rs123": {}}, "proteins": ["P53"], "transcripts": ["ENST123"]}
-state_with_genes_only = {"genes": ["BRCA1"], "traits": [], "variants": {}, "proteins": [], "transcripts": []}
-state_with_nothing = {"genes": [], "traits": [], "variants": {}, "proteins": [], "transcripts": []}
+state_with_all = {"genes": ["BRCA1"], "traits": ["cancer"], "variants": {"rs123": {}}, "proteins": ["P53"], "drugs": ["Vonoprazan"], "transcripts": ["ENST123"]}
+state_with_genes_only = {"genes": ["BRCA1"], "traits": [], "variants": {}, "proteins": [], "drugs": [], "transcripts": []}
+state_with_nothing = {"genes": [], "traits": [], "variants": {}, "proteins": [], "drugs": [], "transcripts": []}
 
 @pytest.mark.parametrize("func, state, expected_result", [
     (entity_extraction.has_genes, state_with_all, True),
@@ -235,6 +294,10 @@ state_with_nothing = {"genes": [], "traits": [], "variants": {}, "proteins": [],
     (entity_extraction.has_transcripts, state_with_all, True),
     (entity_extraction.has_transcripts, state_with_genes_only, False),
     (entity_extraction.has_transcripts, state_with_nothing, False),
+
+    (entity_extraction.has_drugs, state_with_all, True),
+    (entity_extraction.has_drugs, state_with_genes_only, False),
+    (entity_extraction.has_drugs, state_with_nothing, False),
 ])
 def test_has_entities_conditions(func, state, expected_result):
     """Tests the edge condition helpers for all entity types."""

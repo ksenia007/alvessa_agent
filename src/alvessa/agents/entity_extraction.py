@@ -1,9 +1,13 @@
 from __future__ import annotations
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple, Set
+import csv
+import difflib
+import json
 import re
 import requests
+from pathlib import Path
 from src.alvessa.clients.claude import claude_call
-from src.config import DEBUG, GENE_EXTRACT_MODEL, GLINER_MODEL, GLINER_THRESHOLD, GLINER_ENTITY_LABELS
+from src.config import DEBUG, GENE_EXTRACT_MODEL, GLINER_MODEL, GLINER_THRESHOLD, GLINER_ENTITY_LABELS, VERIFY_MODEL
 from src.state import State
 from flair.data import Sentence
 from src.alvessa.domain.gene_class import Gene, canon_gene_key
@@ -13,6 +17,12 @@ from src.alvessa.domain.variant_class import Variant
 # Global variables to cache the models
 _gliner_model = None
 _flair_model = None
+
+# Drug lookup caches
+_drug_library: Dict[str, Dict[str, Any]] = {}
+_drug_term_lookup: Dict[str, Set[str]] = {}
+_drug_lookup_keys: List[str] = []
+_drug_max_tokens: int = 1
 
 
 def _symbol_to_entrez(symbol: str) -> Optional[str]:
@@ -155,6 +165,229 @@ def _extract_entities_with_regex(text: str) -> Dict[str, Any]:
     if DEBUG:
         print(f"[_extract_entities_with_regex] Found entities: {result}")
     return result
+
+
+# --- Drug Extraction Helpers ---
+
+_DRUG_TOKEN_STRIP = ".,;:!?\"'()[]{}<>"
+
+
+def _canon_drug_key(name: str) -> str:
+    """Normalizes a drug name for dictionary keys."""
+    return re.sub(r"[^a-z0-9]+", "", name.lower())
+
+
+def _normalize_drug_phrase(value: str) -> str:
+    """Creates a comparable representation for fuzzy drug matching."""
+    return re.sub(r"[^a-z0-9]+", "", value.lower())
+
+
+def _split_drug_synonyms(raw_synonyms: Optional[str]) -> List[str]:
+    if not raw_synonyms:
+        return []
+    parts = re.split(r"[;\n]", raw_synonyms)
+    return [part.strip() for part in parts if part.strip()]
+
+
+def _ensure_drug_library_loaded() -> None:
+    """Loads the compound library once and prepares lookup tables."""
+    global _drug_library, _drug_term_lookup, _drug_lookup_keys, _drug_max_tokens
+    if _drug_library:
+        return
+
+    csv_path = Path(__file__).resolve().parents[3] / "local_dbs" / "compound_library_medchemexpress.csv"
+    if not csv_path.exists():
+        if DEBUG:
+            print(f"[_ensure_drug_library_loaded] Missing compound library at {csv_path}")
+        return
+
+    try:
+        with csv_path.open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            for row in reader:
+                product_name = (row.get("Product Name") or "").strip()
+                if not product_name:
+                    continue
+
+                canon_key = _canon_drug_key(product_name)
+                synonyms = _split_drug_synonyms(row.get("Synonyms"))
+                entry = {
+                    "name": product_name,
+                    "catalog_number": (row.get("Catalog Number") or "").strip(),
+                    "cas_number": (row.get("CAS Number") or "").strip(),
+                    "synonyms": synonyms,
+                }
+                _drug_library[canon_key] = entry
+
+                for term in [product_name] + synonyms:
+                    term = term.strip()
+                    if not term:
+                        continue
+                    normalized = _normalize_drug_phrase(term)
+                    if not normalized:
+                        continue
+                    _drug_term_lookup.setdefault(normalized, set()).add(canon_key)
+                    _drug_max_tokens = max(_drug_max_tokens, len(term.split()))
+        _drug_lookup_keys = list(_drug_term_lookup.keys())
+    except Exception as exc:
+        if DEBUG:
+            print(f"[_ensure_drug_library_loaded] Failed to load compound library: {exc}")
+        _drug_library = {}
+        _drug_term_lookup = {}
+        _drug_lookup_keys = []
+        _drug_max_tokens = 1
+
+
+def _generate_drug_candidate_phrases(text: str) -> List[Tuple[str, str]]:
+    """Returns n-gram phrases (and their normalized form) from the input text."""
+    tokens: List[str] = []
+    for raw in text.split():
+        cleaned = raw.strip(_DRUG_TOKEN_STRIP)
+        if cleaned:
+            tokens.append(cleaned)
+
+    if not tokens:
+        return []
+
+    max_window = max(1, min(_drug_max_tokens or 1, 8))  # cap to avoid combinatorial explosion
+    phrases: List[Tuple[str, str]] = []
+    n_tokens = len(tokens)
+    for start in range(n_tokens):
+        phrase_tokens: List[str] = []
+        for end in range(start, min(n_tokens, start + max_window)):
+            phrase_tokens.append(tokens[end])
+            phrase = " ".join(phrase_tokens)
+            normalized = _normalize_drug_phrase(phrase)
+            if len(normalized) < 4:
+                continue
+            phrases.append((phrase, normalized))
+    return phrases
+
+
+def _register_drug_match(
+    matches: Dict[str, Dict[str, Any]],
+    canon_key: str,
+    entry: Dict[str, Any],
+    phrase: str,
+    match_type: str,
+) -> None:
+    record = matches.setdefault(
+        canon_key,
+        {
+            "name": entry.get("name", canon_key),
+            "catalog_number": entry.get("catalog_number", ""),
+            "cas_number": entry.get("cas_number", ""),
+            "synonyms": entry.get("synonyms", []),
+            "mentions": [],
+        },
+    )
+    mention = {"text": phrase, "match_type": match_type}
+    if mention not in record["mentions"]:
+        record["mentions"].append(mention)
+
+
+def _extract_drug_entities(text: str) -> Dict[str, Dict[str, Any]]:
+    """Extracts small-molecule mentions by scanning against the compound library."""
+    _ensure_drug_library_loaded()
+    if not _drug_term_lookup:
+        return {}
+
+    matches: Dict[str, Dict[str, Any]] = {}
+    phrases = _generate_drug_candidate_phrases(text)
+    if not phrases:
+        return matches
+
+    for phrase, normalized in phrases:
+        canon_keys = _drug_term_lookup.get(normalized)
+        if canon_keys:
+            for key in canon_keys:
+                entry = _drug_library.get(key)
+                if entry:
+                    _register_drug_match(matches, key, entry, phrase, "exact")
+            continue
+
+        if len(normalized) < 6 or not _drug_lookup_keys:
+            continue
+
+        close_matches = difflib.get_close_matches(normalized, _drug_lookup_keys, n=2, cutoff=0.93)
+        for close_norm in close_matches:
+            for key in _drug_term_lookup.get(close_norm, set()):
+                entry = _drug_library.get(key)
+                if entry:
+                    _register_drug_match(matches, key, entry, phrase, "approximate")
+
+    return matches
+
+
+def _verify_genes_in_query(text: str, candidate_genes: List[str]) -> List[str]:
+    """Uses Claude Haiku to ensure reported genes actually appear in the query."""
+    unique_candidates = list(dict.fromkeys(g for g in candidate_genes if g))
+    if not unique_candidates:
+        return []
+
+    def _fallback() -> List[str]:
+        lowered_text = text.lower()
+        filtered = []
+        for gene in unique_candidates:
+            if re.search(r"\b" + re.escape(gene) + r"\b", text, re.IGNORECASE):
+                filtered.append(gene)
+            elif gene.lower() in lowered_text:
+                filtered.append(gene)
+        return filtered or unique_candidates
+
+    system_message = (
+        "You are validating extracted gene symbols. Return a JSON array of the genes that appear verbatim "
+        "(case-insensitive exact match) in the provided user query. If none, return an empty JSON array."
+    )
+    user_message = (
+        "User query:\n<<<\n"
+        f"{text}\n"
+        ">>>\n\n"
+        "Candidate genes (comma-separated):\n"
+        f"{', '.join(unique_candidates)}\n"
+        "Respond ONLY with a JSON array, e.g., [\"BRCA1\", \"TP53\"]."
+    )
+
+    try:
+        response = claude_call(
+            model=VERIFY_MODEL,
+            max_tokens=100,
+            temperature=0,
+            system=system_message,
+            messages=[{"role": "user", "content": user_message}],
+        )
+        raw_text = response.content[0].text.strip()
+        parsed: Any = None
+        try:
+            parsed = json.loads(raw_text)
+        except json.JSONDecodeError:
+            bracket = re.search(r"\[[\s\S]*\]", raw_text)
+            if bracket:
+                parsed = json.loads(bracket.group(0))
+        if not isinstance(parsed, list):
+            return _fallback()
+
+        normalized_candidates = {g.lower(): g for g in unique_candidates}
+        lowered_text = text.lower()
+        verified: List[str] = []
+        for item in parsed:
+            if not isinstance(item, str):
+                continue
+            gene = item.strip()
+            if not gene:
+                continue
+            gene_lower = gene.lower()
+            if gene_lower not in normalized_candidates:
+                continue
+            if gene_lower not in lowered_text:
+                continue
+            verified.append(normalized_candidates[gene_lower])
+
+        return verified or _fallback()
+    except Exception as exc:
+        if DEBUG:
+            print(f"[_verify_genes_in_query] Verification failed: {exc}")
+        return _fallback()
 
 
 # --- Core Extraction Logic ---
@@ -306,6 +539,7 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
     flair_result = _extract_entities_with_flair(text)
     gliner_result = _extract_entities_with_gliner(text)
     regex_result = _extract_entities_with_regex(text)
+    drug_matches = _extract_drug_entities(text)
     
     # Merge gene symbols and Ensembl Gene IDs (ENSG)
     raw_genes = (
@@ -329,12 +563,15 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
     processed_entities = _post_process_entities(expanded_genes, raw_traits)
     
     final_result = {
-        "genes": processed_entities["genes"],
+        # Added the verification step to the extracted gene list
+        "genes": _verify_genes_in_query(text, processed_entities["genes"]),
         "traits": processed_entities["traits"],
         "proteins": sorted(list(set(raw_proteins))),
         "transcripts": sorted(list(set(regex_result.get("ensembl_transcripts", [])))),
         "variants": regex_result.get("variants", {}),
-        "chr_pos_variants": regex_result.get("chr_pos_variants", {})
+        "chr_pos_variants": regex_result.get("chr_pos_variants", {}),
+        "drugs": sorted(list({info["name"] for info in drug_matches.values()})),
+        "drug_matches": drug_matches,
     }
     
     if DEBUG:
@@ -343,6 +580,7 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
         print(f"[_extract_entities_merged] Final Merged Proteins: {final_result['proteins']}")
         print(f"[_extract_entities_merged] Final Merged Transcripts: {final_result['transcripts']}")
         print(f"[_extract_entities_merged] Final Merged Variants: {final_result['variants']}")
+        print(f"[_extract_entities_merged] Final Merged Drugs: {final_result['drugs']}")
 
     return final_result
 
@@ -353,6 +591,7 @@ def entity_extraction_node(state: "State") -> "State":
     """Runs the comprehensive, merged entity extraction process."""
     user_input: str = state["messages"][-1]["content"]
     extraction_result = _extract_entities_merged(user_input)
+    drug_matches = extraction_result.pop("drug_matches", {})
     if DEBUG:
         print(f"[entity_extraction_node] Extracted: {extraction_result}")
     # create gene objects in the state if any genes were found
@@ -385,6 +624,14 @@ def entity_extraction_node(state: "State") -> "State":
         v = Variant(rsID=var)
         v.add_tool("EntityExtraction")
         extraction_result['variant_entities'][var] = v
+
+    # pull in Drugs
+    extraction_result['drug_entities'] = {}
+    existing_drugs = state.get("drug_entities", {})
+    for canon_key, info in drug_matches.items():
+        if canon_key in existing_drugs:
+            continue
+        extraction_result['drug_entities'][canon_key] = info
     return extraction_result
 
 
@@ -566,4 +813,12 @@ def has_transcripts(state: "State") -> bool:
     found = bool(state.get("transcripts"))
     if DEBUG:
         print(f"[has_transcripts] Transcripts present? {found}")
+    return found
+
+
+def has_drugs(state: "State") -> bool:
+    """Edge condition helper: returns `True` if any small molecules were found."""
+    found = bool(state.get("drugs"))
+    if DEBUG:
+        print(f"[has_drugs] Drugs present? {found}")
     return found

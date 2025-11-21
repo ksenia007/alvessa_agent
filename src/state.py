@@ -38,6 +38,7 @@ class State(TypedDict, total=False):
     genes: Annotated[List[str], operator.add]
     traits: Annotated[List[str], operator.add]
     proteins: Annotated[List[str], operator.add]
+    drugs: Annotated[List[str], operator.add]
     transcripts: Annotated[List[str], operator.add]
     variants: Annotated[Dict[str, Dict[str, Dict[str, Any]]], operator.or_]
     chr_pos_variants: Annotated[Dict[str, Dict[str, Dict[str, Any]]], operator.or_]
@@ -48,6 +49,7 @@ class State(TypedDict, total=False):
     # to replace the keys commented out below w/ proper gene objects
     gene_entities: Annotated[Dict[str, "Gene"], operator.or_]
     variant_entities: Annotated[Dict[str, "Variant"], operator.or_]
+    drug_entities: Annotated[Dict[str, Dict[str, Any]], operator.or_]
 
     # LLM bookkeeping
     context_block: Annotated[str, operator.add]
