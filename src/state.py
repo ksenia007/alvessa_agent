@@ -44,7 +44,7 @@ class State(TypedDict, total=False):
     chr_pos_variants: Annotated[Dict[str, Dict[str, Dict[str, Any]]], operator.or_]
     gene_level_gencode: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     prompt: Annotated[str, operator.add]
-    mc_setup: Annotated[bool, operator.and_]
+    mc_setup: Annotated[bool, operator.or_]
     
     # to replace the keys commented out below w/ proper gene objects
     gene_entities: Annotated[Dict[str, "Gene"], operator.or_]

@@ -33,6 +33,7 @@ def run_pipeline(
         {
             "messages": [{"role": "user", "content": user_message}],
             "prompt": prompt,
+            "mc_setup": mc_setup,
         }
     )
     return state

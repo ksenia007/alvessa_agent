@@ -465,7 +465,7 @@ def _extract_entities_with_gliner(text: str) -> Dict[str, Any]:
     result = {
         "genes": list(set(genes)),
         "proteins": list(set(proteins)),
-        "traits": list(set(traits))
+        # "traits": list(set(traits))
     }
     if DEBUG:
         print(f"[_extract_entities_with_gliner] Found: {result}")

@@ -78,7 +78,7 @@ def build_graph(mc_setup: bool = False, diagram_dir: Path | str | None = None) -
             {"retry": "claude", "done": END},
         )
     else:
-        # If verification is not enabled, skip it
+        # If mc setup => verification is not enabled, skip it & ont additional tools
         g.add_edge("tool_invoke", "claude")
         g.add_edge("claude", END)
 

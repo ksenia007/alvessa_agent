@@ -487,11 +487,19 @@ def conditioned_claude_node(state: "State") -> "State":
         if answer_text and retry_feedback:
             added_feedback = f" Previous answer: {answer_text}. It was declined as low quality, with feedback: {retry_feedback}."
 
-
     # Pull latest user question
     user_question = state["messages"][-1]["content"]
     
+    if state.get('mc_setup', False):
+        if DEBUG:
+            print("MC setup detected - adding note to user prompt to answer concisely.")
+        user_question += "\n IMPORTANT: do not add any explanations or reasoning steps. Reply should be exactly 1 character."
+        
+    print('USER QUESTION')
+    print(user_question)
+    
     if added_feedback=="":
+        
         # User turn content: documents + question text
         user_content = list(doc_blocks) + [
             {
