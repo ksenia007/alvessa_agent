@@ -42,8 +42,17 @@ VERIFY_MODEL: str = "claude-haiku-4-5"
 TOOL_SELECTOR_MODEL: str = "claude-sonnet-4-5" 
 
 ANTHROPIC_API_KEY: str = os.environ["ANTHROPIC_API_KEY"]
-BioGRID_API_KEY: str = os.environ["BIOGRID_API_KEY"]
-DISGENET_API_KEY: str = os.environ["DISGENET_API_KEY"]
+
+try:
+    BioGRID_API_KEY: str = os.environ["BIOGRID_API_KEY"]
+except:
+    print("Warning: BIOGRID_API_KEY not found in environment variables.")
+    BioGRID_API_KEY: str = ""
+try:
+    DISGENET_API_KEY: str = os.environ["DISGENET_API_KEY"]
+except:
+    print("Warning: DISGENET_API_KEY not found in environment variables.")
+    DISGENET_API_KEY: str = ""
 
 # -----------------------------------------------------------------------------
 # Protein tool configuration

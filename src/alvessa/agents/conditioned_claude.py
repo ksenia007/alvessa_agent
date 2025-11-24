@@ -112,6 +112,12 @@ def _stable_gene_title(symbol: str) -> str:
 def _stable_variant_title(rsid: str | None) -> str:
     return f"VAR: {rsid}" if rsid else "VAR: UNKNOWN"
 
+def _stable_drug_title(label: str | None) -> str:
+    return f"DRUG: {label}" if label else "DRUG: UNKNOWN"
+
+def _clean_bullets(text: str) -> str:
+    return text.replace("\n• ", " ").replace("• ", " ")
+
 def variant_text_document(v: "Variant") -> str:
     """
     Pure text (no in-place mutation) for sentence-chunked citation.
@@ -228,6 +234,45 @@ def _collect_gene_docs(state: "State") -> tuple[list[dict], list[tuple[str, int]
             "citations": {"enabled": True},
         })
         manifest.append((title, len(manifest)))  # index is positional after NOTES (will adjust later)
+    return docs, manifest
+
+
+def _collect_drug_docs(state: "State") -> tuple[list[dict], list[tuple[str, int]]]:
+    docs = []
+    manifest = []
+
+    drug_objs = state.get("drug_entities", {}) or {}
+
+    items = []
+    for k, d in (drug_objs or {}).items():
+        if not d:
+            continue
+        ids = getattr(d, "identifiers", None)
+        name = getattr(ids, "name", None) if ids else None
+        canon_key = getattr(ids, "canon_key", None) if ids else None
+        label = name or canon_key or str(k)
+        items.append((label, d))
+
+    items.sort(key=lambda x: (x[0] is None, str(x[0]).lower()))
+
+    seen = set()
+    for label, d in items:
+        key = label or f"UNKNOWN_{id(d)}"
+        if key in seen:
+            # ensure uniqueness even if label is missing/duplicated
+            key = f"{key}_{len(seen)}"
+        seen.add(key)
+
+        title = _stable_drug_title(key)
+        text = _clean_bullets(d.summarize_text())
+        docs.append({
+            "type": "document",
+            "source": {"type": "text", "media_type": "text/plain", "data": text},
+            "title": title,
+            "citations": {"enabled": True},
+        })
+        manifest.append((title, len(manifest)))
+
     return docs, manifest
 
 def _collect_variant_docs(state: "State") -> tuple[list[dict], list[tuple[str, int]]]:
@@ -409,6 +454,13 @@ def create_context_block_with_citations(state: "State") -> tuple[list[dict], lis
     blocks.extend(gene_blocks)
     for i, (title, _) in enumerate(gene_manifest):
         manifest.append({"title": title, "kind": "GENE", "key": title.removeprefix("GENE: ").strip(), "index": start_idx + i})
+
+    # DRUGS
+    drug_blocks, drug_manifest = _collect_drug_docs(state)
+    start_idx = len(blocks)
+    blocks.extend(drug_blocks)
+    for i, (title, _) in enumerate(drug_manifest):
+        manifest.append({"title": title, "kind": "DRUG", "key": title.removeprefix("DRUG: ").strip(), "index": start_idx + i})
 
     # VARIANTS
     var_blocks, var_manifest = _collect_variant_docs(state)

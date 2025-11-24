@@ -580,5 +580,5 @@ def main(argv: Iterable[str] | None = None) -> int:
     return args.func(args)
 
 
-if __name__ == "__main__":  # pragma: no cover - manual entry point
+if __name__ == "__main__":  
     sys.exit(main())
