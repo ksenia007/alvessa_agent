@@ -60,15 +60,17 @@ def _style_axes(ax, *, theme: str) -> None:
 def _plot_accuracy(df: pd.DataFrame, *, out_dir: Path, dpi: int = 300) -> Tuple[Path, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    labels = df["source_folder"].tolist()
+    labels = [_format_folder(f) for f in df["source_folder"].tolist()]
     accuracies = df["accuracy"].tolist()
     counts = df["n"].tolist()
 
     def _make_fig(theme: str, fname: str, bar_color: str) -> Path:
-        fig, ax = plt.subplots(figsize=(max(6, len(labels) * 0.5), 4))
-        ax.bar(labels, accuracies, color=bar_color, edgecolor="none")
-        for x, acc, n in zip(range(len(labels)), accuracies, counts):
-            ax.text(x, acc + 0.02, f"{acc:.2f}\n(n={n})", ha="center", va="bottom", fontsize=10, color=("#111111" if theme == "white" else "#f5f5f5"))
+        fig, ax = plt.subplots(figsize=(max(6, len(labels) * 0.55), 4))
+        ax.bar(range(len(labels)), accuracies, color=bar_color, edgecolor="none")
+        ax.set_xticks(range(len(labels)))
+        ax.set_xticklabels(labels, rotation=90, ha="center", color=("#111111" if theme == "white" else "#f5f5f5"), fontsize=11)
+        # for x, acc, n in zip(range(len(labels)), accuracies, counts):
+        #     ax.text(x, acc + 0.02, f"{acc:.2f}\nn={n}", ha="center", va="bottom", fontsize=10, color=("#111111" if theme == "white" else "#f5f5f5"))
         _style_axes(ax, theme=theme)
         outfile = out_dir / fname
         if theme == "white":
@@ -124,8 +126,9 @@ def _plot_grouped(df: pd.DataFrame, *, out_dir: Path, folder_order: list[str], d
     labels = []
     folder_bounds = []
     x = 0.0
-    gap_between_sets = 0.35
-    gap_between_folders = gap_between_sets * 3.0
+    # spacing tuned for readability: leave room between bars and extra between folders
+    gap_between_sets = 0.5
+    gap_between_folders = gap_between_sets * 2.5
 
     for f in folder_order:
         sub = df[df["source_folder"] == f].copy()
@@ -141,21 +144,22 @@ def _plot_grouped(df: pd.DataFrame, *, out_dir: Path, folder_order: list[str], d
         x += gap_between_folders
 
     def _make_fig(theme: str, fname: str, bar_color: str) -> Path:
-        fig, ax = plt.subplots(figsize=(max(13, x * 0.7), 5.0))
+        fig, ax = plt.subplots(figsize=(max(13.5, x * 0.85), 5.2))
         ax.bar(positions, heights, color=bar_color, width=0.32, edgecolor="none")
 
-        # Set labels below axis
+        # Set labels tucked just below the axis
         for xpos, lbl in zip(positions, labels):
-            ax.text(xpos, -0.04, lbl, ha="center", va="top", fontsize=9, color=("#111111" if theme == "white" else "#f5f5f5"))
+            ax.text(xpos, -0.028, lbl, ha="center", va="top", fontsize=10.5, rotation=90, color=("#111111" if theme == "white" else "#f5f5f5"))
 
         # Folder labels as bracket-like connectors under set labels
         for name, start, end in folder_bounds:
             mid = (start + end) / 2 if end >= start else start
-            y_bracket = -0.08
-            color = "#888888" if theme == "white" else "#aaaaaa"
-            ax.hlines(y_bracket, start, end, colors=color, linewidth=1.2)
-            ax.vlines([start, end], y_bracket, y_bracket - 0.015, colors=color, linewidth=1.2)
-            ax.text(mid, y_bracket - 0.035, _format_folder(name), ha="center", va="top", fontsize=10.5, color=color)
+            # Bracket and folder label placed lower to avoid overlap with set labels
+            y_bracket = -0.092
+            color = "#000000" if theme == "white" else "#aaaaaa"
+            ax.hlines(y_bracket, start, end, colors=color, linewidth=1.0)
+            ax.vlines([start, end], y_bracket, y_bracket - 0.015, colors=color, linewidth=1.0)
+            ax.text(mid, y_bracket - 0.042, _format_folder(name), ha="center", va="top", fontsize=10, color=color)
 
         ax.set_xticks([])
         ax.set_xlim(min(positions) - 0.6, max(positions) + 0.6)

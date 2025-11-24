@@ -11,13 +11,14 @@ import pandas as pd
 
 
 GROUP_RULES = [
-    ("DisGeNet+OMIM", lambda q: re.search(r"disgenet", q) and re.search(r"omim", q)),
+    ("DisGeNet+\nOMIM", lambda q: re.search(r"disgenet", q) and re.search(r"omim", q)),
     ("Ensembl", lambda q: "ensembl" in q),
     ("miRDB", lambda q: "mirdb" in q),
     ("MouseMine", lambda q: "mousemine" in q),
     ("GTRD", lambda q: "gene transcription regulation database" in q),
     ("ClinVar", lambda q: "clinvar" in q),
     ("P-HIPSter", lambda q: "p-hipster" in q),
+    ("MSigDB", lambda q: re.search(r"c\d+\s+collection", q) or re.search(r"c\d+\s+subcollection", q)),
 ]
 
 
@@ -83,10 +84,9 @@ def _plot_groups(df: pd.DataFrame, *, out_dir: Path, dpi: int = 300) -> Tuple[Pa
     counts = df["n"].tolist()
 
     def _make_fig(theme: str, fname: str, bar_color: str) -> Path:
-        fig, ax = plt.subplots(figsize=(max(7, len(labels) * 0.6), 4.5))
+        fig, ax = plt.subplots(figsize=(max(9, len(labels) * 0.7), 4.5))
         ax.bar(labels, accuracies, color=bar_color, edgecolor="none")
-        # labels beneath (rotated) for readability
-        ax.set_xticklabels(labels, rotation=35, ha="right", color=("#111111" if theme == "white" else "#f5f5f5"))
+        ax.set_xticklabels(labels, rotation=0, ha="center", color=("#111111" if theme == "white" else "#f5f5f5"))
         _style_axes(ax, theme=theme)
         outfile = out_dir / fname
         if theme == "white":
@@ -145,4 +145,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
