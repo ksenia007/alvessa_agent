@@ -127,8 +127,13 @@ def alphamissense_predictions_agent(state: "State") -> "State":
 
 
     if not snp_records:
-        variants[var_id].update_text_summaries("No AlphaMissense predictions found.")
-        return 
+        try:
+            variants[var_id].update_text_summaries("No AlphaMissense predictions found.")
+            return 
+        except:
+            if DEBUG:
+                print(f"[AlphaMissense] No SNP records found to process and error in assigning text.")
+            return
 
     snps_df = pd.DataFrame(snp_records)
 

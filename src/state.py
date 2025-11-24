@@ -14,6 +14,7 @@ import operator
 from typing import Annotated, Any, Dict, List
 from src.alvessa.domain.gene_class import Gene
 from src.alvessa.domain.variant_class import Variant
+from src.alvessa.domain.drug_class import Drug
 from typing_extensions import TypedDict
 import os
 import csv
@@ -44,12 +45,12 @@ class State(TypedDict, total=False):
     chr_pos_variants: Annotated[Dict[str, Dict[str, Dict[str, Any]]], operator.or_]
     gene_level_gencode: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     prompt: Annotated[str, operator.add]
-    mc_setup: Annotated[bool, operator.and_]
+    mc_setup: Annotated[bool, operator.or_]
     
     # to replace the keys commented out below w/ proper gene objects
     gene_entities: Annotated[Dict[str, "Gene"], operator.or_]
     variant_entities: Annotated[Dict[str, "Variant"], operator.or_]
-    drug_entities: Annotated[Dict[str, Dict[str, Any]], operator.or_]
+    drug_entities: Annotated[Dict[str, "Drug"], operator.or_]
 
     # LLM bookkeeping
     context_block: Annotated[str, operator.add]
@@ -157,6 +158,25 @@ def _gene_interactions_rows(g: Gene, *, nonhuman: bool = False) -> List[Dict[str
         for partner in partners or []:
             rows.append({"experiment_type": exp_type, "partner_symbol": partner})
     return rows
+
+# =========================
+# Drug extractors
+# =========================
+def _drug_index_row(d: Drug) -> Dict[str, Any]:
+    ids = d.identifiers
+    return {
+        "name": ids.name or "",
+        "canon_key": ids.canon_key or "",
+        "cas_number": ids.cas_number or "",
+        "catalog_number": ids.catalog_number or "",
+        "chembl_id": ids.chembl_id or "",
+        "n_synonyms": len(ids.synonyms or []),
+        "n_targets": len(d.targets or []),
+        "n_research_areas": len(d.research_areas or []),
+        "clinical_status": d.clinical_status or "",
+        "has_smiles": int(bool(d.smiles)),
+        "tools_run": ";".join(d.tools_run or []),
+    }
 
 # =========================
 # Variant extractors (CSV-only, no per-variant dirs)
@@ -329,6 +349,40 @@ def create_files_from_state(state: "State", output_dir: str) -> None:
             "n_binding_peaks", "n_mirna_targets", "n_traits", "tools_run",
             "summary_relpath", "json_relpath",
             "transcripts_relpath", "interactions_human_relpath", "interactions_nonhuman_relpath",
+        ],
+    )
+
+    # ------------------ Drugs ------------------
+    drugs_dir = out_root / "drugs"
+    _ensure_dir(drugs_dir)
+
+    drug_entities: Dict[str, Drug] = (state or {}).get("drug_entities", {}) or {}
+    drug_index_rows: List[Dict[str, Any]] = []
+
+    for _, d in sorted(drug_entities.items(), key=lambda kv: (kv[0] or "")):
+        if not isinstance(d, Drug):
+            continue
+        name = _safe_name(d.identifiers.name, "UNKNOWN_DRUG")
+        ddir = drugs_dir / name
+        _ensure_dir(ddir)
+
+        (ddir / "summary.txt").write_text(d.summarize_text(), encoding="utf-8")
+        (ddir / "drug.json").write_text(json.dumps(asdict(d), ensure_ascii=False, indent=2), encoding="utf-8")
+
+        idx = _drug_index_row(d)
+        idx.update({
+            "summary_relpath": f"drugs/{name}/summary.txt",
+            "json_relpath": f"drugs/{name}/drug.json",
+        })
+        drug_index_rows.append(idx)
+
+    _write_csv(
+        drugs_dir / "drugs.index.csv",
+        drug_index_rows,
+        field_order=[
+            "name", "canon_key", "cas_number", "catalog_number", "chembl_id",
+            "n_synonyms", "n_targets", "n_research_areas", "clinical_status", "has_smiles", "tools_run",
+            "summary_relpath", "json_relpath",
         ],
     )
 

@@ -227,8 +227,7 @@ def _apply_gene_result(
 
 def _ensure_gene_entities(state: State) -> Dict[str, Gene]:
     gene_objs: Dict[str, Gene] = dict(state.get("gene_entities", {}) or {})
-    for gene_symbol in state.get("genes", []) or []:
-        gene_objs.setdefault(gene_symbol, Gene(GeneIdentifiers(symbol=gene_symbol)))
+    # Do NOT add new genes here; rely on existing gene_entities
     return gene_objs
 
 
@@ -334,13 +333,8 @@ def query_by_trait_agent(state: "State") -> "State":
         "variant_annotations": _collect_variant_annotations(normalised),
     }
 
-    related_genes = _extract_genes_from_trait_result(normalised)
-    _debug(
-        f"Trait '{trait_term}': {payload['total_associations']} associations, "
-        f"{len(related_genes)} candidate genes"
-    )
-
-    return {"trait_associations": payload, "genes": related_genes}
+    # Do not introduce new genes into state; only return associations
+    return {"trait_associations": payload, "genes": []}
 
 
 def _extract_genes_from_trait_result(result: Dict[str, Any]) -> List[str]:

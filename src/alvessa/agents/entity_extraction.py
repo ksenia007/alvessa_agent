@@ -11,6 +11,7 @@ from src.config import DEBUG, GENE_EXTRACT_MODEL, GLINER_MODEL, GLINER_THRESHOLD
 from src.state import State
 from flair.data import Sentence
 from src.alvessa.domain.gene_class import Gene, canon_gene_key
+from src.alvessa.domain.drug_class import Drug, DrugIdentifiers
 from src.alvessa.domain.gene_components import GeneIdentifiers
 from src.alvessa.domain.variant_class import Variant
 
@@ -320,74 +321,37 @@ def _extract_drug_entities(text: str) -> Dict[str, Dict[str, Any]]:
 
 
 def _verify_genes_in_query(text: str, candidate_genes: List[str]) -> List[str]:
-    """Uses Claude Haiku to ensure reported genes actually appear in the query."""
+    """Lightweight verification: keep candidates that visibly appear in the query."""
     unique_candidates = list(dict.fromkeys(g for g in candidate_genes if g))
     if not unique_candidates:
         return []
 
-    def _fallback() -> List[str]:
-        lowered_text = text.lower()
-        filtered = []
-        for gene in unique_candidates:
-            if re.search(r"\b" + re.escape(gene) + r"\b", text, re.IGNORECASE):
-                filtered.append(gene)
-            elif gene.lower() in lowered_text:
-                filtered.append(gene)
-        return filtered or unique_candidates
+    # Precompute normalized text variants
+    lowered_text = text.lower()
+    normalized_text = re.sub(r"[^a-z0-9]+", "", lowered_text)
 
-    system_message = (
-        "You are validating extracted gene symbols. Return a JSON array of the genes that appear verbatim "
-        "(case-insensitive exact match) in the provided user query. If none, return an empty JSON array."
-    )
-    user_message = (
-        "User query:\n<<<\n"
-        f"{text}\n"
-        ">>>\n\n"
-        "Candidate genes (comma-separated):\n"
-        f"{', '.join(unique_candidates)}\n"
-        "Respond ONLY with a JSON array, e.g., [\"BRCA1\", \"TP53\"]."
-    )
+    verified: List[str] = []
+    for gene in unique_candidates:
+        g_clean = gene.strip()
+        if not g_clean:
+            continue
 
-    try:
-        response = claude_call(
-            model=VERIFY_MODEL,
-            max_tokens=100,
-            temperature=0,
-            system=system_message,
-            messages=[{"role": "user", "content": user_message}],
-        )
-        raw_text = response.content[0].text.strip()
-        parsed: Any = None
-        try:
-            parsed = json.loads(raw_text)
-        except json.JSONDecodeError:
-            bracket = re.search(r"\[[\s\S]*\]", raw_text)
-            if bracket:
-                parsed = json.loads(bracket.group(0))
-        if not isinstance(parsed, list):
-            return _fallback()
+        # 1) strict word boundary check
+        if re.search(r"\b" + re.escape(g_clean) + r"\b", text, re.IGNORECASE):
+            verified.append(gene)
+            continue
 
-        normalized_candidates = {g.lower(): g for g in unique_candidates}
-        lowered_text = text.lower()
-        verified: List[str] = []
-        for item in parsed:
-            if not isinstance(item, str):
-                continue
-            gene = item.strip()
-            if not gene:
-                continue
-            gene_lower = gene.lower()
-            if gene_lower not in normalized_candidates:
-                continue
-            if gene_lower not in lowered_text:
-                continue
-            verified.append(normalized_candidates[gene_lower])
+        # 2) normalized substring check (drop non-alnum, lowercase)
+        norm_gene = re.sub(r"[^a-z0-9]+", "", g_clean.lower())
+        if norm_gene and norm_gene in normalized_text:
+            verified.append(gene)
+            continue
 
-        return verified or _fallback()
-    except Exception as exc:
-        if DEBUG:
-            print(f"[_verify_genes_in_query] Verification failed: {exc}")
-        return _fallback()
+    if DEBUG:
+        missing = set(unique_candidates) - set(verified)
+        if missing:
+            print(f"[_verify_genes_in_query] Filtered out (no match): {missing}")
+    return verified
 
 
 # --- Core Extraction Logic ---
@@ -395,8 +359,11 @@ def _verify_genes_in_query(text: str, candidate_genes: List[str]) -> List[str]:
 def _extract_entities_with_claude(text: str) -> Dict[str, List[str]]:
     """Extracts gene symbols using Claude and returns them in a standard format."""
     system_message = (
-        "Extract gene symbols from the message. Extract gene names **only if they appear verbatim in the input**. "
-        "Reply with a comma-separated list of gene names only, no extra words. If no gene names are found, reply with an empty string."
+        "Extract gene symbols and drug names from the message, but **only if they appear verbatim in the input**. "
+        "Reply with a dictionary of entities, without any additional text. It needs to be a correct JSON object with two keys: drugs and genes. "
+        "Example question: Is HER2 or PTEN a drug target of neratinib in breast cancer? "
+        "Example answer: ```json{\"genes\": [\"HER2\", \"PTEN\"], \"drugs\": [\"neratinib\"]} ```"
+        "Example **invalid** answers: \"Found these { \"genes\"...}\", \"The drugs are neratinib...\", \"I do not see any genes here.\""
     )
     try:
         response = claude_call(
@@ -406,12 +373,35 @@ def _extract_entities_with_claude(text: str) -> Dict[str, List[str]]:
             system=system_message,
             messages=[{"role": "user", "content": text}],
         )
-        genes = [g.strip() for g in response.content[0].text.split(",") if g.strip()]
-    except Exception as e:
-        print(f"[_extract_entities_with_claude] Error parsing genes: {e}")
-        genes = []
+        # Parse the response content dict, accounting for possible ```json fences or prefixes
+        raw_text = response.content[0].text.strip()
+        raw_text = re.sub(r"^```(?:json)?\s*", "", raw_text).strip()
+        raw_text = re.sub(r"```$", "", raw_text).strip()
+        parsed: Any = None
+        try:
+            parsed = json.loads(raw_text)
+        except json.JSONDecodeError:
+            brace_block = re.search(r"\{[\s\S]*\}", raw_text)
+            if brace_block:
+                try:
+                    parsed = json.loads(brace_block.group(0))
+                except json.JSONDecodeError:
+                    print("[_extract_entities_with_claude] JSON decode error after fence strip.")
+                    print("Raw response:", raw_text)
+            else:
+                print("[_extract_entities_with_claude] JSON decode error, no braces found.")
+                print("Raw response:", raw_text)
+        if not isinstance(parsed, dict):
+            parsed = {}
 
-    result = {"genes": list(set(genes)), "traits": []}
+        genes = parsed.get("genes", []) if isinstance(parsed.get("genes", []), list) else []
+        drugs = parsed.get("drugs", []) if isinstance(parsed.get("drugs", []), list) else []
+    except Exception as e:
+        print(f"[_extract_entities_with_claude] Error parsing: {e}")
+        genes = []
+        drugs = []
+
+    result = {"genes": list(set(genes)), "traits": [], "drugs": list(set(drugs))}
     if DEBUG:
         print(f"[_extract_entities_with_claude] Found: {result}")
     return result
@@ -432,13 +422,14 @@ def _extract_entities_with_flair(text: str) -> Dict[str, List[str]]:
             genes.append(entity_text)
         elif entity_type == "protein":
             proteins.append(entity_text)
-        elif entity_type in ["disease", "trait", "phenotype", "disorder", "syndrome", "condition"]:
-            traits.append(entity_text)
+        # Traits disabled for now
+        # elif entity_type in ["disease", "trait", "phenotype", "disorder", "syndrome", "condition"]:
+        #     traits.append(entity_text)
             
     result = {
         "genes": list(set(genes)),
         "proteins": list(set(proteins)),
-        "traits": list(set(traits))
+        # "traits": list(set(traits))
     }
     if DEBUG:
         print(f"[_extract_entities_with_flair] Found: {result}")
@@ -459,13 +450,14 @@ def _extract_entities_with_gliner(text: str) -> Dict[str, Any]:
             genes.append(text_entity)
         elif label == "protein":
             proteins.append(text_entity)
-        elif label in ["disease", "trait", "phenotype", "disorder", "syndrome", "condition"]:
-            traits.append(text_entity)
+        # Traits disabled for now
+        # elif label in ["disease", "trait", "phenotype", "disorder", "syndrome", "condition"]:
+        #     traits.append(text_entity)
 
     result = {
         "genes": list(set(genes)),
         "proteins": list(set(proteins)),
-        "traits": list(set(traits))
+        # "traits": list(set(traits))
     }
     if DEBUG:
         print(f"[_extract_entities_with_gliner] Found: {result}")
@@ -488,20 +480,40 @@ def _expand_and_refine_gene_names(base_genes: List[str], text: str) -> List[str]
     -   `MIR`: The gene locus encoding the precursor.
     -   `-5p` / `-3p`: Suffix indicating derivation from the 5' or 3' arm of the precursor.
     """
-    expanded_genes = set(base_genes)
+    expanded_genes = {g for g in base_genes if g}
+
+    # Expand each seed by allowing common suffixes (e.g., _5p, -3p)
     for gene in base_genes:
-        # Create a regex to find the gene and any valid following characters (e.g., _5, -5p)
-        # This pattern looks for the gene symbol followed by characters often seen in gene/miRNA names.
         try:
             pattern = re.escape(gene) + r"[\w-]*"
             matches = re.findall(pattern, text, re.IGNORECASE)
             for match in matches:
                 expanded_genes.add(match)
         except re.error:
-            # In case of a regex error with a specific gene symbol, skip it
             if DEBUG:
                 print(f"[_expand_and_refine_gene_names] Regex error with gene: {gene}")
             continue
+
+    # Direct miRNA capture, even if seeds are missing
+    mir_patterns = [
+        r"\b(?:hsa-|mmu-|rno-|ptr-)?miR[-_]?\d+[a-zA-Z]*?(?:[-_]\d+)?(?:[-_][35]p)?\b",  # miR-21-5p, miR520b_5P
+        r"\bMIR\d+[\w-]*[35]?[pP]?\b",                                                    # MIR520b_5P
+        r"\bmir[-_]?\d+[a-zA-Z]*?(?:[-_]\d+)?(?:[-_][35]p)?\b",                            # mir-21-3p
+        r"\blet-7[\w-]*\b",                                                                # let-7 family
+    ]
+    for pat in mir_patterns:
+        try:
+            matches = re.findall(pat, text, re.IGNORECASE)
+        except re.error:
+            continue
+        for m in matches:
+            if isinstance(m, tuple):
+                for part in m:
+                    if part:
+                        expanded_genes.add(part)
+            else:
+                expanded_genes.add(m)
+
     if DEBUG:
         print(f"[_expand_and_refine_gene_names] Expanded {len(base_genes)} base genes to {len(expanded_genes)}.")
     return list(expanded_genes)
@@ -517,19 +529,17 @@ def _post_process_entities(genes: List[str], traits: List[str]) -> Dict[str, Lis
         return cleaned_items
 
     processed_genes = clean_list(genes)
-    processed_traits = clean_list(traits)
+    processed_traits: List[str] = []  # traits disabled
 
     # Filter genes by length and for invalid content.
     processed_genes = [g for g in processed_genes if "no gene" not in g.lower()]
     processed_genes = [g for g in processed_genes if 2 <= len(g) <= 30]
-    processed_genes = [g for g in processed_genes if g.lower() not in {"mirna", "mir"}]
-
-    processed_traits = [t for t in processed_traits if len(t) > 2]
+    # processed_genes = [g for g in processed_genes if g.lower() not in {"mirna", "mir"}]
 
     # Return unique, sorted lists
     return {
         "genes": sorted(list(dict.fromkeys(processed_genes))),
-        "traits": sorted(list(dict.fromkeys(processed_traits)))
+        "traits": []
     }
 
 
@@ -548,7 +558,7 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
         gliner_result.get("genes", []) +
         regex_result.get("ensembl_genes", [])
     )
-    raw_traits = flair_result.get("traits", []) + gliner_result.get("traits", [])
+    raw_traits = []  # traits disabled
     
     # Merge protein symbols and Ensembl Protein IDs (ENSP)
     raw_proteins = (
@@ -556,6 +566,11 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
         gliner_result.get("proteins", []) +
         regex_result.get("ensembl_proteins", [])
     )
+    
+    full_drugs = claude_result.get("drugs", []) + sorted(list({info["name"] for info in drug_matches.values()}))
+    # remove duplicates due to the upper / lower case differences and other minor variations
+    full_drugs = [i.lower() for i in full_drugs]
+    full_drugs = sorted(list(set(full_drugs)))
     
     # Does the microRNA expansion
     expanded_genes = _expand_and_refine_gene_names(raw_genes, text)
@@ -565,12 +580,12 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
     final_result = {
         # Added the verification step to the extracted gene list
         "genes": _verify_genes_in_query(text, processed_entities["genes"]),
-        "traits": processed_entities["traits"],
+        "traits": [],
         "proteins": sorted(list(set(raw_proteins))),
         "transcripts": sorted(list(set(regex_result.get("ensembl_transcripts", [])))),
         "variants": regex_result.get("variants", {}),
         "chr_pos_variants": regex_result.get("chr_pos_variants", {}),
-        "drugs": sorted(list({info["name"] for info in drug_matches.values()})),
+        "drugs": full_drugs,
         "drug_matches": drug_matches,
     }
     
@@ -628,10 +643,60 @@ def entity_extraction_node(state: "State") -> "State":
     # pull in Drugs
     extraction_result['drug_entities'] = {}
     existing_drugs = state.get("drug_entities", {})
+
     for canon_key, info in drug_matches.items():
         if canon_key in existing_drugs:
             continue
-        extraction_result['drug_entities'][canon_key] = info
+
+        identifiers = DrugIdentifiers(
+            name=info.get("name", canon_key),
+            canon_key=canon_key,
+            synonyms=info.get("synonyms", []),
+            catalog_number=info.get("catalog_number"),
+            cas_number=info.get("cas_number"),
+        )
+        drug_obj = Drug(identifiers=identifiers)
+        for mention in info.get("mentions", []):
+            if isinstance(mention, dict):
+                drug_obj.add_mention(mention)
+        drug_obj.add_tool("EntityExtraction")
+        extraction_result['drug_entities'][canon_key] = drug_obj
+
+    # add drugs that were in "drugs" too, in case some were missing from drug_entities. These will not have the extra info
+    existing_drug_names = {str(info.get("name", "")).lower() for info in drug_matches.values()}
+    for info in drug_matches.values():
+        for syn in info.get("synonyms", []):
+            existing_drug_names.add(str(syn).lower())
+        for mention in info.get("mentions", []):
+            if isinstance(mention, dict):
+                existing_drug_names.add(str(mention.get("text", "")).lower())
+
+    for d in existing_drugs.values():
+        if isinstance(d, Drug):
+            if d.identifiers.name:
+                existing_drug_names.add(str(d.identifiers.name).lower())
+            for syn in d.identifiers.synonyms or []:
+                existing_drug_names.add(str(syn).lower())
+
+    claude_drugs = extraction_result.get("drugs") or []
+    for drug in claude_drugs:
+        if not drug:
+            continue
+        # ensure the drug actually appears in the user text to avoid LLM hallucinations/duplicates
+        if not re.search(r"\b" + re.escape(drug) + r"\b", user_input, re.IGNORECASE):
+            continue
+        normalized = drug.lower()
+        if normalized in existing_drug_names:
+            continue
+        if normalized in extraction_result['drug_entities'] or normalized in existing_drugs:
+            continue
+
+        identifiers = DrugIdentifiers(name=drug, canon_key=None, synonyms=[])
+        drug_obj = Drug(identifiers=identifiers)
+        drug_obj.add_mention({"text": drug, "match_type": "claude"})
+        drug_obj.add_tool("EntityExtraction")
+        extraction_result['drug_entities'][normalized] = drug_obj
+        existing_drug_names.add(normalized)
     return extraction_result
 
 
