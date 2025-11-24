@@ -15,6 +15,8 @@ from src.alvessa.domain.drug_class import Drug, DrugIdentifiers
 from src.alvessa.domain.gene_components import GeneIdentifiers
 from src.alvessa.domain.variant_class import Variant
 
+from src.tools.aa_seq.seq_search import resolve_sequences_to_gene_records
+
 # Global variables to cache the models
 _gliner_model = None
 _flair_model = None
@@ -320,6 +322,116 @@ def _extract_drug_entities(text: str) -> Dict[str, Dict[str, Any]]:
     return matches
 
 
+def _extract_candidate_sequences(text: str) -> List[str]:
+    """
+    Extract candidate amino acid sequences from free text.
+
+    Rules:
+      - AA sequences are contiguous runs of letters from the set:
+          ACDEFGHIKLMNPQRSTVWY (case-insensitive).
+      - Minimum length: 10 characters.
+      - Handles:
+          * Inline sequences (e.g., <sequence>MARLGN...</sequence>).
+          * FASTA-style blocks (lines after '>' headers are joined).
+      - Returns unique sequences in the order they are found.
+    """
+
+    MIN_AA_LEN = 10
+    AA_CHARS = "ACDEFGHIKLMNPQRSTVWY"
+    AA_SET = set(AA_CHARS + AA_CHARS.lower())
+
+    sequences: List[str] = []
+    seen = set()
+
+    def _add_sequence(seq: str) -> None:
+        """Normalize, validate, deduplicate, and store a sequence."""
+        # Keep only letters, normalize to upper
+        letters = "".join(ch for ch in seq if ch.isalpha()).upper()
+        if len(letters) < MIN_AA_LEN:
+            return
+        if not all(ch in AA_CHARS for ch in letters):
+            return
+        if letters not in seen:
+            seen.add(letters)
+            sequences.append(letters)
+
+    # ------------------------------------------------------------------
+    # 1) Handle FASTA-style blocks: join consecutive AA-only lines
+    # ------------------------------------------------------------------
+    current_block: List[str] = []
+
+    def _flush_block():
+        nonlocal current_block
+        if current_block:
+            _add_sequence("".join(current_block))
+            current_block = []
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            # Blank line: end of a block
+            _flush_block()
+            continue
+
+        if line.startswith(">"):
+            # FASTA header: flush previous block, skip header
+            _flush_block()
+            continue
+
+        # Check if this line is mostly an AA sequence
+        # We allow tags/whitespace around, but require that the
+        # alphabetical part is valid AAs.
+        letters_only = "".join(ch for ch in line if ch.isalpha())
+        if letters_only and all(ch in AA_SET for ch in letters_only):
+            # Part of a FASTA-like block
+            current_block.append(letters_only.upper())
+        else:
+            # Not a pure AA line: end of any ongoing block
+            _flush_block()
+
+    # Flush trailing block at EOF
+    _flush_block()
+
+    # ------------------------------------------------------------------
+    # 2) Inline AA sequences in arbitrary prose / tags
+    # ------------------------------------------------------------------
+    # Regex to catch contiguous runs of AA letters, length >= MIN_AA_LEN
+    pattern = re.compile(rf"[{AA_CHARS}{AA_CHARS.lower()}]{{{MIN_AA_LEN},}}")
+
+    for match in pattern.finditer(text):
+        _add_sequence(match.group(0))
+
+    if DEBUG and sequences:
+        print(f"[_extract_candidate_sequences] Found {len(sequences)} candidate sequences.")
+
+    return sequences
+
+
+def _extract_sequence_based_genes(text: str) -> Dict[str, Any]:
+    """
+    Skeleton integration for sequence-based gene discovery.
+
+    This:
+      1) extracts candidate protein sequences from the user text;
+      2) calls resolve_sequences_to_gene_records(sequences);
+      3) normalizes whatever structure comes back into:
+         - a flat list of gene symbols;
+         - the raw gene records (for downstream tools / debugging).
+
+    The exact shape of the gene records is intentionally flexible to match the
+    future seq_tool implementation.
+    """
+    sequences = _extract_candidate_sequences(text)
+    if not sequences:
+        return {"genes": [], "gene_records": []}
+
+    records = resolve_sequences_to_gene_records(sequences)
+
+    if DEBUG:
+        print(f"[_extract_sequence_based_genes] Resolved {len(records.get('genes', []))} genes from {len(sequences)} sequences.")
+
+    return records
+
 def _verify_genes_in_query(text: str, candidate_genes: List[str]) -> List[str]:
     """Lightweight verification: keep candidates that visibly appear in the query."""
     unique_candidates = list(dict.fromkeys(g for g in candidate_genes if g))
@@ -550,13 +662,15 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
     gliner_result = _extract_entities_with_gliner(text)
     regex_result = _extract_entities_with_regex(text)
     drug_matches = _extract_drug_entities(text)
+    seq_result = _extract_sequence_based_genes(text)
     
     # Merge gene symbols and Ensembl Gene IDs (ENSG)
     raw_genes = (
         claude_result.get("genes", []) +
         flair_result.get("genes", []) +
         gliner_result.get("genes", []) +
-        regex_result.get("ensembl_genes", [])
+        regex_result.get("ensembl_genes", []) +
+        seq_result.get("genes", [])
     )
     raw_traits = []  # traits disabled
     
@@ -579,7 +693,9 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
     
     final_result = {
         # Added the verification step to the extracted gene list
-        "genes": _verify_genes_in_query(text, processed_entities["genes"]),
+        #NOTE: This verification is disabled to permit addition of new genes from AA seq's (Dmitri)
+        #"genes": _verify_genes_in_query(text, processed_entities["genes"]),
+        "genes": processed_entities["genes"],
         "traits": [],
         "proteins": sorted(list(set(raw_proteins))),
         "transcripts": sorted(list(set(regex_result.get("ensembl_transcripts", [])))),
@@ -587,6 +703,7 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
         "chr_pos_variants": regex_result.get("chr_pos_variants", {}),
         "drugs": full_drugs,
         "drug_matches": drug_matches,
+        "sequence_gene_records": seq_result.get("gene_records", [])
     }
     
     if DEBUG:
@@ -596,6 +713,7 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
         print(f"[_extract_entities_merged] Final Merged Transcripts: {final_result['transcripts']}")
         print(f"[_extract_entities_merged] Final Merged Variants: {final_result['variants']}")
         print(f"[_extract_entities_merged] Final Merged Drugs: {final_result['drugs']}")
+        print(f"[_extract_entities_merged] Sequence gene records: {len(final_result['sequence_gene_records'])} {final_result['sequence_gene_records']}")
 
     return final_result
 

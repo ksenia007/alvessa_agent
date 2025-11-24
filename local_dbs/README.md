@@ -41,3 +41,13 @@ Local ChEMBL v35 database for querying drug–target, drug approval, trial, and 
 - `pdb.zip` (unzip into the `pdb/` folder)  
 **Download Location:** https://drive.google.com/file/d/17uZse6xB8T_U_XcUeVWdCntqfmHIsfv0/view?usp=drive_link  
 Contains PDB protein structures (from AlphaFold DB) corresponding to proteins in `alvessa_proteins.db`, used by `tool_prot` for structural visualization and druggability.
+
+- `uniprot_hs_9606_reviewed.db`
+**Download Location:** https://drive.google.com/file/d/1PHNgkvjzYa0sfZ3pFi-fhA74xwVKp93j/view?usp=drive_link
+Locally built from UniProtKB reviewed human proteome (Homo sapiens, tax_id 9606).
+SQLite database of reviewed human UniProt entries for sequence-to-gene resolution and protein annotation (accessions, gene names, isoforms, and core metadata), including a custom index for quick searching genes by amino acid sequences, used by `aa_seq` tool.
+
+- `drugcentral.dump.11012023.db`
+**Download Location:** https://drive.google.com/file/d/1FrovOP2Uab4pyLsgc0XKc5qwNnTYEnQ9/view?usp=drive_link
+Source: Locally built from DrugCentral PostgreSQL dump (2023-11-01).
+SQLite snapshot of DrugCentral for querying approved and investigational drugs, indications, mechanisms of action, targets, and key safety/regulatory annotations, used by `drug_cntrl` tool.
