@@ -69,6 +69,10 @@ def tool_invoke(state: "State") -> "State":
     selected_tools = list(state.get("use_tools", []))
     used = set(state.get("used_tools", []))
     
+    # make sure entity extraction is always first and added it if not used already
+    if "extract_entities" not in used and "extract_entities" not in selected_tools:
+        selected_tools.insert(0, "extract_entities")
+    
     # filter out tools already used
     selected_tools = [t for t in selected_tools if t not in used]
     if DEBUG:
