@@ -541,11 +541,6 @@ def conditioned_claude_node(state: "State") -> "State":
 
     # Pull latest user question
     user_question = state["messages"][-1]["content"]
-    
-    if state.get('mc_setup', False):
-        if DEBUG:
-            print("MC setup detected - adding note to user prompt to answer concisely.")
-        user_question += "\n IMPORTANT: do not add any explanations or reasoning steps. Reply should be exactly 1 character."
         
     print('USER QUESTION')
     print(user_question)
@@ -556,7 +551,7 @@ def conditioned_claude_node(state: "State") -> "State":
         user_content = list(doc_blocks) + [
             {
                 "type": "text",
-                "text": f"User asked: {user_question}\n Use provided information to answer."
+                "text": f"{user_question}\n Use provided information to answer."
             }
         ]
     else:
@@ -564,7 +559,7 @@ def conditioned_claude_node(state: "State") -> "State":
         user_content = list(doc_blocks) + [
             {
                 "type": "text",
-                "text": f"User asked: {user_question}\n Use provided information to answer. Additionally, consider the following feedback as you tried to answer this quesiton before:\n {added_feedback}"
+                "text": f"{user_question}\n Use provided information to answer. Additionally, consider the following feedback as you tried to answer this quesiton before:\n {added_feedback}"
             }
         ]
     

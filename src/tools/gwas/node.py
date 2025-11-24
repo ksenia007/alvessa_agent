@@ -16,14 +16,14 @@ DB_PATH = "local_dbs"
 
 MODE_CONFIG: Dict[str, Dict[str, Any]] = {
     "summary": {
-        "fps_disease_traits": 20,
-        "top_studies_by_risk": 10,
-        "top_studies_by_significance": 10,
+        "fps_disease_traits": 50,
+        "top_studies_by_risk": 100,
+        "top_studies_by_significance": 100,
     },
     "extensive": {
         "fps_disease_traits": 200,
-        "top_studies_by_risk": 100,
-        "top_studies_by_significance": 100,
+        "top_studies_by_risk": 300,
+        "top_studies_by_significance": 300,
     },
 }
 
