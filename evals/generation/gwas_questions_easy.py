@@ -368,7 +368,7 @@ def parse_args():
         help="Directory containing gwas_catalogue_association.tsv",
     )
     parser.add_argument(
-        "--gwas-file", # /Users/sokolova/Documents/research/alvessa_agent/local_dbs/gwas_catalogue_association.tsv 
+        "--gwas-file", 
         type=Path,
         default=None,
         help="Path to GWAS TSV (overrides --db-dir)",
@@ -376,7 +376,7 @@ def parse_args():
     parser.add_argument(
         "--out-dir",
         type=Path,
-        default=ROOT / "benchmark_questions" / "GWAS", # /Users/sokolova/Documents/research/alvessa_agent/benchmarks_generation/questions/GenomeArena/GWAS_new
+        default=ROOT / "benchmark_questions" / "GWAS", 
         help="Directory to write the generated set.csv",
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
