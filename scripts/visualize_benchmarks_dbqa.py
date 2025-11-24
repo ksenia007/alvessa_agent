@@ -10,11 +10,14 @@ import pandas as pd
 # Configure benchmark CSVs to compare (model name -> CSV path)
 MODEL_FILES = {
     "Alvessa": "/Users/sokolova/Documents/research/alvessa_agent/out/sample_dbqa20251123-214810_cli/benchmark_summary.csv",
-    "Claude Sonnet 4.5": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/claude_baseline_dbQA_20251124-1604.csv",
+    "Claude\nSonnet 4.5": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/claude_baseline_dbQA_20251124-1604.csv",
+    "ChatGPT 5.1": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/chatgpt_baseline_dbQA_20251124-1748.csv"
 }
 
 ALVESSA_COLOR = "#D95F02"
-BASELINE_COLOR = "#888888"
+# Palette/hatches for non-Alvessa models (cycled in order of appearance)
+OTHER_COLORS = ["#555555", "#727272", "#8C8C8C", "#A6A6A6", "#BEBEBE"]
+OTHER_HATCHES = ["//", "\\\\", "xx", "..", "++", "--"]
 
 # Same grouping logic as visualize_dbQA_results.py
 GROUP_RULES: List[Tuple[str, callable]] = [
@@ -44,6 +47,8 @@ def _load_benchmark(csv_path: Path) -> pd.DataFrame:
     df = pd.read_csv(csv_path)
     df["is_correct"] = pd.to_numeric(df.get("is_correct", 0), errors="coerce").fillna(0).astype(int)
     df["question"] = df.get("question", "").fillna("").astype(str)
+    df["source_folder"] = df.get("source_folder", "").fillna("").astype(str).str.strip()
+    df["source_name"] = df.get("source_name", "").fillna("").astype(str).str.strip()
     df["question_group"] = df["question"].apply(_assign_group)
     return df
 
@@ -81,6 +86,20 @@ def _style_axes(ax, theme: str) -> None:
     ax.set_ylim(0, 1.05)
 
 
+def _compute_styles(models_order: List[str]) -> Dict[str, Tuple[str, str | None]]:
+    styles: Dict[str, Tuple[str, str | None]] = {}
+    other_idx = 0
+    for model in models_order:
+        if model.lower().startswith("alvessa"):
+            styles[model] = (ALVESSA_COLOR, None)
+        else:
+            color = OTHER_COLORS[other_idx % len(OTHER_COLORS)]
+            hatch = OTHER_HATCHES[other_idx % len(OTHER_HATCHES)]
+            styles[model] = (color, hatch)
+            other_idx += 1
+    return styles
+
+
 def _plot_by_group(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> Path:
     # Collect all groups and define order (prefer Alvessa ordering if present)
     all_groups = set()
@@ -102,21 +121,17 @@ def _plot_by_group(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> 
         groups = ["All"] + [g for g in groups if g != "All"]
 
     x = range(len(groups))
-    fig, ax = plt.subplots(figsize=(max(10, len(groups) * 0.7), 4.8))
+    fig, ax = plt.subplots(figsize=(max(15, len(groups) * 0.7), 4.8))
 
-    width = 0.35
     models_order = list(data.keys())
+    styles = _compute_styles(models_order)
     n_models = len(models_order)
+    width = min(0.8 / max(1, n_models), 0.28)
     for idx, model in enumerate(models_order):
         df = data[model]
         acc_map = dict(zip(df["question_group"], df["accuracy"]))
         vals = [acc_map.get(g, 0.0) for g in groups]
-        if model.lower().startswith("alvessa"):
-            color = ALVESSA_COLOR
-            hatch = None
-        else:
-            color = BASELINE_COLOR
-            hatch = "//"
+        color, hatch = styles.get(model, ("#888888", "//"))
         positions = [p + (idx - (n_models - 1) / 2) * width for p in x]
         ax.bar(positions, vals, width=width, color=color, edgecolor="black", hatch=hatch, label=model)
 
@@ -126,6 +141,44 @@ def _plot_by_group(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> 
     ax.legend(fontsize=11)
 
     fname = "benchmark_dbqa_by_group_white.png" if theme == "white" else "benchmark_dbqa_by_group_black.png"
+    out_path = out_dir / fname
+    if theme == "white":
+        fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False, facecolor="white")
+    else:
+        fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=True)
+    plt.close(fig)
+    return out_path
+
+
+def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> Path:
+    labels = list(data.keys())
+    styles = _compute_styles(labels)
+
+    accuracies = []
+    for name, df in data.items():
+        # Prefer explicit "All" row; fallback to mean of is_correct
+        all_row = df[df["question_group"] == "All"]
+        if not all_row.empty:
+            accuracies.append(all_row["accuracy"].iloc[0])
+        else:
+            accuracies.append(df["accuracy"].mean() if not df.empty else 0.0)
+
+    fig, ax = plt.subplots(figsize=(max(5, len(labels) * 1.2), 4.0))
+    width = 0.6
+    colors = []
+    hatches = []
+    for name in labels:
+        color, hatch = styles.get(name, ("#888888", "//"))
+        colors.append(color)
+        hatches.append(hatch)
+    bars = ax.bar(labels, accuracies, color=colors, edgecolor="black", width=width)
+    for bar, hatch in zip(bars, hatches):
+        if hatch:
+            bar.set_hatch(hatch)
+    ax.set_xticklabels(labels, rotation=0, ha="center", fontsize=12, color=("#111111" if theme == "white" else "#f5f5f5"))
+    _style_axes(ax, theme)
+
+    fname = "benchmark_dbqa_overall_white.png" if theme == "white" else "benchmark_dbqa_overall_black.png"
     out_path = out_dir / fname
     if theme == "white":
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False, facecolor="white")
@@ -160,6 +213,10 @@ def main() -> int:
     white = _plot_by_group(model_dfs, figures_dir, theme="white")
     black = _plot_by_group(model_dfs, figures_dir, theme="black")
     print(f"Saved dbQA group plots: {white}, {black}")
+
+    white_overall = _plot_overall(model_dfs, figures_dir, theme="white")
+    black_overall = _plot_overall(model_dfs, figures_dir, theme="black")
+    print(f"Saved dbQA overall plots: {white_overall}, {black_overall}")
     return 0
 
 
