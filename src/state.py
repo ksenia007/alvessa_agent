@@ -46,6 +46,7 @@ class State(TypedDict, total=False):
     gene_level_gencode: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     prompt: Annotated[str, operator.add]
     mc_setup: Annotated[bool, operator.or_]
+    sequence_gene_records: Annotated[List[Dict[str, Any]], operator.add]
     
     # to replace the keys commented out below w/ proper gene objects
     gene_entities: Annotated[Dict[str, "Gene"], operator.or_]
