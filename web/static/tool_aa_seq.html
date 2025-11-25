@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AA Sequence – UniProt/Gene Viewer</title>
+
+  <!-- Inline CSS injected by Python -->
+  {{CSS_INLINE}}
+
+  <!-- Inline JS injected by Python (defines aaSeqData + UI logic) -->
+  {{JS_INLINE}}
+</head>
+
+<body>
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <div id="controls">
+      <label for="geneSelect">Gene:</label>
+      <select id="geneSelect" aria-label="Select gene"></select>
+    </div>
+  </div>
+
+  <!-- Main viewer container -->
+  <div id="viewer-container">
+
+    <!-- Mapped UniProt hits per gene -->
+    <section id="mappedSection" class="collapsible-section" style="display:none;">
+      <h2 class="collapsible-header" role="button" tabindex="0">
+        <span class="toggle-icon">▸</span>
+        <span class="title">Mapped UniProt Hits</span>
+        <span class="count"></span>
+      </h2>
+      <div class="collapsible-content">
+        <table class="aa-seq-table">
+          <thead>
+            <tr>
+              <th>Gene / Accession</th>
+              <th>Entrez Gene ID</th>
+              <th>Score (%)</th>
+              <th>Coverage</th>
+              <th>Alignment Length</th>
+              <th>Query Length</th>
+              <th>Query Sequence</th>
+              <th>UniProt Reference Sequence</th>
+            </tr>
+          </thead>
+          <tbody id="mappedTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Hits without an associated gene_name -->
+    <section id="unmappedSection" class="collapsible-section" style="display:none;">
+      <h2 class="collapsible-header" role="button" tabindex="0">
+        <span class="toggle-icon">▸</span>
+        <span class="title">UniProt Hits Without Gene Annotation</span>
+        <span class="count"></span>
+      </h2>
+      <div class="collapsible-content">
+        <table class="aa-seq-table">
+          <thead>
+            <tr>
+              <th>Accession</th>
+              <th>Canonical Accession</th>
+              <th>Score (%)</th>
+              <th>Coverage</th>
+              <th>Alignment Length</th>
+              <th>Query Length</th>
+              <th>Query Sequence</th>
+              <th>UniProt Reference Sequence</th>
+            </tr>
+          </thead>
+          <tbody id="unmappedTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

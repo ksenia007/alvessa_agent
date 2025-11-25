@@ -17,6 +17,11 @@ from src.alvessa.domain.variant_class import Variant
 
 from src.tools.aa_seq.seq_search import resolve_sequences_to_gene_records
 
+#Amino acid recognition constants
+MIN_AA_LEN = 10
+AA_CHARS = "ACDEFGHIKLMNPQRSTVWY"
+AA_SET = set(AA_CHARS + AA_CHARS.lower())
+
 # Global variables to cache the models
 _gliner_model = None
 _flair_model = None
@@ -321,6 +326,20 @@ def _extract_drug_entities(text: str) -> Dict[str, Dict[str, Any]]:
 
     return matches
 
+def _looks_like_aa_sequence(token: str, min_len: int = MIN_AA_LEN) -> bool:
+    """
+    Heuristic: return True if `token` is essentially an amino acid sequence.
+
+    - Strip non-letters.
+    - Must be at least `min_len` long.
+    - All letters must be in the AA alphabet (ACDEFGHIKLMNPQRSTVWY).
+    """
+    if not token:
+        return False
+    letters = re.sub(r"[^A-Za-z]", "", token)
+    if len(letters) < min_len:
+        return False
+    return all(ch.upper() in AA_CHARS for ch in letters)
 
 def _extract_candidate_sequences(text: str) -> List[str]:
     """
@@ -335,10 +354,6 @@ def _extract_candidate_sequences(text: str) -> List[str]:
           * FASTA-style blocks (lines after '>' headers are joined).
       - Returns unique sequences in the order they are found.
     """
-
-    MIN_AA_LEN = 10
-    AA_CHARS = "ACDEFGHIKLMNPQRSTVWY"
-    AA_SET = set(AA_CHARS + AA_CHARS.lower())
 
     sequences: List[str] = []
     seen = set()
@@ -406,31 +421,41 @@ def _extract_candidate_sequences(text: str) -> List[str]:
 
     return sequences
 
-
 def _extract_sequence_based_genes(text: str) -> Dict[str, Any]:
     """
-    Skeleton integration for sequence-based gene discovery.
+    Integration for sequence-based gene discovery.
 
     This:
       1) extracts candidate protein sequences from the user text;
       2) calls resolve_sequences_to_gene_records(sequences);
       3) normalizes whatever structure comes back into:
          - a flat list of gene symbols;
-         - the raw gene records (for downstream tools / debugging).
-
-    The exact shape of the gene records is intentionally flexible to match the
-    future seq_tool implementation.
+         - the raw gene records (for downstream tools / debugging);
+         - the list of AA sequences used for the search.
     """
     sequences = _extract_candidate_sequences(text)
     if not sequences:
-        return {"genes": [], "gene_records": []}
+        if DEBUG:
+            print("[_extract_sequence_based_genes] No candidate AA sequences found.")
+        return {"genes": [], "gene_records": [], "sequences": []}
 
     records = resolve_sequences_to_gene_records(sequences)
 
-    if DEBUG:
-        print(f"[_extract_sequence_based_genes] Resolved {len(records.get('genes', []))} genes from {len(sequences)} sequences.")
+    genes = records.get("genes", []) or []
 
-    return records
+    if DEBUG:
+        print(
+            f"[_extract_sequence_based_genes] Resolved "
+            f"{len(genes)} genes from {len(sequences)} sequences; "
+            #f"{len(gene_records)} gene records."
+        )
+
+    # Normalized shape for the rest of the pipeline
+    return {
+        "genes": genes,
+        #"gene_records": gene_records,
+        "sequences": sequences,
+    }
 
 def _verify_genes_in_query(text: str, candidate_genes: List[str]) -> List[str]:
     """Lightweight verification: keep candidates that visibly appear in the query."""
@@ -630,10 +655,9 @@ def _expand_and_refine_gene_names(base_genes: List[str], text: str) -> List[str]
         print(f"[_expand_and_refine_gene_names] Expanded {len(base_genes)} base genes to {len(expanded_genes)}.")
     return list(expanded_genes)
 
-
 def _post_process_entities(genes: List[str], traits: List[str]) -> Dict[str, List[str]]:
     """Cleans and filters lists of genes and traits."""
-    
+
     def clean_list(items: List[str]) -> List[str]:
         cleaned_items = []
         for item in items:
@@ -643,17 +667,24 @@ def _post_process_entities(genes: List[str], traits: List[str]) -> Dict[str, Lis
     processed_genes = clean_list(genes)
     processed_traits: List[str] = []  # traits disabled
 
-    # Filter genes by length and for invalid content.
+    # Basic filters
     processed_genes = [g for g in processed_genes if "no gene" not in g.lower()]
     processed_genes = [g for g in processed_genes if 2 <= len(g) <= 30]
-    # processed_genes = [g for g in processed_genes if g.lower() not in {"mirna", "mir"}]
+
+    # Drop things that look like amino acid sequences
+    filtered_genes = []
+    for g in processed_genes:
+        if _looks_like_aa_sequence(g):
+            if DEBUG:
+                print(f"[_post_process_entities] Dropping AA-like token from genes: {g}")
+            continue
+        filtered_genes.append(g)
 
     # Return unique, sorted lists
     return {
-        "genes": sorted(list(dict.fromkeys(processed_genes))),
+        "genes": sorted(list(dict.fromkeys(filtered_genes))),
         "traits": []
     }
-
 
 def _extract_entities_merged(text: str) -> Dict[str, Any]:
     """Extracts entities using all models, merges the results, and post-processes them."""
@@ -663,7 +694,7 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
     regex_result = _extract_entities_with_regex(text)
     drug_matches = _extract_drug_entities(text)
     seq_result = _extract_sequence_based_genes(text)
-    
+
     # Merge gene symbols and Ensembl Gene IDs (ENSG)
     raw_genes = (
         claude_result.get("genes", []) +
@@ -673,29 +704,34 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
         seq_result.get("genes", [])
     )
     raw_traits = []  # traits disabled
-    
+
     # Merge protein symbols and Ensembl Protein IDs (ENSP)
     raw_proteins = (
         flair_result.get("proteins", []) +
         gliner_result.get("proteins", []) +
         regex_result.get("ensembl_proteins", [])
     )
-    
-    full_drugs = claude_result.get("drugs", []) + sorted(list({info["name"] for info in drug_matches.values()}))
+
+    full_drugs = claude_result.get("drugs", []) + sorted(
+        list({info["name"] for info in drug_matches.values()})
+    )
     # remove duplicates due to the upper / lower case differences and other minor variations
     full_drugs = [i.lower() for i in full_drugs]
     full_drugs = sorted(list(set(full_drugs)))
-    
+
     # Does the microRNA expansion
     expanded_genes = _expand_and_refine_gene_names(raw_genes, text)
-
     processed_entities = _post_process_entities(expanded_genes, raw_traits)
-    
+
+    # De-duplicate genes
+    unique_genes = sorted(set(processed_entities.get("genes", [])))
+
+    # Pull sequence-derived records & sequences
+    aa_sequences = seq_result.get("sequences", []) or []
+
     final_result = {
-        # Added the verification step to the extracted gene list
-        #NOTE: This verification is disabled to permit addition of new genes from AA seq's (Dmitri)
-        #"genes": _verify_genes_in_query(text, processed_entities["genes"]),
-        "genes": processed_entities["genes"],
+        # NOTE: verification is intentionally disabled to allow adding new genes
+        "genes": unique_genes,
         "traits": [],
         "proteins": sorted(list(set(raw_proteins))),
         "transcripts": sorted(list(set(regex_result.get("ensembl_transcripts", [])))),
@@ -703,9 +739,11 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
         "chr_pos_variants": regex_result.get("chr_pos_variants", {}),
         "drugs": full_drugs,
         "drug_matches": drug_matches,
-        "sequence_gene_records": seq_result.get("gene_records", [])
+        # Sequence-derived info for downstream tools
+        #"sequence_gene_records": sequence_gene_records,
+        "aa_sequences": aa_sequences,
     }
-    
+
     if DEBUG:
         print(f"[_extract_entities_merged] Final Merged Genes: {final_result['genes']}")
         print(f"[_extract_entities_merged] Final Merged Traits: {final_result['traits']}")
@@ -713,10 +751,12 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
         print(f"[_extract_entities_merged] Final Merged Transcripts: {final_result['transcripts']}")
         print(f"[_extract_entities_merged] Final Merged Variants: {final_result['variants']}")
         print(f"[_extract_entities_merged] Final Merged Drugs: {final_result['drugs']}")
-        print(f"[_extract_entities_merged] Sequence gene records: {len(final_result['sequence_gene_records'])} {final_result['sequence_gene_records']}")
+        print(
+            f"[_extract_entities_merged] AA sequences extracted: "
+            f"{len(final_result['aa_sequences'])}"
+        )
 
     return final_result
-
 
 # --- Agent Nodes ---
 

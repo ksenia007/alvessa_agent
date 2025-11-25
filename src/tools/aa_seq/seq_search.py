@@ -46,6 +46,7 @@
 #         "score": ...,
 #         "coverage": ...,
 #         "alignment_length": ...,
+#         "uniprot_sequence": "<full_uniprot_sequence_for_acc>",
 #       },
 #       ...
 #     ]
@@ -93,6 +94,7 @@ class Hit:
     score: float              # similarity in percent (0..100)
     coverage: float           # fraction of query covered (0..1), approx
     alignment_length: int     # approximate aligned length
+    uniprot_sequence: Optional[str] = None  # full UniProt AA sequence for this acc
 
 
 # --------------------------------------------------------------------
@@ -238,6 +240,7 @@ def _substring_search_hits(
             score=similarity,
             coverage=coverage,
             alignment_length=align_len,
+            uniprot_sequence=sequence,
         )
         hits.append(h)
 
@@ -370,6 +373,7 @@ def _kmer_approx_search_hits(
             score=similarity_percent,
             coverage=coverage,
             alignment_length=align_len,
+            uniprot_sequence=sequence,
         )
         hits.append(h)
 
@@ -463,6 +467,7 @@ def resolve_sequences_to_gene_records(
               "score": ...,
               "coverage": ...,
               "alignment_length": ...,
+              "uniprot_sequence": "<full_uniprot_sequence_for_acc>",
             },
             ...
           ]
@@ -556,6 +561,7 @@ def resolve_sequences_to_gene_records(
                     "score": d["score"],
                     "coverage": d["coverage"],
                     "alignment_length": d["alignment_length"],
+                    "uniprot_sequence": d.get("uniprot_sequence") or "",
                 }
             )
 
