@@ -548,14 +548,16 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
             <div class="title">Protein Structure</div>
             <div id="protMount"></div>
           </div>
-  
 
-  <div id="chemblCard" class="card" style="display:none">
-    <div class="title">ChEMBL Data</div>
-    <div id="chemblMount"></div>
-  </div>
-  
-  
+          <div id="chemblCard" class="card" style="display:none">
+            <div class="title">ChEMBL Data</div>
+            <div id="chemblMount"></div>
+          </div>
+
+          <div id="aaSeqCard" class="card" style="display:none">
+            <div class="title">AA Sequence Mapping (UniProt / Genes)</div>
+            <div id="aaSeqMount"></div>
+          </div>
 
           <div id="rawCard" class="card" style="display:none">
             <div class="title">Raw State (debug)</div>
@@ -814,7 +816,74 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
               frame.contentWindow?.postMessage({ type:"theme", theme: isLightNow ? "light" : "dark" }, "*");
             });
           }
-          
+
+          function renderAaSeq(st) {
+        const mount = document.getElementById("aaSeqMount");
+        const card  = document.getElementById("aaSeqCard");
+        if (!mount || !card) return;
+
+        // Back-end currently sets aa_seq_html; leave room for future iframe URL
+        const rawHtml   = st?.aa_seq_html || st?.ui?.aa_seq_html;
+        const iframeUrl = st?.aa_seq_iframe_url || st?.ui?.aa_seq_iframe_url;
+
+        if (!rawHtml && !iframeUrl) {
+          card.style.display = "none";
+          mount.innerHTML = "";
+          return;
+        }
+
+        mount.innerHTML = "";
+        card.style.display = "block";
+
+        const frame = document.createElement("iframe");
+        frame.className = "prot-frame";
+        frame.setAttribute(
+          "sandbox",
+          "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads"
+        );
+        frame.setAttribute("referrerpolicy", "no-referrer");
+
+        if (rawHtml && typeof rawHtml === "string") {
+          const isLight = document.body.classList.contains("light");
+
+          // Inject initial theme into AA-seq HTML to avoid flash
+          const html = isLight
+            ? rawHtml.replace(/<body(\s|>)/i, '<body class="light"$1')
+            : rawHtml;
+
+          frame.srcdoc = html;
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "ghost";
+          saveBtn.textContent = "Save HTML";
+          saveBtn.style.margin = "6px 0 10px";
+          saveBtn.onclick = () => {
+            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "aa_seq_view.html";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 800);
+          };
+          mount.appendChild(saveBtn);
+        } else {
+          // Fallback: external URL if we ever use one
+          frame.src = iframeUrl;
+        }
+
+        mount.appendChild(frame);
+
+        // Keep AA-seq viewer in sync with theme
+        const isLightNow = document.body.classList.contains("light");
+        frame.addEventListener("load", () => {
+          frame.contentWindow?.postMessage(
+            { type: "theme", theme: isLightNow ? "light" : "dark" },
+            "*"
+          );
+        });
+      }
+
           function renderRaw(st){
           const card = byId("rawCard");
           if (!st) { card.style.display = "none"; return; }
@@ -853,6 +922,7 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
               });
             renderProt(STATE);
             renderChembl(STATE);
+            renderAaSeq(STATE);
             renderRaw(STATE);
             broadcastThemeToIframes();
           }

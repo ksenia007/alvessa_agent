@@ -57,8 +57,19 @@ def _safe_merge(acc: dict, out: dict) -> None:
 
         # de-duplicate lists if both sides are lists
         if isinstance(v, list) and isinstance(acc.get(k), list):
-            acc[k] = list(dict.fromkeys(acc[k] + v))
+            merged = acc[k] + v
+            try:
+                # Works for hashable elements (str, int, tuples, etc.)
+                acc[k] = list(dict.fromkeys(merged))
+            except TypeError:
+                if DEBUG:
+                    print("[SAFE MERGE] list-of-dicts (or other unhashables) for key:", k)
+                    print("  acc[k] type:", type(acc[k][0]) if acc[k] else None)
+                    print("  v type:", type(v[0]) if v else None)
+                # Elements are unhashable (e.g. dicts) – just concatenate
+                acc[k] = merged
             continue
+
 
         # default: overwrite
         acc[k] = v

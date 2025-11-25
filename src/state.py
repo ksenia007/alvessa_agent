@@ -46,7 +46,11 @@ class State(TypedDict, total=False):
     gene_level_gencode: Annotated[Dict[str, Dict[str, Any]], operator.or_]
     prompt: Annotated[str, operator.add]
     mc_setup: Annotated[bool, operator.or_]
-    sequence_gene_records: Annotated[List[Dict[str, Any]], operator.add]
+    aa_sequences: Annotated[List[str], operator.add]
+    #AA Sequence-to-Gene data
+    aa_seq_result: Annotated[Dict[str, Any], operator.or_]
+    aa_seq_summary: Annotated[str, operator.add]
+    
     
     # to replace the keys commented out below w/ proper gene objects
     gene_entities: Annotated[Dict[str, "Gene"], operator.or_]
@@ -71,7 +75,10 @@ class State(TypedDict, total=False):
 
     # For ChemBL drug-target interactive viewer
     chembl_html: Annotated[str, operator.add]
-    
+
+    # For AA Sequence-to-Gene interactive viewer
+    aa_seq_html: Annotated[str, operator.add]
+
     # General free-text annotations (not tied to a specific gene)
     text_notes: Annotated[List[str], operator.add]
 

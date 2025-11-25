@@ -1,0 +1,259 @@
+/* ============================================================
+   AA Sequence – UniProt/Gene Viewer Stylesheet
+   Unified with Alvessa UI Theme (dark/light)
+   ============================================================ */
+
+/* === Theme Variables === */
+:root {
+  --bg-main: #0b1020;          /* matches --bg */
+  --bg-card: #121832;          /* matches --card */
+  --bg-panel: #1a2347;         /* matches --pill-bg */
+  --text-main: #e6e8ef;        /* matches --fg */
+  --text-muted: #aab4d6;       /* matches --muted */
+  --border: #1e2a52;           /* matches --line */
+  --border-strong: #2a3a72;    /* matches --accent */
+  --accent: #2a3a72;           /* brand blue-accent */
+
+  --link: #9cc9ff;
+  --link-hover: #d6e7ff;
+  --link-visited: #b9d6ff;
+  --focus-ring: 0 0 0 3px rgba(156, 201, 255, 0.35);
+}
+
+/* === Light Theme === */
+body.light {
+  --bg-main: #ffffff;
+  --bg-card: #ffffff;
+  --bg-panel: #f5f7fb;
+  --text-main: #0b1020;
+  --text-muted: #6b7280;
+  --border: #d8dce6;
+  --border-strong: #c8cfe0;
+  --accent: #1b2450;
+
+  --link: #1b45f0;
+  --link-hover: #0d36c7;
+  --link-visited: #5a3be6;
+  --focus-ring: 0 0 0 3px rgba(27, 69, 240, 0.25);
+}
+
+/* === Global Layout === */
+/* Prevent layout shift when vertical scrollbar toggles */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Fallback for older browsers */
+@supports not (scrollbar-gutter: stable) {
+  body { overflow-y: scroll; }
+}
+
+body {
+  font-family: "Segoe UI", Roboto, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-main);
+  margin: 0;
+  padding: 0;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+h1, h2 {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+h1 {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.25em;
+  margin-top: 0.75em;
+}
+
+/* === Global Link Styles === */
+a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.12s ease;
+}
+a:hover { color: var(--link-hover); }
+a:visited { color: var(--link-visited); }
+a:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 4px;
+}
+
+/* === Collapsible Section Headers === */
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.45em 0.8em;
+  margin: 0.5em 0 0.3em 0;
+  transition: none;
+}
+.collapsible-header:hover {
+  background: var(--bg-panel);
+  border-color: var(--border);
+}
+.collapsible-header:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.collapsible-header .toggle-icon {
+  font-size: 1em;
+  margin-right: 0.6em;
+  color: var(--accent);
+  flex-shrink: 0;
+  width: 1.2em;
+  text-align: center;
+}
+
+.collapsible-header .title {
+  flex: 1;
+  font-size: 1.05em;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.collapsible-header .count {
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: 0.4em;
+}
+
+/* === Collapsible Content === */
+.collapsible-content {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.25s ease;
+}
+.collapsible-content.open {
+  max-height: 100000px;
+  opacity: 1;
+  margin-top: 0.3em;
+  overflow: visible;
+}
+
+/* === Toolbar === */
+#toolbar {
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6em 1em;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+#controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6em;
+}
+
+#controls label {
+  color: var(--text-muted);
+  font-size: 0.95em;
+}
+
+#geneSelect,
+#sequenceSelect {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.95em;
+  min-width: 180px;
+}
+
+/* === Viewer Container === */
+#viewer-container {
+  padding: 1em 2em;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* === Tables === */
+.aa-seq-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.4em;
+  background: var(--bg-card);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.aa-seq-table th,
+.aa-seq-table td {
+  border: 1px solid var(--border);
+  padding: 0.6em 0.8em;
+  text-align: left;
+  font-size: 0.95em;
+  vertical-align: top;
+}
+
+.aa-seq-table th {
+  background: var(--bg-panel);
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.aa-seq-table tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Stable hover, no flicker */
+.aa-seq-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transition: none;
+}
+
+/* Monospace for sequences */
+.aa-seq-table .seq-cell {
+  font-family: "Fira Code", "Source Code Pro", Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.35;
+}
+
+/* Numeric columns */
+.aa-seq-table .num {
+  white-space: nowrap;
+}
+
+/* Muted helper text */
+.muted {
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  #viewer-container { padding: 1em; }
+
+  .aa-seq-table th,
+  .aa-seq-table td {
+    font-size: 0.9em;
+    padding: 0.5em;
+  }
+
+  #controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  #geneSelect,
+  #sequenceSelect {
+    width: 100%;
+    max-width: 100%;
+  }
+}

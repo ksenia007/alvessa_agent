@@ -1,14 +1,25 @@
 # src/tools/aa_seq/__init__.py
 # ===========================================================
-#  AA Sequence/ Gene Tool Package
+#  AA Sequence / Gene Tool Package
 # ===========================================================
 #
 # Author: Dmitri Kosenkov
 # Created: 2025-11-20
+# Updated: 2025-11-25
 #
-# This package enabels AA sequence-to-gene resolution
-# using a local copy of UniProtKB (fast).
+# This package enables fast AA sequence-to-gene resolution
+# using a local copy of UniProtKB.
 #
+# It provides:
+#   - Paths to the UniProt SQLite database.
+#   - A validation helper for the database schema and version.
+#   - Shared layout for local_dbs, out, and web/static directories.
+#   - Frontend template paths for the AA-seq interactive UI.
+#
+# The actual sequence-to-gene logic lives in:
+#   - src/tools/aa_seq/seq_search.py
+# and is consumed by the AA sequence agent node:
+#   - src/tools/aa_seq/node.py
 #
 # Expected SQLite schema (built outside of Alvessa):
 #
@@ -36,24 +47,28 @@ import sqlite3
 # --- Package / Repo Roots ----------------------------------------------------
 
 PACKAGE_ROOT = Path(__file__).resolve().parent
-# src/tools/uniprot/__init__.py -> REPO_ROOT = project root (alvessa_agent)
+# src/tools/aa_seq/__init__.py -> REPO_ROOT = project root (alvessa_agent)
 REPO_ROOT = PACKAGE_ROOT.parents[2]
 
 # --- Local Storage Layout ----------------------------------------------------
 
-# Matches your actual tree:
-#   <REPO_ROOT>/local_dbs
-#   <REPO_ROOT>/out
-#   <REPO_ROOT>/web/static
 LOCAL_DBS_DIR = REPO_ROOT / "local_dbs"
 OUTPUT_DIR = REPO_ROOT / "out"
+WEB_DIR = REPO_ROOT / "web"
+STATIC_DIR = WEB_DIR / "static"
 
-# Ensure output dir exists (for any future reports / logs)
+# Ensure output dir exists (for any future reports / logs / HTML)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+# --- Frontend Templates (AA-seq UI) -----------------------------------------
+
+HTML_TEMPLATE = STATIC_DIR / "tool_aa_seq.html"
+CSS_TEMPLATE = STATIC_DIR / "tool_aa_seq.css"
+JS_TEMPLATE = STATIC_DIR / "tool_aa_seq.js"
 
 # --- UniProt Database File ---------------------------------------------------
 #
-# This should correspond to the DB built by uniprot_db_build.py
+# This should correspond to the DB built by build_uniprot_db_with_kmer.py
 # (DB_PATH_DEFAULT = data/uniprot_hs_9606_reviewed.db), but
 # relocated into <REPO_ROOT>/local_dbs.
 #
@@ -70,7 +85,8 @@ REQUIRED_META = {
 UPDATE_MSG = (
     "Please ensure the UniProt SQLite database exists at:\n"
     f"  {UNIPROT_DB_PATH}\n"
-    "and that it was built with the expected schema (tables `uniprot` and `meta`)."
+    "and that it was built with the expected schema "
+    "(tables `uniprot` and `meta`)."
 )
 
 
@@ -120,7 +136,8 @@ def validate_uniprot_db(db_path: Path | None = None) -> None:
         if row is None:
             raise RuntimeError(
                 f"Table 'meta' not found in DB: {path}\n"
-                "The DB should be built by uniprot_db_build.py with provenance metadata."
+                "The DB should be built by build_uniprot_db_with_kmer.py "
+                "with provenance metadata."
             )
 
         # Check db_version in meta
@@ -129,7 +146,7 @@ def validate_uniprot_db(db_path: Path | None = None) -> None:
         if row is None or row[0] is None:
             raise RuntimeError(
                 f"'meta.db_version' missing in DB: {path}\n"
-                "Please rebuild the DB using uniprot_db_build.py."
+                "Please rebuild the DB using build_uniprot_db_with_kmer.py."
             )
 
         db_version = int(row[0])
@@ -152,6 +169,12 @@ __all__ = [
     "REPO_ROOT",
     "LOCAL_DBS_DIR",
     "OUTPUT_DIR",
+    "WEB_DIR",
+    "STATIC_DIR",
+    # Frontend
+    "HTML_TEMPLATE",
+    "CSS_TEMPLATE",
+    "JS_TEMPLATE",
     # Database
     "UNIPROT_DB_PATH",
     "REQUIRED_META",
