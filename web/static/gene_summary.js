@@ -340,6 +340,65 @@ function msigdbCategoryNote(cat) {
     `;
   }
 
+  function renderAllianceGenomeSection(entries){
+    if (!Array.isArray(entries) || entries.length === 0) return "";
+
+    const cleaned = [];
+    for (const raw of entries) {
+      if (!raw || typeof raw !== "object") continue;
+      const species = (raw.species ? String(raw.species) : "").trim() || "Unknown species";
+      const synopsis = String(raw.synopsis || raw.geneSynopsis || "").trim();
+      const auto = String(raw.automated_synopsis || raw.automatedGeneSynopsis || "").trim();
+      const id = String(raw.id || raw.alliance_id || raw.primaryKey || "").trim();
+      if (!synopsis && !auto && !id && !species) continue;
+      cleaned.push({ species, synopsis, auto, id });
+    }
+    if (!cleaned.length) return "";
+
+    const grouped = {};
+    for (const rec of cleaned) {
+      grouped[rec.species] = grouped[rec.species] || [];
+      grouped[rec.species].push(rec);
+    }
+
+    const speciesBlocks = Object.entries(grouped)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([species, recs]) => {
+        const recBlocks = recs.map(rec => {
+          const idChip = rec.id
+            ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:6px;"><span class="pill wrap">ID: ${escapeInline(rec.id)}</span></div>`
+            : "";
+          const curator = rec.synopsis
+            ? `<div class="blk-text" style="line-height:1.45;">${escapeInline(rec.synopsis)}</div>`
+            : `<div class="muted">No curator summary.</div>`;
+          const autoSum = rec.auto
+            ? `<div class="muted blk-text" style="margin-top:6px; line-height:1.4;">Auto: ${escapeInline(rec.auto)}</div>`
+            : "";
+          return `
+            <div style="margin-top:6px; padding:8px; border:1px solid var(--line); border-radius:8px; background:var(--input);">
+              ${idChip}
+              ${curator}
+              ${autoSum}
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <div style="margin-top:10px; border:1px solid var(--line); border-radius:10px; padding:10px; background:var(--card);">
+            <div class="muted" style="font-weight:700; margin-bottom:4px;">${escapeInline(species)}${recs.length > 1 ? ` (${recs.length})` : ""}</div>
+            ${recBlocks}
+          </div>
+        `;
+      }).join("");
+
+    return `
+      <details style="margin-top:8px;">
+        <summary ${TOP_SUMMARY_STYLE}>Alliance of Genomes (${cleaned.length})</summary>
+        <div style="margin-top:6px;">${speciesBlocks}</div>
+      </details>
+    `;
+  }
+
   function renderInteractionsBlock({ sym, humanTSV, nonTSV, humanCount, nonhumanCount, goEnrichment }) {
     const inner = renderInteractionsInner({ sym, humanTSV, nonTSV, humanCount, nonhumanCount, goEnrichment });
     if (!inner) return "";
@@ -527,6 +586,11 @@ sections.push(renderIsoformsSection(tx.isoforms));
       
       sections.push(renderObjectSection("Binding peaks", g.binding_peaks));
       sections.push(renderObjectSection("miRNA targets", g.mirna_targets));
+
+      const allianceEntries = g.alliancegenome_info
+        || st?.gene_entities?.[sym]?.alliancegenome_info
+        || [];
+      sections.push(renderAllianceGenomeSection(allianceEntries));
   
       // Interactions: TSV counts + collapsible previews + special GO enrichment toggle
       const interactionsBlock = renderInteractionsBlock({
