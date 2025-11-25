@@ -218,7 +218,7 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
     
     # check the length of user_msg, and if it exceeds MAX_TOKENS, we will split and make multiple calls
     # approx tokens as # words * 1.33
-    approx_tokens = int(len(user_msg.split()) * 1.33)
+    approx_tokens = int(len(user_msg.split()) * 1.5)
     if approx_tokens > MAX_TOKENS:
         if DEBUG:
             print(f"[_llm_feedback] Warning: user_msg approx tokens {approx_tokens} exceeds MAX_TOKENS {MAX_TOKENS}. Truncating statements.")
@@ -287,6 +287,8 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
 
 
 def _merge_chunked_feedback(chunks: List[Dict[str, Any]] | None) -> Dict[str, Any]:
+    if DEBUG:
+        print(f"[_merge_chunked_feedback] Merging {len(chunks) if chunks else 0} chunks")
     if not chunks:
         return {}
     if len(chunks) == 1:

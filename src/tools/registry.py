@@ -34,7 +34,7 @@ Do not include any explanations or extra text outside the list.
 """
 
 PACKAGE_NAME = __name__.rsplit(".", 1)[0]
-EXCLUDED_MODULES = {"agent", "shared", "registry", "base", "clinvar"}
+EXCLUDED_MODULES = {"agent", "shared", "registry", "base"}
 
 
 def _iter_tool_modules() -> Iterable[ModuleType]:

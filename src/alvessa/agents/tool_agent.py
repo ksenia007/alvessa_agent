@@ -214,8 +214,6 @@ def select_tools(state: "State") -> "State":
     except Exception as e:
         print(f"[TOOL SELECTION ERROR] Could not parse: {tool_response}\n{e}")
         selected_tools = []
-    #Always call extract_entities() to extract genes from AA seq's and etc.
-    selected_tools.insert(0, "extract_entities")
 
     selected_tools_main = [t for t in selected_tools if t in TOOL_FN_MAP and t not in used_tools]
     # special case for 'twosample_mr_agent' which allows more complicated semi match, as fomatted twosample_mr_agent-value1-value2

@@ -46,6 +46,7 @@ class Gene:
 
     binding_peaks: Dict[str, Any] = field(default_factory=dict)
     mirna_targets: Dict[str, List[str]] = field(default_factory=dict)
+    alliancegenome_info: List[Dict[str, str]] = field(default_factory=list)
     text_summaries_from_tools: List[str] = field(default_factory=list)
     tools_run: List[str] = field(default_factory=list)
 
@@ -471,6 +472,43 @@ class Gene:
 
     def add_miRNA_targets(self, miRNA: Dict[str, Any]) -> None:
         self.mirna_targets = miRNA or {}
+
+    # ------------------------------------------------------------------
+    # Alliance Genome
+    # ------------------------------------------------------------------
+    def add_alliancegenome_info(self, raw_entry: Dict[str, Any], alliance_id: Optional[str] = None) -> None:
+        """Store a condensed Alliance Genome record (species + summaries)."""
+        entry = raw_entry or {}
+        species_info = entry.get("species", {})
+        species = ""
+        if isinstance(species_info, dict):
+            species = (
+                species_info.get("name")
+                or species_info.get("fullName")
+                or species_info.get("displayName")
+                or species_info.get("commonName")
+                or ""
+            )
+        else:
+            species = str(species_info or "")
+
+        species = species.strip()
+        synopsis = str(entry.get("geneSynopsis", "") or "").strip()
+        auto_synopsis = str(entry.get("automatedGeneSynopsis", "") or "").strip()
+
+        if not any([species, synopsis, auto_synopsis]):
+            return
+
+        record: Dict[str, str] = {
+            "species": species,
+            "synopsis": synopsis,
+            "automated_synopsis": auto_synopsis,
+        }
+        if alliance_id:
+            record["id"] = str(alliance_id).strip()
+
+        if record not in self.alliancegenome_info:
+            self.alliancegenome_info.append(record)
 
     # ------------------------------------------------------------------
     # Serialization & presentation
