@@ -36,10 +36,10 @@ GLINER_ENTITY_LABELS: list = ["gene", "disease", "trait"]
 # -----------------------------------------------------------------------------
 # Anthropic model versions
 # -----------------------------------------------------------------------------
-GENE_EXTRACT_MODEL: str = "claude-haiku-4-5"
-CONDITIONED_MODEL: str = "claude-sonnet-4-5"
-VERIFY_MODEL: str = "claude-haiku-4-5"
-TOOL_SELECTOR_MODEL: str = "claude-sonnet-4-5" 
+GENE_EXTRACT_MODEL: str = "claude-sonnet-4-5-20250929"
+CONDITIONED_MODEL: str = "claude-sonnet-4-5-20250929"
+VERIFY_MODEL: str = "claude-sonnet-4-5-20250929"
+TOOL_SELECTOR_MODEL: str = "claude-sonnet-4-5-20250929" 
 
 ANTHROPIC_API_KEY: str = os.environ["ANTHROPIC_API_KEY"]
 

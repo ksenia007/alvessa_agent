@@ -9,7 +9,7 @@ import pandas as pd
 
 # Hardwired benchmark CSVs (extendable)
 MODEL_FILES = {
-    "Alvessa": "/Users/sokolova/Documents/research/alvessa_agent/out/alvessa_half_GA_20251124-012201_cli/benchmark_summary.csv",
+    "Alvessa": '/Users/sokolova/Documents/research/alvessa_agent/out/20251126-165227_cli/benchmark_summary.csv', #"/Users/sokolova/Documents/research/alvessa_agent/out/alvessa_half_GA_20251124-012201_cli/benchmark_summary.csv",
     "Claude\nSonnet 4.5": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/claude_baseline_GenomeArena_20251124-1607.csv",
     "ChatGPT 5.1": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/chatgpt_baseline_GenomeArena_20251124-1750.csv"
 }
@@ -294,8 +294,8 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
     labels = list(data.keys())
     accuracies = [df["accuracy"].mean() if not df.empty else 0.0 for df in data.values()]
 
-    fig, ax = plt.subplots(figsize=(max(6, len(labels) * 1.4), 4.0))
-    width = min(0.8 / max(1, len(labels)), 0.6)
+    fig, ax = plt.subplots(figsize=(max(3, len(labels) * 1.1), 4.0))
+    width = min(0.95 / max(1, len(labels)), 0.6)
     styles = _compute_styles(labels)
     colors = []
     hatches = []
