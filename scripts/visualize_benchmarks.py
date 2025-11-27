@@ -9,7 +9,7 @@ import pandas as pd
 
 # Hardwired benchmark CSVs (extendable)
 MODEL_FILES = {
-    "Alvessa": "/Users/sokolova/Documents/research/alvessa_agent/out/alvessa_half_GA_20251124-012201_cli/benchmark_summary.csv",
+    "Alvessa": '/Users/sokolova/Documents/research/alvessa_agent/out/20251126-165227_cli/benchmark_summary.csv', #"/Users/sokolova/Documents/research/alvessa_agent/out/alvessa_half_GA_20251124-012201_cli/benchmark_summary.csv",
     "Claude\nSonnet 4.5": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/claude_baseline_GenomeArena_20251124-1607.csv",
     "ChatGPT 5.1": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/chatgpt_baseline_GenomeArena_20251124-1750.csv"
 }
