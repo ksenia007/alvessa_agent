@@ -142,12 +142,34 @@ def _deterministic_verdict(text: str, proofs: List[Dict[str, Any]], idx2title: D
     union_proof = " ".join(p.get("cited_text") or "" for p in proofs)
     union_title = " ".join((p.get("title") or "") for p in proofs)
     union_all = (union_proof + " " + union_title).strip()
+    
+    # for each statement, check if there are any rsid* or ids starting with ENS* or r-hsa-*  or HGNC:* MGI:* RGD:* mentioned that are missing in proofs, where * is the numeric part
+    # we will use regex to find the # patterns after thense IDs to the proof, removing all punctuation - substring match, all on .lower()
+    id_patterns = [
+        r"\brs\d+\b",          # rs + digits
+        r"\bENS[A-Z]\d+\b",    # ENS + one letter + digits (e.g. ENSG00000123456)
+        r"\br-hsa-\d+\b",      # r-hsa- + digits
+        r"\bHGNC:\d+\b",       # HGNC: + digits
+        r"\bMGI:\d+\b",        # MGI: + digits
+        r"\bRGD:\d+\b",        # RGD: + digits
+    ]
+
+    text_lc = (text or "")
+    union_lc = (union_all or "").lower()
+
+    for pattern in id_patterns:
+        for match in re.finditer(pattern, text_lc, flags=re.IGNORECASE):
+            id_str = match.group(0)          # exactly the ID, nothing extra
+            if id_str.lower() not in union_lc:
+                reasons.append(f"missing-id:{id_str}")
 
 
     # Verdict (categorical only)
     if "no-citations" in reasons:
         verdict = "unsupported"
     elif any(r.startswith(( "bad-doc-index")) for r in reasons):
+        verdict = "partial"
+    elif any(r.startswith("missing-id") for r in reasons):
         verdict = "partial"
     else:
         verdict = "supported"
@@ -185,7 +207,7 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
         })
 
     system_msg = (
-        "You are a meticulous research assitant. Provide qualitative feedback on whether each sentence of the following statement is well supported "
+        "You are a meticulous research assitant. Provide qualitative feedback on whether each statement of the following answer is well supported "
         "by the quoted snippets (proofs). Do NOT invent facts or add citations, and double check the numbers.\n"
         "Special case: statements that begin with 'Possible speculation:' are allowed as cautious synthesis IF they are "
         "clearly grounded in the cited evidence. Flag only if they overreach or contradict the proofs.\n"
@@ -197,17 +219,21 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
         "    \"1\": {\"label\": \"partial\", \"feedback\": \"...\"}\n ..."
         "  }\n"
         "}\n"
-        "Where the keys in per_statement correspond to the statement indices.\n"
-        "Note that the output will be parsed with json.loads(), so ensure it is valid JSON.\n"
-        "Note that it is possible that citations consiting of long lists or long chunks got cutoff due to length"
-        "If you see this case, in your feedback direct user to check specific field manually to verify. \n"
-        "For transitional text that is non-problematic or connective, you can label as 'partial'.\n"
+        "The keys in per_statement correspond to the statement indices. Ensure every statement is addressed.\n"
+        "The output will be parsed with json.loads(), so it MUST be valid JSON.\n"
+        "Note: citations consisting of long lists or large chunks may be truncated. If you encounter truncated proofs, advise the user to manually check the specific field.\n"
+        "Non-problematic transitional or connective text may be labeled as 'supported' with a brief explanation.\n"
         "Label guidance:\n"
         "- supported: fully backed by the provided proofs.\n"
-        "- partial: generally correct but missing a key entity/number or the proofs are only loosely aligned.\n"
-        "- unsupported: lacks adequate proofs or conflicts with them (for non-speculation claims).\n"
+        "- partial: generally correct but missing a minor referenced entity/number, or only loosely aligned with the proofs, or contains minor exaggeration.\n"
+        "- unsupported: not supported or contradicted by the proofs; introduces key entities or numbers not present; clear overreach."
+        " If a statement contains multiple factual claims and even one key claim is unsupported, label the entire statement as 'unsupported' and explain in the feedback which part is unsupported.\n"
         "- speculation-ok: starts with 'Possible speculation:' AND stays within what the proofs plausibly support.\n"
         "- speculation-overreach: starts with 'Possible speculation:' BUT extends beyond or contradicts the proofs.\n"
+        "Overall support_quality heuristic:\n"
+        "- high: most statements are 'supported', at most a few 'partial', and no major claims are 'unsupported'.\n"
+        "- medium: a mix of 'supported' and 'partial' statements, and/or a small number of 'unsupported' statements that do not affect the main conclusions.\n"
+        "- low: several 'unsupported' statements, especially if they concern core claims, or pervasive partial/weak support.\n"
         "Avoid any numeric scoring."
     )
     payload = {
@@ -362,12 +388,6 @@ def verify_evidence_node(state: "State") -> "State":
             "is_speculation": _is_speculation_text(s["text"]),
         })
 
-    summary = {
-        "supported":   sum(1 for s in verified if s["verdict"] == "supported"),
-        "partial":     sum(1 for s in verified if s["verdict"] == "partial"),
-        "unsupported": sum(1 for s in verified if s["verdict"] == "unsupported"),
-    }
-
     # 4) LLM PASS
     overall_feedback = _llm_feedback(verified, question)
     
@@ -383,12 +403,44 @@ def verify_evidence_node(state: "State") -> "State":
         }
     verdict = "fail" if support_quality == "low" else "pass"
     
-    # add per-statement LLM feedback
+    # add per-statement LLM feedback in addition to deterministic verdicts
     per_stmt_feedback = overall_feedback.get("per_statement") or {}
     for i, s in enumerate(verified):
         fdbk = per_stmt_feedback.get(str(i)) or {}
-        s["verdict"] = fdbk.get("label")
-        s["llm_feedback"] = fdbk.get("feedback")
+        # if current verdict is 'unsupported' or 'partial' while in LLM feedback it is 'supported' or 'speculation-ok', we keep the more conservative label
+        llm_label = fdbk.get("label")
+        if llm_label:
+            llm_label = llm_label.strip().lower()
+            current_verdict = s.get("verdict")
+            if current_verdict in {"unsupported", "partial"} and llm_label in {"supported", "speculation-ok"}:
+                # keep current verdict & append feedback
+                feedback_extra = fdbk.get("feedback")
+                if feedback_extra:
+                    existing_feedback = s.get("llm_feedback") or ""
+                    s["llm_feedback"] = ('Deterministic feedbacl:'+ existing_feedback + "\n Additional feedback:" + feedback_extra).strip()
+            else:
+                # upgrade to LLM label
+                s["verdict"] = llm_label
+                s["llm_feedback"] = fdbk.get("feedback") or ""
+        else:
+            s["llm_feedback"] = ""
+            s["verdict"] = s.get("verdict")  # keep deterministic verdict
+            
+    # recompute summary based on all verdicts when available
+    def _norm_label(lbl):
+        return (lbl or "").strip().lower()
+
+    summary = {
+        "supported":   sum(1 for s in verified if _norm_label(s.get("verdict")) == "supported"),
+        "partial":     sum(1 for s in verified if _norm_label(s.get("verdict")) == "partial"),
+        "unsupported": sum(1 for s in verified if _norm_label(s.get("verdict")) in {"unsupported", "speculation-overreach"}),
+    }
+
+    # Upgrade fail if any unsupported/speculation-overreach label
+    total_statements = max(1, sum(summary.values()))
+    unsupported_ratio = summary["unsupported"] / total_statements
+    if verdict != "fail" and (summary["unsupported"] > 0 or unsupported_ratio >= 0.2):
+        verdict = "fail"
 
     verification = {
         "verdict": verdict,
