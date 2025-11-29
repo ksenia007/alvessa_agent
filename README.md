@@ -1,5 +1,9 @@
 # Alvessa: agentic AI scientist
 
+# IMPORTANT: THIS IS AN ADVERSARIAL EVALUATION BRANCH
+
+This branch is designed as evaluation of the verification process. As such, it's output will not be reliable. Use with caution
+
 ## Installation
 ```bash
 conda activate agents

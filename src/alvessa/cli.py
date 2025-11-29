@@ -562,6 +562,60 @@ def _handle_benchmark_all(args: argparse.Namespace) -> int:
     return 0
 
 
+def _handle_adversarial_eval(args: argparse.Namespace) -> int:
+    """Run adversarial evaluation over a CSV of questions."""
+    from src.alvessa.agents import adversarial_agent as adv
+
+    csv_path = Path(args.csv_path)
+    if not csv_path.exists():
+        print(f"[alvessa] CSV file not found: {csv_path}", file=sys.stderr)
+        return 1
+
+    try:
+        with csv_path.open("r", encoding="utf-8") as fh:
+            reader = csv.DictReader(fh)
+            rows = [row for row in reader if row.get("question")]
+    except Exception as exc:
+        print(f"[alvessa] Failed to read CSV: {exc}", file=sys.stderr)
+        return 1
+
+    if not rows:
+        print(f"[alvessa] No questions found in {csv_path}", file=sys.stderr)
+        return 1
+
+    max_n = args.N if args.N and args.N > 0 else len(rows)
+    rows = rows[:max_n]
+
+    # Set adversarial parameters globally
+    if args.MODE is not None:
+        adv.MODE = args.MODE
+    if args.N_CHANGE is not None:
+        adv.N_CHANGE = args.N_CHANGE
+    print(f"[alvessa] Adversarial params: MODE={adv.MODE} N_CHANGE={adv.N_CHANGE}")
+
+    run_dir, _ = create_run_directory("adversarial_eval")
+    print(f"[alvessa] Adversarial eval on {len(rows)} question(s) from {csv_path}")
+    print(f"[alvessa] Writing artifacts under {run_dir}")
+
+    for idx, row in enumerate(rows, start=1):
+        qid = (row.get("id") or f"row_{idx}").strip()
+        question = (row.get("question") or "").strip()
+        if not question:
+            continue
+
+        print(f"[alvessa][{idx}/{len(rows)}] {qid} — {question[:90]}{'...' if len(question) > 90 else ''}")
+        try:
+            result = run_pipeline(question, output_dir=run_dir)
+        except Exception as exc:
+            print(f"[alvessa] Error on question {qid}: {exc}", file=sys.stderr)
+            result = {"error": str(exc)}
+
+        out_path = run_dir / f"{qid}.json"
+        out_path.write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")
+
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     """Construct the top-level argument parser."""
     parser = argparse.ArgumentParser(prog="alvessa", description="CLI for the Alvessa agent.")
@@ -623,6 +677,28 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Path to an existing benchmark_summary.csv to resume from (questions matched by text).",
     )
     bench_all_parser.set_defaults(func=_handle_benchmark_all)
+
+    adv_parser = subparsers.add_parser("adversarial_eval", help="Run adversarial eval over a CSV of questions.")
+    adv_parser.add_argument("csv_path", help="Path to the CSV file with columns id,question.")
+    adv_parser.add_argument(
+        "--MODE",
+        type=int,
+        default=None,
+        help="Adversarial mode (default: current adversarial_agent.MODE).",
+    )
+    adv_parser.add_argument(
+        "--N_CHANGE",
+        type=int,
+        default=None,
+        help="Number of statements to modify per answer (default: adversarial_agent.N_CHANGE).",
+    )
+    adv_parser.add_argument(
+        "--N",
+        type=int,
+        default=0,
+        help="Number of questions to run (default: all).",
+    )
+    adv_parser.set_defaults(func=_handle_adversarial_eval)
 
     return parser
 
