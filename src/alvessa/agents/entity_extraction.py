@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Dict, Any, Optional, Tuple, Set
+from typing import List, Dict, Any, Optional, Tuple, Set, Iterable
 import csv
 import difflib
 import json
@@ -602,6 +602,48 @@ def _extract_entities_with_gliner(text: str) -> Dict[str, Any]:
 
 # --- Merging and Post-processing Logic ---
 
+def _dedupe_mirna_variants(genes: Iterable[str]) -> List[str]:
+    """
+    Collapse miRNA-like names so that for MIR*
+    we prefer specific 5p/3p (or longer) variants over bare MIR*.
+    """
+    genes = list(genes)
+
+    mir_like = []
+    non_mir = []
+    for g in genes:
+        if re.match(r"^(?:hsa-|mmu-|rno-|ptr-)?miR|^MIR|^mir|^let-7", g, re.IGNORECASE):
+            mir_like.append(g)
+        else:
+            non_mir.append(g)
+
+    groups = {}
+    for g in mir_like:
+        # core: strip 5p/3p if present at the end, and ignore trailing case diff
+        core = re.sub(r"([_-]?[35][pP])$", "", g)
+        core_key = core.lower()
+        groups.setdefault(core_key, []).append(g)
+
+    deduped_mir = []
+
+    def sort_key(name: str):
+        # Prefer: has 5p/3p > longer name > starts with miR > MIR > mir
+        has_arm = bool(re.search(r"[_-]?[35][pP]$", name))
+        return (
+            1 if has_arm else 0,       # 5p/3p gets 1, bare MIR* gets 0
+            len(name),                 # longer is usually more specific
+            1 if name.lower().startswith("mir") else 0,
+            2 if name.lower().startswith("mir") else
+            3 if name.lower().startswith("mir") else 0,
+        )
+
+    for core, variants in groups.items():
+        # pick the “best” representative per core
+        best = sorted(variants, key=sort_key, reverse=True)[0]
+        deduped_mir.append(best)
+
+    return non_mir + deduped_mir
+
 def _expand_and_refine_gene_names(base_genes: List[str], text: str) -> List[str]:
     """
     Expands gene symbols by finding more complete patterns in the original text.
@@ -650,10 +692,12 @@ def _expand_and_refine_gene_names(base_genes: List[str], text: str) -> List[str]
                         expanded_genes.add(part)
             else:
                 expanded_genes.add(m)
+                
+    expanded_genes_list = _dedupe_mirna_variants(expanded_genes)
 
     if DEBUG:
         print(f"[_expand_and_refine_gene_names] Expanded {len(base_genes)} base genes to {len(expanded_genes)}.")
-    return list(expanded_genes)
+    return expanded_genes_list
 
 def _post_process_entities(genes: List[str], traits: List[str]) -> Dict[str, List[str]]:
     """Cleans and filters lists of genes and traits."""
@@ -679,7 +723,7 @@ def _post_process_entities(genes: List[str], traits: List[str]) -> Dict[str, Lis
                 print(f"[_post_process_entities] Dropping AA-like token from genes: {g}")
             continue
         filtered_genes.append(g)
-
+    
     # Return unique, sorted lists
     return {
         "genes": sorted(list(dict.fromkeys(filtered_genes))),
