@@ -4,6 +4,10 @@
 <h1 align="center">
   <strong>Alvessa: Agentic Evidence-Grounded Research Assistant for Genomics</strong>
 </h1>
+<h1 align="center">
+  <strong>CAUTION: ADVERSARIAL EVALUATION BRANCH</strong>
+</h1>
+
 
 <p align="center">
   <a href="#-key-features">Features</a> •
