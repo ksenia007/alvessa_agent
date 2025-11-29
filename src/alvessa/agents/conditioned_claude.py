@@ -520,14 +520,14 @@ def conditioned_claude_node(state: "State") -> "State":
             "Requirements:\n"
             "- Every factual claim must be grounded in the documents and include citations.\n"
             "- Do not add outside knowledge. If key information is missing, say so briefly.\n"
-            "- Write clear, smooth prose (no filler like 'Based on the documents') but no long recitation of incohorent facts either.\n"
-            "- Put the most important, directly question-answering facts first (lead with the answer), then expand with supporting details\n"
-            "  in decreasing order of importance; include brief connective synthesis where helpful, also cited.\n"
-            "- Length: write as much as needed for completeness and clarity—no artificial limit—stop when the key evidence is covered.\n"
-            "- Factoids (Who/What/When/Where/Which/How many): if a single sentence fully answers the question, provide that one sentence; "
-            "  otherwise, add only the minimal additional context needed, still fully cited."
-            "• At the end, you may include a short section labeled **Possible speculation:** "
-            "if—and only if—it is clearly marked as such and explicitly reasoned from the cited evidence."
+            "- Write clear, smooth prose (avoid filler words like 'Based on the documents' or long repetitive lists).\n"
+            "- Lead with the direct answer to the question. Then provide supporting details in decreasing order of importance, with concise synthesis where useful (also cited).\n"
+            "- Length: write as much as needed for completeness and clarity.\n"
+            "- Factoid questions (Who/What/When/Where/Which/How many): if a single sentence fully answers the question, provide that one sentence. Avoid lengthy explanations unless necessary for clarity or context.\n"
+            "- If the question is ambiguous, briefly note the ambiguity and address the most common interpretations.\n"
+            "- If the question is multi-part, address each part clearly and separately.\n"
+            "- When citing, prioritize attaching citations to complete sentences or clear factual units. Avoid breaking sentences unnaturally unless absolutely necessary (e.g., when two distinct factual claims appear within one sentence).\n"
+            "- At the end, you may include a short section labeled **Possible speculation: if—and only if—it is clearly marked as such and explicitly reasoned from the cited evidence."
         )
         
     # check if there is verification in State alwready that is non-empty and if it is, we get the answer_text and retry_feedback
@@ -570,7 +570,7 @@ def conditioned_claude_node(state: "State") -> "State":
     # Call Claude
     raw = claude_call(
         model=CONDITIONED_MODEL,
-        temperature=0.1,
+        temperature=0.0,
         max_tokens=20000,
         system=system_msg,
         messages=[{"role": "user", "content": user_content}],
