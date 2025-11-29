@@ -362,12 +362,6 @@ def verify_evidence_node(state: "State") -> "State":
             "is_speculation": _is_speculation_text(s["text"]),
         })
 
-    summary = {
-        "supported":   sum(1 for s in verified if s["verdict"] == "supported"),
-        "partial":     sum(1 for s in verified if s["verdict"] == "partial"),
-        "unsupported": sum(1 for s in verified if s["verdict"] == "unsupported"),
-    }
-
     # 4) LLM PASS
     overall_feedback = _llm_feedback(verified, question)
     
@@ -389,6 +383,22 @@ def verify_evidence_node(state: "State") -> "State":
         fdbk = per_stmt_feedback.get(str(i)) or {}
         s["verdict"] = fdbk.get("label")
         s["llm_feedback"] = fdbk.get("feedback")
+
+    # recompute summary based on LLM verdicts when available
+    def _norm_label(lbl):
+        return (lbl or "").strip().lower()
+
+    summary = {
+        "supported":   sum(1 for s in verified if _norm_label(s.get("verdict")) == "supported"),
+        "partial":     sum(1 for s in verified if _norm_label(s.get("verdict")) == "partial"),
+        "unsupported": sum(1 for s in verified if _norm_label(s.get("verdict")) in {"unsupported", "speculation-overreach"}),
+    }
+
+    # Upgrade fail if any unsupported/speculation-overreach label
+    total_statements = max(1, sum(summary.values()))
+    unsupported_ratio = summary["unsupported"] / total_statements
+    if verdict != "fail" and (summary["unsupported"] > 0 or unsupported_ratio >= 0.2):
+        verdict = "fail"
 
     verification = {
         "verdict": verdict,
