@@ -7,11 +7,17 @@ import seaborn as sns
 #%%
 
 file_locations = [
-   '/Users/sokolova/Documents/research/alvessa_agent/out/20251127-194054_adversarial_eval/baseline-20251127-205858', 
-   '/Users/sokolova/Documents/research/alvessa_agent/out/20251127-194549_adversarial_eval/baseline-20251127-205845', 
-# '/Users/sokolova/Documents/research/alvessa_agent/out/20251128-005836_adversarial_eval/baseline-20251128-014418',
-   '/Users/sokolova/Documents/research/alvessa_agent/out/20251128-005841_adversarial_eval/baseline-20251128-014434', 
-   '/Users/sokolova/Documents/research/alvessa_agent/out/20251128-015745_adversarial_eval/baseline-20251128-140730', 
+    # '/Users/sokolova/Documents/research/alvessa_agent/out/MODE1-20251129-195241_adversarial_eval/baseline-20251129-213415', 
+    '/Users/sokolova/Documents/research/alvessa_agent/out/MODE2-20251129-195253_adversarial_eval/baseline-20251129-213614', 
+    '/Users/sokolova/Documents/research/alvessa_agent/out/MODE3-20251129-213401_adversarial_eval/baseline-20251129-222411',
+    '/Users/sokolova/Documents/research/alvessa_agent/out/MODE4-20251129-213154_adversarial_eval/baseline-20251129-222433',
+    '/Users/sokolova/Documents/research/alvessa_agent/out/MODE5_20251129-193500_adversarial_eval/baseline-20251129-213515'
+    
+#    '/Users/sokolova/Documents/research/alvessa_agent/out/20251127-194054_adversarial_eval/baseline-20251127-205858', 
+#    '/Users/sokolova/Documents/research/alvessa_agent/out/20251127-194549_adversarial_eval/baseline-20251127-205845', 
+# # '/Users/sokolova/Documents/research/alvessa_agent/out/20251128-005836_adversarial_eval/baseline-20251128-014418',
+#    '/Users/sokolova/Documents/research/alvessa_agent/out/20251128-005841_adversarial_eval/baseline-20251128-014434', 
+#    '/Users/sokolova/Documents/research/alvessa_agent/out/20251128-015745_adversarial_eval/baseline-20251128-140730', 
 ]
 
 # load all jsons from the file locations; 
@@ -79,14 +85,15 @@ alvessa_accuracy = df['alvessa_correct'].mean()
 print(f'Baseline Accuracy: {baseline_accuracy:.2%}')
 print(f'Alvessa Accuracy: {alvessa_accuracy:.2%}')
 # %%
-# Plot nicer bar chart (Nature-ish style)
+# Plot nicer bar chart
 # ------------------------------------------------------------------
 # Pretty labels for y-axis
 label_map = {
-    "counterfactual": "Counterfactual\n(plain)",
-    "counterfactual_with_proofs": "Counterfactual\n(using proofs)",
+    "contradiction": "Contradiction\n(plain)",
+    "contradiction_with_proofs": "Contradiction\n(using evidence)",
     "overstatement": "Overstatement",
-    "hard_example": "Subtle unsupported",
+    "hallucinated_alphanumeric_entities": "Wrong alphanumeric\nvalues",
+    "hallucinated_numbers": "Wrong numerical\nvalues",
 }
 
 modification_summary = (
@@ -103,6 +110,8 @@ modification_summary = modification_summary.melt(
     var_name="model",
     value_name="accuracy",
 )
+# convert accuracy to percent
+modification_summary['accuracy'] = modification_summary['accuracy']*100
 
 # Styling
 sns.set_theme(style="whitegrid")
@@ -115,13 +124,13 @@ plt.rcParams.update({
 })
 
 palette = {
-    "baseline_correct": "#B0B0B0",  # light grey so hatch is visible
+    "baseline_correct": "tan",  
     "alvessa_correct": "#FF7C07",   # vibrant orange
 }
 
-fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
+fig, ax = plt.subplots(figsize=(10, 9), dpi=300)
 hue_order = ["baseline_correct", "alvessa_correct"]
-cat_order = modification_summary.sort_values("pretty_type")["pretty_type"].unique().tolist()
+cat_order = modification_summary.sort_values("accuracy", ascending=False)["pretty_type"].unique().tolist()
 model_sequence = modification_summary["model"].tolist()  # preserves melted row order
 bar = sns.barplot(
     data=modification_summary,
@@ -135,11 +144,13 @@ bar = sns.barplot(
     dodge=True,
     edgecolor="none",
 )
-
 # Rounded corners for bars + hatching on baseline
 from matplotlib.patches import FancyBboxPatch
 new_patches = []
 for patch in bar.patches:
+    width = patch.get_width()
+    if width is None or width < 1e-3:   
+        continue
     bbox = patch.get_bbox()
     p = FancyBboxPatch(
         (bbox.xmin, bbox.ymin),
@@ -162,17 +173,43 @@ for idx, patch in enumerate(new_patches):
     model_key = model_sequence[idx] if idx < len(model_sequence) else hue_order[idx % n_hues]
     # enforce facecolor by model to avoid bleed-through
     patch.set_facecolor(palette.get(model_key, patch.get_facecolor()))
+    width = patch.get_width()
     if model_key == "baseline_correct":
         patch.set_hatch("///")
-        patch.set_edgecolor("#3A3A3A")
+        patch.set_edgecolor("antiquewhite")
         patch.set_linewidth(0.8)
+        y_center = patch.get_y() + patch.get_height() / 2.0
+        print('y_center', y_center)
+        ax.text(
+            width - 1,              
+            y_center,
+            f"{width:.1f}%",      
+            va="center",
+            ha="right",
+            fontsize=19,
+            fontweight="bold",
+            color="black",
+        )
+
     else:
         patch.set_hatch("")
         patch.set_edgecolor("none")
+        y_center = patch.get_y() + patch.get_height() / 2.0
+        ax.text(
+            width - 1,              
+            y_center,
+            f"{width:.1f}%",      
+            va="center",
+            ha="right",
+            fontsize=19,
+            fontweight="bold",
+            color="black",
+        )
+    
 
 # Axes formatting
-ax.set_xlim(0.0, 1.05)
-ax.set_xlabel("Fraction mistakes caught", labelpad=8)
+ax.set_xlim(0.0, 105)
+ax.set_xlabel("% correctly labeled", labelpad=8)
 ax.set_ylabel("")  # no y-axis label per request
 ax.set_title("")   # no title
 ax.grid(True, axis="x", linestyle="--", linewidth=0.6, alpha=0.6)
@@ -186,10 +223,10 @@ ax.spines["bottom"].set_color("#A0A0A0")
 # Legend cleanup (manual handles so hatching shows)
 from matplotlib.patches import Patch
 legend_handles = [
-    Patch(facecolor=palette["baseline_correct"], edgecolor="#3A3A3A", linewidth=0.8, hatch="///", label="Baseline"),
-    Patch(facecolor=palette["alvessa_correct"], edgecolor="none", label="Alvessa"),
+    Patch(facecolor=palette["baseline_correct"], edgecolor="antiquewhite", linewidth=0.8, hatch="///", label="Simple verifier"),
+    Patch(facecolor=palette["alvessa_correct"], edgecolor="none", label="Context-aware verifier"),
 ]
-ax.legend(legend_handles, [h.get_label() for h in legend_handles], title="", frameon=False, loc="upper right",bbox_to_anchor=(1.2, 1.2), fontsize=16)
+ax.legend(legend_handles, [h.get_label() for h in legend_handles], title="", frameon=False, loc="upper right",bbox_to_anchor=(1.1, 1.2), fontsize=16)
 
 plt.tight_layout()
 plt.show()
@@ -197,9 +234,10 @@ plt.show()
 # %% md
 # Pretty labels for y-axis
 label_map = {
-    "counterfactual": "Contradition\n(statement only)",
-    "counterfactual_with_proofs": "Contradition\n(using context)",
+    "contradiction": "Contradiction\n(plain)",
+    "contradiction_with_proofs": "Contradiction\n(using evidence)",
     "overstatement": "Overstatement",
+    "hallucinated_alphanumeric_entities": "Wrong alphanumeric\nvalues",
     "hallucinated_numbers": "Wrong numerical\nvalues",
 }
 
@@ -210,6 +248,7 @@ modification_summary = (
       )
       .reset_index()
 )
+
 # sort
 modification_summary["pretty_type"] = modification_summary["modification_type"].map(label_map).fillna(modification_summary["modification_type"])
 modification_summary = modification_summary.melt(
@@ -218,6 +257,7 @@ modification_summary = modification_summary.melt(
     value_name="accuracy",
 )
 modification_summary = modification_summary.sort_values(by="accuracy", ascending=False)
+modification_summary['accuracy'] = modification_summary['accuracy']*100
 
 # Styling
 sns.set_theme(style="whitegrid")
@@ -233,7 +273,7 @@ palette = {
     "alvessa_correct": "#FF7C07",   # vibrant orange
 }
 
-fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
+fig, ax = plt.subplots(figsize=(7, 6), dpi=300)
 hue_order = ["alvessa_correct"]
 cat_order = modification_summary.sort_values("accuracy", ascending=False)["pretty_type"].unique().tolist()
 model_sequence = modification_summary["model"].tolist()  # preserves melted row order
@@ -276,19 +316,19 @@ for patch in new_patches:
     y_center = patch.get_y() + patch.get_height() / 2.0
 
     ax.text(
-        width - 0.01,              
+        width - 1,              
         y_center,
-        f"{width*100:.1f}%",      
+        f"{width:.1f}%",      
         va="center",
         ha="right",
-        fontsize=13,
+        fontsize=16,
         fontweight="bold",
         color="white",
     )
 
 # Axes formatting
-ax.set_xlim(0.0, 1.05)
-ax.set_xlabel("Fraction mistakes caught", labelpad=8)
+ax.set_xlim(0.0, 105)
+ax.set_xlabel("% correctly labeled", labelpad=8)
 ax.set_ylabel("")  # no y-axis label per request
 ax.set_title("")   # no title
 ax.grid(True, axis="x", linestyle="--", linewidth=0.6, alpha=0.6)
@@ -309,6 +349,11 @@ overstatement_failures = df[
     (~df["alvessa_correct"])
 ]
 # %%
-overstatement_failures.head()
-
+for i in overstatement_failures.index:
+    print("Question ID:", overstatement_failures.at[i, 'question_id'])
+    print("Modification Type:", overstatement_failures.at[i, 'modification_type'])
+    print("Original Statement:", overstatement_failures.at[i, 'original_statement'])
+    print("Adversarial Statement:", overstatement_failures.at[i, 'adversarial_statement'])
+    print("Original Proof:", overstatement_failures.at[i, 'original_proof'])
+    print("----")
 # %%
