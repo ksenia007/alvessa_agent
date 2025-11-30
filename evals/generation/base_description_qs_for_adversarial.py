@@ -1,12 +1,12 @@
 """
-Create a set of basic description‑based questions from the Gencode database for adversarial testing of LLMs.
-Example quesitons (x3 per each):
-- Tell me about diseases associated with the gene {gene_name}.
-- I am trying to develop a therapy targeting the gene {gene_name}. Can you provide information on its function, relevance to human health and feasibility as a target?
-- For {gene_name} are there any variants that are predicted to have regulatory effects?
-- Are {gene_name1} and {gene_name2} known to interact or be involved in similar biological pathways?
+Create a set of description‑style questions for adversarial testing.
+Sources:
+- Genes: Gencode
+- Variants: ClinVar pathogenic set
+- Drugs: MedChemExpress compound library
+- Interactions: BioGRID-backed pairs
 
-We will sample genes from the Gencode database to create these questions.
+Output CSV columns: id, question
 """
 
 from __future__ import annotations
@@ -23,6 +23,8 @@ from src.tools.biogrid.utils import _fetch_predictions_BioGRID
 ROOT = Path(__file__).resolve().parents[2]
 OUT_PATH = ROOT / "evals" / "generation" / "base_description_qs_for_adversarial.csv"
 LOCAL_DBS_DIR = ROOT / "local_dbs"
+CLINVAR_DF = LOCAL_DBS_DIR / "clinvar" / "clinvar_pathogenic_variants_grch38.parquet"
+COMPOUND_LIBRARY = LOCAL_DBS_DIR / "compound_library_medchemexpress.csv"
 
 TEMPLATES = [
     lambda g: f"Tell me about diseases associated with the gene {g}.",
@@ -83,23 +85,80 @@ def sample_interacting_pair(rng: np.random.Generator, gene_pool: List[str], max_
     return None
 
 
-def build_questions(n_questions: int = 30, seed: int = 42) -> pd.DataFrame:
+def load_clinvar_variants() -> pd.DataFrame:
+    if not CLINVAR_DF.exists():
+        return pd.DataFrame()
+    try:
+        df = pd.read_parquet(CLINVAR_DF)
+    except Exception:
+        return pd.DataFrame()
+    df = df.dropna(subset=["rsid"]).copy()
+    df = df[(df['rsid']!=-1) & (df['rsid']!='-1')]
+    return df.drop_duplicates()
+
+
+def load_drug_names() -> List[str]:
+    if not COMPOUND_LIBRARY.exists():
+        return []
+    try:
+        df = pd.read_csv(COMPOUND_LIBRARY)
+    except Exception:
+        return []
+    names = df.get("Product Name").dropna().astype(str).tolist()
+    names = [n.strip() for n in names if n and len(n.strip()) <= 40]
+    return names
+
+
+def build_questions(
+    n_gene_questions: int = 20,  # biogrid add  n_gene_questions // 4 interaction qs
+    n_variant_questions: int = 10,
+    n_drug_questions: int = 10,
+    seed: int = 42,
+) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     gene_pool = load_gene_pool()
     biogrid_pool = gene_pool  # use same pool for interactions; BioGRID list is optional
+    clinvar_df = load_clinvar_variants()
+    drug_names = load_drug_names()
 
     rows: List[Dict[str, str]] = []
     qid = 1
 
     # Single-gene questions: pick random gene per template
-    for _ in range(n_questions):
+    for _ in range(n_gene_questions):
         g = sample_gene(rng, gene_pool)
         tmpl = rng.choice(TEMPLATES)
         rows.append({"id": f"q{qid:04d}", "question": tmpl(g)})
         qid += 1
 
+    # Variant questions (ClinVar)
+    variant_templates = [
+        lambda r: f"Tell me about rs{r.get('rsid', '')}?",
+        lambda r: f"Summarize the pathogenicity evidence for variant rs{r.get('rsid', '')}",
+        lambda r: f"Are there diseases linked to variant rs{r.get('rsid', '')} and how strong is the evidence?",
+    ]
+    if not clinvar_df.empty:
+        var_rows = clinvar_df.sample(n=min(n_variant_questions, len(clinvar_df)), random_state=seed)
+        for _, row in var_rows.iterrows():
+            tmpl = rng.choice(variant_templates)
+            rows.append({"id": f"q{qid:04d}", "question": tmpl(row)})
+            qid += 1
+
+    # Drug questions
+    drug_templates = [
+        lambda d: f"What are the targets and clinical uses of {d}?",
+        lambda d: f"Is {d} being investigated for any gene-targeted therapies or pathways?",
+        lambda d: f"Provide a brief profile of {d}, including mechanism and therapeutic areas.",
+    ]
+    if drug_names:
+        sampled_drugs = rng.choice(drug_names, size=min(n_drug_questions, len(drug_names)), replace=False)
+        for d in sampled_drugs:
+            tmpl = rng.choice(drug_templates)
+            rows.append({"id": f"q{qid:04d}", "question": tmpl(d)})
+            qid += 1
+
     # Interaction questions using BioGRID-backed pairs
-    for _ in range(n_questions // 3):  # fewer pair questions
+    for _ in range(max(1, n_gene_questions // 4)):  # fewer pair questions
         pair = sample_interacting_pair(rng, biogrid_pool)
         if not pair:
             continue
