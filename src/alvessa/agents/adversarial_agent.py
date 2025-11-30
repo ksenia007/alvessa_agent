@@ -11,13 +11,15 @@ Assume that verification step is downstream
 
 Supports multiple modes of adversarial injection:
 
-(1) Level 1 - create counterfactual statements using the given statememt but not it the provided proofs
+(1) Mode 1 - create contradicting statements using the given statememt but not it the provided proofs
 
-(2) Level 2 - create counterfactual statements using the provided proofs & statement as a base
+(2) Mode 2 - create contradicting statements using the provided proofs & statement as a base
 
-(3) Level 3 - create overstatements that exaggerate the claims made in the statement using the provided proofs as a base
+(3) Mode 3 - create overstatements that exaggerate the claims made in the statement using the provided proofs as a base
 
-(4) Level 4 - create subtle, numberical hallucinations by changing numbers in the statement to different numbers not supported by the proofs
+(4) Mode 4 - create subtle, numberical hallucinations by changing numbers in the statement to different numbers not supported by the proofs
+
+(5) Mode 5 - create subtle, alphanumeric hallucinations by changing entities with numbers in them (e.g., gene names with numbers) to similar entities with different numbers not supported by the proofs
 
 
 """
@@ -47,8 +49,7 @@ def _create_contradiction_statement(statement: str, proofs: List[str]) -> str:
         
     content = f"""Original statement: {statement}"""
    
-    prompt = f"""You are an adversarial transformation engine.
-Your task is to generate a CONTRADICTION of the original scientific statement that still sounds plausible.
+    prompt = f"""Your task is to generate a CONTRADICTION of the original scientific statement that still sounds plausible.
 
 Goals:
 - Reverse, negate, or meaningfully conflict with the original claim or its implications.
@@ -110,8 +111,7 @@ def _create_contradiction_with_proofs(statement: str, proofs: List[str]) -> str:
     """Create a contradiction using the provided proofs as a base."""
     if DEBUG:
         print("[_create_contradiction_with_proofs] Creating contradiction with proofs")
-    prompt = f"""You are an adversarial transformation engine.
-Your task is to generate a CONTRADICTION of the original scientific statement that is NOT supported by the provided proofs, 
+    prompt = f"""Your task is to generate a CONTRADICTION of the original scientific statement that is NOT supported by the provided proofs, 
 but still sounds plausible and superficially consistent with them.
 
 Goals:
@@ -154,8 +154,7 @@ def _create_overstatement(statement: str, proofs: List[str]) -> str:
     if DEBUG:
         print("[_create_overstatement] Creating overstatement")
     
-    prompt = """You are an adversarial transformation engine.
-Your task is to rewrite the original scientific statement as an OVERSTATEMENT that goes clearly beyond what is warranted by the original wording and supporting proofs.
+    prompt = """Your task is to rewrite the original scientific statement as an OVERSTATEMENT that goes clearly beyond what is warranted by the original wording and supporting proofs.
 
 Goals:
 - Make the claim stronger, more absolute, or more general than the original.
@@ -206,8 +205,7 @@ def _create_wrong_numbers(statement: str, proofs: List[str]) -> str:
     """
     if DEBUG:
         print("[_create_hard_example] Creating hard adversarial example")
-    prompt = f"""You are an adversarial transformation engine. 
-Your task is ONLY to alter numeric values, without changing any wording, structure, claims, or named entities.
+    prompt = f"""Your task is ONLY to alter numeric values, without changing any wording, structure, claims, or named entities.
 The modified version must contradict the supporting proofs while still sounding plausible.
 
 Rules:
@@ -254,8 +252,7 @@ def _perturb_numerical_entities(statement: str, proofs: List[str]) -> str:
     """
     if DEBUG:
         print("[_create_hard_example] Creating hard adversarial example")
-    prompt = f"""You are an adversarial transformation engine.
-Your task is ONLY to alter identifiers that contain both letters and digits, without changing any other wording, structure, or numeric quantities.
+    prompt = f"""Your task is to ONLY alter identifiers that contain both letters and digits, without changing any other wording, structure, or numeric quantities.
 The modified version must contradict the supporting proofs while still sounding plausible.
 
 Definitions:
@@ -291,6 +288,7 @@ Return ONLY:
         system=prompt,
         messages=[{"role": "user", "content": content}],
     )
+    print("[_create_wrong_numbers] LLM raw response:", response)
     response_text = _extract_text_response(response)
     if DEBUG:
         print("[_create_wrong_numbers] LLM response:", response_text)
@@ -342,31 +340,54 @@ def adversarial_node(state: "State") -> "State":
         # we want to select only statements that contain numbers mergemd with letters in it (e.g., gene names with numbers or special characters)
         candidate_indices = [i for i in candidate_indices if re.search(r'(?i)[A-Za-z]\d|\d[A-Za-z]', answer_with_proofs[i][1])]
     
-    selected_indices = random.sample(candidate_indices, min(N_CHANGE, len(candidate_indices)))
+    selected_indices = random.sample(candidate_indices, min(N_CHANGE*3, len(candidate_indices)))
     if DEBUG:
         print(f"[adversarial_node] Selected indices for modification: {selected_indices}")
         print(f"[adversarial_node] Original statement: {[answer_with_proofs[i][1] for i in selected_indices]}")
         
-    for i in selected_indices:
+    created_N = 0
+    
+    while created_N < N_CHANGE and selected_indices:
+        i = selected_indices.pop(0)
         new_statement, modification_label = _create_adversarial_statement(answer_with_proofs[i], mode=MODE)
-        if DEBUG:
-            print(f"[adversarial_node] Original statement: {answer_with_proofs[i][1]}")
-            print(f"[adversarial_node] New adversarial statement: {new_statement}")
-            
-        adversarial_indices.append({
-            "index": i,
-            "original_statement": answer_with_proofs[i][1],
-            "original_proofs": answer_with_proofs[i][0],
-            "new_statement": new_statement,
-            "modification_type": modification_label
-        })
-                    
-        # modify answer_with_proofs in place
-        if new_statement:
+        if new_statement and new_statement != answer_with_proofs[i][1] and new_statement.lower()!='none':
+            adversarial_indices.append({
+                "index": i,
+                "original_statement": answer_with_proofs[i][1],
+                "original_proofs": answer_with_proofs[i][0],
+                "new_statement": new_statement,
+                "modification_type": modification_label
+            })
+                        
+            # modify answer_with_proofs in place
             answer_with_proofs[i] = (answer_with_proofs[i][0], new_statement)
+            created_N += 1
+            if DEBUG:
+                print(f"[adversarial_node] Created adversarial statement for index {i}: {new_statement}")
         else:
             if DEBUG:
-                print(f"[adversarial_node] Skipping overwrite for index {i} because new_statement is None")
+                print(f"[adversarial_node] No adversarial statement created for index {i}, trying next candidate.")
+        
+    # for i in selected_indices:
+    #     new_statement, modification_label = _create_adversarial_statement(answer_with_proofs[i], mode=MODE)
+    #     if DEBUG:
+    #         print(f"[adversarial_node] Original statement: {answer_with_proofs[i][1]}")
+    #         print(f"[adversarial_node] New adversarial statement: {new_statement}")
+            
+    #     adversarial_indices.append({
+    #         "index": i,
+    #         "original_statement": answer_with_proofs[i][1],
+    #         "original_proofs": answer_with_proofs[i][0],
+    #         "new_statement": new_statement,
+    #         "modification_type": modification_label
+    #     })
+                    
+    #     # modify answer_with_proofs in place
+    #     if new_statement:
+    #         answer_with_proofs[i] = (answer_with_proofs[i][0], new_statement)
+    #     else:
+    #         if DEBUG:
+    #             print(f"[adversarial_node] Skipping overwrite for index {i} because new_statement is None")
             
     # reassign modified structures back to state
     # state['llm_json']['answer_with_proofs'] = answer_with_proofs
