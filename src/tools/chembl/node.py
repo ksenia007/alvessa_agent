@@ -163,7 +163,8 @@ if __name__ == "__main__":
     # Example: python node.py TP53 EGFR DRD2
     #genes = sys.argv[1:] if len(sys.argv) > 1 else ["TMEM179", "C20orf85", "POTEM", "ZNF533", "WDR90"]
     #genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "DRD2", "ADRB2"]
-    genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "ADRB2"]
+    #genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "ADRB2"]
+    genes = sys.argv[1:] if len(sys.argv) > 1 else ["ABAT"]
     base_name = genes[0] if len(genes) == 1 else f"{genes[0]}_plus{len(genes)-1}"
 
     state = State({

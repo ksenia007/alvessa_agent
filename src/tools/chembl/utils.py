@@ -5,10 +5,14 @@
 #
 # Author: Dmitri Kosenkov
 # Created: 2025-09-25
-# Updated: 2025-10-09
+# Updated: 2025-12-01
 #
 # Extends core ChEMBL utilities with OpenFDA black-box text retrieval.
 # Adds black_box_text and black_box_url fields for frontend integration.
+#
+# Also provides drug-centric helpers for:
+#   - Normalizing a drug identifier to a canonical ChEMBL record
+#   - Retrieving targets for a given ChEMBL compound ID
 #
 
 # --- Standard library imports ---
@@ -17,7 +21,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
-from typing import List, Dict
+from typing import List, Dict, Any, Optional, Tuple
 
 # --- Package/Repo Roots ---
 PACKAGE_ROOT = Path(__file__).resolve().parent
@@ -31,11 +35,12 @@ from src.tools.chembl.openfda import fetch_black_box_text_by_name
 
 MAX_BB_TEXT = 800  # Max FDA black box warning text
 
+
 # ------------------------------
 # Logging
 # ------------------------------
 def log(msg: str) -> None:
-    """Log ChEMBL messages with timestamp."""
+    """Log ChEMBL messages with timestamp (DEBUG-gated)."""
     if DEBUG:
         print(f"[ChEMBL] {msg} @ {datetime.now()}")
 
@@ -55,7 +60,7 @@ def get_connection() -> sqlite3.Connection:
 # ------------------------------
 # Unit normalization
 # ------------------------------
-def _to_nM(value: float, unit: str) -> float:
+def _to_nM(value: float, unit: str) -> Optional[float]:
     """Convert assay values into nanomolar units for consistency."""
     if value is None or value <= 0:
         return None
@@ -72,32 +77,428 @@ def _to_nM(value: float, unit: str) -> float:
 
 
 # ------------------------------
-# Queries
+# Drug-centric helpers (new)
+# ------------------------------
+def _looks_like_chembl_id(value: str) -> bool:
+    """Heuristic check for ChEMBL compound IDs like 'CHEMBL1234'."""
+    v = (value or "").strip().upper()
+    return v.startswith("CHEMBL") and len(v) > 6
+
+
+def _maybe_extract_cas(value: str) -> Optional[str]:
+    """
+    Very simple CAS pattern detector: NNNNN-NN-N.
+    If the string matches this pattern, return it; otherwise None.
+    """
+    s = (value or "").strip()
+    parts = s.split("-")
+    if len(parts) != 3:
+        return None
+    if not all(p.isdigit() for p in parts):
+        return None
+    # basic length sanity; CAS left block is usually 2-7 digits
+    if not (2 <= len(parts[0]) <= 7 and len(parts[1]) == 2 and len(parts[2]) == 1):
+        return None
+    return s
+
+
+def normalize_chembl_drug_identifier(name_or_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Resolve a free-text or ID-like input (ChEMBL ID, preferred name,
+    synonym, CAS-like string) to a canonical ChEMBL drug record.
+
+    Returns a dict with:
+        {
+          "chembl_id": str,
+          "pref_name": str,
+          "molecule_type": str,
+          "inchi_key": str,
+          "smiles": str,
+          "cas_number": Optional[str],
+          "synonyms": List[str],
+        }
+
+    Returns None if resolution fails.
+    """
+    if not name_or_id or not str(name_or_id).strip():
+        return None
+
+    value = str(name_or_id).strip()
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+
+        row: Optional[sqlite3.Row] = None
+        cas_candidate: Optional[str] = None
+
+        # --------------------------------------------------
+        # 1) Direct ChEMBL ID (e.g., CHEMBL1234)
+        # --------------------------------------------------
+        if _looks_like_chembl_id(value):
+            cur.execute(
+                """
+                SELECT m.molregno,
+                       m.chembl_id,
+                       m.pref_name,
+                       m.molecule_type,
+                       cs.standard_inchi_key,
+                       cs.canonical_smiles
+                FROM molecule_dictionary m
+                LEFT JOIN compound_structures cs
+                  ON m.molregno = cs.molregno
+                WHERE UPPER(m.chembl_id) = ?
+                LIMIT 1
+                """,
+                (value.upper(),),
+            )
+            row = cur.fetchone()
+
+        # --------------------------------------------------
+        # 2) Exact preferred name match (case-insensitive)
+        # --------------------------------------------------
+        if row is None:
+            cur.execute(
+                """
+                SELECT m.molregno,
+                       m.chembl_id,
+                       m.pref_name,
+                       m.molecule_type,
+                       cs.standard_inchi_key,
+                       cs.canonical_smiles
+                FROM molecule_dictionary m
+                LEFT JOIN compound_structures cs
+                  ON m.molregno = cs.molregno
+                WHERE LOWER(m.pref_name) = ?
+                LIMIT 1
+                """,
+                (value.lower(),),
+            )
+            row = cur.fetchone()
+
+        # --------------------------------------------------
+        # 3) Synonym match (molecule_synonyms), capturing CAS
+        # --------------------------------------------------
+        if row is None:
+            cur.execute(
+                """
+                SELECT m.molregno,
+                       m.chembl_id,
+                       m.pref_name,
+                       m.molecule_type,
+                       cs.standard_inchi_key,
+                       cs.canonical_smiles,
+                       ms.synonyms
+                FROM molecule_dictionary m
+                JOIN molecule_synonyms ms
+                  ON m.molregno = ms.molregno
+                LEFT JOIN compound_structures cs
+                  ON m.molregno = cs.molregno
+                WHERE LOWER(ms.synonyms) = ?
+                LIMIT 1
+                """,
+                (value.lower(),),
+            )
+            row = cur.fetchone()
+            if row:
+                cas_candidate = _maybe_extract_cas(row["synonyms"] or "")
+
+        if row is None:
+            return None
+
+        molregno = row["molregno"]
+        chembl_id = row["chembl_id"]
+        pref_name = row["pref_name"] or ""
+        molecule_type = row["molecule_type"] or ""
+        inchi_key = row["standard_inchi_key"] or ""
+        smiles = row["canonical_smiles"] or ""
+
+        # --------------------------------------------------
+        # All synonyms for this molregno
+        # --------------------------------------------------
+        cur.execute(
+            """
+            SELECT synonyms
+            FROM molecule_synonyms
+            WHERE molregno = ?
+            """,
+            (molregno,),
+        )
+        syns_raw = [r["synonyms"] for r in cur.fetchall() if r["synonyms"]]
+
+        # Simple dedup (case-insensitive), preserving first occurrence
+        seen: set[str] = set()
+        synonyms: List[str] = []
+        for s in syns_raw:
+            s_norm = (s or "").strip()
+            if not s_norm:
+                continue
+            key = s_norm.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            synonyms.append(s_norm)
+
+        # Detect CAS from synonyms if not already captured
+        cas_number = cas_candidate
+        if cas_number is None:
+            for s in synonyms:
+                c = _maybe_extract_cas(s)
+                if c:
+                    cas_number = c
+                    break
+
+        return {
+            "chembl_id": chembl_id,
+            "pref_name": pref_name,
+            "molecule_type": molecule_type,
+            "inchi_key": inchi_key,
+            "smiles": smiles,
+            "cas_number": cas_number,
+            "synonyms": synonyms,
+        }
+    finally:
+        conn.close()
+
+def get_chembl_drug_targets(
+    chembl_id: str,
+    only_human: bool = True,
+) -> List[Dict[str, Any]]:
+    """
+    Given a ChEMBL compound ID, return its known targets from ChEMBL
+    drug_mechanism / target_dictionary / component_sequences.
+
+    Each record includes (when available):
+        {
+          "chembl_id": str,          # compound CHEMBL ID
+          "molecule_type": str,
+          "target_chembl_id": int,   # TID
+          "target_name": str,        # target_dictionary.pref_name
+          "target_type": str,        # target_dictionary.target_type
+          "organism": str,           # component_sequences.organism or target_dictionary.organism
+          "uniprot_id": str,         # component_sequences.accession
+          "gene_symbol": str,        # component_synonyms.component_synonym (GENE_SYMBOL)
+          "mechanism_of_action": str,
+          "action_type": str,        # agonist, antagonist, inhibitor, etc.
+        }
+    """
+    cid = (chembl_id or "").strip()
+    if not cid:
+        return []
+
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+
+        # ----------------------------------------------------------
+        # 1) Resolve CHEMBL ID -> molregno + active_molregno
+        #    and use the UNION of both when querying mechanisms.
+        # ----------------------------------------------------------
+        cur.execute(
+            """
+            SELECT
+                md.molregno,
+                mh.active_molregno
+            FROM molecule_dictionary md
+            LEFT JOIN molecule_hierarchy mh
+              ON md.molregno = mh.molregno
+            WHERE UPPER(md.chembl_id) = ?
+            """,
+            (cid.upper(),),
+        )
+        rows = cur.fetchall()
+        if not rows:
+            if DEBUG:
+                log(f"[get_chembl_drug_targets] No molecule_dictionary row for {cid}")
+            return []
+
+        molregnos: set[int] = set()
+        for r in rows:
+            if r["molregno"] is not None:
+                molregnos.add(r["molregno"])
+            if r["active_molregno"] is not None:
+                molregnos.add(r["active_molregno"])
+
+        if not molregnos:
+            if DEBUG:
+                log(f"[get_chembl_drug_targets] No molregno/active_molregno for {cid}")
+            return []
+
+        if DEBUG:
+            log(
+                f"[get_chembl_drug_targets] {cid} -> molregno set "
+                f"{sorted(molregnos)}"
+            )
+
+        def _run_main_query(molregno_ids: List[int]) -> List[sqlite3.Row]:
+            if not molregno_ids:
+                return []
+            placeholders = ",".join(["?"] * len(molregno_ids))
+            cur.execute(
+                f"""
+                SELECT
+                    m.chembl_id,
+                    m.molecule_type,
+                    dm.tid AS target_chembl_id,
+                    td.pref_name AS target_name,
+                    td.target_type,
+                    td.organism AS target_organism,
+                    cs.accession AS uniprot_id,
+                    cs.organism AS component_organism,
+                    csy.component_synonym AS gene_symbol,
+                    dm.mechanism_of_action,
+                    dm.action_type
+                FROM drug_mechanism dm
+                JOIN molecule_dictionary m
+                  ON dm.molregno = m.molregno
+                LEFT JOIN target_dictionary td
+                  ON dm.tid = td.tid
+                LEFT JOIN target_components tc
+                  ON td.tid = tc.tid
+                LEFT JOIN component_sequences cs
+                  ON tc.component_id = cs.component_id
+                LEFT JOIN component_synonyms csy
+                  ON tc.component_id = csy.component_id
+                 AND csy.syn_type = 'GENE_SYMBOL'
+                WHERE dm.molregno IN ({placeholders})
+                """,
+                molregno_ids,
+            )
+            return cur.fetchall()
+
+        # First attempt: mechanisms on any of the molregnos/active_molregnos
+        rows = _run_main_query(sorted(molregnos))
+
+        # ----------------------------------------------------------
+        # 2) Fallback: sometimes mechanisms are linked in odd ways.
+        #    As a safety net, also try a direct join on chembl_id.
+        # ----------------------------------------------------------
+        if not rows:
+            if DEBUG:
+                log(
+                    f"[get_chembl_drug_targets] No mechanisms via molregno set "
+                    f"for {cid}, trying fallback join on chembl_id"
+                )
+            cur.execute(
+                """
+                SELECT
+                    m.chembl_id,
+                    m.molecule_type,
+                    dm.tid AS target_chembl_id,
+                    td.pref_name AS target_name,
+                    td.target_type,
+                    td.organism AS target_organism,
+                    cs.accession AS uniprot_id,
+                    cs.organism AS component_organism,
+                    csy.component_synonym AS gene_symbol,
+                    dm.mechanism_of_action,
+                    dm.action_type
+                FROM drug_mechanism dm
+                JOIN molecule_dictionary m
+                  ON dm.molregno = m.molregno
+                LEFT JOIN target_dictionary td
+                  ON dm.tid = td.tid
+                LEFT JOIN target_components tc
+                  ON td.tid = tc.tid
+                LEFT JOIN component_sequences cs
+                  ON tc.component_id = cs.component_id
+                LEFT JOIN component_synonyms csy
+                  ON tc.component_id = csy.component_id
+                 AND csy.syn_type = 'GENE_SYMBOL'
+                WHERE UPPER(m.chembl_id) = ?
+                """,
+                (cid.upper(),),
+            )
+            rows = cur.fetchall()
+
+        if DEBUG:
+            log(
+                f"[get_chembl_drug_targets] Raw rows for {cid} from drug_mechanism: "
+                f"{len(rows)}"
+            )
+
+        results: List[Dict[str, Any]] = []
+        seen: set[tuple] = set()
+
+        for r in rows:
+            target_chembl_id = r["target_chembl_id"]
+            target_name = r["target_name"] or ""
+            target_type = r["target_type"] or ""
+
+            # Prefer component organism when present; fallback to target organism
+            organism = (r["component_organism"] or r["target_organism"] or "").strip()
+            uniprot_id = (r["uniprot_id"] or "").strip()
+            gene_symbol = (r["gene_symbol"] or "").strip()
+            moa = (r["mechanism_of_action"] or "").strip()
+            action_type = (r["action_type"] or "").strip()
+            molecule_type = (r["molecule_type"] or "").strip()
+
+            # Optional organism filter (focus on human targets if desired)
+            if only_human:
+                org_low = organism.lower()
+                if org_low and ("homo sapiens" not in org_low and "human" not in org_low):
+                    continue
+
+            # Deduplicate by (tid, uniprot, gene_symbol)
+            key = (target_chembl_id, uniprot_id, gene_symbol)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            results.append(
+                {
+                    "chembl_id": r["chembl_id"],
+                    "molecule_type": molecule_type,
+                    "target_chembl_id": target_chembl_id,
+                    "target_name": target_name,
+                    "target_type": target_type,
+                    "organism": organism,
+                    "uniprot_id": uniprot_id,
+                    "gene_symbol": gene_symbol,
+                    "mechanism_of_action": moa,
+                    "action_type": action_type,
+                }
+            )
+
+        if DEBUG:
+            log(
+                f"[get_chembl_drug_targets] Resolved {len(results)} targets for {cid} "
+                f"(only_human={only_human})"
+            )
+        return results
+    finally:
+        conn.close()
+
+# ------------------------------
+# Queries (existing, target-centric)
 # ------------------------------
 def fetch_target_info(conn: sqlite3.Connection, uniprot_id: str, limit: int = 25) -> Dict[str, List]:
     """
     Query ChEMBL for a UniProt target: approved drugs, clinical/preclinical trials,
     and assay bioactivities (normalized to nM). Adds OpenFDA black-box text and URL.
     """
-    data = {"approved_drugs": [], "clinical_trials": [], "bioactivity": []}
+    data: Dict[str, List] = {"approved_drugs": [], "clinical_trials": [], "bioactivity": []}
     cur = conn.cursor()
 
     # --- Resolve UniProt ID -> target ID ---
-    cur.execute("""
+    cur.execute(
+        """
         SELECT td.tid
         FROM target_dictionary td
         JOIN target_components tc ON td.tid = tc.tid
         JOIN component_sequences cs ON tc.component_id = cs.component_id
         WHERE cs.accession = ?
         LIMIT 1
-    """, (uniprot_id,))
+        """,
+        (uniprot_id,),
+    )
     row = cur.fetchone()
     if not row:
         return data
     tid = row["tid"]
 
     # --- FDA-approved drugs ---
-    cur.execute("""
+    cur.execute(
+        """
         SELECT DISTINCT
             m.chembl_id,
             m.pref_name,
@@ -124,9 +525,11 @@ def fetch_target_info(conn: sqlite3.Connection, uniprot_id: str, limit: int = 25
             END,
             COALESCE(m.first_approval, 0) DESC,
             m.chembl_id
-    """, (tid,))
+        """,
+        (tid,),
+    )
 
-    openfda_cache: Dict[str, tuple | None] = {}
+    openfda_cache: Dict[str, Tuple[Optional[str], Optional[str]]] = {}
 
     for r in cur.fetchall():
         indication = r["efo_term"] or r["mesh_heading"] or ""
@@ -135,39 +538,45 @@ def fetch_target_info(conn: sqlite3.Connection, uniprot_id: str, limit: int = 25
         black_box = "Yes" if r["black_box_warning"] == 1 else ""
 
         pref_name = r["pref_name"] or ""
-        bb_text = None
-        bb_url = None
+        bb_text: Optional[str] = None
+        bb_url: Optional[str] = None
 
         if black_box:
             if pref_name in openfda_cache:
-                bb_text, bb_url = openfda_cache[pref_name]  # type: ignore[misc]
+                bb_text, bb_url = openfda_cache[pref_name]
             else:
                 res = fetch_black_box_text_by_name(pref_name)
                 if res:
                     txt, link = res
                     txt = (txt or "").strip().replace("\n", " ")
                     if len(txt) > MAX_BB_TEXT:
-                        txt = txt[:MAX_BB_TEXT].rstrip() + "... [truncated, see FDA label]"
+                        txt = (
+                            txt[:MAX_BB_TEXT].rstrip()
+                            + "... [truncated, see FDA label]"
+                        )
                     bb_text, bb_url = txt, link
                 openfda_cache[pref_name] = (bb_text, bb_url)
 
-        data["approved_drugs"].append({
-            "chembl_id": r["chembl_id"],
-            "pref_name": pref_name,  # <-- included for frontend + summaries
-            "molecule_type": r["molecule_type"],
-            "inchi_key": r["standard_inchi_key"] or "",
-            "smiles": r["canonical_smiles"] or "",
-            "first_approval": r["first_approval"] or "",
-            "indication": indication,
-            "mechanism": mechanism,
-            "withdrawn": withdrawn,
-            "black_box": black_box,
-            "black_box_text": bb_text,
-            "black_box_url": bb_url,
-        })
+        data["approved_drugs"].append(
+            {
+                "chembl_id": r["chembl_id"],
+                "pref_name": pref_name,  # for frontend + summaries
+                "molecule_type": r["molecule_type"],
+                "inchi_key": r["standard_inchi_key"] or "",
+                "smiles": r["canonical_smiles"] or "",
+                "first_approval": r["first_approval"] or "",
+                "indication": indication,
+                "mechanism": mechanism,
+                "withdrawn": withdrawn,
+                "black_box": black_box,
+                "black_box_text": bb_text,
+                "black_box_url": bb_url,
+            }
+        )
 
     # --- Clinical trials (include pref_name) ---
-    cur.execute("""
+    cur.execute(
+        """
         SELECT DISTINCT
             m.chembl_id,
             m.max_phase,
@@ -180,7 +589,9 @@ def fetch_target_info(conn: sqlite3.Connection, uniprot_id: str, limit: int = 25
         LEFT JOIN compound_structures cs ON m.molregno = cs.molregno
         WHERE dm.tid = ? AND m.max_phase BETWEEN 1 AND 3
         ORDER BY m.max_phase DESC, m.chembl_id
-    """, (tid,))
+        """,
+        (tid,),
+    )
     data["clinical_trials"] = [
         (
             r["chembl_id"],
@@ -188,13 +599,14 @@ def fetch_target_info(conn: sqlite3.Connection, uniprot_id: str, limit: int = 25
             r["molecule_type"],
             r["standard_inchi_key"] or "",
             r["canonical_smiles"] or "",
-            r["pref_name"] or "",  # <-- added
+            r["pref_name"] or "",  # added
         )
         for r in cur.fetchall()
     ]
 
     # --- Preclinical (include pref_name) ---
-    cur.execute("""
+    cur.execute(
+        """
         SELECT DISTINCT
             m.chembl_id,
             m.molecule_type,
@@ -205,23 +617,28 @@ def fetch_target_info(conn: sqlite3.Connection, uniprot_id: str, limit: int = 25
         JOIN molecule_dictionary m ON dm.molregno = m.molregno
         LEFT JOIN compound_structures cs ON m.molregno = cs.molregno
         WHERE dm.tid = ? AND m.max_phase = 0
-    """, (tid,))
+        """,
+        (tid,),
+    )
     preclinical = [
         (
             r["chembl_id"],
             r["molecule_type"],
             r["standard_inchi_key"] or "",
             r["canonical_smiles"] or "",
-            r["pref_name"] or "",  # <-- added
+            r["pref_name"] or "",  # added
         )
         for r in cur.fetchall()
     ]
     if preclinical:
         # Extend as phase 0 and preserve pref_name as last element
-        data["clinical_trials"].extend([(d, 0, t, k, s, n) for d, t, k, s, n in preclinical])
+        data["clinical_trials"].extend(
+            [(d, 0, t, k, s, n) for d, t, k, s, n in preclinical]
+        )
 
     # --- Bioactivity assays (include pref_name) ---
-    cur.execute("""
+    cur.execute(
+        """
         SELECT
             m.chembl_id,
             m.molecule_type,
@@ -240,9 +657,14 @@ def fetch_target_info(conn: sqlite3.Connection, uniprot_id: str, limit: int = 25
           AND a.standard_type IN ('IC50','EC50','Ki')
           AND a.standard_value > 0
           AND a.standard_units IN ('nM','uM','pM','M')
-    """, (tid,))
+        """,
+        (tid,),
+    )
 
-    assay_data = defaultdict(
+    assay_data: Dict[
+        Tuple[str, str],
+        Dict[str, Any],
+    ] = defaultdict(
         lambda: {
             "values": [],
             "pchembl": [],
@@ -282,7 +704,7 @@ def fetch_target_info(conn: sqlite3.Connection, uniprot_id: str, limit: int = 25
                 line,
                 vdict["inchikey"],
                 vdict["smiles"],
-                vdict["pref_name"],  # <-- added as last element
+                vdict["pref_name"],  # added as last element
             )
         )
 
@@ -304,8 +726,10 @@ def _fmt_entry(chembl_id: str, mtype: str) -> str:
     """Format ChEMBL ID, adding molecule type if non-small molecule."""
     return chembl_id if mtype == "Small molecule" else f"{chembl_id} [Molecule type: {mtype}]"
 
+
 def make_summary_text(gene: str, uniprot_id: str, target_data: Dict[str, List]) -> str:
-    """Create compact, human-readable druggability summary.
+    """
+    Create compact, human-readable druggability summary.
     Groups all indications for the same drug and prints the black-box warning once.
     Includes pref_name after the ChEMBL ID when available (approved, clinical/preclinical, bioactivity).
     """
@@ -315,7 +739,7 @@ def make_summary_text(gene: str, uniprot_id: str, target_data: Dict[str, List]) 
         lines.append("  FDA-approved drugs:")
 
         # Group all approved drugs by chembl_id
-        grouped = {}
+        grouped: Dict[str, Dict[str, Any]] = {}
         for drug in target_data["approved_drugs"]:
             cid = drug["chembl_id"]
             if cid not in grouped:
@@ -340,9 +764,7 @@ def make_summary_text(gene: str, uniprot_id: str, target_data: Dict[str, List]) 
 
         # Format grouped entries
         for cid, info in grouped.items():
-            # base: CHEMBL ID (+ molecule type if non-small molecule)
-            entry_head = _fmt_entry(cid, info['molecule_type'])
-            # add pref name right after the ID if present
+            entry_head = _fmt_entry(cid, info["molecule_type"])
             if info.get("pref_name"):
                 entry_head += f" ({info['pref_name']})"
 
@@ -360,7 +782,7 @@ def make_summary_text(gene: str, uniprot_id: str, target_data: Dict[str, List]) 
             if info["black_box"]:
                 details.append("black box warning")
             if details:
-                entry += " – " + ", ".join(details)
+                entry += " - " + ", ".join(details)
             lines.append(entry)
 
             # Single warning section per unique drug (indented for clarity)
@@ -435,7 +857,7 @@ def inject_frontend_assets(
     css_template: str,
     js_template: str,
     chembl_data_all: Dict[str, Dict],
-    genes_str: str
+    genes_str: str,
 ) -> str:
     """
     Inject inline CSS, JS, and JSON ChemBL data into HTML template.
@@ -465,8 +887,7 @@ def inject_frontend_assets(
     )
 
     return (
-        html_template
-        .replace("{{CSS_INLINE}}", css_inline)
+        html_template.replace("{{CSS_INLINE}}", css_inline)
         .replace("{{JS_INLINE}}", js_inline)
         .replace("{{GENE_SYMBOL}}", genes_str)
     )

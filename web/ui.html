@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</title>
 
-  <!-- Favicon / icons -->
-  <link rel="icon" href="favicon.ico?v=10" />
-  <link rel="icon" type="image/png" sizes="32x32" href="images/rocket_favicon_32.png?v=10" />
-  <link rel="icon" type="image/png" sizes="64x64" href="images/rocket_favicon_64.png?v=10" />
-  <link rel="apple-touch-icon" sizes="180x180" href="images/rocket_favicon_180.png?v=10" />
-  <meta name="theme-color" content="#0b1020" />
+    <!-- Favicon / icons -->
+    <link rel="icon" href="favicon.ico?v=10" />
+    <link rel="icon" type="image/png" sizes="32x32" href="images/rocket_favicon_32.png?v=10" />
+    <link rel="icon" type="image/png" sizes="64x64" href="images/rocket_favicon_64.png?v=10" />
+    <link rel="apple-touch-icon" sizes="180x180" href="images/rocket_favicon_180.png?v=10" />
+    <meta name="theme-color" content="#0b1020" />
 
-  <!-- Markdown parser + sanitizer -->
-<script src="https://cdn.jsdelivr.net/npm/markdown-it@13/dist/markdown-it.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <!-- Markdown parser + sanitizer -->
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@13/dist/markdown-it.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 
-
-  <style>
-    :root {
+    <style>
+      :root {
         /* DARK THEME (default) */
         --bg: #0b1020;
         --fg: #e6e8ef;
@@ -26,12 +26,13 @@
         --line: #1e2a52;
         --accent: #2a3a72;
         --input: #0e1430;
-        --shadow: 0 6px 24px rgba(0,0,0,.2);
+        --shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
         --radius: 16px;
         --r-sm: 10px;
         --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       }
+
       body.light {
         --bg: #ffffff;
         --fg: #0b1020;
@@ -39,13 +40,19 @@
         --muted: #6b7280;
         --line: #d8dce6;
         --input: #ffffff;
-        --shadow: 0 6px 24px rgba(0,0,0,.06);
+        --shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
         --accent: #afc5ff; /* bright blue accent for light theme */
-
       }
-      
-      * { box-sizing: border-box; }
-      html, body { height: 100%; }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
       body {
         margin: 0;
         background: var(--bg);
@@ -54,17 +61,19 @@
         overflow-anchor: none;
         transition: background 0.3s ease, color 0.3s ease;
       }
+
       a {
         color: inherit;
         text-decoration: underline;
         text-underline-offset: 2px;
       }
+
       .wrap {
         max-width: 1100px;
         margin: 24px auto;
         padding: 0 16px;
       }
-      
+
       /* GRID */
       .grid {
         display: grid;
@@ -75,6 +84,7 @@
           "main";
         align-items: start;
       }
+
       .brand-header {
         grid-area: brand-header;
         display: flex;
@@ -83,16 +93,24 @@
         gap: 12px;
         padding: 8px 0;
       }
-      .logo-brand { height: 44px; }
+
+      .logo-brand {
+        height: 44px;
+      }
+
       .brand-title {
         margin: 0;
         font-weight: 800;
         text-align: center;
-        font-size: clamp(24px,3.2vw,38px);
-        letter-spacing: .2px;
+        font-size: clamp(24px, 3.2vw, 38px);
+        letter-spacing: 0.2px;
       }
-      .main-col { grid-area: main; min-width: 0; }
-      
+
+      .main-col {
+        grid-area: main;
+        min-width: 0;
+      }
+
       /* CARD */
       .card {
         background: var(--card);
@@ -100,46 +118,66 @@
         border-radius: var(--radius);
         padding: 20px;
         box-shadow: var(--shadow);
-        transition: transform .2s ease, box-shadow .2s ease;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
       }
+
       .card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 36px rgba(0,0,0,.35);
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
       }
+
       body.light .card {
         background: var(--card);
         box-shadow: var(--shadow);
       }
-      
+
       /* TYPOGRAPHY */
-      .title { font-size: 22px; font-weight: 700; margin: 0 0 10px; }
-      .muted { color: var(--muted); font-size: 13px; }
-      .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-      
+      .title {
+        font-size: 22px;
+        font-weight: 700;
+        margin: 0 0 10px;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
       /* INPUTS */
-      input[type="text"], select {
+      input[type="text"],
+      select {
         width: 100%;
         padding: 12px 14px;
         font-size: 15px;
         border: none;
         border-radius: 14px;
-        background: rgba(255,255,255,0.06);
+        background: rgba(255, 255, 255, 0.06);
         color: var(--fg);
-        box-shadow: inset 0 1px 3px rgba(255,255,255,0.05);
-        transition: background .2s ease, box-shadow .2s ease;
+        box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.05);
+        transition: background 0.2s ease, box-shadow 0.2s ease;
       }
+
       input[type="text"]:focus {
         outline: none;
         box-shadow: 0 0 0 2px #4b6ef5;
-        background: rgba(255,255,255,0.1);
+        background: rgba(255, 255, 255, 0.1);
       }
+
       body.light input[type="text"] {
-        background: rgba(0,0,0,0.05);
+        background: rgba(0, 0, 0, 0.05);
         color: var(--fg);
       }
-      
+
       /* BUTTONS */
-      button, label.pill {
+      button,
+      label.pill {
         padding: 10px 18px;
         font-weight: 600;
         font-size: 14px;
@@ -148,38 +186,46 @@
         border: none;
         border-radius: 999px;
         cursor: pointer;
-        transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
-        box-shadow: 0 4px 12px rgba(0,0,0,.2);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       }
-      button:hover, label.pill:hover {
+
+      button:hover,
+      label.pill:hover {
         transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(0,0,0,.3);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
       }
+
       button:focus-visible {
         outline: 2px solid var(--accent);
         outline-offset: 2px;
       }
+
       .vs-link {
         border: 1px solid var(--line);
-        background: rgba(148,163,184,0.08);
+        background: rgba(148, 163, 184, 0.08);
         color: inherit;
         font-size: 12px;
         padding: 4px 10px;
         border-radius: 999px;
         cursor: pointer;
       }
+
       .vs-link.active {
-        background: rgba(148,163,184,0.2);
-        border-color: rgba(148,163,184,0.5);
+        background: rgba(148, 163, 184, 0.2);
+        border-color: rgba(148, 163, 184, 0.5);
       }
+
       button.ghost {
         background: transparent;
         box-shadow: none;
       }
+
       .variant-controls .vs-link.active {
-        background: rgba(148,163,184,0.22);
-        border-color: rgba(148,163,184,0.6);
+        background: rgba(148, 163, 184, 0.22);
+        border-color: rgba(148, 163, 184, 0.6);
       }
+
       .variant-controls {
         display: flex;
         flex-wrap: wrap;
@@ -187,25 +233,37 @@
         align-items: center;
         margin-bottom: 8px;
       }
+
       .variant-controls__sorts {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
         align-items: center;
       }
+
       .variant-controls__download {
         margin-left: auto;
       }
+
       @media (max-width: 640px) {
         .variant-controls__download {
           margin-left: 0;
         }
       }
-      
+
       /* HERO */
-      #hero { min-height: 50vh; display: grid; place-items: center; }
-      #hero .card { width: 100%; max-width: 720px; text-align: center; }
-      
+      #hero {
+        min-height: 50vh;
+        display: grid;
+        place-items: center;
+      }
+
+      #hero .card {
+        width: 100%;
+        max-width: 720px;
+        text-align: center;
+      }
+
       /* TOOLBAR */
       #toolbar {
         background: var(--card);
@@ -217,19 +275,22 @@
         flex-direction: column;
         gap: 10px;
       }
+
       #toolbar .toolbar-title {
         font-weight: 600;
         color: var(--muted);
         text-transform: uppercase;
         font-size: 12px;
-        letter-spacing: .5px;
+        letter-spacing: 0.5px;
       }
+
       #toolbar .toolbar-row {
         display: flex;
         align-items: center;
         gap: 8px;
         width: 100%;
       }
+
       #toolbar input[type="text"] {
         flex: 1;
         background: var(--input);
@@ -238,12 +299,14 @@
         border-radius: 999px;
         padding: 10px 14px;
         font-size: 15px;
-        transition: box-shadow .2s ease, background .2s ease;
+        transition: box-shadow 0.2s ease, background 0.2s ease;
       }
+
       #toolbar input[type="text"]:focus {
         outline: none;
         box-shadow: 0 0 0 2px #4b6ef5;
       }
+
       #toolbar button {
         background: var(--accent);
         color: var(--fg);
@@ -252,10 +315,13 @@
         padding: 10px 18px;
         font-weight: 600;
         font-size: 14px;
-        transition: transform .15s ease, background .15s ease;
+        transition: transform 0.15s ease, background 0.15s ease;
       }
-      #toolbar button:hover { transform: translateY(-1px); }
-      
+
+      #toolbar button:hover {
+        transform: translateY(-1px);
+      }
+
       /* FLOATING TOOLBAR */
       .floating-ui {
         position: fixed;
@@ -265,17 +331,18 @@
         display: flex;
         gap: 10px;
         align-items: center;
-        background: rgba(20,24,45,0.5);
+        background: rgba(20, 24, 45, 0.5);
         backdrop-filter: blur(10px) saturate(150%);
         border-radius: 16px;
         padding: 6px 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       }
+
       body.light .floating-ui {
-        background: rgba(255,255,255,0.7);
-        box-shadow: 0 2px 8px rgba(0,0,0,.1);
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
-      
+
       /* THEME TOGGLE */
       .theme-toggle {
         display: inline-flex;
@@ -283,11 +350,13 @@
         cursor: pointer;
         user-select: none;
       }
+
       .theme-toggle input {
         position: absolute;
         opacity: 0;
         pointer-events: none;
       }
+
       .theme-toggle .track {
         width: 56px;
         height: 28px;
@@ -295,8 +364,9 @@
         background: linear-gradient(180deg, #1e274f, #141a39);
         border: 1px solid var(--line);
         position: relative;
-        transition: background .2s ease, border-color .2s ease;
+        transition: background 0.2s ease, border-color 0.2s ease;
       }
+
       .theme-toggle .thumb {
         position: absolute;
         top: 2px;
@@ -309,27 +379,30 @@
         font-size: 14px;
         background: #0e1430;
         color: #fff;
-        transition: transform .22s ease, background .2s ease;
-        box-shadow: 0 2px 8px rgba(0,0,0,.35);
+        transition: transform 0.22s ease, background 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
       }
+
       .theme-toggle input:checked + .track {
         background: #e9eefc;
         border-color: #c8cfe0;
       }
+
       .theme-toggle input:checked + .track .thumb {
         transform: translateX(28px);
         background: #fff;
         color: #111827;
       }
 
-       /* Protein viewer iframe */
-    .prot-frame {
+      /* Protein viewer iframe */
+      .prot-frame {
         width: 100%;
         height: 720px;
         border: 1px solid #1e2a52;
         border-radius: 12px;
         background: #0e1430;
       }
+
       body.light .prot-frame {
         background: #ffffff;
         border-color: #cbd5e1;
@@ -338,137 +411,174 @@
       .blk-text {
         white-space: normal;
         line-height: 1.45;
-        font-size: 14px;     
+        font-size: 14px;
       }
-      
 
       /* bump global sizes */
-body { font-size: 16px; line-height: 1.55; }
-.muted { font-size: 14px; }
+      body {
+        font-size: 16px;
+        line-height: 1.55;
+      }
 
-/* section titles like “MSigDB”, “Open Targets”, etc. */
-.section-title {
-  font-size: 18px;
-  font-weight: 800;
-  margin: 14px 0 6px;
-}
+      .muted {
+        font-size: 14px;
+      }
 
-/* details headers (“Functions”, “Diseases”, etc.) */
-details > summary.sect-hdr {
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 700;
-}
+      /* section titles like “MSigDB”, “Open Targets”, etc. */
+      .section-title {
+        font-size: 18px;
+        font-weight: 800;
+        margin: 14px 0 6px;
+      }
 
-/* --- layout primitives --- */
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;              
-  align-items: center;
-}
+      /* details headers (“Functions”, “Diseases”, etc.) */
+      details > summary.sect-hdr {
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 700;
+      }
 
-/* rows: small vertical row-gap, normal horizontal gap */
-.row { 
-  display: flex; 
-  flex-wrap: wrap; 
-  column-gap: 6px;   /* horiz spacing */
-  row-gap: 3px;      
-  align-items: center;
-}
+      /* --- layout primitives --- */
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+      }
 
-/* chips & pills: smaller + tighter */
-.chip, .pill {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  vertical-align: top;
-  padding: 2px 8px;          
-  border-radius: 999px;
-  line-height: 1.1;         
-  font-size: 12.5px;        
-  color: var(--fg);
-  background: rgba(255,255,255,0.08);
-}
-body.light .chip, body.light .pill { background: rgba(0,0,0,0.06); }
+      /* rows: small vertical row-gap, normal horizontal gap */
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 6px; /* horiz spacing */
+        row-gap: 3px;
+        align-items: center;
+      }
 
-/* wrapping variants */
-.chip { white-space: nowrap; }
-.chip.wrap { white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
+      /* chips & pills: smaller + tighter */
+      .chip,
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
+        vertical-align: top;
+        padding: 2px 8px;
+        border-radius: 999px;
+        line-height: 1.1;
+        font-size: 12.5px;
+        color: var(--fg);
+        background: rgba(255, 255, 255, 0.08);
+      }
 
-/* long notes still readable but compact */
-.chip-note{
-  display: inline-block;   /* switch from inline-flex so text wraps naturally */
-  white-space: normal;     /* override .chip's nowrap */
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  line-height: 1.25;
-  padding: 6px 8px;
-  max-width: 100%;        
-  font-size: 12px;
-  opacity: .9;
-}
+      body.light .chip,
+      body.light .pill {
+        background: rgba(0, 0, 0, 0.06);
+      }
 
-/* header sizes: top vs inner */
-.sect-hdr { cursor: pointer; }
-.top-hdr  { font-weight: 700; font-size: 15px; }
-.sub      { font-size: 12px; }
+      /* wrapping variants */
+      .chip {
+        white-space: nowrap;
+      }
 
-/* utility */
-.wrap { white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
+      .chip.wrap {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
 
-/* tables (unchanged, just here for completeness) */
-.vs-table {
-  border-collapse: separate;
-  border-spacing: 0 8px; /* add air between rows without changing line spacing */
-}
-.vs-table th,
-.vs-table td {
-  font-size: 14px;
-  line-height: 1.35;
-  padding: 10px 14px;
-}
+      /* long notes still readable but compact */
+      .chip-note {
+        display: inline-block; /* switch from inline-flex so text wraps naturally */
+        white-space: normal; /* override .chip's nowrap */
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        line-height: 1.25;
+        padding: 6px 8px;
+        max-width: 100%;
+        font-size: 12px;
+        opacity: 0.9;
+      }
 
-      
+      /* header sizes: top vs inner */
+      .sect-hdr {
+        cursor: pointer;
+      }
 
-/* keep page container margins */
-body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
+      .top-hdr {
+        font-weight: 700;
+        font-size: 15px;
+      }
 
-/* neutralize when .wrap is used on chips/pills */
-.chip.wrap,
-.pill.wrap {
-  margin: 0 !important;
-  padding-top: 2px;   /* whatever you like */
-  padding-bottom: 2px;
-}
+      .sub {
+        font-size: 12px;
+      }
 
-/* make .wrap mean 'text wrapping' ONLY when on chips */
-.chip.wrap,
-.pill.wrap {
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
+      /* utility */
+      .wrap {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
 
-/* optional: ensure the row itself isn’t adding extra spacing */
-.row { display:flex; flex-wrap:wrap; column-gap:6px; row-gap:3px; align-items:center; }
+      /* tables (unchanged, just here for completeness) */
+      .vs-table {
+        border-collapse: separate;
+        border-spacing: 0 8px; /* add air between rows without changing line spacing */
+      }
 
-      
-      
-  </style>
+      .vs-table th,
+      .vs-table td {
+        font-size: 14px;
+        line-height: 1.35;
+        padding: 10px 14px;
+      }
+
+      /* keep page container margins */
+      body > .wrap {
+        max-width: 1100px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+
+      /* neutralize when .wrap is used on chips/pills */
+      .chip.wrap,
+      .pill.wrap {
+        margin: 0 !important;
+        padding-top: 2px;
+        padding-bottom: 2px;
+      }
+
+      /* make .wrap mean 'text wrapping' ONLY when on chips */
+      .chip.wrap,
+      .pill.wrap {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+
+      /* optional: ensure the row itself isn’t adding extra spacing */
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 6px;
+        row-gap: 3px;
+        align-items: center;
+      }
+    </style>
+  </head>
 
   <body>
     <!-- Floating toolbar -->
-<div class="floating-ui" aria-label="Quick actions">
-    <button id="savePageBtn" class="btn-ghost" title="Download a snapshot of this page">Save HTML</button>
-  
-    <!-- Emoji theme slider -->
-    <label class="theme-toggle" title="Toggle theme">
-      <input id="themeCheckbox" type="checkbox" aria-label="Toggle theme (light/dark)">
-      <span class="track"><span class="thumb">🌙</span></span>
-    </label>
-  </div>
-  
+    <div class="floating-ui" aria-label="Quick actions">
+      <button id="savePageBtn" class="btn-ghost" title="Download a snapshot of this page">Save HTML</button>
+
+      <!-- Emoji theme slider -->
+      <label class="theme-toggle" title="Toggle theme">
+        <input id="themeCheckbox" type="checkbox" aria-label="Toggle theme (light/dark)" />
+        <span class="track"><span class="thumb">🌙</span></span>
+      </label>
+    </div>
+
     <div class="wrap">
       <!-- Landing -->
       <div id="hero" role="region" aria-label="Landing">
@@ -478,19 +588,30 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
             <span>Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</span>
           </div>
           <p class="muted" style="margin-bottom:12px">
-            Ask a question or load a folder 
+            Ask a question or load a folder
           </p>
           <div class="row" style="justify-content:center; width:100%; gap:12px; margin-bottom:8px">
-            <input id="q" type="text" placeholder="Ask a question… e.g., Genes interacting with TP53" aria-label="Question" />
+            <input
+              id="q"
+              type="text"
+              placeholder="Ask a question… e.g., Genes interacting with TP53"
+              aria-label="Question"
+            />
             <button id="runBtn" aria-label="Run query">Run</button>
             <button id="loadFolderBtn" aria-label="Load Folder">Load Folder</button>
             <input id="folderPicker" type="file" webkitdirectory directory style="display:none" />
-
           </div>
           <div style="text-align:center; margin-top:12px">
-            <a id="tryDemoLink" href="#" style="font-size:14px; color:var(--accent); text-decoration:underline">Try Demo</a>
+            <a
+              id="tryDemoLink"
+              href="#"
+              style="font-size:14px; color:var(--accent); text-decoration:underline"
+              >Try Demo</a
+            >
           </div>
-          <div class="muted" style="margin-top:8px">Tip: nothing loads until you choose a file, a folder, or click Run.</div>
+          <div class="muted" style="margin-top:8px">
+            Tip: nothing loads until you choose a file, a folder, or click Run.
+          </div>
         </div>
       </div>
 
@@ -498,7 +619,9 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
       <div id="grid" class="grid" style="display:none">
         <div class="brand-header">
           <img src="images/rocket_logo.png" alt="Alvessa logo" class="logo-brand" />
-          <h1 class="brand-title">Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</h1>
+          <h1 class="brand-title">
+            Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics
+          </h1>
         </div>
 
         <aside class="side-col">
@@ -509,19 +632,24 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
         </aside>
 
         <div class="main-col">
-            <!-- Ask another question toolbar -->
-            <div id="toolbar" class="card" style="display:none">
-                <div class="toolbar-title">Ask another question</div>
-                <div class="toolbar-row">
-                  <input id="q2" type="text" placeholder="Type your next question..." aria-label="Another question" />
-                  <button id="runBtn2">Run</button>
-                  <label class="pill" style="cursor:pointer">
-                    Load Folder
-                    <input id="folderPicker2" type="file" webkitdirectory directory style="display:none" />
-                  </label>
-                </div>
-              </div>
-              
+          <!-- Ask another question toolbar -->
+          <div id="toolbar" class="card" style="display:none">
+            <div class="toolbar-title">Ask another question</div>
+            <div class="toolbar-row">
+              <input
+                id="q2"
+                type="text"
+                placeholder="Type your next question..."
+                aria-label="Another question"
+              />
+              <button id="runBtn2">Run</button>
+              <label class="pill" style="cursor:pointer">
+                Load Folder
+                <input id="folderPicker2" type="file" webkitdirectory directory style="display:none" />
+              </label>
+            </div>
+          </div>
+
           <div class="card">
             <div class="title" id="questionTitle">Question</div>
             <div id="question" style="font-size:18px"></div>
@@ -537,21 +665,25 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
             <div class="title">Gene Summary</div>
             <div id="geneSummary"></div>
           </div>
-          
+
           <div id="variantSummaryCard" class="card" style="display:none">
             <div class="title">Variant Summary</div>
             <div id="variantSummary"></div>
           </div>
-          
 
-          <div id="protCard" class="card full" data-section style="display: none">
-            <div class="title">Protein Structure</div>
-            <div id="protMount"></div>
+          <div id="drugCentralCard" class="card" style="display:none">
+            <div class="title">DrugCentral Data</div>
+            <div id="drugCentralMount"></div>
           </div>
 
           <div id="chemblCard" class="card" style="display:none">
-            <div class="title">ChEMBL Data</div>
+            <div class="title">ChEMBL Gene-Centric Data</div>
             <div id="chemblMount"></div>
+          </div>
+
+          <div id="protCard" class="card full" data-section style="display:none">
+            <div class="title">Protein Structure</div>
+            <div id="protMount"></div>
           </div>
 
           <div id="aaSeqCard" class="card" style="display:none">
@@ -569,44 +701,52 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
 
     <!-- App boot + small utilities; Answer renderer is imported from static/answer.js -->
     <script type="module">
-        import { renderAnswerVerified } from "./static/answer.js";
-        import { Wait } from "./static/waiting_module.js";
-        import { renderGeneSummary } from "./static/gene_summary.js";
-        import { renderVariantSummary } from "./static/variant_summary.js";
+      import { renderAnswerVerified } from "./static/answer.js";
+      import { Wait } from "./static/waiting_module.js";
+      import { renderGeneSummary } from "./static/gene_summary.js";
+      import { renderVariantSummary } from "./static/variant_summary.js";
 
+      // ---- Helpers  ----
+      const byId = (id) => document.getElementById(id);
+      const show = (id) => {
+        const el = byId(id);
+        if (!el) return;
+        el.style.display = el.classList.contains("grid") ? "grid" : "block";
+      };
+      const hide = (id) => {
+        const el = byId(id);
+        if (el) el.style.display = "none";
+      };
+      const setText = (id, t) => {
+        const el = byId(id);
+        if (el) el.textContent = t ?? "";
+      };
 
-      
-        // ---- Helpers  ----
-        const byId = (id) => document.getElementById(id);
-        const show = (id) => { const el = byId(id); if (!el) return; el.style.display = el.classList.contains("grid") ? "grid" : "block"; };
-        const hide = (id) => { const el = byId(id); if (el) el.style.display = "none"; };
-        const setText = (id, t) => { const el = byId(id); if (el) el.textContent = t ?? ""; };
+      function setArtifactBaseFromState(st) {
+        const cand = st?.ui?.artifact_base || st?.artifact_base || st?.ui?.base_path || "";
+        if (cand) ARTIFACT_BASE = cand.endsWith("/") ? cand : cand + "/";
+      }
 
-        function setArtifactBaseFromState(st){
-            const cand = st?.ui?.artifact_base || st?.artifact_base || st?.ui?.base_path || "";
-            if (cand) ARTIFACT_BASE = cand.endsWith("/") ? cand : (cand + "/");
-          }
-      
-        // ---- App state ----
-        let STATE = null;
-        let HERO_SHOWN = true;
-        let ARTIFACT_BASE = "";
-        const FILE_CACHE = new Map();
-        const LOCAL_FILES = new Map();
-      
-        // ---- Save page (snapshot) ----
-        function saveFullPageSnapshot(){
-          try{
-            const htmlEl = document.documentElement.cloneNode(true);
-            htmlEl.querySelectorAll(".cite-tip").forEach(n => n.remove());
-      
-            const boot = document.createElement("script");
-            boot.type = "text/javascript";
-            const stateJson = JSON.stringify(STATE ?? {});
-            const localFilesJson = JSON.stringify(Array.from(LOCAL_FILES.entries()));
-            const fileCacheJson  = JSON.stringify(Array.from(FILE_CACHE.entries()));
-            const isLight = document.body.classList.contains("light");
-            boot.textContent = `
+      // ---- App state ----
+      let STATE = null;
+      let HERO_SHOWN = true;
+      let ARTIFACT_BASE = "";
+      const FILE_CACHE = new Map();
+      const LOCAL_FILES = new Map();
+
+      // ---- Save page (snapshot) ----
+      function saveFullPageSnapshot() {
+        try {
+          const htmlEl = document.documentElement.cloneNode(true);
+          htmlEl.querySelectorAll(".cite-tip").forEach((n) => n.remove());
+
+          const boot = document.createElement("script");
+          boot.type = "text/javascript";
+          const stateJson = JSON.stringify(STATE ?? {});
+          const localFilesJson = JSON.stringify(Array.from(LOCAL_FILES.entries()));
+          const fileCacheJson = JSON.stringify(Array.from(FILE_CACHE.entries()));
+          const isLight = document.body.classList.contains("light");
+          boot.textContent = `
               (function(){
                 try{
                   window.STATE = ${stateJson};
@@ -617,213 +757,318 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
                 }catch(e){ console.warn('Snapshot boot failed', e); }
               })();
             `;
-            htmlEl.querySelector("body")?.appendChild(boot);
-      
-            const doctype = "<!doctype html>\n";
-            const htmlText = doctype + htmlEl.outerHTML;
-            const blob = new Blob([htmlText], { type: "text/html;charset=utf-8" });
-            const url  = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url; a.download = "alvessa_snapshot.html"; a.click();
-            setTimeout(() => URL.revokeObjectURL(url), 800);
-          }catch(e){
-            alert("Could not create snapshot: " + e.message);
-          }
-        }
-        byId("savePageBtn")?.addEventListener("click", saveFullPageSnapshot);
-      
-        // ---- Theme slider (emoji) ----
-        const themeCb = byId("themeCheckbox");
-        function applyTheme(light){
-          document.body.classList.toggle("light", !!light);
-          const thumb = document.querySelector(".theme-toggle .thumb");
-          if (thumb) thumb.textContent = light ? "☀️" : "🌙";
-          try{ localStorage.setItem("alvessa_theme", light ? "light" : "dark"); }catch(_){}
-        }
-        (function initTheme(){
-          let pref = null;
-          try{ pref = localStorage.getItem("alvessa_theme"); }catch(_){}
-          const startLight = pref ? (pref === "light") : false;
-          applyTheme(startLight);
-          if (themeCb) themeCb.checked = startLight;
-          broadcastThemeToIframes();
-        })();
+          htmlEl.querySelector("body")?.appendChild(boot);
 
-        function broadcastThemeToIframes() {
-            const isLight = document.body.classList.contains("light");
-            document.querySelectorAll("iframe").forEach((frame) => {
-              try {
-                frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
-              } catch (_) {}
-            });
-          }
-          
-          themeCb?.addEventListener("change", (e) => {
-            applyTheme(e.target.checked);
-            broadcastThemeToIframes();
-          });
-          
-          
-        function setArtifactBaseFromUrl(url){
+          const doctype = "<!doctype html>\n";
+          const htmlText = doctype + htmlEl.outerHTML;
+          const blob = new Blob([htmlText], { type: "text/html;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "alvessa_snapshot.html";
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 800);
+        } catch (e) {
+          alert("Could not create snapshot: " + e.message);
+        }
+      }
+
+      byId("savePageBtn")?.addEventListener("click", saveFullPageSnapshot);
+
+      // ---- Theme slider (emoji) ----
+      const themeCb = byId("themeCheckbox");
+
+      function applyTheme(light) {
+        document.body.classList.toggle("light", !!light);
+        const thumb = document.querySelector(".theme-toggle .thumb");
+        if (thumb) thumb.textContent = light ? "☀️" : "🌙";
+        try {
+          localStorage.setItem("alvessa_theme", light ? "light" : "dark");
+        } catch (_) {}
+      }
+
+      (function initTheme() {
+        let pref = null;
+        try {
+          pref = localStorage.getItem("alvessa_theme");
+        } catch (_) {}
+        const startLight = pref ? pref === "light" : false;
+        applyTheme(startLight);
+        if (themeCb) themeCb.checked = startLight;
+        broadcastThemeToIframes();
+      })();
+
+      function broadcastThemeToIframes() {
+        const isLight = document.body.classList.contains("light");
+        document.querySelectorAll("iframe").forEach((frame) => {
           try {
-            const u = new URL(url, window.location.href);
-            const parts = u.pathname.split("/"); parts.pop();
-            ARTIFACT_BASE = parts.join("/") + "/";
-            if (u.origin && !/^https?:\/\//.test(ARTIFACT_BASE)) ARTIFACT_BASE = u.origin + ARTIFACT_BASE;
-          } catch {
-            const p = String(url || "").split("/"); p.pop();
-            ARTIFACT_BASE = (p.join("/") + "/").replace(/\/\/+/g, "/");
-          }
-        }
-        function withBase(path){
-          if (!path) return path;
-          if (/^https?:\/\//i.test(path)) return path;
-          if (!ARTIFACT_BASE) return path;
-          return (ARTIFACT_BASE + path).replace(/([^:]\/)\/+/g, "$1");
-        }
-        async function fetchTextCached(path){
-          if (LOCAL_FILES.has(path)) return LOCAL_FILES.get(path);
-          // ends-with match for folder loads
-          for (const k of LOCAL_FILES.keys()) {
-            if (k.endsWith("/"+path) || k === path) return LOCAL_FILES.get(k);
-          }
-          const url = withBase(path);
-          if (FILE_CACHE.has(url)) return FILE_CACHE.get(url);
-          const res = await fetch(url, { cache:"no-store" });
-          if (!res.ok) throw new Error(`Fetch failed: ${url} (${res.status})`);
-          const txt = await res.text();
-          FILE_CACHE.set(url, txt);
-          return txt;
-        }
-      
-        // ---- Renderers ----
-        function setBusy(busy) {
-            const ids = ["runBtn", "runBtn2", "loadFolderBtn"];
-            for (const id of ids) {
-              const el = byId(id);
-              if (el) { el.disabled = !!busy; el.style.opacity = busy ? 0.7 : 1; el.style.pointerEvents = busy ? "none" : "auto"; }
-            }
-          }
+            frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
+          } catch (_) {}
+        });
+      }
 
-        function renderQuestion(st){
-          const msgs = st?.messages || [];
-          const lastUser = [...msgs].reverse().find(m => m?.role === "user");
-          const q = lastUser?.content || st?.prompt || "";
-          setText("question", q || "");
-          setText("questionTitle", "Question");
+      themeCb?.addEventListener("change", (e) => {
+        applyTheme(e.target.checked);
+        broadcastThemeToIframes();
+      });
+
+      function setArtifactBaseFromUrl(url) {
+        try {
+          const u = new URL(url, window.location.href);
+          const parts = u.pathname.split("/");
+          parts.pop();
+          ARTIFACT_BASE = parts.join("/") + "/";
+          if (u.origin && !/^https?:\/\//.test(ARTIFACT_BASE)) ARTIFACT_BASE = u.origin + ARTIFACT_BASE;
+        } catch {
+          const p = String(url || "").split("/");
+          p.pop();
+          ARTIFACT_BASE = (p.join("/") + "/").replace(/\/\/+/g, "/");
         }
-        function renderProt(st) {
-            const mount = document.getElementById("protMount");
-            if (!mount) return;
-    
-            const html = st?.prot_html;
-            const iframeUrl = st?.prot_iframe_url;
-            const pdbId = st?.pdb_id;
-    
-            mount.innerHTML = "";
-            if (!html && !iframeUrl && !pdbId) {
-              return (document.getElementById("protCard").style.display = "none");
-            }
-    
-            const frame = document.createElement("iframe");
-            frame.className = "prot-frame";
-            // Updated sandbox for full link functionality and downloads
-            frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
-            frame.setAttribute("referrerpolicy", "no-referrer");
-    
-            if (html && typeof html === "string" && html.trim()) {
-              frame.srcdoc = html;
-    
-              const saveBtn = document.createElement("button");
-              saveBtn.className = "mini";
-              saveBtn.textContent = "Save HTML";
-              saveBtn.style.margin = "6px 0 10px";
-              saveBtn.onclick = () => {
-                const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "protein_view.html";
-                a.click();
-                setTimeout(() => URL.revokeObjectURL(url), 800);
-              };
-              mount.appendChild(saveBtn);
-            } else if (iframeUrl) {
-              frame.src = iframeUrl;
-            } else if (pdbId) {
-              frame.src = `https://www.ebi.ac.uk/pdbe/entry-files/molstar.html?structureId=${encodeURIComponent(pdbId)}`;
-            }
-    
-            mount.appendChild(frame);
+      }
 
-            document.getElementById("protCard").style.display = "block";
-    
-            // Updated theme broadcast after load
-            const isLight = document.body.classList.contains("light");
-            frame.addEventListener("load", () => {
-              frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
-            });
-          }
-        
-          function renderChembl(st) {
-            const mount = document.getElementById("chemblMount");
-            const card  = document.getElementById("chemblCard");
-            if (!mount || !card) return;
-          
-            const rawHtml   = st?.chembl_html || st?.ui?.chembl_html;           // srcdoc (preferred)
-            const iframeUrl = st?.chembl_iframe_url || st?.ui?.chembl_iframe_url;
-          
-            if (!rawHtml && !iframeUrl) { card.style.display = "none"; mount.innerHTML = ""; return; }
-          
-            mount.innerHTML = "";
-            card.style.display = "block";
-          
-            const frame = document.createElement("iframe");
-            frame.className = "prot-frame";
-            frame.setAttribute("sandbox","allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
-            frame.setAttribute("referrerpolicy","no-referrer");
-          
-            if (rawHtml && typeof rawHtml === "string") {
-              const isLight = document.body.classList.contains("light");
-          
-              // Inject starting theme directly into the child HTML to avoid a flash
-              const html = isLight
-                ? rawHtml.replace(/<body(\s|>)/i, '<body class="light"$1')
-                : rawHtml;
-          
-              frame.srcdoc = html;
-          
-              const saveBtn = document.createElement("button");
-              saveBtn.className = "ghost";
-              saveBtn.textContent = "Save HTML";
-              saveBtn.style.margin = "6px 0 10px";
-              saveBtn.onclick = () => {
-                const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url; a.download = "chembl_view.html"; a.click();
-                setTimeout(() => URL.revokeObjectURL(url), 800);
-              };
-              mount.appendChild(saveBtn);
-            } else {
-              frame.src = iframeUrl;
-            }
-          
-            mount.appendChild(frame);
-          
-            const isLightNow = document.body.classList.contains("light");
-            frame.addEventListener("load", () => {
-              frame.contentWindow?.postMessage({ type:"theme", theme: isLightNow ? "light" : "dark" }, "*");
-            });
-          }
+      function withBase(path) {
+        if (!path) return path;
+        if (/^https?:\/\//i.test(path)) return path;
+        if (!ARTIFACT_BASE) return path;
+        return (ARTIFACT_BASE + path).replace(/([^:]\/)\/+/g, "$1");
+      }
 
-          function renderAaSeq(st) {
+      async function fetchTextCached(path) {
+        if (LOCAL_FILES.has(path)) return LOCAL_FILES.get(path);
+        // ends-with match for folder loads
+        for (const k of LOCAL_FILES.keys()) {
+          if (k.endsWith("/" + path) || k === path) return LOCAL_FILES.get(k);
+        }
+        const url = withBase(path);
+        if (FILE_CACHE.has(url)) return FILE_CACHE.get(url);
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Fetch failed: ${url} (${res.status})`);
+        const txt = await res.text();
+        FILE_CACHE.set(url, txt);
+        return txt;
+      }
+
+      // ---- Renderers ----
+      function setBusy(busy) {
+        const ids = ["runBtn", "runBtn2", "loadFolderBtn"];
+        for (const id of ids) {
+          const el = byId(id);
+          if (el) {
+            el.disabled = !!busy;
+            el.style.opacity = busy ? 0.7 : 1;
+            el.style.pointerEvents = busy ? "none" : "auto";
+          }
+        }
+      }
+
+      function renderQuestion(st) {
+        const msgs = st?.messages || [];
+        const lastUser = [...msgs].reverse().find((m) => m?.role === "user");
+        const q = lastUser?.content || st?.prompt || "";
+        setText("question", q || "");
+        setText("questionTitle", "Question");
+      }
+
+      function renderDrugCentral(st) {
+        const mount = document.getElementById("drugCentralMount");
+        const card = document.getElementById("drugCentralCard");
+        if (!mount || !card) return;
+
+        // Back-end: set either of these
+        //   st.drug_central_html or st.ui.drug_central_html
+        //   st.drug_central_iframe_url or st.ui.drug_central_iframe_url
+        const rawHtml = st?.drug_central_html || st?.ui?.drug_central_html;
+        const iframeUrl = st?.drug_central_iframe_url || st?.ui?.drug_central_iframe_url;
+
+        if (!rawHtml && !iframeUrl) {
+          card.style.display = "none";
+          mount.innerHTML = "";
+          return;
+        }
+
+        mount.innerHTML = "";
+        card.style.display = "block";
+
+        const frame = document.createElement("iframe");
+        frame.className = "prot-frame";
+        frame.setAttribute(
+          "sandbox",
+          "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads",
+        );
+        frame.setAttribute("referrerpolicy", "no-referrer");
+
+        if (rawHtml && typeof rawHtml === "string") {
+          const isLight = document.body.classList.contains("light");
+
+          // Inject starting theme into the DrugCentral HTML to avoid flash
+          const html = isLight
+            ? rawHtml.replace(/<body(\s|>)/i, '<body class="light"$1')
+            : rawHtml;
+
+          frame.srcdoc = html;
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "ghost";
+          saveBtn.textContent = "Save HTML";
+          saveBtn.style.margin = "6px 0 10px";
+          saveBtn.onclick = () => {
+            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "drug_central_view.html";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 800);
+          };
+          mount.appendChild(saveBtn);
+        } else {
+          // Fallback to external URL if provided
+          frame.src = iframeUrl;
+        }
+
+        mount.appendChild(frame);
+
+        // Keep DrugCentral viewer in sync with theme
+        const isLightNow = document.body.classList.contains("light");
+        frame.addEventListener("load", () => {
+          frame.contentWindow?.postMessage(
+            { type: "theme", theme: isLightNow ? "light" : "dark" },
+            "*",
+          );
+        });
+      }
+
+      function renderChembl(st) {
+        const mount = document.getElementById("chemblMount");
+        const card = document.getElementById("chemblCard");
+        if (!mount || !card) return;
+
+        const rawHtml = st?.chembl_html || st?.ui?.chembl_html; // srcdoc (preferred)
+        const iframeUrl = st?.chembl_iframe_url || st?.ui?.chembl_iframe_url;
+
+        if (!rawHtml && !iframeUrl) {
+          card.style.display = "none";
+          mount.innerHTML = "";
+          return;
+        }
+
+        mount.innerHTML = "";
+        card.style.display = "block";
+
+        const frame = document.createElement("iframe");
+        frame.className = "prot-frame";
+        frame.setAttribute(
+          "sandbox",
+          "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads",
+        );
+        frame.setAttribute("referrerpolicy", "no-referrer");
+
+        if (rawHtml && typeof rawHtml === "string") {
+          const isLight = document.body.classList.contains("light");
+
+          // Inject starting theme directly into the child HTML to avoid a flash
+          const html = isLight
+            ? rawHtml.replace(/<body(\s|>)/i, '<body class="light"$1')
+            : rawHtml;
+
+          frame.srcdoc = html;
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "ghost";
+          saveBtn.textContent = "Save HTML";
+          saveBtn.style.margin = "6px 0 10px";
+          saveBtn.onclick = () => {
+            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "chembl_view.html";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 800);
+          };
+          mount.appendChild(saveBtn);
+        } else {
+          frame.src = iframeUrl;
+        }
+
+        mount.appendChild(frame);
+
+        const isLightNow = document.body.classList.contains("light");
+        frame.addEventListener("load", () => {
+          frame.contentWindow?.postMessage(
+            { type: "theme", theme: isLightNow ? "light" : "dark" },
+            "*",
+          );
+        });
+      }
+
+      function renderProt(st) {
+        const mount = document.getElementById("protMount");
+        if (!mount) return;
+
+        const html = st?.prot_html;
+        const iframeUrl = st?.prot_iframe_url;
+        const pdbId = st?.pdb_id;
+
+        mount.innerHTML = "";
+        if (!html && !iframeUrl && !pdbId) {
+          document.getElementById("protCard").style.display = "none";
+          return;
+        }
+
+        const frame = document.createElement("iframe");
+        frame.className = "prot-frame";
+        frame.setAttribute(
+          "sandbox",
+          "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads",
+        );
+        frame.setAttribute("referrerpolicy", "no-referrer");
+
+        if (html && typeof html === "string" && html.trim()) {
+          frame.srcdoc = html;
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "mini";
+          saveBtn.textContent = "Save HTML";
+          saveBtn.style.margin = "6px 0 10px";
+          saveBtn.onclick = () => {
+            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "protein_view.html";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 800);
+          };
+          mount.appendChild(saveBtn);
+        } else if (iframeUrl) {
+          frame.src = iframeUrl;
+        } else if (pdbId) {
+          frame.src = `https://www.ebi.ac.uk/pdbe/entry-files/molstar.html?structureId=${encodeURIComponent(
+            pdbId,
+          )}`;
+        }
+
+        mount.appendChild(frame);
+        document.getElementById("protCard").style.display = "block";
+
+        // Updated theme broadcast after load
+        const isLight = document.body.classList.contains("light");
+        frame.addEventListener("load", () => {
+          frame.contentWindow?.postMessage(
+            { type: "theme", theme: isLight ? "light" : "dark" },
+            "*",
+          );
+        });
+      }
+
+      function renderAaSeq(st) {
         const mount = document.getElementById("aaSeqMount");
-        const card  = document.getElementById("aaSeqCard");
+        const card = document.getElementById("aaSeqCard");
         if (!mount || !card) return;
 
         // Back-end currently sets aa_seq_html; leave room for future iframe URL
-        const rawHtml   = st?.aa_seq_html || st?.ui?.aa_seq_html;
+        const rawHtml = st?.aa_seq_html || st?.ui?.aa_seq_html;
         const iframeUrl = st?.aa_seq_iframe_url || st?.ui?.aa_seq_iframe_url;
 
         if (!rawHtml && !iframeUrl) {
@@ -839,7 +1084,7 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
         frame.className = "prot-frame";
         frame.setAttribute(
           "sandbox",
-          "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads"
+          "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads",
         );
         frame.setAttribute("referrerpolicy", "no-referrer");
 
@@ -879,229 +1124,304 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
         frame.addEventListener("load", () => {
           frame.contentWindow?.postMessage(
             { type: "theme", theme: isLightNow ? "light" : "dark" },
-            "*"
+            "*",
           );
         });
       }
 
-          function renderRaw(st){
-          const card = byId("rawCard");
-          if (!st) { card.style.display = "none"; return; }
-          byId("raw").textContent = JSON.stringify(st, null, 2);
-          card.style.display = "block";
+      function renderRaw(st) {
+        const card = byId("rawCard");
+        if (!st) {
+          card.style.display = "none";
+          return;
         }
-      
-        async function refresh(qOverride){
-            if (!STATE) return;
-          
-            if (HERO_SHOWN){ 
-              HERO_SHOWN = false; 
-              hide("hero"); 
-              show("grid"); 
+        byId("raw").textContent = JSON.stringify(st, null, 2);
+        card.style.display = "block";
+      }
+
+      async function refresh(qOverride) {
+        if (!STATE) return;
+
+        if (HERO_SHOWN) {
+          HERO_SHOWN = false;
+          hide("hero");
+          show("grid");
+        }
+        if (qOverride) setText("question", qOverride);
+
+        // show the “Ask another question” bar
+        show("toolbar");
+
+        renderQuestion(STATE);
+        renderAnswerVerified(STATE);
+        await renderGeneSummary(STATE, {
+          byId,
+          show,
+          hide,
+          fetchTextCached,
+          escapeHtml: (s) =>
+            String(s ?? "").replace(
+              /[&<>"']/g,
+              (ch) =>
+                ({
+                  "&": "&amp;",
+                  "<": "&lt;",
+                  ">": "&gt;",
+                  '"': "&quot;",
+                  "'": "&#39;",
+                })[ch],
+            ),
+        });
+        await renderVariantSummary(STATE, {
+          byId,
+          show,
+          hide,
+          fetchTextCached,
+          escapeHtml: (s) =>
+            String(s ?? "").replace(
+              /[&<>"']/g,
+              (ch) =>
+                ({
+                  "&": "&amp;",
+                  "<": "&lt;",
+                  ">": "&gt;",
+                  '"': "&quot;",
+                  "'": "&#39;",
+                })[ch],
+            ),
+        });
+        renderDrugCentral(STATE);
+        renderProt(STATE);
+        renderChembl(STATE);
+        renderAaSeq(STATE);
+        renderRaw(STATE);
+        broadcastThemeToIframes();
+      }
+
+      // ---- Run (server) ----
+      let WAITER = null;
+      let LOG_TIMER = null;
+      let LOG_POS = 0;
+
+      function startLogFollower(onLine) {
+        stopLogFollower();
+        LOG_POS = 0;
+        LOG_TIMER = setInterval(async () => {
+          try {
+            const r = await fetch("log?pos=" + LOG_POS, { cache: "no-store" });
+            if (!r.ok) return;
+            const { pos, data } = await r.json();
+            if (typeof pos === "number") LOG_POS = pos;
+            if (typeof data === "string") {
+              const lines = data
+                .split(/\r?\n/)
+                .map((s) => s.trim())
+                .filter(Boolean);
+              const last = lines[lines.length - 1];
+              if (last && typeof onLine === "function") onLine(last);
             }
-            if (qOverride) setText("question", qOverride);
-          
-            // show the “Ask another question” bar
-            show("toolbar");
-          
-            renderQuestion(STATE);
-            renderAnswerVerified(STATE);
-            await renderGeneSummary(STATE, {
-                byId,
-                show,
-                hide,
-                fetchTextCached,  
-                escapeHtml: (s) => String(s ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
-              });
-            await renderVariantSummary(STATE, {
-                byId,
-                show,
-                hide,
-                fetchTextCached,
-                escapeHtml: (s) => String(s ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
-              });
-            renderProt(STATE);
-            renderChembl(STATE);
-            renderAaSeq(STATE);
-            renderRaw(STATE);
-            broadcastThemeToIframes();
+          } catch {}
+        }, 900);
+      }
+
+      function stopLogFollower() {
+        if (LOG_TIMER) clearInterval(LOG_TIMER);
+        LOG_TIMER = null;
+      }
+
+      async function runServer(q) {
+        if (!WAITER) WAITER = Wait.attach();
+        setBusy(true);
+        WAITER.start("Submitting…", "Starting pipeline");
+
+        // Follow the live log WHILE /run is executing
+        startLogFollower((line) => WAITER.setMessage(line.slice(0, 220)));
+
+        try {
+          // Kick off the run and WAIT for the final JSON (server is synchronous)
+          const resp = await fetch("run?q=" + encodeURIComponent(q), { cache: "no-store" });
+
+          // If the server refused because another run is active
+          if (resp.status === 409) {
+            WAITER.setError("A run is already in progress.");
+            return;
+          }
+          if (!resp.ok) {
+            WAITER.setError("Run failed (" + resp.status + ")");
+            return;
           }
 
-                
-        // ---- Run (server) ----
-        let WAITER = null;
-let LOG_TIMER = null;
-let LOG_POS = 0;
+          // THIS IS THE FINAL STATE — no need to poll /state
+          STATE = await resp.json();
+          LOCAL_FILES.clear();
+          FILE_CACHE.clear();
+          setArtifactBaseFromState(STATE);
 
-function startLogFollower(onLine) {
-  stopLogFollower();
-  LOG_POS = 0;
-  LOG_TIMER = setInterval(async () => {
-    try {
-      const r = await fetch("log?pos=" + LOG_POS, { cache: "no-store" });
-      if (!r.ok) return;
-      const { pos, data } = await r.json();
-      if (typeof pos === "number") LOG_POS = pos;
-      if (typeof data === "string") {
-        const lines = data.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-        const last = lines[lines.length - 1];
-        if (last && typeof onLine === "function") onLine(last);
+          // Render
+          await refresh(q);
+        } catch (err) {
+          console.error(err);
+          WAITER.setError(err?.message || String(err));
+        } finally {
+          stopLogFollower();
+          WAITER.stop();
+          setBusy(false);
+        }
       }
-    } catch {}
-  }, 900);
-}
-function stopLogFollower() { if (LOG_TIMER) clearInterval(LOG_TIMER); LOG_TIMER = null; }
 
-async function runServer(q){
-  if (!WAITER) WAITER = Wait.attach();
-  setBusy(true);
-  WAITER.start("Submitting…", "Starting pipeline");
+      function wireRun(btnId, inputId) {
+        const btn = byId(btnId);
+        const inp = byId(inputId);
+        if (!btn || !inp) return;
+        const go = () => {
+          const q = inp.value.trim();
+          if (!q) {
+            inp.focus();
+            return;
+          }
+          runServer(q);
+        };
+        btn.addEventListener("click", go);
+        inp.addEventListener("keydown", (e) => e.key === "Enter" && go());
+      }
 
-  // Follow the live log WHILE /run is executing
-  startLogFollower((line) => WAITER.setMessage(line.slice(0, 220)));
+      wireRun("runBtn", "q");
+      wireRun("runBtn2", "q2");
 
-  try {
-    // Kick off the run and WAIT for the final JSON (server is synchronous)
-    const resp = await fetch("run?q=" + encodeURIComponent(q), { cache: "no-store" });
-
-    // If the server refused because another run is active
-    if (resp.status === 409) {
-      WAITER.setError("A run is already in progress.");
-      return;
-    }
-    if (!resp.ok) {
-      WAITER.setError("Run failed (" + resp.status + ")");
-      return;
-    }
-
-    // THIS IS THE FINAL STATE — no need to poll /state
-    STATE = await resp.json();
-    LOCAL_FILES.clear();
-    FILE_CACHE.clear();
-    setArtifactBaseFromState(STATE);
-
-
-    // Render
-    await refresh(q);
-
-  } catch (err) {
-    console.error(err);
-    WAITER.setError(err?.message || String(err));
-  } finally {
-    stopLogFollower();
-    WAITER.stop();
-    setBusy(false);
-  }
-}
-
-        
-        function wireRun(btnId, inputId){
-          const btn = byId(btnId), inp = byId(inputId);
-          if (!btn || !inp) return;
-          const go = () => { const q = inp.value.trim(); if (!q) { inp.focus(); return; } runServer(q); };
-          btn.addEventListener("click", go);
-          inp.addEventListener("keydown", (e) => e.key === "Enter" && go());
-        }
-        wireRun("runBtn", "q");
-        wireRun("runBtn2", "q2");  
-      
-        // ---- Load JSON (both inputs) ----
-        (function wireJson(id){
-          const input = byId(id);
-          if (!input) return;
-          input.addEventListener("change", () => {
-            const f = input.files?.[0]; if (!f) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-              try { STATE = JSON.parse(String(reader.result||"{}")); LOCAL_FILES.clear(); FILE_CACHE.clear();setArtifactBaseFromState(STATE); refresh(); }
-              catch { alert("Invalid JSON file."); }
-            };
-            reader.readAsText(f);
-            input.value = "";
-          });
-        })("jsonFile");
-        (function wireJson2(id){
-          const input = byId(id);
-          if (!input) return;
-          input.addEventListener("change", () => {
-            const f = input.files?.[0]; if (!f) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-              try { STATE = JSON.parse(String(reader.result||"{}")); LOCAL_FILES.clear(); FILE_CACHE.clear();setArtifactBaseFromState(STATE); refresh(); }
-              catch { alert("Invalid JSON file."); }
-            };
-            reader.readAsText(f);
-            input.value = "";
-          });
-        })("jsonFile2");
-      
-        // ---- Load Folder (both pickers) ----
-        function wireFolder(id){
-          const picker = byId(id);
-          if (!picker) return;
-          picker.addEventListener("change", async () => {
-            LOCAL_FILES.clear(); FILE_CACHE.clear(); ARTIFACT_BASE = "";
-            const files = Array.from(picker.files || []);
-            let demoKey = null;
-            for (const f of files) {
-              const key = (f.webkitRelativePath || f.name).replace(/\\/g,"/");
-              const txt = await f.text().catch(()=>null);
-              if (txt != null) LOCAL_FILES.set(key, txt);
-              if (/\/demo\.json$/i.test(key) || /^demo\.json$/i.test(key)) demoKey = key;
+      // ---- Load JSON (both inputs) ----
+      (function wireJson(id) {
+        const input = byId(id);
+        if (!input) return;
+        input.addEventListener("change", () => {
+          const f = input.files?.[0];
+          if (!f) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              STATE = JSON.parse(String(reader.result || "{}"));
+              LOCAL_FILES.clear();
+              FILE_CACHE.clear();
+              setArtifactBaseFromState(STATE);
+              refresh();
+            } catch {
+              alert("Invalid JSON file.");
             }
-            if (!demoKey){ alert("Folder loaded, but no demo.json found."); return; }
-            try { STATE = JSON.parse(LOCAL_FILES.get(demoKey) || "{}"); }
-            catch { alert("Could not parse demo.json"); return; }
-            const parts = demoKey.split("/"); parts.pop();
-            ARTIFACT_BASE = parts.length ? parts.join("/") + "/" : "";
-            await refresh();
-            picker.value = "";
-          });
-        }
-        wireFolder("folderPicker");
-        wireFolder("folderPicker2");
-      
-        // ---- Demo select ----
-        byId("demoSelect")?.addEventListener("change", async () => {
-          const v = byId("demoSelect").value;
-          if (!v) return;
+          };
+          reader.readAsText(f);
+          input.value = "";
+        });
+      })("jsonFile");
+
+      (function wireJson2(id) {
+        const input = byId(id);
+        if (!input) return;
+        input.addEventListener("change", () => {
+          const f = input.files?.[0];
+          if (!f) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              STATE = JSON.parse(String(reader.result || "{}"));
+              LOCAL_FILES.clear();
+              FILE_CACHE.clear();
+              setArtifactBaseFromState(STATE);
+              refresh();
+            } catch {
+              alert("Invalid JSON file.");
+            }
+          };
+          reader.readAsText(f);
+          input.value = "";
+        });
+      })("jsonFile2");
+
+      // ---- Load Folder (both pickers) ----
+      function wireFolder(id) {
+        const picker = byId(id);
+        if (!picker) return;
+        picker.addEventListener("change", async () => {
+          LOCAL_FILES.clear();
+          FILE_CACHE.clear();
+          ARTIFACT_BASE = "";
+          const files = Array.from(picker.files || []);
+          let demoKey = null;
+          for (const f of files) {
+            const key = (f.webkitRelativePath || f.name).replace(/\\/g, "/");
+            const txt = await f.text().catch(() => null);
+            if (txt != null) LOCAL_FILES.set(key, txt);
+            if (/\/demo\.json$/i.test(key) || /^demo\.json$/i.test(key)) demoKey = key;
+          }
+          if (!demoKey) {
+            alert("Folder loaded, but no demo.json found.");
+            return;
+          }
           try {
-            const r = await fetch(v, { cache:"no-store" });
-            if (!r.ok) throw new Error("fetch failed");
-            STATE = await r.json();
-            setArtifactBaseFromUrl(v);
-            refresh();
-          } catch { alert("Could not load demo JSON."); }
+            STATE = JSON.parse(LOCAL_FILES.get(demoKey) || "{}");
+          } catch {
+            alert("Could not parse demo.json");
+            return;
+          }
+          const parts = demoKey.split("/");
+          parts.pop();
+          ARTIFACT_BASE = parts.length ? parts.join("/") + "/" : "";
+          await refresh();
+          picker.value = "";
         });
-      
-        // ---- Download current STATE ----
-        byId("downloadBtn")?.addEventListener("click", () => {
-          if (!STATE) { alert("No JSON loaded yet."); return; }
-          const blob = new Blob([JSON.stringify(STATE, null, 2)], { type:"application/json" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a"); a.href = url; a.download = "alvessa_state.json"; a.click();
-          setTimeout(()=>URL.revokeObjectURL(url), 800);
+      }
+
+      wireFolder("folderPicker");
+      wireFolder("folderPicker2");
+
+      // ---- Demo select ----
+      byId("demoSelect")?.addEventListener("change", async () => {
+        const v = byId("demoSelect").value;
+        if (!v) return;
+        try {
+          const r = await fetch(v, { cache: "no-store" });
+          if (!r.ok) throw new Error("fetch failed");
+          STATE = await r.json();
+          setArtifactBaseFromUrl(v);
+          refresh();
+        } catch {
+          alert("Could not load demo JSON.");
+        }
+      });
+
+      // ---- Download current STATE ----
+      byId("downloadBtn")?.addEventListener("click", () => {
+        if (!STATE) {
+          alert("No JSON loaded yet.");
+          return;
+        }
+        const blob = new Blob([JSON.stringify(STATE, null, 2)], {
+          type: "application/json",
         });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "alvessa_state.json";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 800);
+      });
 
+      const DEMO_PATH = "out/20250924-004900_ui/demo.json"; // the hardwired demo folder
 
-const DEMO_PATH = "out/20250924-004900_ui/demo.json";  // the hardwired demo folder
-byId("tryDemoLink").addEventListener("click", async (e) => {
-  e.preventDefault();
-  try {
-    const r = await fetch(DEMO_PATH, { cache:"no-store" });
-    if (!r.ok) throw new Error("failed");
-    STATE = await r.json();
-    setArtifactBaseFromUrl(DEMO_PATH);
-    refresh();
-  } catch(err) {
-    alert("Could not load demo: " + err.message);
-  }
-});
-byId("loadFolderBtn").addEventListener("click", () => {
-  byId("folderPicker").click();
-});
+      byId("tryDemoLink").addEventListener("click", async (e) => {
+        e.preventDefault();
+        try {
+          const r = await fetch(DEMO_PATH, { cache: "no-store" });
+          if (!r.ok) throw new Error("failed");
+          STATE = await r.json();
+          setArtifactBaseFromUrl(DEMO_PATH);
+          refresh();
+        } catch (err) {
+          alert("Could not load demo: " + err.message);
+        }
+      });
 
-      </script>
-      
+      byId("loadFolderBtn").addEventListener("click", () => {
+        byId("folderPicker").click();
+      });
+    </script>
   </body>
 </html>

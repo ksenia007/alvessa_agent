@@ -1,0 +1,515 @@
+/* ============================================================
+   Drug Central Viewer Stylesheet (Aligned with Alvessa UI Theme)
+   Clean, professional, dark/light palette
+   ============================================================ */
+
+/* === Theme Variables === */
+:root {
+  --bg-main: #0b1020;
+  --bg-card: #121832;
+  --bg-panel: #1a2347;
+  --text-main: #e6e8ef;
+  --text-muted: #aab4d6;
+  --border: #1e2a52;
+  --border-strong: #2a3a72;
+  --accent: #2a3a72;
+
+  --link: #9cc9ff;
+  --link-hover: #d6e7ff;
+  --link-visited: #b9d6ff;
+  --focus-ring: 0 0 0 3px rgba(156, 201, 255, 0.35);
+
+  --withdrawn: #ff6b6b;
+}
+
+/* === Light Theme === */
+body.light {
+  --bg-main: #ffffff;
+  --bg-card: #ffffff;
+  --bg-panel: #f5f7fb;
+  --text-main: #0b1020;
+  --text-muted: #6b7280;
+  --border: #d8dce6;
+  --border-strong: #c8cfe0;
+  --accent: #1b2450;
+
+  --link: #1b45f0;
+  --link-hover: #0d36c7;
+  --link-visited: #5a3be6;
+  --focus-ring: 0 0 0 3px rgba(27, 69, 240, 0.25);
+
+  --withdrawn: #c22222;
+}
+
+/* === Global Layout === */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+@supports not (scrollbar-gutter: stable) {
+  body {
+    overflow-y: scroll;
+  }
+}
+
+body {
+  font-family: "Segoe UI", Roboto, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-main);
+  margin: 0;
+  padding: 0;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3 {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+h1 {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.25em;
+  margin-top: 0.75em;
+}
+
+.subheading {
+  margin: 0.8em 0 0.4em 0;
+  font-size: 0.95em;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Utility sub-lines */
+.sub {
+  display: block;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+.sub.muted {
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+.sub.withdrawn {
+  color: var(--withdrawn);
+  font-weight: 600;
+}
+
+/* === Links === */
+a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.12s ease;
+}
+a:hover {
+  color: var(--link-hover);
+}
+a:visited {
+  color: var(--link-visited);
+}
+a:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 4px;
+}
+
+/* === Sections === */
+.collapsible-section {
+  margin-top: 1.2em;
+}
+
+/* === Collapsible Section Headers === */
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.45em 0.8em;
+  margin: 0.5em 0 0.3em 0;
+}
+.collapsible-header:hover {
+  background: var(--bg-panel);
+  border-color: var(--border-strong);
+}
+.collapsible-header:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.collapsible-header .toggle-icon {
+  font-size: 1em;
+  margin-right: 0.6em;
+  color: var(--accent);
+  flex-shrink: 0;
+  width: 1.2em;
+  text-align: center;
+}
+
+.collapsible-header .title {
+  flex: 1;
+  font-size: 1.05em;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* Count pill on the right */
+.collapsible-header .count {
+  font-size: 0.85em;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: 0.4em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* === Collapsible Content === */
+.collapsible-content {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.25s ease;
+}
+.collapsible-content.open {
+  max-height: 100000px;
+  opacity: 1;
+  margin-top: 0.3em;
+  overflow: visible;
+}
+
+/* === Toolbar === */
+#toolbar {
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6em 1em;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+#controls label {
+  margin-right: 0.1em;
+  color: var(--text-muted);
+  font-size: 0.95em;
+}
+
+#drugSelect {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.95em;
+}
+
+/* === Viewer Container === */
+#viewer-container {
+  padding: 1em 2em 2em 2em;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* === Overview Card === */
+.drug_central-card {
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 0.9em 1em;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
+  gap: 1em;
+}
+.drug_central-card-left {
+  font-size: 0.95em;
+}
+.drug_central-card-left dl {
+  margin: 0;
+}
+.drug_central-card-left dt {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.86em;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-top: 0.4em;
+}
+.drug_central-card-left dd {
+  margin: 0.05em 0 0.3em 0;
+}
+.drug_central-card-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-panel);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  min-height: 140px;
+}
+
+/* === Tables === */
+.drug_central-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.4em;
+  background: var(--bg-card);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.drug_central-table th,
+.drug_central-table td {
+  border: 1px solid var(--border);
+  padding: 0.6em 0.8em;
+  text-align: left;
+  font-size: 0.95em;
+}
+.drug_central-table th {
+  background: var(--bg-panel);
+  color: var(--text-main);
+  font-weight: 600;
+}
+.drug_central-table tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+.drug_central-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.drug_central-table td a,
+.drug_central-table th a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.drug_central-table td a:hover,
+.drug_central-table th a:hover {
+  color: var(--link-hover);
+}
+
+/* === Molecule Thumbnail === */
+.mol-thumb {
+  display: inline-block;
+  vertical-align: middle;
+}
+.mol-thumb svg {
+  max-height: 80px;
+  width: auto;
+}
+.mol-thumb svg:hover {
+  cursor: zoom-in;
+}
+
+/* Withdrawn highlighting on ID cell (future use) */
+tr.is-withdrawn td:first-child .id-label {
+  color: var(--withdrawn);
+  font-weight: 600;
+}
+
+/* === Boxed Warning / Safety Panels === */
+.bb-warning-box {
+  background: rgba(255, 80, 80, 0.08);
+  border-left: 4px solid #ff5050;
+  border-radius: 6px;
+  margin: 6px 0 10px 0;
+  padding: 8px 12px;
+  font-size: 0.9em;
+  line-height: 1.45;
+  color: var(--text-main);
+}
+body.light .bb-warning-box {
+  background: rgba(255, 70, 70, 0.08);
+  border-left-color: #e44444;
+}
+.bb-warning-header {
+  font-weight: 600;
+  color: #ff6666;
+  margin-bottom: 4px;
+}
+body.light .bb-warning-header {
+  color: #c22222;
+}
+.bb-warning-text {
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+.bb-warning-link a {
+  color: var(--link);
+  text-decoration: underline;
+  font-size: 0.85em;
+}
+.bb-warning-link a:hover {
+  color: var(--link-hover);
+}
+
+/* Generic info panel for safety notes and contraindications */
+.info-panel {
+  background: var(--bg-card);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  font-size: 0.9em;
+  margin-bottom: 0.6em;
+}
+
+/* === Modal for Molecules === */
+.mol-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 1000;
+}
+.mol-modal.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mol-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+}
+
+.mol-modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(880px, 92vw);
+  max-height: 92vh;
+  background: var(--bg-card);
+  color: var(--text-main);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  z-index: 1001;
+  transform-origin: center center;
+}
+body.light .mol-modal-content {
+  background: #ffffff;
+  color: #0b1020;
+  border-color: #e5e7eb;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+.mol-modal.active .mol-modal-content {
+  transform: scale(0.98);
+}
+
+.mol-modal-header,
+.mol-modal-footer {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.mol-modal-footer {
+  border-bottom: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+body.light .mol-modal-header,
+body.light .mol-modal-footer {
+  border-color: #e5e7eb;
+}
+
+.mol-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 1.05em;
+}
+
+.mol-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.4em;
+  line-height: 1;
+  cursor: pointer;
+}
+.mol-modal-close:hover {
+  color: var(--accent);
+}
+
+.mol-modal-body {
+  padding: 12px;
+  overflow: auto;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mol-modal-body svg {
+  width: 100%;
+  height: auto;
+  max-width: 760px;
+  display: block;
+}
+
+.mol-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+}
+
+.mol-modal-footer #molName {
+  max-width: min(66ch, 60vw);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mol-modal-footer #molName a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.mol-modal-footer #molName a:hover {
+  color: var(--link-hover);
+}
+.mol-modal-footer #molName a:visited {
+  color: var(--link-visited);
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  #viewer-container {
+    padding: 1em;
+  }
+  .drug_central-table th,
+  .drug_central-table td {
+    font-size: 0.9em;
+    padding: 0.5em;
+  }
+  .drug_central-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mol-modal-content {
+    width: 94vw;
+    max-height: 92vh;
+  }
+  .mol-modal-body svg {
+    max-width: 100%;
+  }
+  .mol-modal-footer #molName {
+    max-width: 48vw;
+  }
+}
