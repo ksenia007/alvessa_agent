@@ -44,7 +44,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 #      - "top"  -> resolve ChemBL + DrugCentral, but keep only the top
 #                  DRUG_TARGET_TOP_N DrugCentral HUMAN targets (by score).
 #      - "all"  -> resolve ChemBL + DrugCentral and return all targets.
-DRUG_TARGET_RETURN_MODE = "none"
+DRUG_TARGET_RETURN_MODE = "top"
 
 # Sort DrugCentral targets by descending score, keep top N
 DRUG_TARGET_TOP_N = 5
