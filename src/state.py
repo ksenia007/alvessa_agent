@@ -74,15 +74,12 @@ class State(TypedDict, total=False):
     prot_html: Annotated[str, merge_html]
 
     # For ChemBL drug-target interactive viewer
-    #chembl_html: Annotated[str, operator.add]
     chembl_html: Annotated[str, merge_html]
 
     # For DrugCentral drug-target interactive viewer
-    #drug_central_html: Annotated[str, operator.add]
     drug_central_html: Annotated[str, merge_html]
 
     # For AA Sequence-to-Gene interactive viewer
-    #aa_seq_html: Annotated[str, operator.add]
     aa_seq_html: Annotated[str, merge_html]
 
     # General free-text annotations (not tied to a specific gene)

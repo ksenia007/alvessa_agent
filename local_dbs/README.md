@@ -49,5 +49,5 @@ SQLite database of reviewed human UniProt entries for sequence-to-gene resolutio
 
 - `drugcentral.dump.11012023.db`
 **Download Location:** https://drive.google.com/file/d/1FrovOP2Uab4pyLsgc0XKc5qwNnTYEnQ9/view?usp=drive_link
-Source: Locally built from DrugCentral PostgreSQL dump (2023-11-01).
-SQLite snapshot of DrugCentral for querying approved and investigational drugs, indications, mechanisms of action, targets, and key safety/regulatory annotations, used by `drug_cntrl` tool.
+Source: Locally built from Drug Central PostgreSQL dump (2023-11-01).
+SQLite snapshot of DrugCentral for querying approved and investigational drugs, indications, mechanisms of action, targets, and key safety/regulatory annotations, used by `drug_central` tool.
