@@ -1,4 +1,3 @@
-# src/tools/drug_central/drug_extraction.py
 from __future__ import annotations
 
 from typing import Dict, Any, List, Set, Tuple, Optional
@@ -44,6 +43,14 @@ _drug_lookup_keys: List[str] = []
 # Longest token length (in words) across all library names/synonyms
 _drug_max_tokens: int = 1
 
+# Explicit identifier patterns (for direct ChemBL / DrugCentral / CAS extraction)
+_CHEMBL_ID_PATTERN = re.compile(r"\bCHEMBL\d+\b", re.IGNORECASE)
+_DRUGCENTRAL_ID_PATTERN = re.compile(
+    r"\b(?:drug\s*central|drugcentral)\s*(?:id)?\s*[:#=]?\s*(\d+)\b",
+    re.IGNORECASE,
+)
+_CAS_PATTERN = re.compile(r"\b\d{2,7}-\d{2}-\d\b")
+
 
 # --------------------------------------------------------------------
 # Helper functions for library and matching
@@ -79,7 +86,7 @@ def _ensure_drug_library_loaded() -> None:
     Populates:
       - _drug_library: internal_key -> entry
       - _drug_term_lookup: normalized_phrase -> {internal_key, ...}
-      - _drug_lookup_keys: list of all normalized phrases (for difflib)
+      - _drug_lookup_keys: list of all normalized terms (for difflib)
       - _drug_max_tokens: max phrase length in tokens (for n-gram search)
     """
     global _drug_library, _drug_term_lookup, _drug_lookup_keys, _drug_max_tokens
@@ -303,9 +310,20 @@ def build_drug_entities(
        - Skip if already known (by name or synonym).
        - Create a minimal Drug with name only.
 
+    4) NEW: Parse explicit identifiers from the user text:
+       - ChemBL IDs (e.g., CHEMBL521)
+       - Drug Central IDs (e.g., "Drug Central ID: 1407")
+       - CAS numbers (e.g., 15687-27-1)
+
+       For each identifier, either:
+         - Attach it as a mention to an existing Drug with the same ID, or
+         - Create a new Drug object keyed by the identifier (chembl:, drugcentral:, cas:)
+           so that ChemBL / Drug Central / CAS-based lookups work downstream.
+
     The keys in the returned dict are:
       - MedChemExpress internal keys for library-backed drugs.
       - lowercased name strings for Claude-only drugs.
+      - "chembl:<id>", "drugcentral:<id>", "cas:<id>" for explicit ID-only drugs.
     """
 
     # --------------------------------------------------------
@@ -464,6 +482,113 @@ def build_drug_entities(
 
         drug_entities[normalized] = drug_obj
         existing_drug_names.add(normalized)
+
+    # ----------------------------
+    # 4) Explicit ID-based drugs
+    # ----------------------------
+    # Build a view over all known Drug objects (existing + new)
+    all_drugs_map: Dict[str, Drug] = {}
+    all_drugs_map.update(existing_drugs)
+    all_drugs_map.update(drug_entities)
+
+    id_based_count = 0
+
+    def _attach_or_create_id_drug(
+        key_prefix: str,
+        id_field: str,
+        id_value: str,
+        mention_source: str,
+        mention_text: str,
+    ) -> None:
+        nonlocal id_based_count
+        id_value_norm = (id_value or "").strip()
+        if not id_value_norm:
+            return
+
+        # Try to attach to an existing Drug that already has this identifier
+        for d in all_drugs_map.values():
+            ids_obj = d.identifiers
+            current_val = getattr(ids_obj, id_field, None)
+            if current_val and str(current_val).strip() == id_value_norm:
+                d.add_mention(
+                    {
+                        "text": mention_text,
+                        "match_type": "id",
+                        "source": mention_source,
+                    }
+                )
+                return
+
+        # Create a new Drug with this identifier as the primary key
+        identifiers = DrugIdentifiers(
+            name=None,
+            chembl_id=None,
+            drugcentral_id=None,
+            cas_number=None,
+            catalog_number=None,
+            synonyms=[],
+        )
+        setattr(identifiers, id_field, id_value_norm)
+
+        d_obj = Drug(identifiers=identifiers)
+        d_obj.add_mention(
+            {
+                "text": mention_text,
+                "match_type": "id",
+                "source": mention_source,
+            }
+        )
+        d_obj.add_tool("EntityExtraction")
+
+        key = f"{key_prefix}:{id_value_norm.lower()}"
+        if key in existing_drugs or key in drug_entities:
+            # Avoid overwriting an existing entry
+            return
+
+        drug_entities[key] = d_obj
+        all_drugs_map[key] = d_obj
+        id_based_count += 1
+
+    # ChemBL IDs: CHEMBL521, CHEMBL25, etc.
+    for match in _CHEMBL_ID_PATTERN.finditer(user_input):
+        token = match.group(0)
+        chembl_id = token.upper()
+        _attach_or_create_id_drug(
+            key_prefix="chembl",
+            id_field="chembl_id",
+            id_value=chembl_id,
+            mention_source="chembl_id",
+            mention_text=token,
+        )
+
+    # DrugCentral IDs: e.g. "Drug Central ID: 1407", "DrugCentral 1407"
+    for match in _DRUGCENTRAL_ID_PATTERN.finditer(user_input):
+        token = match.group(0)
+        dc_id = match.group(1)
+        _attach_or_create_id_drug(
+            key_prefix="drugcentral",
+            id_field="drugcentral_id",
+            id_value=dc_id,
+            mention_source="drugcentral_id",
+            mention_text=token,
+        )
+
+    # CAS numbers: 15687-27-1, etc.
+    for match in _CAS_PATTERN.finditer(user_input):
+        cas_val = match.group(0)
+        _attach_or_create_id_drug(
+            key_prefix="cas",
+            id_field="cas_number",
+            id_value=cas_val,
+            mention_source="cas_number",
+            mention_text=cas_val,
+        )
+
+    if DEBUG and id_based_count:
+        print(
+            f"[build_drug_entities] Added {id_based_count} ID-based Drug entities "
+            "(ChemBL/DrugCentral/CAS)."
+        )
 
     if DEBUG:
         print(f"[build_drug_entities] Built {len(drug_entities)} Drug entities.")
@@ -652,12 +777,59 @@ def _get_targets_from_drugcentral(
         _ = DRUG_CENTRAL_DB_PATH  # keep linter happy
         return None, [], {}
 
+    # ------------------------------------------------------------------
+    # OPTIONAL BRIDGE: use ChemBL to translate chembl_id -> name/CAS/syns
+    # even if ChemBL target lookup is disabled or failed.
+    # This ensures that CHEMBL521-like inputs can still be resolved in
+    # Drug Central purely via their preferred name / CAS.
+    # ------------------------------------------------------------------
+    if ids.chembl_id:
+        try:
+            from src.tools.chembl.utils import normalize_chembl_drug_identifier as _chembl_norm_for_dc
+        except Exception as exc:
+            if DEBUG:
+                print(
+                    f"[_get_targets_from_drugcentral] ChemBL normalization unavailable "
+                    f"for DrugCentral bridge: {exc}"
+                )
+            _chembl_norm_for_dc = None
+
+        if _chembl_norm_for_dc:
+            try:
+                chembl_rec = _chembl_norm_for_dc(str(ids.chembl_id).strip())
+            except Exception as exc:
+                chembl_rec = None
+                if DEBUG:
+                    print(
+                        f"[_get_targets_from_drugcentral] Error calling ChemBL normalizer "
+                        f"for {ids.chembl_id!r}: {exc}"
+                    )
+
+            if chembl_rec:
+                pref_name = (chembl_rec.get("pref_name") or "").strip()
+                if pref_name and not ids.name:
+                    ids.name = pref_name
+
+                cas_from_chembl = (chembl_rec.get("cas_number") or "").strip()
+                if cas_from_chembl and not ids.cas_number:
+                    ids.cas_number = cas_from_chembl
+
+                syns_from_chembl = chembl_rec.get("synonyms") or []
+                if syns_from_chembl:
+                    ids.synonyms.extend([s for s in syns_from_chembl if s])
+
     # Build candidate identifiers in a reasonable order
     candidates: List[str] = []
 
+    # 1) If we already have an explicit Drug Central ID (struct_id), try that first
     if ids.drugcentral_id:
         candidates.append(str(ids.drugcentral_id).strip())
 
+    # 2) ChemBL ID as a direct identifier in DrugCentral.identifier table
+    if ids.chembl_id:
+        candidates.append(str(ids.chembl_id).strip())
+
+    # 3) Name, CAS, synonyms (possibly enriched via ChemBL above)
     if ids.name:
         candidates.append(ids.name.strip())
 

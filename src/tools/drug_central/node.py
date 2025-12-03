@@ -403,7 +403,7 @@ def drug_central_agent(state: "State") -> "State":
 if __name__ == "__main__":
     # Example:
     #   python node.py "Imatinib" "Atorvastatin"
-    drugs = sys.argv[1:] if len(sys.argv) > 1 else ["Imatinib", "Atorvastatin"]
+    drugs = sys.argv[1:] if len(sys.argv) > 1 else ["Imatinib", "Atorvastatin", "CHEMBL521"]
     base_name = drugs[0] if len(drugs) == 1 else f"{drugs[0]}_plus{len(drugs)-1}"
 
     state = State(

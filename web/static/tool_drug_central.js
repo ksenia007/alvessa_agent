@@ -18,6 +18,15 @@ function pubchemCidUrl(cid) {
   return "https://pubchem.ncbi.nlm.nih.gov/compound/" + cid;
 }
 
+function chemblUrl(chemblId) {
+  if (!chemblId) return "https://www.ebi.ac.uk/chembl/";
+  return (
+    "https://www.ebi.ac.uk/chembl/compound_report_card/" +
+    encodeURIComponent(String(chemblId)) +
+    "/"
+  );
+}
+
 function esc(s) {
   if (s == null) return "";
   return String(s)
@@ -62,7 +71,9 @@ async function fetchPubChemInfo(inchikey) {
   if (_pubchemCache.has(inchikey)) return _pubchemCache.get(inchikey);
   try {
     // simple throttle
-    await new Promise(function (res) { setTimeout(res, 200); });
+    await new Promise(function (res) {
+      setTimeout(res, 200);
+    });
 
     const cidResp = await fetch(
       "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/" +
@@ -75,13 +86,19 @@ async function fetchPubChemInfo(inchikey) {
       return null;
     }
     const cidData = await cidResp.json();
-    if (!cidData.IdentifierList || !cidData.IdentifierList.CID || !cidData.IdentifierList.CID.length) {
+    if (
+      !cidData.IdentifierList ||
+      !cidData.IdentifierList.CID ||
+      !cidData.IdentifierList.CID.length
+    ) {
       _pubchemCache.set(inchikey, null);
       return null;
     }
     const cid = cidData.IdentifierList.CID[0];
 
-    await new Promise(function (res) { setTimeout(res, 200); });
+    await new Promise(function (res) {
+      setTimeout(res, 200);
+    });
     const propResp = await fetch(
       "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/" +
         cid +
@@ -158,7 +175,7 @@ async function openMolModal(svg, inchikey, smiles) {
     '<div class="mol-modal-backdrop"></div>',
     '<div class="mol-modal-content">',
     '  <div class="mol-modal-header">',
-    '    <span>Molecule View</span>',
+    "    <span>Molecule View</span>",
     '    <button class="mol-modal-close" aria-label="Close">X</button>',
     "  </div>",
     '  <div class="mol-modal-body">' + svg + "</div>",
@@ -174,8 +191,12 @@ async function openMolModal(svg, inchikey, smiles) {
     modal.classList.add("active");
   });
 
-  modal.querySelector(".mol-modal-close").onclick = function () { modal.remove(); };
-  modal.querySelector(".mol-modal-backdrop").onclick = function () { modal.remove(); };
+  modal.querySelector(".mol-modal-close").onclick = function () {
+    modal.remove();
+  };
+  modal.querySelector(".mol-modal-backdrop").onclick = function () {
+    modal.remove();
+  };
   modal.querySelector("#saveSvgBtn").onclick = function () {
     const blob = new Blob([svg], { type: "image/svg+xml" });
     const a = document.createElement("a");
@@ -234,6 +255,19 @@ function buildOverviewCard(container, data, drugKey) {
   const atcCodes = (cr.atc_codes || []).filter(Boolean);
   const synonyms = (dg.synonyms || []).filter(Boolean);
 
+  // Extract first ChEMBL ID from cross references (if present)
+  let chemblId = null;
+  if (Array.isArray(cr.identifiers)) {
+    cr.identifiers.forEach(function (id) {
+      if (chemblId) return;
+      if (!id || !id.identifier) return;
+      const type = (id.id_type || "").toUpperCase();
+      if (type === "CHEMBL" || type === "CHEMBL_ID") {
+        chemblId = String(id.identifier).trim();
+      }
+    });
+  }
+
   const left = document.createElement("div");
   left.className = "drug_central-card-left";
 
@@ -266,7 +300,18 @@ function buildOverviewCard(container, data, drugKey) {
     );
   }
 
-  //if (structId !== "") addField("Struct ID", esc(structId));
+  // Prominent ChEMBL ID (if available)
+  if (chemblId) {
+    addField(
+      "ChEMBL ID",
+      '<a href="' +
+        chemblUrl(chemblId) +
+        '" target="_blank" rel="noopener">' +
+        esc(chemblId) +
+        "</a>"
+    );
+  }
+
   if (cas) addField("CAS Number", esc(cas));
   if (status) addField("Status", esc(status));
   if (atcCodes && atcCodes.length) {
@@ -317,34 +362,28 @@ function buildRegulatoryTables(regBody, prodBody, data) {
     }
 
     const dateStr =
-      row.approval ||      // approval.approval (text / date string)
+      row.approval || // approval.approval (text / date string)
       row.approval_date || // generic date
-      row.date ||          // fallback
+      row.date || // fallback
       "";
 
     const agencyType =
-      row.agency ||        // explicit agency if Python added it
-      row.type ||          // approval.type (e.g. FDA, EMA)
+      row.agency || // explicit agency if Python added it
+      row.type || // approval.type (e.g. FDA, EMA)
       "Unknown";
 
     const applicant =
-      row.applicant ||     // approval.applicant
-      row.company ||       // alt naming
+      row.applicant || // approval.applicant
+      row.company || // alt naming
       "";
 
     const orphanFlag =
-      row.orphan === 1 ||
-      row.orphan === true ||
-      row.orphan === "Y"
-        ? "Yes"
-        : "";
+      row.orphan === 1 || row.orphan === true || row.orphan === "Y" ? "Yes" : "";
 
     const notesPieces = [];
     if (row.source) notesPieces.push(String(row.source));
     if (row.appl_type || row.appl_no) {
-      notesPieces.push(
-        [row.appl_type, row.appl_no].filter(Boolean).join(" ")
-      );
+      notesPieces.push([row.appl_type, row.appl_no].filter(Boolean).join(" "));
     }
     if (row.notes) notesPieces.push(String(row.notes));
     const notes = notesPieces.join(" | ");
@@ -420,10 +459,7 @@ function buildIndicationsTable(tbody, data) {
       return cell;
     }
 
-    const disease =
-      r.concept_name ||
-      r.snomed_full_name ||
-      "";
+    const disease = r.concept_name || r.snomed_full_name || "";
 
     const relation = r.relationship_name || "indication";
 
@@ -665,7 +701,19 @@ function buildCrossrefTable(tbody, data) {
     const td1 = document.createElement("td");
     const td2 = document.createElement("td");
     td1.textContent = r.label;
-    td2.textContent = r.value;
+
+    // Make ChEMBL ID clickable here as well
+    if (r.label === "ChEMBL ID" && r.value) {
+      td2.innerHTML =
+        '<a href="' +
+        chemblUrl(r.value) +
+        '" target="_blank" rel="noopener">' +
+        esc(r.value) +
+        "</a>";
+    } else {
+      td2.textContent = r.value;
+    }
+
     tr.appendChild(td1);
     tr.appendChild(td2);
     tbody.appendChild(tr);
@@ -693,10 +741,7 @@ async function populateDrug(drugKey) {
     const dg = data.drug || {};
     const hasAnything =
       dg &&
-      (dg.name ||
-        dg.cas_number ||
-        dg.smiles ||
-        dg.struct_id != null);
+      (dg.name || dg.cas_number || dg.smiles || dg.struct_id != null);
 
     if (!hasAnything) {
       section.style.display = "none";
@@ -848,7 +893,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         (d.targets && d.targets.length) ||
         (d.regulatory &&
           ((d.regulatory.approvals || []).length ||
-           (d.regulatory.orange_book_products || []).length));
+            (d.regulatory.orange_book_products || []).length));
       if (anyEvidence) {
         const opt = document.createElement("option");
         opt.value = key;
@@ -879,7 +924,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     header.addEventListener("click", function () {
       const isOpen = content.classList.toggle("open");
       header.classList.toggle("active", isOpen);
-      icon.textContent = isOpen ?  "▾" : "▸";
+      icon.textContent = isOpen ? "▾" : "▸";
       content.style.maxHeight = "";
     });
 
