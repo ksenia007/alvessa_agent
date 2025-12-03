@@ -457,8 +457,8 @@ NODES: tuple[Node, ...] = (
         entry_point=drug_central_agent,
         description=(
             "Query Drug Central for drug-centric information given one or more drugs "
-            "identified by name, synonym, CAS number, struct_id, or external IDs. "
-            "Summarizes structural properties, regulatory status, pharmacologic "
+            "identified by name, synonym, ChEMBL ID, CAS number, struct_id, or external IDs. "
+            "Summarizes drug description, information, structural properties, regulatory status, pharmacologic "
             "actions, HUMAN gene-level targets (MoA and off-target), indications, "
             "contraindications, FAERS safety signals, and cross references, "
             "with text summaries and an optional interactive HTML viewer."
