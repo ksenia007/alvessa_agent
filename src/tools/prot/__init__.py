@@ -32,6 +32,9 @@ REQUIRED_META = {
 }
 UPDATE_MSG = f"Please update to the latest {DB_PATH.name} file."
 
+# --- Maximal number of proteins to be displayed ---
+TOOL_PROT_MAX_GENES = 100
+
 # --- Thresholds & Cutoffs ---
 PLDDT_HIGH_CUTOFF: float = 90.0
 PLDDT_MEDIUM_CUTOFF: float = 70.0
@@ -47,6 +50,8 @@ FMT_FLOAT_DEFAULT: str = "NA"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 __all__ = [
+    # Maximal number of genes to be displayed
+    "TOOL_PROT_MAX_GENES",
     # Roots & storage
     "PACKAGE_ROOT", "REPO_ROOT",
     "LOCAL_DBS_DIR", "OUTPUT_DIR",

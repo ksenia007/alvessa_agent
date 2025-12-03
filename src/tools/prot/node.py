@@ -32,13 +32,13 @@ import src.tools.prot as prot  # loads constants from __init__.py
 
 # --- Imports ---
 from src.state import State
-from src.config import TOOL_PROT_MAX_GENES
 from src.alvessa.domain.gene_class import Gene
 from src.alvessa.domain.gene_components import GeneIdentifiers
 from src.tools.base import Node
 
 # --- Local storage Layout ---
 from src.tools.prot import (
+    TOOL_PROT_MAX_GENES, 
     OUTPUT_DIR,
     HTML_TEMPLATE,
     CSS_TEMPLATE,

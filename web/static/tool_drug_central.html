@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>DrugCentral Viewer - {{DRUG_LABEL}}</title>
+
+  <!-- Inline CSS injected by Python -->
+  {{CSS_INLINE}}
+
+  <!-- RDKit.js for 2D molecular rendering -->
+  <script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
+
+  <!-- Inline JS injected by Python (viewer logic; expects global drug_centralData) -->
+  {{JS_INLINE}}
+</head>
+
+<body>
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <div id="controls">
+      <label for="drugSelect">Drug:</label>
+      <select id="drugSelect" aria-label="Select drug"></select>
+    </div>
+  </div>
+
+  <!-- Main viewer container -->
+  <div id="viewer-container">
+
+    <!-- Overview and Structure -->
+    <section id="overviewSection" class="collapsible-section" style="display:none;">
+      <h2 class="collapsible-header" role="button" tabindex="0">
+        <span class="toggle-icon">></span>
+        <span class="title">Overview and Structure</span>
+        <span class="count"></span>
+      </h2>
+      <div class="collapsible-content">
+        <div id="overviewCard" class="drug_central-card">
+          <!-- Populated by JS: name, struct_id, CAS, InChIKey, SMILES, ATC summary, etc. -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Regulatory Status and Pharmaceutical Products -->
+    <section id="regulatorySection" class="collapsible-section" style="display:none;">
+      <h2 class="collapsible-header" role="button" tabindex="0">
+        <span class="toggle-icon">></span>
+        <span class="title">Regulatory Status and Pharmaceutical Products</span>
+        <span class="count"></span>
+      </h2>
+      <div class="collapsible-content">
+
+        <h3 class="subheading">Regulatory Approvals</h3>
+        <table class="drug_central-table">
+          <thead>
+            <tr>
+              <!-- From approval: approval, type, applicant, orphan; plus overall status -->
+              <th>Approval Date</th>
+              <th>Agency / Type</th>
+              <th>Applicant</th>
+              <th>Orphan</th>
+              <th>Regulatory Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="regulatoryTable"></tbody>
+        </table>
+
+        <h3 class="subheading">Pharmaceutical Products (Orange Book)</h3>
+        <table class="drug_central-table">
+          <thead>
+            <tr>
+              <!-- From ob_product via struct2obprod: trade_name, ingredient, route, dose_form, strength, appl_type/appl_no/product_no, approval_date, type/te_code/rld -->
+              <th>Product (Trade Name)</th>
+              <th>Ingredient(s)</th>
+              <th>Route</th>
+              <th>Dose Form</th>
+              <th>Strength</th>
+              <th>Application (Type / No. / Prod.)</th>
+              <th>Approval Date</th>
+              <th>Product Type / TE Code</th>
+            </tr>
+          </thead>
+          <tbody id="productsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Drug Use and Indications (OMOP / SNOMED / UMLS) -->
+    <section id="indicationsSection" class="collapsible-section" style="display:none;">
+      <h2 class="collapsible-header" role="button" tabindex="0">
+        <span class="toggle-icon">></span>
+        <span class="title">Drug Use and Indications</span>
+        <span class="count"></span>
+      </h2>
+      <div class="collapsible-content">
+        <table class="drug_central-table">
+          <thead>
+            <tr>
+              <!-- From omop_relationship: concept_name, relationship_name, snomed_conceptid, umls_cui, cui_semantic_type -->
+              <th>Disease / Condition</th>
+              <th>Relation (OMOP)</th>
+              <th>SNOMED ID</th>
+              <th>UMLS CUI</th>
+              <th>Semantic Type</th>
+            </tr>
+          </thead>
+          <tbody id="indicationsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Targets, Bioactivity, and Mechanisms -->
+    <section id="targetsSection" class="collapsible-section" style="display:none;">
+      <h2 class="collapsible-header" role="button" tabindex="0">
+        <span class="toggle-icon">></span>
+        <span class="title">Targets and Bioactivity</span>
+        <span class="count"></span>
+      </h2>
+      <div class="collapsible-content">
+
+        <h3 class="subheading">Bioactivity Summary (act_table_full)</h3>
+        <table class="drug_central-table">
+          <thead>
+            <tr>
+              <!-- From TargetRecord: target_name, gene, accession, target_class, tdl, action_type, act_type, act_value, act_unit, relation, organism -->
+              <th>Target (Name / Gene)</th>
+              <th>Target Class</th>
+              <th>Pharos (TDL)</th>
+              <th>UniProt (Accession / SwissProt)</th>
+              <th>Action</th>
+              <th>Activity Type</th>
+              <th>Activity Value (with Unit)</th>
+              <th>Mechanism (MoA vs Off-target)</th>
+            </tr>
+          </thead>
+          <tbody id="targetsTable"></tbody>
+        </table>
+
+        <h3 class="subheading">Pharmacologic Actions (pharma_class)</h3>
+        <table class="drug_central-table">
+          <thead>
+            <tr>
+              <!-- From PharmActionRecord: type, name, class_code, source -->
+              <th>Type</th>
+              <th>Action / Class Name</th>
+              <th>Class Code</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody id="pharmTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Safety and Adverse Events -->
+    <section id="safetySection" class="collapsible-section" style="display:none;">
+      <h2 class="collapsible-header" role="button" tabindex="0">
+        <span class="toggle-icon">></span>
+        <span class="title">Safety and Adverse Events</span>
+        <span class="count"></span>
+      </h2>
+      <div class="collapsible-content">
+        <div id="boxedWarningsContainer">
+          <!-- Optional boxed warnings / contraindications summary (derived from indications / internal logic) -->
+        </div>
+
+        <h3 class="subheading">FAERS Signals (Top by LLR)</h3>
+        <table class="drug_central-table">
+          <thead>
+            <tr>
+              <!-- From faers* tables: level, meddra_name, meddra_code, llr, llr_threshold; sex/age from which table we pull (overall/female/male/ped/ger) -->
+              <th>Level</th>
+              <th>MedDRA Term</th>
+              <th>MedDRA Code</th>
+              <th>LLR</th>
+              <th>LLR Threshold</th>
+              <th>Sex / Age Stratum</th>
+            </tr>
+          </thead>
+          <tbody id="faersTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Cross References and Drug Classes -->
+    <section id="crossrefSection" class="collapsible-section" style="display:none;">
+      <h2 class="collapsible-header" role="button" tabindex="0">
+        <span class="toggle-icon">></span>
+        <span class="title">Cross References and Drug Classes</span>
+        <span class="count"></span>
+      </h2>
+      <div class="collapsible-content">
+        <table class="drug_central-table">
+          <thead>
+            <tr>
+              <!-- From CrossRefInfo: identifiers (id_type, identifier), atc_codes, drug_classes -->
+              <th>Source</th>
+              <th>Identifier(s) / Code(s)</th>
+            </tr>
+          </thead>
+          <tbody id="crossrefTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>
