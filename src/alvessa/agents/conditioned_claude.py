@@ -19,9 +19,6 @@ from src.state import State
 import re
 import numpy as np
 
-
-def conditioned_claude_node(state: "State") -> "State":
-
 def ensure_json_safe(x):
     if isinstance(x, dict):
         return {ensure_json_safe(k): ensure_json_safe(v) for k, v in x.items()}
