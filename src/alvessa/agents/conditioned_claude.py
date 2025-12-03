@@ -19,11 +19,8 @@ from src.state import State
 import re
 import numpy as np
 
-from src.alvessa.debug_utils import debug_drug_entities_state
 
 def conditioned_claude_node(state: "State") -> "State":
-    if DEBUG:
-        debug_drug_entities_state(state, "conditioned_claude_node.entry")
 
 def ensure_json_safe(x):
     if isinstance(x, dict):
