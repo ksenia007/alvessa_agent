@@ -59,6 +59,7 @@ class DrugRecord(TypedDict, total=False):
     smiles: str
     status: str
     synonyms: List[str]
+    chembl_id: Optional[str]  # mapped from identifier.id_type = 'ChEMBL_ID'
 
 
 class StructuralInfo(TypedDict, total=False):
@@ -220,6 +221,31 @@ def _parse_struct_id(value: Any) -> Optional[int]:
 # ------------------------------
 # Core lookup utilities
 # ------------------------------
+def _fetch_chembl_id(conn: sqlite3.Connection, struct_id: int) -> Optional[str]:
+    """
+    Return the ChEMBL ID for a given Drug Central struct_id (structures.id),
+    if present in the identifier table as id_type = 'ChEMBL_ID'.
+    """
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT identifier
+        FROM identifier
+        WHERE struct_id = ?
+          AND upper(id_type) = 'CHEMBL_ID'
+        ORDER BY id
+        LIMIT 1
+        """,
+        (struct_id,),
+    )
+    row = cur.fetchone()
+    if row:
+        ident = row["identifier"]
+        if ident:
+            return str(ident)
+    return None
+
+
 def _fetch_struct_by_struct_id(conn: sqlite3.Connection, struct_id: int) -> Optional[DrugRecord]:
     """
     Fetch a DrugRecord by structures.id (struct_id).
@@ -256,6 +282,9 @@ def _fetch_struct_by_struct_id(conn: sqlite3.Connection, struct_id: int) -> Opti
     )
     syns = [r["name"] for r in syn_cur.fetchall()]
 
+    # ChEMBL ID from identifier table (id_type = 'ChEMBL_ID')
+    chembl_id = _fetch_chembl_id(conn, row["struct_id"])
+
     return DrugRecord(
         struct_id=row["struct_id"],          # structures.id
         name=row["name"] or "",
@@ -264,6 +293,7 @@ def _fetch_struct_by_struct_id(conn: sqlite3.Connection, struct_id: int) -> Opti
         smiles=row["smiles"] or "",
         status=row["status"] or "",
         synonyms=syns,
+        chembl_id=chembl_id,
     )
 
 
@@ -340,13 +370,16 @@ def _fetch_struct_by_cas(conn: sqlite3.Connection, cas_number: str) -> Optional[
 
 
 def _fetch_struct_by_identifier(conn: sqlite3.Connection, identifier: str) -> Optional[DrugRecord]:
-    """Try to resolve by identifier table (ChEMBL, PubChem CID, RxNorm, etc.)."""
+    """
+    Try to resolve by identifier table (ChEMBL, PubChem CID, RxNorm, etc.).
+    Case-insensitive over identifier to support 'chembl521' vs 'CHEMBL521'.
+    """
     cur = conn.cursor()
     cur.execute(
         """
         SELECT DISTINCT struct_id
         FROM identifier
-        WHERE identifier = ?
+        WHERE lower(identifier) = lower(?)
         LIMIT 1
         """,
         (identifier.strip(),),
@@ -1504,7 +1537,7 @@ def search_drugs(query: str, limit: int = 20) -> List[DrugRecord]:
     conn = get_connection()
     try:
         cur = conn.cursor()
-        # Search structures.name (structures.id)
+        # Search structures.name (structures.id) and CAS
         cur.execute(
             """
             SELECT DISTINCT id
@@ -1513,11 +1546,11 @@ def search_drugs(query: str, limit: int = 20) -> List[DrugRecord]:
                OR lower(cas_reg_no) = ?
             LIMIT ?
             """,
-            (f"%{q}%", query.strip(), limit),
+            (f"%{q}%", query.strip().lower(), limit),
         )
         struct_ids = [r["id"] for r in cur.fetchall()]
 
-        # If not enough hits, add synonyms and product names
+        # If not enough hits, add synonyms
         if len(struct_ids) < limit:
             needed = limit - len(struct_ids)
             cur.execute(
@@ -1532,6 +1565,7 @@ def search_drugs(query: str, limit: int = 20) -> List[DrugRecord]:
             )
             struct_ids.extend(r["id"] for r in cur.fetchall())
 
+        # If still not enough hits, add product names
         if len(struct_ids) < limit:
             needed = limit - len(struct_ids)
             cur.execute(
@@ -1549,6 +1583,20 @@ def search_drugs(query: str, limit: int = 20) -> List[DrugRecord]:
                 (f"%{q}%", f"%{q}%", needed),
             )
             struct_ids.extend(r["id"] for r in cur.fetchall())
+
+        # If still not enough hits, add identifiers (ChEMBL, PubChem CID, RxNorm, etc.)
+        if len(struct_ids) < limit:
+            needed = limit - len(struct_ids)
+            cur.execute(
+                """
+                SELECT DISTINCT struct_id
+                FROM identifier
+                WHERE lower(identifier) LIKE ?
+                LIMIT ?
+                """,
+                (f"%{q}%", needed),
+            )
+            struct_ids.extend(r["struct_id"] for r in cur.fetchall())
 
         # Deduplicate
         struct_ids = list(dict.fromkeys(struct_ids))[:limit]
@@ -1674,7 +1722,7 @@ def make_drug_summary_text(
     Create a compact, human-readable summary text for a single drug.
 
     Sections:
-      - Core identifiers (name, Drug ID = structures.id, CAS, InChIKey, SMILES)
+      - Core identifiers (name, Drug ID = structures.id, ChEMBL ID, CAS, InChIKey, SMILES)
       - Regulatory status, approvals, and Orange Book products
       - Pharmacologic actions (pharma_class)
       - Target / bioactivity overview
@@ -1688,6 +1736,11 @@ def make_drug_summary_text(
     struct_id = drug.get("struct_id", "")
     lines.append(f"Drug Central record for: {name}")
     lines.append(f"  Drug ID (structures.id): {struct_id}")
+
+    chembl_id = drug.get("chembl_id") or ""
+    if chembl_id:
+        lines.append(f"  ChEMBL ID: {chembl_id}")
+
     cas = drug.get("cas_number") or ""
     if cas:
         lines.append(f"  CAS: {cas}")
