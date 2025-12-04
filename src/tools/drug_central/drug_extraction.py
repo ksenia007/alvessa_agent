@@ -43,13 +43,14 @@ _drug_lookup_keys: List[str] = []
 # Longest token length (in words) across all library names/synonyms
 _drug_max_tokens: int = 1
 
-# Explicit identifier patterns (for direct ChemBL / DrugCentral / CAS extraction)
+# Explicit identifier patterns (for direct ChemBL / DrugCentral / CAS / DrugBank extraction)
 _CHEMBL_ID_PATTERN = re.compile(r"\bCHEMBL\d+\b", re.IGNORECASE)
 _DRUGCENTRAL_ID_PATTERN = re.compile(
     r"\b(?:drug\s*central|drugcentral)\s*(?:id)?\s*[:#=]?\s*(\d+)\b",
     re.IGNORECASE,
 )
 _CAS_PATTERN = re.compile(r"\b\d{2,7}-\d{2}-\d\b")
+_DRUGBANK_ID_PATTERN = re.compile(r"\bDB\d+\b", re.IGNORECASE)
 
 
 # --------------------------------------------------------------------
@@ -217,6 +218,52 @@ def _register_drug_match(
 
 
 # --------------------------------------------------------------------
+# Name normalization / replacement logic
+# --------------------------------------------------------------------
+
+def _looks_like_chembl_id(value: str) -> bool:
+    return bool(_CHEMBL_ID_PATTERN.fullmatch(value.strip()))
+
+
+def _looks_like_drugbank_id(value: str) -> bool:
+    return bool(_DRUGBANK_ID_PATTERN.fullmatch(value.strip()))
+
+
+def _looks_like_cas(value: str) -> bool:
+    return bool(_CAS_PATTERN.fullmatch(value.strip()))
+
+
+def _should_overwrite_name_with_resolved(ids: DrugIdentifiers) -> bool:
+    """
+    Decide whether it's safe to replace ids.name with a resolved, human-friendly
+    drug name from ChemBL / DrugCentral.
+
+    We overwrite when:
+      - name is missing, or
+      - name looks like a bare identifier (CAS, CHEMBL, DrugBank), or
+      - name equals the CAS number.
+    """
+    name = (ids.name or "").strip()
+    if not name:
+        return True
+
+    # If name is exactly the CAS number, it's really an ID, not a name
+    if ids.cas_number and name == str(ids.cas_number).strip():
+        return True
+
+    if _looks_like_chembl_id(name):
+        return True
+
+    if _looks_like_drugbank_id(name):
+        return True
+
+    if _looks_like_cas(name):
+        return True
+
+    return False
+
+
+# --------------------------------------------------------------------
 # Public API: text -> library-backed drug_matches
 # --------------------------------------------------------------------
 
@@ -310,7 +357,7 @@ def build_drug_entities(
        - Skip if already known (by name or synonym).
        - Create a minimal Drug with name only.
 
-    4) NEW: Parse explicit identifiers from the user text:
+    4) Parse explicit identifiers from the user text:
        - ChemBL IDs (e.g., CHEMBL521)
        - Drug Central IDs (e.g., "Drug Central ID: 1407")
        - CAS numbers (e.g., 15687-27-1)
@@ -320,10 +367,11 @@ def build_drug_entities(
          - Create a new Drug object keyed by the identifier (chembl:, drugcentral:, cas:)
            so that ChemBL / Drug Central / CAS-based lookups work downstream.
 
-    The keys in the returned dict are:
-      - MedChemExpress internal keys for library-backed drugs.
-      - lowercased name strings for Claude-only drugs.
-      - "chembl:<id>", "drugcentral:<id>", "cas:<id>" for explicit ID-only drugs.
+    Additionally
+    ------------
+    - This function now also ensures that state["drugs"] is populated with
+      human-friendly drug names (once resolved), so subsequent tools can
+      rely on it.
     """
 
     # --------------------------------------------------------
@@ -593,6 +641,39 @@ def build_drug_entities(
     if DEBUG:
         print(f"[build_drug_entities] Built {len(drug_entities)} Drug entities.")
 
+    # ----------------------------
+    # 5) Populate state["drugs"] list
+    # ----------------------------
+    # We want a simple, human-facing list of resolved drug names for downstream tools.
+    existing_state_drugs = list(state.get("drugs") or [])
+    seen_labels: Set[str] = {str(x) for x in existing_state_drugs}
+
+    def _label_for_drug(d: Drug, fallback_key: str) -> Optional[str]:
+        ids = d.identifiers
+        # Prefer resolved human name if we have it
+        if ids.name:
+            return str(ids.name)
+        # Then fall back to stable identifiers
+        if ids.chembl_id:
+            return str(ids.chembl_id)
+        if ids.drugcentral_id:
+            return f"DrugCentral:{ids.drugcentral_id}"
+        if ids.cas_number:
+            return str(ids.cas_number)
+        # Last resort: internal key
+        return fallback_key
+
+    for key, d in {**existing_drugs, **drug_entities}.items():
+        label = _label_for_drug(d, key)
+        if not label:
+            continue
+        if label in seen_labels:
+            continue
+        existing_state_drugs.append(label)
+        seen_labels.add(label)
+
+    state["drugs"] = existing_state_drugs  # type: ignore[index]
+
     return drug_entities
 
 
@@ -615,15 +696,8 @@ def _get_targets_from_chembl(ids: DrugIdentifiers) -> List[Dict[str, Any]]:
     - If resolution succeeds, it *enriches* the DrugIdentifiers in-place:
         - fills chembl_id if missing,
         - fills cas_number if missing,
-        - extends synonyms with ChEMBL synonyms (dedup is handled upstream).
-    - Returns a list of target records of the form:
-        {
-          "symbol": "EGFR",
-          "entrez_id": None,
-          "uniprot_id": "P00533",
-          "ensembl_id": None,
-          "source": "chembl",
-        }
+        - extends synonyms with ChEMBL synonyms (dedup is handled upstream),
+        - replaces ID-like name (e.g. CHEMBLxxx, CAS) with ChEMBL name.
     """
     try:
         from src.tools.chembl.utils import (
@@ -686,8 +760,8 @@ def _get_targets_from_chembl(ids: DrugIdentifiers) -> List[Dict[str, Any]]:
     if not ids.chembl_id:
         ids.chembl_id = str(chembl_id).strip()
 
-    pref_name = chembl_record.get("pref_name") or ""
-    if not ids.name and pref_name:
+    pref_name = (chembl_record.get("pref_name") or "").strip()
+    if pref_name and _should_overwrite_name_with_resolved(ids):
         ids.name = pref_name
 
     cas_from_chembl = chembl_record.get("cas_number")
@@ -807,7 +881,7 @@ def _get_targets_from_drugcentral(
 
             if chembl_rec:
                 pref_name = (chembl_rec.get("pref_name") or "").strip()
-                if pref_name and not ids.name:
+                if pref_name and _should_overwrite_name_with_resolved(ids):
                     ids.name = pref_name
 
                 cas_from_chembl = (chembl_rec.get("cas_number") or "").strip()
@@ -853,6 +927,8 @@ def _get_targets_from_drugcentral(
 
     # Resolve to one or more Drug Central struct_ids (structures.id)
     struct_ids: List[int] = []
+    primary_rec: Optional[Dict[str, Any]] = None
+
     for token in ordered_candidates:
         rec = normalize_drug_identifier(token)
         if not rec:
@@ -866,6 +942,8 @@ def _get_targets_from_drugcentral(
             continue
         if sid not in struct_ids:
             struct_ids.append(sid)
+        if primary_rec is None:
+            primary_rec = rec
         # If the user explicitly set a Drug Central id, stop after first hit
         if ids.drugcentral_id:
             break
@@ -879,6 +957,30 @@ def _get_targets_from_drugcentral(
     primary_struct_id = struct_ids[0]
     if not ids.drugcentral_id:
         ids.drugcentral_id = str(primary_struct_id)
+
+    # Enrich DrugIdentifiers from the primary DrugCentral record
+    if primary_rec:
+        dc_name = (
+            primary_rec.get("name")
+            or primary_rec.get("preferred_name")
+            or primary_rec.get("drug_name")
+            or ""
+        ).strip()
+        if dc_name and _should_overwrite_name_with_resolved(ids):
+            ids.name = dc_name
+
+        dc_cas = (
+            primary_rec.get("cas_reg_no")
+            or primary_rec.get("cas_number")
+            or primary_rec.get("cas")
+            or ""
+        ).strip()
+        if dc_cas and not ids.cas_number:
+            ids.cas_number = dc_cas
+
+        syns_from_dc = primary_rec.get("synonyms") or []
+        if syns_from_dc:
+            ids.synonyms.extend([s for s in syns_from_dc if s])
 
     # Collect raw targets and per-gene scores
     all_dc_raw_targets: List[Dict[str, Any]] = []
@@ -1203,5 +1305,5 @@ def _run_cli_self_test(drugs: List[str]) -> None:
 if __name__ == "__main__":
     # Example:
     #   python drug_extraction.py "Imatinib" "Atorvastatin"
-    cli_drugs = sys.argv[1:] if len(sys.argv) > 1 else ["Imatinib", "Atorvastatin"]
+    cli_drugs = sys.argv[1:] if len(sys.argv) > 1 else ["Imatinib", "amoxicillin", "26787-78-0"]
     _run_cli_self_test(cli_drugs)

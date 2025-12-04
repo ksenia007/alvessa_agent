@@ -18,6 +18,7 @@
 
 import sqlite3
 import json
+import re
 from datetime import datetime
 from collections import Counter, defaultdict
 from typing import Any, Dict, List, Optional, Tuple, TypedDict
@@ -218,6 +219,19 @@ def _parse_struct_id(value: Any) -> Optional[int]:
         return None
 
 
+# CAS-like pattern (e.g., 15687-27-1)
+_CAS_RE = re.compile(r"^\d{2,7}-\d{2}-\d$")
+
+# Strip characters that often surround IDs in text ("[15687-27-1]", "15687-27-1," etc.)
+_ID_PUNCT_STRIP = ".,;:!?\"'()[]<>"
+
+# Prefixes like "CAS: 15687-27-1", "cas 15687-27-1", "ChEMBL: 521"
+_ID_PREFIX_RE = re.compile(
+    r"^(?P<prefix>cas|chembl|drugbank|db)\s*[:#]?\s*(?P<id>\S+)\s*$",
+    re.IGNORECASE,
+)
+
+
 # ------------------------------
 # Core lookup utilities
 # ------------------------------
@@ -371,7 +385,7 @@ def _fetch_struct_by_cas(conn: sqlite3.Connection, cas_number: str) -> Optional[
 
 def _fetch_struct_by_identifier(conn: sqlite3.Connection, identifier: str) -> Optional[DrugRecord]:
     """
-    Try to resolve by identifier table (ChEMBL, PubChem CID, RxNorm, etc.).
+    Try to resolve by identifier table (ChEMBL, DrugBank, PubChem CID, RxNorm, CAS, etc.).
     Case-insensitive over identifier to support 'chembl521' vs 'CHEMBL521'.
     """
     cur = conn.cursor()
@@ -395,44 +409,79 @@ def _fetch_struct_by_identifier(conn: sqlite3.Connection, identifier: str) -> Op
 # ------------------------------
 def normalize_drug_identifier(name_or_id: str) -> Optional[DrugRecord]:
     """
-    Resolve a free-text or ID-like input (generic name, brand name, synonym,
-    struct_id (structures.id), Drug Central identifier, ChEMBL ID if mapped,
-    InChIKey, CAS, etc.) to a canonical DrugRecord.
+    Resolve a free-text or ID-like input to a canonical DrugRecord.
 
-    struct_id in the returned DrugRecord is ALWAYS structures.id.
+    Inputs handled include:
+      - Generic / brand / synonym names
+      - CAS numbers (e.g. '15687-27-1' or 'CAS: 15687-27-1') via structures.cas_reg_no
+      - DrugCentral struct_id (structures.id) when numeric
+      - External IDs in `identifier` (e.g. ChEMBL, DrugBank, PubChem CID, RxNorm)
+      - InChIKey (structures.inchikey)
+      - SMILES (structures.smiles)
 
-    Returns None if resolution fails.
+    This is the function that drug_extraction.py uses when it needs to
+    normalize user-provided tokens such as CAS or CHEMBL IDs into a single
+    canonical DrugCentral drug, so subsequent tools and the state can use
+    the resolved drug name and struct_id.
+
+    Returns:
+      DrugRecord (with struct_id = structures.id) or None if resolution fails.
     """
     if not name_or_id or not str(name_or_id).strip():
         return None
 
-    value = str(name_or_id).strip()
+    raw = str(name_or_id)
+    # Strip whitespace and common surrounding punctuation
+    value = raw.strip().strip(_ID_PUNCT_STRIP)
+
+    # Handle "CAS: 15687-27-1", "cas 15687-27-1", "ChEMBL: 521", etc.
+    m = _ID_PREFIX_RE.match(value)
+    if m:
+        prefix = (m.group("prefix") or "").lower()
+        core = (m.group("id") or "").strip().strip(_ID_PUNCT_STRIP)
+        if prefix == "cas":
+            # Normalize to bare CAS for CAS-specific lookup
+            value = core
+        elif prefix == "chembl":
+            # Normalize to standard CHEMBL ID form, e.g. "CHEMBL521"
+            core_u = core.upper()
+            if not core_u.startswith("CHEMBL"):
+                value = f"CHEMBL{core_u}"
+            else:
+                value = core_u
+        else:
+            # For other prefixes (drugbank/db), just drop the prefix but keep the ID
+            value = core
+
+    if not value:
+        return None
+
     conn = get_connection()
     try:
-        # 1) Direct struct_id (structures.id)
+        # 1) Direct struct_id (structures.id) for purely numeric tokens
         sid = _parse_struct_id(value)
         if sid is not None:
             rec = _fetch_struct_by_struct_id(conn, sid)
             if rec:
                 return rec
 
-        # 2) CAS-like pattern
-        if value.count("-") == 2 and all(part.isdigit() for part in value.split("-")):
+        # 2) CAS-like pattern via structures.cas_reg_no
+        if _CAS_RE.match(value):
             rec = _fetch_struct_by_cas(conn, value)
             if rec:
                 return rec
 
-        # 3) Identifier table (ChEMBL, PubChem, RxNorm, etc.)
+        # 3) identifier table (covers ChEMBL, DrugBank, PubChem, RxNorm, CAS, etc.)
         rec = _fetch_struct_by_identifier(conn, value)
         if rec:
             return rec
 
-        # 4) Name or synonym or product name
+        # 4) Name, synonym, or product name
         rec = _fetch_struct_by_name_or_synonym(conn, value)
         if rec:
             return rec
 
-        # 5) Try InChIKey match via structures table
+        # 5) InChIKey (exact match)
         cur = conn.cursor()
         cur.execute(
             """
@@ -447,7 +496,7 @@ def normalize_drug_identifier(name_or_id: str) -> Optional[DrugRecord]:
         if row:
             return _fetch_struct_by_struct_id(conn, row["id"])
 
-        # 6) Try SMILES exact match (rare but useful in some contexts)
+        # 6) SMILES (exact match)
         cur.execute(
             """
             SELECT id
@@ -464,6 +513,31 @@ def normalize_drug_identifier(name_or_id: str) -> Optional[DrugRecord]:
         return None
     finally:
         conn.close()
+
+
+def get_display_name_for_identifier(name_or_id: str) -> Optional[str]:
+    """
+    Convenience helper: resolve a CAS / DrugCentral struct_id / ChEMBL ID / name
+    to a DrugCentral record and return a usable display name.
+
+    If DrugCentral has no stored name, fall back to the original token.
+
+    This is what drug_extraction.py should call when it wants to replace
+    a CAS / CHEMBL / DrugBank token in the user input with the actual
+    drug name for display, while still keeping the underlying identifiers.
+    """
+    if not name_or_id or not str(name_or_id).strip():
+        return None
+
+    rec = normalize_drug_identifier(name_or_id)
+    if not rec:
+        return None
+
+    name = (rec.get("name") or "").strip()
+    if not name:
+        value = str(name_or_id).strip()
+        return value or None
+    return name
 
 
 def get_drug_by_id(drug_central_id: str) -> Optional[DrugRecord]:

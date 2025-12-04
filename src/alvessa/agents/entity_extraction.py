@@ -1,4 +1,3 @@
-# src/tools/entity_extraction.py
 from __future__ import annotations
 
 from typing import List, Dict, Any, Optional, Tuple, Set, Iterable
@@ -629,6 +628,8 @@ def entity_extraction_node(state: "State") -> "State":
        (`resolve_drug_gene_targets`), project to HUMAN-only genes, and:
          - add those genes to `gene_entities`,
          - add those genes to the top-level `genes` list.
+       The top-level `drugs` list is synchronized with `state["drugs"]` so that
+       ID-only hits (e.g., CAS) are exposed in the returned state.
     """
     user_input: str = state["messages"][-1]["content"]
     extraction_result = _extract_entities_merged(user_input)
@@ -688,7 +689,7 @@ def entity_extraction_node(state: "State") -> "State":
         variant_entities[var] = v
 
     # --------------------------------------------------------
-    # Drug entities (MedChemExpress + Claude)
+    # Drug entities (MedChemExpress + Claude + ID-based)
     # --------------------------------------------------------
     claude_drugs = extraction_result.get("drugs") or []
 
@@ -759,6 +760,14 @@ def entity_extraction_node(state: "State") -> "State":
                 f"[entity_extraction_node] Created Gene object from drug targets: "
                 f"{symbol_for_display} (key={key}, entrez={entrez})"
             )
+
+    # --------------------------------------------------------
+    # Sync top-level drug list with state
+    # --------------------------------------------------------
+    # build_drug_entities() populated state["drugs"] (including CAS / CHEMBL / DrugCentral-only hits).
+    # Make sure the returned extraction_result exposes the same list so that
+    # has_drugs(state) and downstream tools see it.
+    extraction_result["drugs"] = list(state.get("drugs") or [])
 
     # --------------------------------------------------------
     # Final gene list (text/sequence + drug targets)
