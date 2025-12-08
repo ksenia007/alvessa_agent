@@ -1,7 +1,7 @@
 # src/tools/prot/utils.py
 # Author: Dmitri Kosenkov
 # Created: 2025-09-20
-# Updated: 2025-10-01
+# Updated: 2025-12-08
 #
 # Shared utilities for the agentic protein visualization tool.
 
@@ -204,18 +204,18 @@ def minmax_normalize(rows: List[Tuple[int, float]]) -> Tuple[Optional[Dict[str, 
 INTERPRETATION_TEXTS = OrderedDict([
     ("plddt", f"""
 AlphaFold pLDDT (Predicted Local Distance Difference Test)
-Per-residue confidence score from AlphaFold (0–100):
+Per-residue confidence score from AlphaFold (0-100):
   - >{PLDDT_HIGH_CUTOFF:.0f} : very high reliability
-  - {PLDDT_MEDIUM_CUTOFF:.0f}–{PLDDT_HIGH_CUTOFF:.0f} : backbone usually correct
+  - {PLDDT_MEDIUM_CUTOFF:.0f}-{PLDDT_HIGH_CUTOFF:.0f} : backbone usually correct
   - <{PLDDT_MEDIUM_CUTOFF:.0f} : lower confidence, often flexible
 """),
     ("fpocket", """
-FPocket Druggability Score (0–1)
+FPocket Druggability Score (0-1)
 Estimate of drug-likeness of a pocket.
 """),
     ("sasa", """
 Solvent Accessible Surface Area (SASA)
-Computed per residue using FreeSASA (Å²).
+Computed per residue using FreeSASA (A^2).
 """),
     ("pi", """
 Polarity Index (PI)
@@ -231,21 +231,38 @@ Regions disordered in isolation but fold on binding.
 """),
     ("biolip2", """
 BioLiP2 ligand-binding evidence from experimental PDB structures.
-Curated protein–ligand interactions with cross-references to ChEMBL.
+Curated protein-ligand interactions with cross-references to ChEMBL.
 For small-molecule ligands, ChEMBL IDs are retrieved.
 Common ions and solvents from PDB are excluded.
 Summarizes unique ligands, binding sites, and supporting PDB entries.
 """),
+    ("cysdb", """
+CysDB cysteine chemoproteomics and functional context.
+Flags are derived from curated chemoproteomics datasets and structural annotations:
+  - detected: cysteine was detected in at least one chemoproteomics experiment.
+  - ligandable: competition with a covalent probe indicates ligandable behavior.
+  - hyperreactive: elevated intrinsic reactivity relative to baseline.
+  - is_act_site: annotated as an active-site (catalytic) cysteine.
+  - near_act_site: spatially close to an active-site residue within a distance threshold.
+  - is_bind_site: lies in a ligand-binding site based on structural or UniProt annotations.
+  - near_bind_site: spatially close to a ligand-binding site residue.
+Neighbor lists indicate nearby active-site or binding-site residues (for example: G324, G326, S329).
+For details on CysDB, see: Boatner, L. M. et al. Cell Chem. Biol. 2023, 30(6), 683-698.e3.
+DOI: 10.1016/j.chembiol.2023.04.004.
+"""),
 ])
 
 
-def interpretation_notes(include_fpocket: bool,
-                         include_sasa: bool,
-                         include_pi: bool,
-                         include_plddt: bool = True,
-                         include_disorder: bool = True,
-                         include_morf: bool = True,
-                         include_biolip2: bool = False) -> str:
+def interpretation_notes(
+    include_fpocket: bool,
+    include_sasa: bool,
+    include_pi: bool,
+    include_plddt: bool = True,
+    include_disorder: bool = True,
+    include_morf: bool = True,
+    include_biolip2: bool = False,
+    include_cysdb: bool = False,
+) -> str:
     sections: List[str] = ["\nInterpretation Notes\n"]
     if include_plddt:
         sections.append(INTERPRETATION_TEXTS["plddt"])
@@ -261,6 +278,8 @@ def interpretation_notes(include_fpocket: bool,
         sections.append(INTERPRETATION_TEXTS["morf"])
     if include_biolip2:
         sections.append(INTERPRETATION_TEXTS["biolip2"])
+    if include_cysdb:
+        sections.append(INTERPRETATION_TEXTS["cysdb"])
     return "".join(sections)
 
 
@@ -318,16 +337,28 @@ def make_full_summary(
     disorder_stats: Optional[Dict[str, float]],
     morf_stats: Optional[Dict[str, float]] = None,
     biolip2_summary: Optional[Dict[str, Any]] = None,
+    cysdb_stats: Optional[Dict[str, Any]] = None,
 ) -> str:
     parts: List[str] = []
-    parts.append(make_summary_text(
-        gene_symbol, uniprot_id, protein_id, pdb_file,
-        plddt_stats, fpocket_stats, sasa_stats, pi_stats
-    ))
+    parts.append(
+        make_summary_text(
+            gene_symbol,
+            uniprot_id,
+            protein_id,
+            pdb_file,
+            plddt_stats,
+            fpocket_stats,
+            sasa_stats,
+            pi_stats,
+        )
+    )
     if disorder_stats:
         parts.append(_format_block("Disorder consensus", disorder_stats))
     if morf_stats:
         parts.append(_format_block("MoRF propensity", morf_stats))
+    if cysdb_stats and cysdb_stats.get("include_cysdb"):
+        parts.append("CysDB cysteine chemoproteomics summary:")
+        parts.append(make_cysdb_summary(uniprot_id, cysdb_stats))
     if biolip2_summary:
         parts.append("BioLiP2 ligand-binding evidence:")
         parts.append(make_biolip2_summary(uniprot_id, biolip2_summary))
@@ -358,7 +389,6 @@ def append_flags_to_summary_text(summary_text: str, flags: List[str]) -> str:
 # ------------------------------
 # HTML template injection helper
 # ------------------------------
-
 def inject_frontend_assets(
     html_template_text: str,
     css_text: str,
@@ -382,7 +412,21 @@ def inject_frontend_assets(
             continue
 
         # check arrays that carry actual per-residue data
-        feature_keys = ["plddt", "fpocket", "sasa", "pi", "disorder", "morf", "biolip2"]
+        feature_keys = [
+            "plddt",
+            "fpocket",
+            "sasa",
+            "pi",
+            "disorder",
+            "morf",
+            "biolip2",
+            "cysdb_hyperreactive",
+            "cysdb_ligandable",
+            "cysdb_is_act_site",
+            "cysdb_near_act_site",
+            "cysdb_is_bind_site",
+            "cysdb_near_bind_site",
+        ]
         if any(d.get(k) and len(d[k]) > 0 for k in feature_keys):
             has_data = True
             break
@@ -408,11 +452,12 @@ def inject_frontend_assets(
         .replace("{{CSS_INLINE}}", "<style>\n" + css_text + "\n</style>")
         .replace(
             "{{JS_INLINE}}",
-            data_script + "\n<script>\n" + js_text + "\n</script>"
+            data_script + "\n<script>\n" + js_text + "\n</script>",
         )
     )
 
     return html
+
 
 # ------------------------------
 # BioLiP2 summary text
@@ -482,8 +527,90 @@ def make_biolip2_summary(
             f"(ions/solvents or missing ChEMBL IDs)."
         )
         if excluded.get("ids"):
-            ids_preview = ", ".join(excluded['ids'][:BIO_EXCLUDED_IDS_MAX])
-            suffix = " ..." if len(excluded['ids']) > BIO_EXCLUDED_IDS_MAX else ""
+            ids_preview = ", ".join(excluded["ids"][:BIO_EXCLUDED_IDS_MAX])
+            suffix = " ..." if len(excluded["ids"]) > BIO_EXCLUDED_IDS_MAX else ""
             lines.append(f"  Excluded ligand IDs: {ids_preview}{suffix}")
+
+    return "\n".join(lines)
+
+
+# ------------------------------
+# CysDB summary text
+# ------------------------------
+def make_cysdb_summary(
+    uniprot_id: str,
+    stats: Dict[str, Any],
+) -> str:
+    """
+    Format CysDB cysteine chemoproteomics and functional context for text output.
+
+    Revised formatting per user specification:
+      - Uses "CysDB Cysteines Entries:" header line
+      - Removes example neighbor section
+      - For each cysteine in near_* categories, append its respective neighbor list
+    """
+    if not stats or not stats.get("has_any_flag"):
+        return f"UniProt {uniprot_id}: No CysDB evidence found."
+
+    lines: List[str] = []
+    lines.append(f"UniProt: {uniprot_id}")
+    lines.append(
+        "  CysDB Cysteines Entries: "
+        f"detected={int(stats.get('n_identified', 0))}, "
+        f"hyperreactive={int(stats.get('n_hyperreactive', 0))}, "
+        f"ligandable={int(stats.get('n_ligandable', 0))}, "
+        f"is_act_site={int(stats.get('n_is_act_site', 0))}, "
+        f"near_act_site={int(stats.get('n_near_act_site', 0))}, "
+        f"is_bind_site={int(stats.get('n_is_bind_site', 0))}, "
+        f"near_bind_site={int(stats.get('n_near_bind_site', 0))}"
+    )
+
+    def _emit_block(title: str, key: str, include_neighbors: bool = False,
+                    neighbor_map: Optional[Dict[str, str]] = None):
+        """
+        Emit:
+            Title:
+              P04406_C152
+              P04406_C156 <neighbor list, if any>
+        """
+        residues = stats.get(key) or []
+        if not residues:
+            return
+        lines.append(f"{title}:")
+        for lab in residues:
+            if include_neighbors and neighbor_map:
+                neigh = neighbor_map.get(lab)
+                if neigh:
+                    lines.append(f"  {lab}  {neigh}")
+                else:
+                    lines.append(f"  {lab}")
+            else:
+                lines.append(f"  {lab}")
+
+    # Neighbor maps: residue label → neighbor text
+    near_act_map: Dict[str, str] = stats.get("near_act_site_neighbors_per_residue", {})
+    near_bind_map: Dict[str, str] = stats.get("near_bind_site_neighbors_per_residue", {})
+
+    # Emit blocks in revised order and style
+    _emit_block("CysDB Detected", "detected_residues")
+    _emit_block("Hyperreactive", "hyperreactive_residues")
+    _emit_block("Ligandable", "ligandable_residues")
+    _emit_block("Active-site cysteines", "is_act_site_residues")
+
+    # Per-residue neighbor printing for near-active-site cysteines
+    _emit_block(
+        "Near active-site cysteines",
+        "near_act_site_residues",
+        include_neighbors=True,
+        neighbor_map=near_act_map,
+    )
+
+    # Per-residue neighbor printing for near-binding-site cysteines
+    _emit_block(
+        "Near binding-site cysteines",
+        "near_bind_site_residues",
+        include_neighbors=True,
+        neighbor_map=near_bind_map,
+    )
 
     return "\n".join(lines)
