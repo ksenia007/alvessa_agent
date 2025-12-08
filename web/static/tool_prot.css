@@ -9,7 +9,7 @@
   --text-muted: #aab4d6;
 
   /* Tooltips + legend colors (default = dark theme) */
-  --tooltip-bg: rgba(0, 0, 0, 0.9); /* slightly stronger opacity for readability */
+  --tooltip-bg: rgba(0, 0, 0, 0.9);
   --tooltip-fg: #ffffff;
   --legend-bg: var(--bg-main);
   --legend-text: var(--text-muted);
@@ -44,7 +44,7 @@ body {
 /* Toolbar */
 #toolbar {
   display: flex;
-  align-items: flex-start;   /* allows stacked elements like ligand name block */
+  align-items: flex-start;
   justify-content: space-between;
   padding: 8px 12px;
   background: var(--bg-card);
@@ -53,10 +53,10 @@ body {
   z-index: 2;
 }
 
-/* Controls */
+/* Main Controls Row */
 #controls {
   display: flex;
-  flex-wrap: wrap;           /* ensures ligand block wraps below */
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   color: var(--text-main);
@@ -81,37 +81,97 @@ body {
 }
 
 #styleSelect {
-  min-width: 220px; /* Wider for longer surface labels */
+  min-width: 220px;
 }
 
 #ligandSelect {
-  min-width: 260px; /* Ligand entries are longer */
-  display: none;    /* hidden until BioLiP2 mode is selected */
+  min-width: 260px;
+  display: none;
 }
 
 #ligandLabel {
   font-size: 14px;
   color: var(--text-muted);
-  display: none; /* hidden by default */
+  display: none;
 }
 
-/* Ligand Name block (forced to new line, uniform margins) */
+/* Ligand name block */
 #ligandNameBlock {
   display: none;
-  flex-basis: 100%;          /* forces block onto its own row */
-  margin: 6px 0;             /* consistent top/bottom spacing */
+  flex-basis: 100%;
+  margin: 6px 0;
 }
+
 #ligandNameBlock label {
   font-size: 14px;
   color: var(--text-muted);
 }
+
 #ligandNameValue {
   font-size: 14px;
-  color: var(--text-main);   /* matches dropdown text */
+  color: var(--text-main);
   margin-left: 4px;
 }
 
-/* Viewer */
+/* === CysDB Controls Row === */
+#cysdbControls {
+  display: none;
+  flex-basis: 100%;
+  margin: 6px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#cysdbControls .cysdb-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 4px 0 8px;
+  color: var(--text-muted);
+}
+
+/* FPocket label uses same bold style but without extra left indent */
+#cysdbControls .cysdb-option.cysdb-label {
+  margin-left: 0;
+}
+
+#cysdbControls .cysdb-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+}
+
+#cysdbControls .cysdb-option input {
+  margin: 0;
+}
+
+/* Divider: "|", "[", "]" */
+#cysdbControls .cysdb-divider {
+  opacity: 0.6;
+  margin: 0 4px;
+  font-weight: 600;
+}
+
+#cysdbControls .cysdb-or {
+  margin: 0 4px;
+  opacity: 0.9;
+}
+
+/* CysDB color square */
+.cysdb-color-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border-strong);
+  background: #ff1f8f;
+  vertical-align: middle;
+}
+
+/* Viewer Container */
 #viewer-container {
   width: 100%;
   height: 580px;
@@ -139,7 +199,7 @@ body {
   gap: 6px;
   font-size: 13px;
   color: var(--legend-text);
-  min-width: 260px; /* Ensure legend stays wide enough */
+  min-width: 260px;
 }
 
 #legend span {

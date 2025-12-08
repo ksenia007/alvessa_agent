@@ -24,9 +24,9 @@
       <select id="styleSelect">
         <option value="cartoon">Protein Backbone</option>
         <option value="surface-plddt">Confidence (AlphaFold pLDDT)</option>
-        <option value="surface-fpocket">Druggability (FPocket)</option>
+        <option value="surface-fpocket">Druggablity (FPocket)</option>
         <option value="surface-sasa">Exposure (FreeSASA)</option>
-        <option value="surface-pi">Polarity Index (FreeSASA)</option>
+        <option value="surface-pi">Surface Polarity Index (FreeSASA)</option>
         <option value="surface-disorder">Intrinsic Disorder (IUPred3 + DisProt)</option>
         <option value="surface-morf">Disorder MoRF Hotspot (IUPred3)</option>
         <option value="surface-biolip2">Exp. Binding Sites (BioLiP2)</option>
@@ -40,6 +40,71 @@
       <div id="ligandNameBlock" style="display:none; width:100%; margin:0.5em 0;">
         <label id="ligandNameLabel" style="display:none;">Ligand Name:</label>
         <span id="ligandNameValue" style="display:none;"></span>
+      </div>
+
+      <!-- CysDB controls (own line, shown only for FPocket+CysDB with data) -->
+      <div id="cysdbControls">
+        <!-- FPocket (X) -->
+        <label class="cysdb-option cysdb-label">
+          FPocket:&nbsp;
+          <input type="checkbox" id="cysdbFpocketBase">
+        </label>
+
+        <span class="cysdb-divider">|</span>
+
+        <!-- CysDB: [color square] -->
+        <span class="cysdb-label">CysDB:</span>
+        <span class="cysdb-color-swatch"></span>
+
+        <span class="cysdb-divider">[</span>
+
+        <!-- Identified (X) -->
+        <label class="cysdb-option">
+          Detected
+          <input type="checkbox" id="cysdbIdentified">
+        </label>
+
+        <span class="cysdb-divider">|</span>
+
+        <!-- Hyperreactive (X) -->
+        <label class="cysdb-option">
+          Hyperreactive
+          <input type="checkbox" id="cysdbHyperreactive">
+        </label>
+
+        <span class="cysdb-divider">|</span>
+
+        <!-- Ligandable: (X) -->
+        <label class="cysdb-option">
+          Ligandable
+          <input type="checkbox" id="cysdbLigandable">
+        </label>
+
+        <span class="cysdb-divider">|</span>
+
+        <!-- Act. Site (X) or Near (X) -->
+        Cys @ Act. Site
+        <label class="cysdb-option">
+          <input type="checkbox" id="cysdbIsActSite">
+        </label>
+        or Near
+        <label class="cysdb-option">
+          <input type="checkbox" id="cysdbNearActSite">
+        </label>
+
+        <span class="cysdb-divider">|</span>
+
+        <!-- Bind. Site (X) or Near (X) -->
+        Cys @ Bind. Site
+        <label class="cysdb-option">
+          <input type="checkbox" id="cysdbIsBindSite">
+        </label>
+        or Near
+        <label class="cysdb-option">
+          <input type="checkbox" id="cysdbNearBindSite">
+        </label>
+
+        <span class="cysdb-divider">]</span>
       </div>
     </div>
 

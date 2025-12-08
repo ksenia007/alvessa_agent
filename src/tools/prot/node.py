@@ -1,7 +1,7 @@
 # src/tools/prot/node.py
 # Author: Dmitri Kosenkov
 # Created: 2025-09-20
-# Updated: 2025-10-07
+# Updated: 2025-12-08
 """
 node.py
 =======
@@ -38,7 +38,7 @@ from src.tools.base import Node
 
 # --- Local storage Layout ---
 from src.tools.prot import (
-    TOOL_PROT_MAX_GENES, 
+    TOOL_PROT_MAX_GENES,
     OUTPUT_DIR,
     HTML_TEMPLATE,
     CSS_TEMPLATE,
@@ -55,7 +55,6 @@ from src.tools.prot.utils import (
     derive_warning_flags,
     append_flags_to_summary_text,
     inject_frontend_assets,
-    make_biolip2_summary,
 )
 
 from src.tools.prot.plddt import fetch_plddt
@@ -63,6 +62,7 @@ from src.tools.prot.fpocket import fetch_fpocket
 from src.tools.prot.sasa_pi import fetch_sasa_pi
 from src.tools.prot.disorder import fetch_disorder
 from src.tools.prot.biolip2 import fetch_biolip2
+from src.tools.prot.cysdb import fetch_cysdb
 
 
 # ----------------------------------------------------------------------
@@ -121,6 +121,7 @@ def prot_agent(state: "State") -> "State":
     include_plddt_any = include_fpocket_any = include_sasa_any = include_pi_any = False
     include_disorder_any = include_morf_any = False
     include_biolip2_any = False
+    include_cysdb_any = False
 
     for gene_symbol in genes:
         log(f"Processing gene: {gene_symbol}")
@@ -135,6 +136,7 @@ def prot_agent(state: "State") -> "State":
         sasa_stats, sasa_norm, pi_stats, pi_norm, residue_labels = fetch_sasa_pi(conn, protein_id)
         disorder_stats, disorder_norm, morf_stats, morf_norm = fetch_disorder(conn, protein_id, uniprot_id)
         biolip2_summary, biolip2_norm = fetch_biolip2(conn, uniprot_id)
+        cysdb_stats, cysdb_tracks = fetch_cysdb(conn, protein_id, uniprot_id)
 
         pdb_data = load_pdb_inline(pdb_file)
         if not pdb_data:
@@ -148,13 +150,23 @@ def prot_agent(state: "State") -> "State":
         include_disorder_any |= bool(disorder_stats)
         include_morf_any |= bool(morf_stats)
         include_biolip2_any |= bool(biolip2_summary)
+        if cysdb_stats and cysdb_stats.get("include_cysdb"):
+            include_cysdb_any = True
 
         # --- Text summary ---
         summary = make_full_summary(
-            gene_symbol, uniprot_id, protein_id, pdb_file,
-            plddt_stats, fpocket_stats, sasa_stats, pi_stats,
-            disorder_stats, morf_stats,
+            gene_symbol,
+            uniprot_id,
+            protein_id,
+            pdb_file,
+            plddt_stats,
+            fpocket_stats,
+            sasa_stats,
+            pi_stats,
+            disorder_stats,
+            morf_stats,
             biolip2_summary,
+            cysdb_stats,
         )
 
         flags = derive_warning_flags(plddt_stats)
@@ -175,6 +187,12 @@ def prot_agent(state: "State") -> "State":
             "morf": morf_norm or [],
             "pdb": pdb_data,
             "biolip2": biolip2_norm or [],
+            "cysdb_hyperreactive": cysdb_tracks.get("cysdb_hyperreactive", []) if cysdb_tracks else [],
+            "cysdb_ligandable": cysdb_tracks.get("cysdb_ligandable", []) if cysdb_tracks else [],
+            "cysdb_is_act_site": cysdb_tracks.get("cysdb_is_act_site", []) if cysdb_tracks else [],
+            "cysdb_near_act_site": cysdb_tracks.get("cysdb_near_act_site", []) if cysdb_tracks else [],
+            "cysdb_is_bind_site": cysdb_tracks.get("cysdb_is_bind_site", []) if cysdb_tracks else [],
+            "cysdb_near_bind_site": cysdb_tracks.get("cysdb_near_bind_site", []) if cysdb_tracks else [],
             "stats": {
                 "plddt": plddt_stats,
                 "fpocket": fpocket_stats,
@@ -183,6 +201,7 @@ def prot_agent(state: "State") -> "State":
                 "disorder": disorder_stats,
                 "morf": morf_stats,
                 "biolip2": biolip2_summary,
+                "cysdb": cysdb_stats,
             },
             "labels": residue_labels or {},
         }
@@ -191,9 +210,14 @@ def prot_agent(state: "State") -> "State":
 
     if prot_data_all:
         notes = interpretation_notes(
-            include_fpocket_any, include_sasa_any, include_pi_any,
-            include_plddt_any, include_disorder_any, include_morf_any,
+            include_fpocket_any,
+            include_sasa_any,
+            include_pi_any,
+            include_plddt_any,
+            include_disorder_any,
+            include_morf_any,
             include_biolip2_any,
+            include_cysdb_any,
         )
         last_gene = genes[-1]
         if state["gene_entities"].get(last_gene):
@@ -219,7 +243,7 @@ def prot_agent(state: "State") -> "State":
 
 
 # ----------------------------------------------------------------------
-# Helper: Resolve Gene → Protein Mapping
+# Helper: Resolve Gene -> Protein Mapping
 # ----------------------------------------------------------------------
 def _resolve_gene_to_protein(conn, gene_symbol: str):
     """Resolve a gene symbol to (uniprot_id, protein_id, pdb_file)."""
@@ -257,7 +281,7 @@ def _resolve_gene_to_protein(conn, gene_symbol: str):
 # CLI (testing)
 # ----------------------------------------------------------------------
 if __name__ == "__main__":
-    genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "AFM"]
+    genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "AFM", "GAPDH"]
     base_name = genes[0] if len(genes) == 1 else f"{genes[0]}_plus{len(genes)-1}"
 
     state = State({
@@ -304,12 +328,16 @@ NODES: tuple[Node, ...] = (
         entry_point=prot_agent,
         description=(
             "Visualize AlphaFold-predicted protein structures for one or more genes. "
-            "Overlays include: per-residue confidence scores (pLDDT, AlphaFold), "
-            "pocket druggability (FPocket), solvent-accessible surface area and polarity index (FreeSASA), "
-            "disorder consensus (IUPred3 + DisProt), MoRF propensity (IUPred3/ANCHOR2), "
-            "and ligand-binding evidence (BioLiP2 + ChEMBL). "
-            "Generates interactive 3Dmol.js views with color-coded surfaces, binding site info, "
-            "summary statistics, and interpretation notes."
+            "Overlays include: per-residue confidence scores (pLDDT, AlphaFold); "
+            "pocket druggability and geometric features (FPocket); "
+            "solvent-accessible surface area and polarity index (FreeSASA); "
+            "intrinsic disorder consensus (IUPred3 + DisProt); "
+            "MoRF propensity predictions (IUPred3/ANCHOR2); "
+            "ligand-binding evidence (BioLiP2 + ChEMBL); "
+            "and cysteine chemoproteomics annotations from CysDB, including detected, "
+            "ligandable, hyperreactive, and active-site or binding-site–proximal cysteines. "
+            "Generates interactive 3Dmol.js views with color-coded surfaces, binding-site "
+            "context, summary statistics, and interpretation notes."
         ),
     ),
 )
