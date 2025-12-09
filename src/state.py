@@ -56,6 +56,8 @@ class State(TypedDict, total=False):
     gene_entities: Annotated[Dict[str, "Gene"], operator.or_]
     variant_entities: Annotated[Dict[str, "Variant"], operator.or_]
     drug_entities: Annotated[Dict[str, "Drug"], operator.or_]
+    drug_gene_interactions: Annotated[Dict[str, Any], operator.or_]
+    gene_drug_interactions: Annotated[Dict[str, Any], operator.or_]
 
     # LLM bookkeeping
     context_block: Annotated[str, operator.add]
