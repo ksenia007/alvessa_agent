@@ -57,32 +57,169 @@ def _style_axes(ax, *, theme: str) -> None:
     ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.5, color=spine_color)
 
 
+# def _plot_accuracy(df: pd.DataFrame, *, out_dir: Path, dpi: int = 300) -> Tuple[Path, Path]:
+#     out_dir.mkdir(parents=True, exist_ok=True)
+
+#     labels = [_format_folder(f) for f in df["source_folder"].tolist()]
+#     accuracies = df["accuracy"].tolist()
+#     counts = df["n"].tolist()
+
+#     def _make_fig(theme: str, fname: str, bar_color: str) -> Path:
+#         fig, ax = plt.subplots(figsize=(max(6, len(labels) * 0.55), 4))
+#         ax.bar(range(len(labels)), accuracies, color=bar_color, edgecolor="none")
+#         ax.set_xticks(range(len(labels)))
+#         ax.set_xticklabels(labels, rotation=90, ha="center", color=("#111111" if theme == "white" else "#f5f5f5"), fontsize=11)
+#         # for x, acc, n in zip(range(len(labels)), accuracies, counts):
+#         #     ax.text(x, acc + 0.02, f"{acc:.2f}\nn={n}", ha="center", va="bottom", fontsize=10, color=("#111111" if theme == "white" else "#f5f5f5"))
+#         _style_axes(ax, theme=theme)
+#         outfile = out_dir / fname
+#         if theme == "white":
+#             fig.savefig(outfile, dpi=dpi, bbox_inches="tight", transparent=False, facecolor="white")
+#         else:
+#             fig.savefig(outfile, dpi=dpi, bbox_inches="tight", transparent=True)
+#         plt.close(fig)
+#         return outfile
+
+#     white_path = _make_fig("white", "accuracy_by_source_white.png", bar_color="#D95F02")
+#     black_path = _make_fig("black", "accuracy_by_source_black.png", bar_color="#FFB570")
+#     return white_path, black_path
+
+from pathlib import Path
+from typing import Tuple
+
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch
+import pandas as pd
+
+
 def _plot_accuracy(df: pd.DataFrame, *, out_dir: Path, dpi: int = 300) -> Tuple[Path, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     labels = [_format_folder(f) for f in df["source_folder"].tolist()]
-    accuracies = df["accuracy"].tolist()
+    accuracies = df["accuracy"].tolist()   # <-- fractions in [0, 1], keep as is
     counts = df["n"].tolist()
 
     def _make_fig(theme: str, fname: str, bar_color: str) -> Path:
-        fig, ax = plt.subplots(figsize=(max(6, len(labels) * 0.55), 4))
-        ax.bar(range(len(labels)), accuracies, color=bar_color, edgecolor="none")
-        ax.set_xticks(range(len(labels)))
-        ax.set_xticklabels(labels, rotation=90, ha="center", color=("#111111" if theme == "white" else "#f5f5f5"), fontsize=11)
-        # for x, acc, n in zip(range(len(labels)), accuracies, counts):
-        #     ax.text(x, acc + 0.02, f"{acc:.2f}\nn={n}", ha="center", va="bottom", fontsize=10, color=("#111111" if theme == "white" else "#f5f5f5"))
+        text_color = "#111111" if theme == "white" else "#F5F5F5"
+
+        fig_width = max(6.0, len(labels) * 0.6)
+        fig, ax = plt.subplots(figsize=(fig_width, 4), dpi=dpi)
+
+        x_pos = range(len(labels))
+
+        # basic vertical bars
+        bars = ax.bar(
+            x_pos,
+            accuracies,
+            color=bar_color,
+            edgecolor="none",
+        )
+
+        ax.set_xticks(x_pos)
+        ax.set_xticklabels(
+            labels,
+            rotation=90,
+            ha="center",
+            color=text_color,
+            fontsize=11,
+        )
+
+        # rounded corners (like your Seaborn plots)
+        new_patches = []
+        for patch in bars:
+            height = patch.get_height()
+            if height is None or height < 1e-6:
+                continue
+            bbox = patch.get_bbox()
+            p = FancyBboxPatch(
+                (bbox.xmin, bbox.ymin),
+                bbox.width,
+                bbox.height,
+                boxstyle="round,pad=0.02",
+                linewidth=0,
+                facecolor=patch.get_facecolor(),
+                edgecolor="none",
+            )
+            patch.remove()
+            new_patches.append(p)
+        for p in new_patches:
+            ax.add_patch(p)
+
+        # value labels on bars (still fractions)
+        label_color = text_color if theme == "white" else "black"
+        for acc, patch, n in zip(accuracies, new_patches, counts):
+            height = patch.get_height()
+            if height is None or height < 1e-6:
+                continue
+            x_center = patch.get_x() + patch.get_width() / 2.0
+
+            # slightly inside the bar if it's tall enough, else just above
+            if height > 0.2:
+                y_text = height - 0.03
+                va = "top"
+            else:
+                y_text = height + 0.02
+                va = "bottom"
+
+            ax.text(
+                x_center,
+                y_text,
+                f"{acc:.2f}",  # e.g. 0.87
+                va=va,
+                ha="center",
+                fontsize=10,
+                fontweight="bold",
+                color=label_color,
+            )
+            # if you ever want n as well:
+            # ax.text(x_center, y_text - 0.06, f"n={n}", va="top", ha="center", fontsize=8, color=label_color)
+
+        # y-axis 0–1 with a tiny headroom
+        ymax = min(1.05, max(1.0, max(accuracies) * 1.05))
+        ax.set_ylim(0.0, ymax)
+        ax.set_ylabel("Accuracy", labelpad=8, color=text_color)
+        ax.set_xlabel("", labelpad=8)
+
+        ax.tick_params(axis="y", labelsize=10, colors=text_color)
+        ax.tick_params(axis="x", labelsize=10, colors=text_color)
+
+        # light grid on y
+        ax.grid(True, axis="y", linestyle="--", linewidth=0.6, alpha=0.6)
+        ax.grid(False, axis="x")
+
+        # your external styling hook
         _style_axes(ax, theme=theme)
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.spines["left"].set_color("#A0A0A0")
+        ax.spines["bottom"].set_color("#A0A0A0")
+
+        plt.tight_layout()
+
         outfile = out_dir / fname
         if theme == "white":
-            fig.savefig(outfile, dpi=dpi, bbox_inches="tight", transparent=False, facecolor="white")
+            fig.savefig(
+                outfile,
+                dpi=dpi,
+                bbox_inches="tight",
+                transparent=False,
+                facecolor="white",
+            )
         else:
-            fig.savefig(outfile, dpi=dpi, bbox_inches="tight", transparent=True)
+            fig.savefig(
+                outfile,
+                dpi=dpi,
+                bbox_inches="tight",
+                transparent=True,
+            )
         plt.close(fig)
         return outfile
 
-    white_path = _make_fig("white", "accuracy_by_source_white.png", bar_color="#D95F02")
+    white_path = _make_fig("white", "accuracy_by_source_white.png", bar_color="#FF7C07")
     black_path = _make_fig("black", "accuracy_by_source_black.png", bar_color="#FFB570")
     return white_path, black_path
+
 
 
 def _compute_accuracy_by_folder_name(df: pd.DataFrame, folder_order: list[str] | None = None) -> pd.DataFrame:
