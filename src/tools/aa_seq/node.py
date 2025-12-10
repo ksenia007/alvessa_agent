@@ -68,7 +68,7 @@ from src.tools.aa_seq.utils import (
 
 # Default parameters for the underlying resolver
 AA_SEQ_TOP_N: int = 5
-AA_SEQ_MIN_SCORE: float = 80.0
+AA_SEQ_MIN_SCORE: float = 60.0
 
 
 # --------------------------------------------------------------------
@@ -360,7 +360,8 @@ if __name__ == "__main__":
         # fallback demo sequence (HRAS fragment, or any other test sequence)
         # raw_args = ["MTEYKLVVVGAGGVGKSALTIQLIQNHFVD"]
         #raw_args = ["CKCWHGQLRCFPQAFLPGCDGLVMDEHLVA"]
-        raw_args = ["LENLQIIRGN", "LENLQIIRGG", "LENLQIIGGG", "VDRVDYDRQSGSAVITFVEI","DDRVDYDRQSGSAVITFVEI"]
+        #raw_args = ["LENLQIIRGN", "LENLQIIRGG", "LENLQIIGGG", "VDRVDYDRQSGSAVITFVEI","DDRVDYDRQSGSAVITFVEI"]
+        raw_args = ["SWPSRSLPAQEAVVKLRVEGMTCQSCVSSIEGKVRKLQGVVRVKVSLSNQEAVITYQPYLIQPEDLRDHVNDMGFEAAIKSKVAPLSLGPIDIERLQSTNPKRPLSSANQNFNNSETLGH"]
         
 
     sequences = raw_args
