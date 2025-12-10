@@ -52,6 +52,63 @@ _DRUGCENTRAL_ID_PATTERN = re.compile(
 _CAS_PATTERN = re.compile(r"\b\d{2,7}-\d{2}-\d\b")
 _DRUGBANK_ID_PATTERN = re.compile(r"\bDB\d+\b", re.IGNORECASE)
 
+# Amino-acid base terms where we only want exact library hits (e.g., "L-cysteine")
+# and should avoid fuzzy upgrading from the bare residue (e.g., "cysteine" -> "L-cysteine").
+_AA_STOP_FOR_FUZZY = {
+    "alanine",
+    "arginine",
+    "asparagine",
+    "aspartate",
+    "asparticacid",
+    "cysteine",
+    "glutamate",
+    "glutamicacid",
+    "glutamine",
+    "glycine",
+    "histidine",
+    "isoleucine",
+    "leucine",
+    "lysine",
+    "methionine",
+    "phenylalanine",
+    "proline",
+    "serine",
+    "threonine",
+    "tryptophan",
+    "tyrosine",
+    "valine",
+}
+
+
+def _is_aa_stop_term(normalized: str) -> bool:
+    """
+    Return True if a normalized phrase is an amino-acid base term or a trivial
+    plural of one. This is used to prevent fuzzy matching from upgrading bare
+    residues (e.g., “cysteines”) into drug variants like “L-cysteine”.
+    """
+    if normalized in _AA_STOP_FOR_FUZZY:
+        return True
+    singular = normalized.rstrip("s")
+    return bool(singular and singular in _AA_STOP_FOR_FUZZY)
+
+
+def _is_near_aa_term(normalized: str) -> bool:
+    """
+    Return True if a normalized phrase is very close to an amino-acid base term.
+
+    This blocks fuzzy upgrades like "cysteine we" -> "L-cysteine" while still
+    allowing exact matches (handled earlier).
+    """
+    if _is_aa_stop_term(normalized):
+        return True
+
+    for aa in _AA_STOP_FOR_FUZZY:
+        if normalized.startswith(aa) and len(normalized) - len(aa) <= 3:
+            return True
+        if normalized.endswith(aa) and len(normalized) - len(aa) <= 3:
+            return True
+    return False
+
 
 # --------------------------------------------------------------------
 # Helper functions for library and matching
@@ -305,6 +362,11 @@ def extract_drug_matches(text: str) -> Dict[str, Dict[str, Any]]:
                 entry = _drug_library.get(key)
                 if entry:
                     _register_drug_match(matches, key, entry, phrase, "exact")
+            continue
+
+        # Avoid fuzzy-upgrading bare amino-acid terms (e.g., "cysteine") into
+        # L-/D- variants; still allow exact hits above.
+        if _is_near_aa_term(normalized):
             continue
 
         # Fuzzy match
