@@ -105,49 +105,10 @@ def tool_invoke(state: "State") -> "State":
         print(view)
         fn = TOOL_FN_MAP.get(name)
         if not fn:
-            # check twosample_mr_agent special case
-            if name.startswith("twosample_mr_agent"):
-                print('[TOOL RUN] Special case: twosample_mr_agent with parameters')
-                fn = TOOL_FN_MAP.get("twosample_mr_agent")
-                if fn:
-                    # parse parameters from the name, e.g. twosample_mr_agent-EXPOSURE-OUTCOME
-                    parts = name.split("-")
-                    if len(parts) == 3:
-                        exposure, outcome = parts[1], parts[2]
-                        if DEBUG:
-                            print(f"[TOOL RUN] → {name} (exposure={exposure}, outcome={outcome})")
-                        print('view in twosample_mr_agent:', view)
-                        out = fn(view, exposure_gwas=exposure, outcome_gwas=outcome)
-                        if out is None:
-                            used.add(name)
-                            continue
-                        out = dict(out)
-                        out.pop("messages", None)
-                        _safe_merge(acc, out)
+            print(f"[TOOL RUN] Skipping unknown tool: {name}", flush=True)
+            used.add(name)
 
-                        used.add(name)
-                        continue 
-                    if len(parts) == 4:
-                        # also pass in optional gene name
-                        exposure, outcome, gene = parts[1], parts[2], parts[3]
-                        if DEBUG:
-                            print(f"[TOOL RUN] → {name} (exposure={exposure}, outcome={outcome}, gene={gene})")
-                        out = fn(view, exposure_gwas=exposure, outcome_gwas=outcome, gene_name=gene)
-                        if out is None:
-                            used.add(name)
-                            continue
-                        out = dict(out) # shallow copy
-                        out.pop("messages", None)
-                        _safe_merge(acc, out)
-                        used.add(name)
-                        view.update(acc)
-
-                        continue    
-            else:
-                print(f"[TOOL RUN] Skipping unknown tool: {name}", flush=True)
-                used.add(name)
-
-                continue       
+            continue       
         else:
             print(f"[TOOL RUN] → {name}", flush=True)
 

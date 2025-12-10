@@ -439,7 +439,7 @@ def verify_evidence_node(state: "State") -> "State":
     # Upgrade fail if any unsupported/speculation-overreach label
     total_statements = max(1, sum(summary.values()))
     unsupported_ratio = summary["unsupported"] / total_statements
-    if verdict != "fail" and (summary["unsupported"] > 0 or unsupported_ratio >= 0.2):
+    if verdict != "fail" and (unsupported_ratio >= 0.3):
         verdict = "fail"
 
     verification = {
