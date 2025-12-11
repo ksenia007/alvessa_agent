@@ -200,6 +200,8 @@ body {
   font-size: 13px;
   color: var(--legend-text);
   min-width: 260px;
+  margin-right: 16px;
+  flex-shrink: 0;
 }
 
 #legend span {
