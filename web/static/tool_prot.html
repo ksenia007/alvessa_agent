@@ -14,8 +14,9 @@
   {{JS_INLINE}}
 </head>
 <body>
-  <!-- Toolbar row with protein and style selectors -->
+  <!-- Toolbar: left = controls, right = legend, below = cysdbControls (full width) -->
   <div id="toolbar">
+    <!-- LEFT COLUMN: main controls -->
     <div id="controls">
       <label for="proteinSelect">Gene:</label>
       <select id="proteinSelect"></select>
@@ -25,7 +26,7 @@
         <option value="cartoon">Protein Backbone</option>
         <option value="surface-plddt">Confidence (AlphaFold pLDDT)</option>
         <option value="surface-fpocket">Druggablity (FPocket)</option>
-        <option value="surface-sasa">Exposure (FreeSASA)</option>
+        <option value="surface-sasa">Solvent Exposure (FreeSASA)</option>
         <option value="surface-pi">Surface Polarity Index (FreeSASA)</option>
         <option value="surface-disorder">Intrinsic Disorder (IUPred3 + DisProt)</option>
         <option value="surface-morf">Disorder MoRF Hotspot (IUPred3)</option>
@@ -33,32 +34,42 @@
       </select>
 
       <!-- Ligand selector (hidden by default, shown only if BioLiP2 selected) -->
-      <label for="ligandSelect" id="ligandLabel" style="display:none;">Ligands:</label>
-      <select id="ligandSelect" style="display:none;"></select>
+      <label for="ligandSelect" id="ligandLabel">Ligands:</label>
+      <select id="ligandSelect"></select>
 
       <!-- Ligand name block (own line, consistent spacing with controls) -->
-      <div id="ligandNameBlock" style="display:none; width:100%; margin:0.5em 0;">
-        <label id="ligandNameLabel" style="display:none;">Ligand Name:</label>
-        <span id="ligandNameValue" style="display:none;"></span>
+      <div id="ligandNameBlock">
+        <label id="ligandNameLabel">Ligand Name:</label>
+        <span id="ligandNameValue"></span>
       </div>
+    </div>
 
-      <!-- CysDB controls (own line, shown only for FPocket+CysDB with data) -->
-      <div id="cysdbControls">
-        <!-- FPocket (X) -->
+    <!-- RIGHT COLUMN: legend -->
+    <div id="legend">
+      <span id="legendMin">Min</span>
+      <canvas id="colorLegend" width="120" height="12"></canvas>
+      <span id="legendMax">Max</span>
+    </div>
+
+    <!-- FULL-WIDTH ROW BELOW: CysDB + FPocket toggles -->
+    <div id="cysdbControls">
+      <!-- Row 1: FPocket (base surface) -->
+      <div class="cysdb-row">
         <label class="cysdb-option cysdb-label">
           FPocket:&nbsp;
           <input type="checkbox" id="cysdbFpocketBase">
         </label>
+      </div>
 
-        <span class="cysdb-divider">|</span>
-
+      <!-- Row 2: CysDB options -->
+      <div class="cysdb-row">
         <!-- CysDB: [color square] -->
         <span class="cysdb-label">CysDB:</span>
         <span class="cysdb-color-swatch"></span>
 
         <span class="cysdb-divider">[</span>
 
-        <!-- Identified (X) -->
+        <!-- Detected (X) -->
         <label class="cysdb-option">
           Detected
           <input type="checkbox" id="cysdbIdentified">
@@ -74,7 +85,7 @@
 
         <span class="cysdb-divider">|</span>
 
-        <!-- Ligandable: (X) -->
+        <!-- Ligandable (X) -->
         <label class="cysdb-option">
           Ligandable
           <input type="checkbox" id="cysdbLigandable">
@@ -106,13 +117,6 @@
 
         <span class="cysdb-divider">]</span>
       </div>
-    </div>
-
-    <!-- Legend inline with controls -->
-    <div id="legend" style="display:none;">
-      <span id="legendMin">Min</span>
-      <canvas id="colorLegend" width="120" height="12"></canvas>
-      <span id="legendMax">Max</span>
     </div>
   </div>
 

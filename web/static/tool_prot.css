@@ -41,11 +41,16 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Toolbar */
+/* === Toolbar as 2-column grid === */
 #toolbar {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto;   /* left: controls, right: legend */
+  grid-template-rows: auto auto;     /* row 1: controls+legend, row 2: cysdbControls */
+  grid-template-areas:
+    "controls legend"
+    "cysdb    cysdb";
+  gap: 6px 20px;
+
   padding: 8px 12px;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
@@ -53,8 +58,9 @@ body {
   z-index: 2;
 }
 
-/* Main Controls Row */
+/* Main Controls (left column) */
 #controls {
+  grid-area: controls;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -86,18 +92,18 @@ body {
 
 #ligandSelect {
   min-width: 260px;
-  display: none;
+  display: none; /* shown by JS when BioLiP2 overlay is active */
 }
 
 #ligandLabel {
   font-size: 14px;
   color: var(--text-muted);
-  display: none;
+  display: none; /* shown by JS */
 }
 
 /* Ligand name block */
 #ligandNameBlock {
-  display: none;
+  display: none;             /* JS toggles this */
   flex-basis: 100%;
   margin: 6px 0;
 }
@@ -113,13 +119,22 @@ body {
   margin-left: 4px;
 }
 
-/* === CysDB Controls Row === */
+/* === CysDB Controls Row (full width, second grid row) === */
 #cysdbControls {
+  grid-area: cysdb;
+  /* JS will toggle display to 'flex' when needed */
   display: none;
-  flex-basis: 100%;
-  margin: 6px 0;
+  width: 100%;
+  margin: 6px 0 0 0;
   font-size: 13px;
   color: var(--text-muted);
+  flex-direction: column;  /* stack FPocket row and CysDB row */
+  gap: 4px;
+}
+
+/* Each row inside CysDB controls (line 1: FPocket, line 2: CysDB…) */
+.cysdb-row {
+  display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
@@ -128,7 +143,7 @@ body {
 #cysdbControls .cysdb-label {
   font-size: 13px;
   font-weight: 600;
-  margin: 0 4px 0 8px;
+  margin: 0 4px 0 0;
   color: var(--text-muted);
 }
 
@@ -171,6 +186,34 @@ body {
   vertical-align: middle;
 }
 
+/* Legend (right column) */
+#legend {
+  grid-area: legend;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--legend-text);
+  min-width: 260px;
+  margin-right: 16px;  /* keeps legend away from right edge */
+  flex-shrink: 0;
+  justify-self: end;   /* align to right side of toolbar */
+}
+
+#legend span {
+  font-size: 12px;
+  color: var(--legend-text);
+}
+
+#colorLegend {
+  width: 200px;
+  height: 20px;
+  border: 1px solid var(--border-strong);
+  background: var(--legend-bg);
+  border-radius: 4px;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
 /* Viewer Container */
 #viewer-container {
   width: 100%;
@@ -190,30 +233,4 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-}
-
-/* Legend */
-#legend {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--legend-text);
-  min-width: 260px;
-  margin-right: 16px;
-  flex-shrink: 0;
-}
-
-#legend span {
-  font-size: 12px;
-  color: var(--legend-text);
-}
-
-#colorLegend {
-  width: 200px;
-  height: 20px;
-  border: 1px solid var(--border-strong);
-  background: var(--legend-bg);
-  border-radius: 4px;
-  transition: background 0.3s ease, border-color 0.3s ease;
 }
