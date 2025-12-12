@@ -207,7 +207,7 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
         })
 
     system_msg = (
-        "You are a meticulous research assitant. Provide qualitative feedback on whether each statement of the following answer is well supported "
+        "You are a meticulous research assistant. Provide qualitative feedback on whether each statement of the following answer is well supported "
         "by the quoted snippets (proofs). Do NOT invent facts or add citations, and double check the numbers.\n"
         "Special case: statements that begin with 'Possible speculation:' are allowed as cautious synthesis IF they are "
         "clearly grounded in the cited evidence. Flag only if they overreach or contradict the proofs.\n"

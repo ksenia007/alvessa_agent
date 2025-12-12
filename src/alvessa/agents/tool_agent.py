@@ -154,7 +154,6 @@ def select_tools(state: "State") -> "State":
             f"IMPORTANT: if no additional tools are needed, return [] with no explanation.\n"
             f"Overall, NO explanation, downstream parser can only work with a list of tools.\n\n"
             f"Current context block:\n{current_context_block}\n\n No other words should be included in the response."
-            f"{system_msg_base}"
         )
         if len(system_msg) > N_CHARS:
             system_msg = system_msg[:N_CHARS] + "...<truncated>"
