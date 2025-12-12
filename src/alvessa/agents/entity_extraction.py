@@ -441,7 +441,7 @@ def _extract_entities_with_gliner(text: str) -> Dict[str, Any]:
 def _dedupe_mirna_variants(genes: Iterable[str]) -> List[str]:
     """
     Collapse miRNA-like names so that for MIR* we prefer specific 5p/3p
-    (or longer) variants over bare MIR*.
+    (or longer) variants over bare MIR*, and we keep the species (hsa-, mmu-, etc.) prefix if present.
     """
     genes = list(genes)
     mir_like: List[str] = []
@@ -455,16 +455,22 @@ def _dedupe_mirna_variants(genes: Iterable[str]) -> List[str]:
 
     groups: Dict[str, List[str]] = {}
     for g in mir_like:
-        core = re.sub(r"([_-]?[35][pP])$", "", g)
+        # Extract species prefix if present; group by core (without prefix) so we dedupe prefixed/unprefixed together
+        m = re.match(r"^((?:hsa|mmu|rno|ptr)[_-])?(.*)$", g, re.IGNORECASE)
+        prefix = m.group(1) if m else ""
+        body = m.group(2) if m else g
+
+        core = re.sub(r"([_-]?[35][pP])$", "", body)
         core_key = core.lower()
         groups.setdefault(core_key, []).append(g)
 
     deduped_mir: List[str] = []
 
-    def sort_key(name: str) -> Tuple[int, int]:
+    def sort_key(name: str) -> Tuple[int, int, int]:
         has_arm = bool(re.search(r"[_-]?[35][pP]$", name))
-        # Prefer arm-specific, then longer names
-        return (0 if has_arm else 1, -len(name))
+        has_prefix = bool(re.match(r"^(?:hsa|mmu|rno|ptr)[_-]", name, re.IGNORECASE))
+        # Prefer prefixed, then arm-specific, then longer names
+        return (0 if has_prefix else 1, 0 if has_arm else 1, -len(name))
 
     for _, variants in groups.items():
         best = sorted(variants, key=sort_key)[0]
