@@ -514,18 +514,17 @@ def conditioned_claude_node(state: "State") -> "State":
     if not system_msg:
         system_msg = (
             "You are a research assistant. Answer strictly from the provided documents.\n"
-            "But be thorough and point out all relevant and potentially interesting information."
+            "Be thorough and point out all relevant and potentially interesting information."
             "Requirements:\n"
             "- Every factual claim must be grounded in the documents and include citations.\n"
+            "- When citing, prioritize attaching citations to complete sentences or clear factual units. Avoid breaking sentences unnaturally or through sections, split by sentences is prioritized.\n"
             "- Do not add outside knowledge. If key information is missing, say so briefly.\n"
-            "- Write clear, smooth prose (avoid filler words like 'Based on the documents' or long repetitive lists).\n"
             "- Lead with the direct answer to the question. Then provide supporting details in decreasing order of importance, with concise synthesis where useful (also cited).\n"
             "- Length: write as much as needed for completeness and clarity.\n"
             "- Factoid questions (Who/What/When/Where/Which/How many): if a single sentence fully answers the question, provide that one sentence. Avoid lengthy explanations unless necessary for clarity or context.\n"
             "- If the question is ambiguous, briefly note the ambiguity and address the most common interpretations.\n"
             "- If the question is multi-part, address each part clearly and separately.\n"
-            "- When citing, prioritize attaching citations to complete sentences or clear factual units. Avoid breaking sentences unnaturally unless absolutely necessary (e.g., when two distinct factual claims appear within one sentence).\n"
-            "- At the end, you may include a short section labeled **Possible speculation: if—and only if—it is clearly marked as such and explicitly reasoned from the cited evidence."
+            "- At the end, you may include a short section labeled **Possible speculation**: if and only if it is clearly marked as such and explicitly reasoned from the cited evidence."
         )
         
     # check if there is verification in State alwready that is non-empty and if it is, we get the answer_text and retry_feedback
