@@ -623,23 +623,29 @@ def _extract_entities_merged(text: str) -> Dict[str, Any]:
 def entity_extraction_node(state: "State") -> "State":
     """
     Runs the comprehensive, merged entity extraction process.
-
-    Steps
-    -----
-    1) Extract genes, proteins, variants, AA sequences, and drug mentions
-       (Claude + regex + Flair + GLiNER + MedChemExpress library).
-    2) Build Gene entities for text/sequence-derived genes.
-    3) Build Drug entities via `build_drug_entities`.
-    4) Resolve gene targets for the set of recognized drugs via ChemBL + DrugCentral
-       (`resolve_drug_gene_targets`), project to HUMAN-only genes, and:
-         - add those genes to `gene_entities`,
-         - add those genes to the top-level `genes` list.
-       The top-level `drugs` list is synchronized with `state["drugs"]` so that
-       ID-only hits (e.g., CAS) are exposed in the returned state.
     """
     user_input: str = state["messages"][-1]["content"]
     extraction_result = _extract_entities_merged(user_input)
     drug_matches = extraction_result.pop("drug_matches", {})
+
+    # ------------------------------------------------------------------
+    # AA-sequence-derived genes as a state-level text note
+    # ------------------------------------------------------------------
+    seq_genes = sorted(
+        {
+            canon_gene_key(g)
+            for g in (extraction_result.get("genes") or [])
+            if g
+        }
+    )
+    if extraction_result.get("aa_sequences") and seq_genes:
+        note = (
+            "Genes identified from amino-acid sequence analysis: "
+            + ", ".join(seq_genes)
+        )
+        state.setdefault("text_notes", [])
+        if note not in state["text_notes"]:
+            state["text_notes"].append(note)
 
     if DEBUG:
         print(f"[entity_extraction_node] Extracted (pre-entities): {extraction_result}")
@@ -676,7 +682,10 @@ def entity_extraction_node(state: "State") -> "State":
         gene_entities[key] = g
 
         if DEBUG:
-            print(f"[entity_extraction_node] Created Gene object from text: {sym} (key={key}, entrez={entrez})")
+            print(
+                f"[entity_extraction_node] Created Gene object from text: "
+                f"{sym} (key={key}, entrez={entrez})"
+            )
 
     # --------------------------------------------------------
     # Variant entities
@@ -706,31 +715,23 @@ def entity_extraction_node(state: "State") -> "State":
         drug_matches=drug_matches,
     )
 
-    # Merge existing + new drugs into state and result
     merged_drug_entities: Dict[str, Any] = dict(state_drug_entities)
     merged_drug_entities.update(new_drug_entities)
-    state["drug_entities"] = merged_drug_entities  # keep state in sync
+    state["drug_entities"] = merged_drug_entities
     extraction_result["drug_entities"] = merged_drug_entities
 
     # --------------------------------------------------------
-    # Drug → gene targets (ChemBL + DrugCentral, HUMAN-only projection)
+    # Drug → gene targets
     # --------------------------------------------------------
-    # New resolve_drug_gene_targets API: takes a list of Drug objects and
-    # returns a mapping from Drug Central struct_id (structures.id) to
-    # lists of normalized HUMAN gene targets.
     dc_target_map = resolve_drug_gene_targets(list(new_drug_entities.values()))
 
-    # Store per-drug-central-id mapping for downstream consumers
     drug_targets: Dict[str, List[Dict[str, Any]]] = {}
     for struct_id, targets in (dc_target_map or {}).items():
-        if not targets:
-            continue
-        # normalize key to string for JSON-compatibility
-        drug_targets[str(struct_id)] = list(targets)
+        if targets:
+            drug_targets[str(struct_id)] = list(targets)
 
     extraction_result["drug_targets"] = drug_targets
 
-    # Aggregate target genes across all drugs
     target_gene_info: Dict[str, Dict[str, Any]] = {}
     for targets in drug_targets.values():
         for t in targets:
@@ -744,12 +745,10 @@ def entity_extraction_node(state: "State") -> "State":
             if existing is None:
                 target_gene_info[key] = dict(t)
             else:
-                # Fill missing IDs best-effort
                 for field in ("entrez_id", "uniprot_id", "ensembl_id"):
                     if not existing.get(field) and t.get(field):
                         existing[field] = t[field]
 
-    # Add drug-target genes into gene_entities
     for key, info in target_gene_info.items():
         if key in gene_entities:
             continue
@@ -770,13 +769,10 @@ def entity_extraction_node(state: "State") -> "State":
     # --------------------------------------------------------
     # Sync top-level drug list with state
     # --------------------------------------------------------
-    # build_drug_entities() populated state["drugs"] (including CAS / CHEMBL / DrugCentral-only hits).
-    # Make sure the returned extraction_result exposes the same list so that
-    # has_drugs(state) and downstream tools see it.
     extraction_result["drugs"] = list(state.get("drugs") or [])
 
     # --------------------------------------------------------
-    # Final gene list (text/sequence + drug targets)
+    # Final gene list
     # --------------------------------------------------------
     all_gene_keys: Set[str] = set(gene_entities.keys())
     extraction_result["genes"] = sorted(all_gene_keys)
@@ -785,9 +781,6 @@ def entity_extraction_node(state: "State") -> "State":
 
     if DEBUG:
         print(f"[entity_extraction_node] Final genes after target expansion: {extraction_result['genes']}")
-        print(f"[entity_extraction_node] Gene entities (keys): {list(gene_entities.keys())}")
-        print(f"[entity_extraction_node] Variant entities: {list(variant_entities.keys())}")
-        print(f"[entity_extraction_node] Drug entities: {list(merged_drug_entities.keys())}")
 
     return extraction_result
 

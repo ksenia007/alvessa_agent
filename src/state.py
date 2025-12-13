@@ -33,6 +33,17 @@ def merge_html(old: Optional[str], new: Optional[str]) -> Optional[str]:
         return old
     return new
 
+def merge_notes(old: Optional[List[str]], new: Optional[List[str]]) -> List[str]:
+    """
+    Reducer for text_notes that concatenates then de-duplicates while preserving order.
+    """
+    combined: List[str] = []
+    for part in (old or [], new or []):
+        for x in (part or []):
+            if x and x not in combined:
+                combined.append(x)
+    return combined
+
 class State(TypedDict, total=False):
     # Conversation
     messages: Annotated[List[Dict[str, str]], operator.add]
@@ -70,7 +81,6 @@ class State(TypedDict, total=False):
     ui: Annotated[Dict[str, Any], operator.or_]  # e.g., {"panels": [...]}
 
     # Protein structure and druggablility visualization
-    #prot_html: Annotated[str, operator.add]
     prot_html: Annotated[str, merge_html]
 
     # For ChemBL drug-target interactive viewer
@@ -83,7 +93,8 @@ class State(TypedDict, total=False):
     aa_seq_html: Annotated[str, merge_html]
 
     # General free-text annotations (not tied to a specific gene)
-    text_notes: Annotated[List[str], operator.add]
+    text_notes: Annotated[List[str], merge_notes]
+
 
 
 # =========================
