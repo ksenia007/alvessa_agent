@@ -195,7 +195,7 @@ body {
   font-size: 13px;
   color: var(--legend-text);
   min-width: 260px;
-  margin-right: 16px;  /* keeps legend away from right edge */
+  margin-right: 8px;  /* keeps legend away from right edge */
   flex-shrink: 0;
   justify-self: end;   /* align to right side of toolbar */
 }
