@@ -119,7 +119,7 @@ def opentargets_set2(count):
         all_choices = false_choices + [correct_choice]
         random.shuffle(all_choices)
 
-        question = f'Which of the following tissues is gene {curr_gene} most highly expressed in? [A] {all_choices[0]} [B] {all_choices[1]} [C] {all_choices[2]} [D] {all_choices[3]}'
+        question = f'Which of the following tissues or cell types is gene {curr_gene} most highly expressed in? [A] {all_choices[0]} [B] {all_choices[1]} [C] {all_choices[2]} [D] {all_choices[3]}'
 
         correct_choice_idx_in_question = all_choices.index(correct_choice)
         all_letters = ['A', 'B', 'C', 'D']
@@ -138,7 +138,7 @@ def opentargets_set2(count):
 
 if __name__ == "__main__":
     num_questions = 20
-    print("=== Generating OpenTargets Question Set 1 ===")
-    opentargets_set1(num_questions)
+    # print("=== Generating OpenTargets Question Set 1 ===")
+    # opentargets_set1(num_questions)
     print("=== Generating OpenTargets Question Set 2 ===")
     opentargets_set2(num_questions)
