@@ -67,13 +67,11 @@ def msigdb_agent(state: "State") -> "State":
         for collection, desc in CATEGORIES.items():
             annots_list = extract_geneSetNames(msigdata, gene.symbol, collection)
             
-            summary_lines.append(f"All MSigDB annotations in the collection {collection}, which holds {desc}: " + ",".join(annots_list) + ".")
+            summary_lines.append(f"*MSigDB: Collection {collection} ({desc}) for {gene.symbol}: " + ", ".join(annots_list) + ".")
             gene.add_msigdb_annotated_terms(collection, annots_list)
 
         if summary_lines:
-            gene.update_text_summaries(
-                " ".join(summary_lines) + f" End of record for {gene.symbol} |"
-            )
+            gene.update_text_summaries(" ".join(summary_lines))
         
             gene.add_tool("MSigDB")
 

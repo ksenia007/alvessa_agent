@@ -400,7 +400,7 @@ def extract_summaries(entry: Dict) -> Dict[str, str]:
     if diseases:
         summary_full += "\n Associated diseases: " + ", ".join(diseases) + "."
     
-    return summaries, summary_full
+    return summaries, f"*UniProt: {summary_full.strip().replace(chr(10), ' ')}"
 
     
 def uniprot_node(state: "State") -> "State":

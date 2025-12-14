@@ -156,10 +156,9 @@ def miRDB_agent(state: "State") -> "State":
         gene_objs[gene].add_tool("miRDB_agent")
 
         # create a text summary about miRNA targets
-        summary = f"All computationally predicted gene targets for {gene} (from the miRDB database), separated by organism, include: "
+        summary = f"*miRDB: Computationally predicted gene targets for {gene} by organism: "
         for org, targets in preds_temp.items():
             summary += f"{org} - {', '.join(targets)}; "
-        summary += f" End of record for {gene} |"
         gene_objs[gene].update_text_summaries(summary)
 
     return 

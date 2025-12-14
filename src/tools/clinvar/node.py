@@ -71,9 +71,9 @@ def clinvar_node(state: "State") -> "State":
                 diseases = subset[['DiseaseName', 'SourceName', "LastUpdated"]].drop_duplicates()
                 disease_lines = []
                 for _, row in diseases.iterrows():
-                    disease_lines.append(f"{row['DiseaseName']} (Source: {row['SourceName']}, Last Updated: {row['LastUpdated']})")
+                    disease_lines.append(f"{row['DiseaseName']} (source: {row['SourceName']}, updated: {row['LastUpdated']})")
                 gene.update_text_summaries(
-                f"ClinVar-sourced diseases for {gene_name}: " + ", ".join(disease_lines) + f"|"
+                f"*ClinVar: Diseases for {gene_name}: " + ", ".join(disease_lines) + "."
                 )
         except:
             if DEBUG:
@@ -122,10 +122,10 @@ def clinvar_node(state: "State") -> "State":
                                     continue
                                 variant_info_long.append(f"{val}")
                             # add variant_info as text summary with update_text_summaries
-                            new_variant.update_text_summaries("ClinVar variant info: " + ", ".join(variant_info_long))
+                            new_variant.update_text_summaries("*ClinVar: " + ", ".join(variant_info_long) + ".")
                             variant_entities[rsid_clean] = new_variant
-                    variant_lines.append(", ".join(variant_info_short))
-                gene.update_text_summaries(f"ClinVar pathogenic variants for {gene_name}: " + "; ".join(variant_lines)+ f"|")
+                    variant_lines.append(" ".join(variant_info_short).rstrip(","))
+                gene.update_text_summaries(f"*ClinVar: Pathogenic variants for {gene_name}: " + "; ".join(variant_lines) + ".")
         except:
             if DEBUG:
                 print(f"[ClinVar] Error processing variants for gene {gene_name}")

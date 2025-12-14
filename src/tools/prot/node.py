@@ -174,7 +174,7 @@ def prot_agent(state: "State") -> "State":
             summary = append_flags_to_summary_text(summary, flags)
 
         state["gene_entities"][gene_symbol].update_text_summaries(
-            "Protein structure and druggability:\n" + summary
+            "*Protein: " + summary.replace("\n", " ").strip()
         )
 
         # --- Store all features for frontend ---
@@ -221,7 +221,7 @@ def prot_agent(state: "State") -> "State":
         )
         last_gene = genes[-1]
         if state["gene_entities"].get(last_gene):
-            state["gene_entities"][last_gene].update_text_summaries(notes)
+            state["gene_entities"][last_gene].update_text_summaries("*Protein: " + notes.replace("\n", " ").strip())
     else:
         log("No proteins resolved for any of the requested genes.")
 

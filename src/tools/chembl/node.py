@@ -120,7 +120,7 @@ def chembl_agent(state: "State") -> "State":
 
         summary = make_summary_text(gene_symbol, uniprot_id, target_data)
         gene_obj = state["gene_entities"][gene_symbol]
-        gene_obj.update_text_summaries("ChEMBL drug-target evidence:\n" + summary)
+        gene_obj.update_text_summaries("*ChEMBL: " + summary.replace("\n", " ").strip())
 
         chembl_data_all[gene_symbol] = target_data
 
@@ -131,7 +131,7 @@ def chembl_agent(state: "State") -> "State":
         last_gene = genes[-1]
         if state["gene_entities"].get(last_gene):
             state["gene_entities"][last_gene].update_text_summaries(
-                interpretation_notes(include_bioactivity=True)
+                "*ChEMBL: " + interpretation_notes(include_bioactivity=True).replace("\n", " ").strip()
             )
 
     # --- Build HTML frontend ---
