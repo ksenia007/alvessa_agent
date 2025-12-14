@@ -48,13 +48,11 @@ def disgenet_agent(state: "State") -> "State":
             disease_list = _fetch_predictions_DisGeNet(gene)
 
             if len(disease_list) > 0:
-                summary_lines.append(f"All diseases annotated to {gene.symbol} from DisGeNet: " + ";".join(disease_list))
+                summary_lines.append(f"*DisGeNet: Diseases annotated to {gene.symbol}: " + "; ".join(disease_list) + ".")
                 gene.add_many_disgenet_diseases(disease_list)
 
             if summary_lines:
-                gene.update_text_summaries(
-                    " ".join(summary_lines) + f" End of record for {gene.symbol} |"
-                )
+                gene.update_text_summaries(" ".join(summary_lines))
             
                 gene.add_tool("DisGeNet")
 
