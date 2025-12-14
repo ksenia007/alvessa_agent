@@ -85,7 +85,7 @@ def opentargets_agent(state: "State") -> "State":
             associated_disease_list = target_disease_dict[gene.symbol]
             gene.add_many_direct_disease_associations(associated_disease_list)
 
-            summary_lines.append(f"All direct disease associations for {gene.symbol} (from the Open Targets database): " 
+            summary_lines.append(f"*OpenTargets: Direct disease associations for {gene.symbol}: " 
                         + ', '.join(associated_disease_list) + ".")
 
             # print(len(associated_disease_list))
@@ -99,8 +99,12 @@ def opentargets_agent(state: "State") -> "State":
                         
             gene.add_many_tissues_expression(tissue_zscore)
 
-            summary_lines.append(f"Tissue-specific expression binned z-scores for {gene.symbol} (from the Open Targets database). Z-scores were calculated for each gene and each tissue and then were divided into 10 bins based on quantiles of a perfect normal distribution. A gene is considered to be tissue specific if the binned z-score for that tissue is greater than or equal to 2 (this is the 75th z-score percentile): " 
-                        + str(tissue_zscore) + ".")
+            summary_lines.append(
+                "*OpenTargets: Tissue-specific expression binned z-scores for "
+                f"{gene.symbol} (>=2 indicates 75th percentile and is tissue-specific; "
+                "z-scores per gene per tissue, binned into 10 quantile-based bins): "
+                + str(tissue_zscore) + "."
+            )
             
         except Exception as e:
             print(f"Failed to pull tissue expression: {gene}, {e}")
@@ -111,9 +115,15 @@ def opentargets_agent(state: "State") -> "State":
             gene.add_essentiality(gene_is_essential)
 
             if gene_is_essential:
-                summary_lines.append(f"{gene.symbol} is a core essential gene, meaning that it is unlikely to tolerate inhibition and is susceptible to causing adverse events if modulated. The gene is crucial for basic cellular function in many tissue types.")
+                summary_lines.append(
+                    f"*OpenTargets: {gene.symbol} is a core essential gene (unlikely to tolerate inhibition; "
+                    "crucial for basic cellular function across many tissues)."
+                )
             else:
-                summary_lines.append(f"{gene.symbol} is not a core essential gene, meaning that inhibition or knockout of this gene does not consistently result in cell death across the majority of cell lines tested. The gene's function is not universally vital for cell survival in diverse tissues, as determined by large-scale cell fitness and depletion assays.")
+                summary_lines.append(
+                    f"*OpenTargets: {gene.symbol} is not a core essential gene (inhibition/knockout not consistently lethal "
+                    "across most cell lines; not universally vital for survival)."
+                )
         
         except Exception as e:
             print(f"Failed to pull essentiality: {gene}, {e}")
@@ -124,7 +134,12 @@ def opentargets_agent(state: "State") -> "State":
             
             for constraint_type_name, score in gene_all_constraint.items():
                 gene.add_constraint(score, constraint_type_name)
-                summary_lines.append(f"Genetic constraint score for {constraint_type_name} variants ({CONSTRAINT_TYPES[constraint_type_name]}) in {gene.symbol} from the Open Targets database. A constraint score from -1 to 1 is given to genes depending on their LOEUF (loss-of-function observed/expected upper bound fraction) metric rank, with -1 being the least tolerant to LoF variation and 1 being the most tolerant.: " + str(score))
+                summary_lines.append(
+                    f"*OpenTargets: Genetic constraint score for {constraint_type_name} variants "
+                    f"({CONSTRAINT_TYPES[constraint_type_name]}) in {gene.symbol}; "
+                    "scores -1 to 1 map to LOEUF rank (lower = less tolerant): "
+                    + str(score)
+                )
 
         except Exception as e:
             print(f"Failed to pull constraint: {gene}, {e}")
@@ -133,15 +148,16 @@ def opentargets_agent(state: "State") -> "State":
             # Pharmacovigilance
             gene_adrs = pharmocovigilance_dict[gene.symbol]
             gene.add_many_adverse_reactions(gene_adrs)
-            summary_lines.append(f"List of significant adverse drug reactions associated with drugs for which {gene.symbol} is a shared pharmacological target (from the Open Targets database): " + ', '.join(gene_adrs) + ".")
+            summary_lines.append(
+                f"*OpenTargets: Significant adverse drug reactions for drugs targeting {gene.symbol}: "
+                + ', '.join(gene_adrs) + "."
+            )
         
         except Exception as e:
             print(f"Failed to pull pharmacovigilance: {gene}, {e}")
 
         if summary_lines:
-            gene.update_text_summaries(
-                " ".join(summary_lines) + f" End of record for {gene.symbol} |"
-            )
+            gene.update_text_summaries(" ".join(summary_lines))
         
             gene.add_tool("OpenTargets")
 
@@ -157,15 +173,16 @@ def opentargets_agent(state: "State") -> "State":
             # Pharmacogenomics
             variant_effects = pharmacogenomics_dict[variant.rsID]
             variant.add_many_drug_response_effects(variant_effects)
-            summary_lines.append(f"List of detailed annotations for the association between {variant.rsID} and particular drug responses (from the Open Targets database): " + ', '.join(variant_effects) + ".")
+            summary_lines.append(
+                f"*OpenTargets: Drug response annotations for {variant.rsID}: "
+                + ', '.join(variant_effects) + "."
+            )
         
         except Exception as e:
             print(f"Failed to pull pharmacogenomics: {variant}, {e}")
 
         if summary_lines:
-            variant.update_text_summaries(
-                " ".join(summary_lines) + f" End of record for {variant.rsID} |"
-            )
+            variant.update_text_summaries(" ".join(summary_lines))
         
             variant.add_tool("OpenTargets")
 

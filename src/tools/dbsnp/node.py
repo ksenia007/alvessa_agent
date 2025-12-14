@@ -185,9 +185,9 @@ def dbsnp_variants_agent(
 
         summaries: List[str] = []
         if coordinates:
-            summaries.append(_create_coordinate_summary(rsid, coordinates))
+            summaries.append("*dbSNP: " + _create_coordinate_summary(rsid, coordinates))
         if include_population_summaries and allele_freqs:
-            summaries.append(_format_population_summary(allele_freqs))
+            summaries.append("*dbSNP: " + _format_population_summary(allele_freqs))
 
         for summary in summaries:
             variant.update_text_summaries(summary)

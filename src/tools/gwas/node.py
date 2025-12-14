@@ -105,7 +105,7 @@ def _build_gene_summary(gene_symbol: str, profile: GeneGWASProfile) -> str:
         return f"No genome-wide significant GWAS associations found for {gene_symbol}."
 
     header = (
-        f"Gene {gene_symbol} has {profile.total_associations} GWAS associations "
+        f"*GWAS: Gene {gene_symbol} has {profile.total_associations} GWAS associations "
         f"({profile.significant_associations} significant) across {profile.total_studies} studies."
     )
 
@@ -170,7 +170,7 @@ def _apply_gene_result(
         if payload.get("traits_truncated"):
             total = payload.get("total_trait_count", len(trait_map))
             variant.update_text_summaries(
-                f"GWAS associations truncated to top 20 of {total} traits for {gene.symbol}."
+                f"*GWAS: Associations truncated to top 20 of {total} traits for {gene.symbol}."
             )
 
         gene.link_variant(variant)

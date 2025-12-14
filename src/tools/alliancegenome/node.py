@@ -104,10 +104,9 @@ def alliancegenome_predictions_agent(state: "State") -> "State":
             gene.add_alliancegenome_info(info)  # need to implement this method in Gene class, structured to future UI consumption
             
             # save summary text info. Create a string:
-            summary += f"Matched to {alliance_id}, {info.get('species', {}).get('name', 'unknown species')}. Summary: {info.get('geneSynopsis', 'No summary available.')}. Auto-summary: {info.get('automatedGeneSynopsis', 'No auto-summary available.')} |"
+            summary += f"Matched to {alliance_id}, {info.get('species', {}).get('name', 'unknown species')}. Summary: {info.get('geneSynopsis', 'No summary available.')}. Auto-summary: {info.get('automatedGeneSynopsis', 'No auto-summary available.')}. "
         
-        summary += " End of Alliance of Genome information."
-        gene.update_text_summaries(summary.strip())
+        gene.update_text_summaries(f"*AllianceOfGenomes: {summary.strip()}")
         gene.add_tool("AllianceOfGenomes")
         time.sleep(0.3)
 

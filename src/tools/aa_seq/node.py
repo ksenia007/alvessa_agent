@@ -276,7 +276,7 @@ def aa_seq_agent(state: "State") -> "State":
 
         # Attach per-gene block
         gene_obj.update_text_summaries(
-            "AA sequence to UniProt mapping evidence (aa_seq tool):\n" + block
+            "*AASeq: AA sequence to UniProt mapping evidence: " + block.replace("\n", " ").strip()
         )
 
     # --------------------------------------------------------------
@@ -298,8 +298,8 @@ def aa_seq_agent(state: "State") -> "State":
         unknown_block = _build_unmapped_block_for_unknown_gene(unmapped_records)
         if unknown_block:
             unknown_gene.update_text_summaries(
-                "AA sequence to UniProt mapping evidence (no gene symbol available):\n"
-                + unknown_block
+                "*AASeq: AA sequence to UniProt mapping evidence (no gene symbol): "
+                + unknown_block.replace("\n", " ").strip()
             )
 
     # Write back gene_entities and genes list

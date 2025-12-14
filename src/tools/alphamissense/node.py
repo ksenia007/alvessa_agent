@@ -128,7 +128,7 @@ def alphamissense_predictions_agent(state: "State") -> "State":
 
     if not snp_records:
         try:
-            variants[var_id].update_text_summaries("No AlphaMissense predictions found.")
+            variants[var_id].update_text_summaries("*AlphaMissense: No predictions found.")
             return 
         except:
             if DEBUG:

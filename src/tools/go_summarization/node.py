@@ -86,7 +86,7 @@ def go_summarization_agent(state: "State", embedding_method: str = 'word2vec') -
         else:  # fallback (tf-idf or anything else)
             raise NotImplementedError(f"Unknown embedding method: {embedding_method}")
 
-        gobj.update_text_summaries(f"{gene} - " + ", ".join(picked)+". ")
+        gobj.update_text_summaries(f"*GO: {gene} representative GO terms: " + ", ".join(picked) + ".")
 
     time.sleep(0.1)
     return
@@ -155,16 +155,13 @@ def summarize_biogrid_go_agent(state: "State") -> "State":
                 if source == "pan_go":
                     summary_lines.append(
                         (
-                            f"All enriched PAN-GO terms in the category "
-                            f"{CATEGORY_LABELS.get(category, category)} for BioGRID human interactors "
-                            f"of {gene.symbol}: {', '.join(enriched_terms)}."
+                            f"*BioGRID GO: Enriched PAN-GO {CATEGORY_LABELS.get(category, category)} terms "
+                            f"for interactors of {gene.symbol}: {', '.join(enriched_terms)}."
                         )
                     )
 
         if summary_lines:
-            gene.update_text_summaries(
-                " ".join(summary_lines) + f" End of record for {gene.symbol} |"
-            )
+            gene.update_text_summaries(" ".join(summary_lines))
             gene.add_tool("Summarize_bioGRID_GO")
 
     return

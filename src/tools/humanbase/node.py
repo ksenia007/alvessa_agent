@@ -282,7 +282,7 @@ def expectosc_predictions_agent(state: "State") -> "State":
             if not text:
                 print(f"[ExpectoSC] no data for var {var_id} {chr_str}:{pos}>{alt}")
                 continue
-            var_obj.update_text_summaries(f"Cell-type specific predicted GE disruption (target = {gene_sym}): {text}")
+            var_obj.update_text_summaries(f"*ExpectoSC: Cell-type specific predicted GE disruption (target = {gene_sym}): {text}.")
             if not dict_summary:
                 continue
 
@@ -335,7 +335,7 @@ def expectosc_predictions_agent(state: "State") -> "State":
         if df is None or df.empty:
             continue
         
-        gobj.update_text_summaries("Values for cell type specific gene expression disruption are predicted by ExpectoSC, scaled z-scores relative to common 1000Genomes variants; positive - increased expression, and negative - decreased. Scores above 3 is high confidence, and is all scores below abs(1) top tissues are not provided. Predicts for variants +/- 20kbp around TSS, could be a coding variant.")
+        gobj.update_text_summaries("*ExpectoSC: Cell-type specific GE disruption scores (scaled z vs 1000 Genomes; >3 high confidence; abs(score)<1 hides top tissues; predicts variants +/-20kbp of TSS; positive=increased expression, negative=decreased).")
         
         # annotate any variant that lists this gene
         for var_id, var_obj in variants.items():
@@ -436,7 +436,7 @@ def humanbase_predictions_agent(state: "State") -> "State":
         
         # add text description of the disease terms
         if disease_list:
-            disease_text = f"Predicted disease associations for gene {gene} (score>0.7 in HumanBase): " + "; ".join(disease_list)
+            disease_text = f"*HumanBase: Predicted disease associations for {gene} (score>0.7): " + "; ".join(disease_list) + "."
             gene_objs[gene].update_text_summaries(disease_text)
 
     return 

@@ -121,8 +121,7 @@ def remap_crm_agent(state: "State", window_width: int =1000) -> "State":
         # Write one concise line to the Gene
         # IMPORTANT: this is the main output of this tool
         gobj.update_text_summaries(
-            f"[ReMap Cis Regulatory Modules] Which TFs are predicted to bind for {gsym} {chr_str}:{tss} (+/-{window_width}bp): {n_peaks} peaks; "
-            f"Total unique binders {n_bind}: {list_bind}"
+            f"*ReMap: TF peaks near {gsym} {chr_str}:{tss} (+/-{window_width}bp): {n_peaks} peaks; unique binders {n_bind}: {list_bind}."
         )
         annotated += 1
         
