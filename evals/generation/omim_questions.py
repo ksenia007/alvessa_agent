@@ -69,7 +69,7 @@ def omim_set1(count):
             all_choices = false_choices + [correct_choice]
             random.shuffle(all_choices)
 
-            question = f'Which of the following phenotypes is associated with gene {curr_gene}? [A] {all_choices[0]} [B] {all_choices[1]} [C] {all_choices[2]} [D] {all_choices[3]}'
+            question = f'Which phenotype has been reported to be caused by pathogenic variants in {curr_gene}? [A] {all_choices[0]} [B] {all_choices[1]} [C] {all_choices[2]} [D] {all_choices[3]}'
 
             correct_choice_idx_in_question = all_choices.index(correct_choice)
             all_letters = ['A', 'B', 'C', 'D']
@@ -141,7 +141,7 @@ def omim_set2(count):
                         all_choices = false_choices + [correct_choice]
                         random.shuffle(all_choices)
 
-                        question = f'Which of the following phenotypes is associated with both gene {gene_x} and gene {gene_y}? [A] {all_choices[0]} [B] {all_choices[1]} [C] {all_choices[2]} [D] {all_choices[3]}'
+                        question = f'Which phenotype has been reported to be caused by pathogenic variants in both gene {gene_x} and gene {gene_y}? [A] {all_choices[0]} [B] {all_choices[1]} [C] {all_choices[2]} [D] {all_choices[3]}'
 
                         correct_choice_idx_in_question = all_choices.index(correct_choice)
                         all_letters = ['A', 'B', 'C', 'D']

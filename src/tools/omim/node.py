@@ -83,6 +83,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="OMIM",
         entry_point=omim_agent,
-        description="Fetches information about phenotype annotations for the input genes from OMIM, which provides comprehensive, curated data linking human genes to disease phenotypes, detailing clinical features, inheritance patterns, and molecular genetics of genetic disorders.",
+        description=" Fetches curated OMIM entries describing Mendelian disease phenotypes caused by pathogenic variants in the input genes, including clinical features, inheritance patterns, and molecular genetic evidence.",
     ),
 )
