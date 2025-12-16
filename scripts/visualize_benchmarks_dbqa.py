@@ -9,9 +9,9 @@ import pandas as pd
 
 # Configure benchmark CSVs to compare (model name -> CSV path)
 MODEL_FILES = {
-    "Alvessa": "/Users/sokolova/Documents/research/alvessa_agent/out/sample_dbqa20251123-214810_cli/benchmark_summary.csv",
-    "Claude\nSonnet 4.5": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/claude_baseline_dbQA_20251124-1604.csv",
-    "ChatGPT 5.1": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/chatgpt_baseline_dbQA_20251124-1748.csv"
+    "Alvessa": "/Users/sokolova/Documents/research/alvessa_agent/out/20251215-235658_cli/benchmark_summary.csv",
+    "Claude\nSonnet 4.5": "/Users/sokolova/Documents/research/alvessa_agent/claude_baseline_dbQA_20251215-2308.csv",
+    "ChatGPT 5.1": "/Users/sokolova/Documents/research/alvessa_agent/chatgpt_baseline_dbQA_20251215-2330.csv"
 }
 
 ALVESSA_COLOR = "#D95F02"

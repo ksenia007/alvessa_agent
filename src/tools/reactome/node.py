@@ -69,6 +69,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="reactome",
         entry_point=reactome_pathways_agent,
-        description="Fetches Reactome pathways associated with the input genes. Provides a curated collection of biological pathways which describe how molecules interact within a cell to carry out different biological processes.",
+        description="Fetches Reactome pathways associated with the input genes, providing curated, expert-reviewed pathway information that describe molecular interactions, signaling cascades, and biological processes in which the genes participate.",
     ),
 )

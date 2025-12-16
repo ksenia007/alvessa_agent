@@ -23,13 +23,13 @@ from src.state import create_files_from_state
 
 MC_BENCHMARK_SYS_MSG = (
     "You are answering multiple-choice questions. Each question lists answer choices "
-    "labeled [A], [B], [C], [D]. Respond with exactly one capital letter (A, B, C, or D) inside <answer> tags."
-    " Do not provide any explanations or additional text."
+    "labeled [A], [B], [C], [D]. Think step by step using information provided and put a final answer as a capital letter (A, B, C, or D) inside <answer> tags."
+    "If the information is insufficient to determine a unique correct answer, choose the option that is most directly supported by the given text (i.e., requires the fewest additional assumptions), even if multiple options seem plausible."
 )
 
 MC_BENCHMARK_PROMPT_ADD = (
     "Given the question, think silently."
-    "Then output the final choice as a single letter only, inside <answer></answer> tags. \n"
+    "Then output the final choice as a single letter inside <answer></answer> tags. \n"
 )
 
 def _extract_answer_letter(answer: str) -> str:

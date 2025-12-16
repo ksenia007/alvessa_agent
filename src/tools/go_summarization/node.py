@@ -177,7 +177,7 @@ NODES: tuple[Node, ...] = (
         name="Summarize_bioGRID_GO",
         entry_point=summarize_biogrid_go_agent,
         description=(
-            "This is a summarized version of BIOGRID that should be run instead of BioGRID when individual interactor names are not needed to answer the query. Provides a summarized list of GO terms significantly enriched for the interacting genes of each input gene fetched from BioGRID."
+            "This is a summarized version of BIOGRID that can be run instead or in addition to BioGRID when individual interactor names are not needed or a summary of interactions would be helpful to answer the query. Provides a summarized list of GO terms significantly enriched for the interacting genes of each input gene fetched from BioGRID."
         ),
         dependencies=("BioGRID",),
     ),

@@ -11,20 +11,20 @@ from src.tools.base import Node
 
 EXAMPLE_TOOL_SELECTION = """EXAMPLE PIPELINES (pay attention to dependencies):
 
-1. Variant regulatory activity (e.g. SEI):
-   ["extract_entities", "query_gwas_by_gene", "variant_annotations", "sei"]
+1. Variant regulatory activity:
+   ["extract_entities", "gencode_gene_node", "query_gwas_by_gene", "variant_annotations", "sei", "expectosc_predictions_agent", "clinvar_node", "remap_crm_agent"]
 
-2. Variant pathogenicity (e.g. AlphaMissense):
-   ["extract_entities", "query_gwas_by_gene", "variant_annotations", "alphamissense"] 
+2. Variant pathogenicity:
+   ["extract_entities", "query_gwas_by_gene", "variant_annotations", "alphamissense",  "clinvar_node"] 
 
-3. HumanBase Expecto variant annotation:
-   ["extract_entities", "humanbase_expecto", "query_gwas_by_gene", "variant_annotations", "humanbase_tissue_expecto_annotate_variants"]
-
-4. Gene-level functional annotation:
+3. Gene-level functional annotation:
    ["extract_entities", "gencode_gene_node", "humanbase_functions", "uniprot_base", "reactome", "BioGRID", "Summarize_bioGRID_GO", "uniprot_gwas"]
 
-5. Protein structure, visualization and druggability:
-   ["prot"]
+4. Protein structure, visualization and druggability:
+   ["extract_entities", "prot", "chembl", "drug_central", "MSigDB"]
+   
+5. Protein-protein interactions and gene function questions (for the most complete context):    
+    ["extract_entities", "BioGRID", "Summarize_bioGRID_GO", "reactome", "Summarize_GO", "intact_viral", "AllianceOfGenomes"]
    
 Note these are only examples, and in real life you may need to run combinations of these tools **depending on the user intent and the entities extracted**.
 
