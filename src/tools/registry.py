@@ -76,7 +76,7 @@ STATIC_NODES: Sequence[Node] = (
         name="extract_entities",
         entry_point=entity_extraction_node,
         description=(
-            "Extract genes and biomedical entities from the user question using Claude + GLiNER. "
+            "Extract genes and biomedical entities from the user question. "
             "This must run before any downstream tool to populate gene/trait context."
         ),
     ),

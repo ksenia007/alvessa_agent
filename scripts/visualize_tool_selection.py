@@ -2,8 +2,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-loc = '/Users/sokolova/Documents/research/alvessa_agent/out/ga_alvessa_5_20251126-195657_cli/benchmark_summary.csv'
+# %%
+loc = '/Users/sokolova/Documents/research/alvessa_agent/out/FINAL_GA_20251216-162600_cli/benchmark_summary.csv'
 preds = pd.read_csv(loc)
 
 # --- drop rows where either tool_tag or used_tools is NaN ---
@@ -22,6 +22,8 @@ df['used'] = df['used_tools'].str.split(';').apply(
 mapping = {
     'query_gwas_by_gene': 'GWAS',
     'query_gwas_extensive': 'GWAS',
+    'uniprot_gwas': 'UniProt',
+    'uniprot_base': 'UniProt',
 }
 
 df['needed'] = df['needed'].apply(lambda lst: [mapping.get(x, x) for x in lst])
@@ -62,26 +64,30 @@ for t_need in needed_tools:
 row_order = [
     'BioGRID',
     'GWAS',
-    'MSigDB',
     'OMIM',
     'OpenTargets',
     'gencode_gene_node',
     'miRDB',
+    'MSigDB',
     'reactome',
+    'aa_seq',
+       'chembl', 'prot', 
 ]
 
 col_order = [
     'BioGRID',
     'GWAS',
-    'MSigDB',
     'OMIM',
     'OpenTargets',
     'gencode_gene_node',
-    'miRDB',
+    'miRDB','MSigDB',
     'reactome',
-    'uniprot_base',
-    'clinvar_node',
-    'variant_annotations',
+    'aa_seq', 'chembl', 'prot', 
+'AllianceOfGenomes','DisGeNet',
+       'Summarize_bioGRID_GO', 
+       'clinvar_node', 'drug_central',
+       'humanbase_functions', 'intact_viral', 
+       'uniprot_base', 'uniprot_gwas', 'variant_annotations'
 ]
 
 row_order = [t for t in row_order if t in crosstab_prop.index]
@@ -104,6 +110,12 @@ pretty_labels = {
     'prot': 'Protein structure', 
     'alphamissense': 'AlphaMissense',
     'chembl': 'ChEMBL',
+    'aa_seq': 'AA sequence',
+    'Summarize_bioGRID_GO': 'BioGRID summ.',
+    'drug_central': 'DrugCentral',
+    'humanbase_functions': 'HumanBase',
+    'intact_viral': 'IntAct Viral',
+    
 }
 
 crosstab_pretty = crosstab_prop.copy()
@@ -113,7 +125,7 @@ crosstab_pretty.columns = [pretty_labels.get(t, t) for t in crosstab_prop.column
 # --- styling & plotting (fixed tick_params) ---
 sns.set_theme(style="white")
 
-fig, ax = plt.subplots(figsize=(7, 5), dpi=300)
+fig, ax = plt.subplots(figsize=(9, 5), dpi=300)
 
 heatmap = sns.heatmap(
     crosstab_pretty,
@@ -121,7 +133,7 @@ heatmap = sns.heatmap(
     annot=True,
     fmt=".2f",
     cmap="Blues",
-    annot_kws={"size": 9},
+    annot_kws={"size": 8},
     vmin=0,
     vmax=1,
     cbar_kws={"shrink": 0.9, "label": ""},
@@ -135,6 +147,10 @@ ax.set_ylabel("Tool needed", fontsize=12)
 ax.tick_params(axis='x', labelrotation=0, labelsize=9)
 ax.tick_params(axis='y', labelrotation=0, labelsize=9)
 
+# remove colorbar
+cbar = heatmap.collections[0].colorbar
+cbar.remove()
+
 # now set rotation + alignment on Text objects (this is where 'ha' belongs)
 for label in ax.get_xticklabels():
     label.set_rotation(90)
@@ -142,8 +158,8 @@ for label in ax.get_xticklabels():
 
 plt.tight_layout()
 
-plt.savefig("tool_usage_heatmap.png", dpi=300)
-plt.savefig("tool_usage_heatmap.pdf")
+# plt.savefig("tool_usage_heatmap.png", dpi=300)
+
 plt.show()
 
 # %%
