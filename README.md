@@ -1,4 +1,5 @@
-# Alvessa: agentic AI scientist
+# Alvessa: Agentic Evidence-Grounded Research Assistant for Genomics
+![IMG_8827](https://github.com/user-attachments/assets/2bdd5321-8ffe-44ae-aaff-be11a715bdc5)
 
 ## Installation
 ```bash
@@ -14,29 +15,11 @@ export DISGENET_API_KEY=...
 ```
 
 ### CLI usage
+- `alvessa ui 9000` (serves the UI on `http://127.0.0.1:9000`; default is 8000)
 - `alvessa question "Summarize GO terms enriched for interactors of TP53"`
 - `alvessa tools`
-- `alvessa ui 9000` (serves the UI on `http://127.0.0.1:9000`; default is 8000)
+- `alvessa benchmark_all <path>` run MC mode on all the .csv file in folders and subfolders
 
-## Quickstart commands
-```bash
-# install environment from requirements.txt
-conda activate agents
-pip install -r requirements.txt
-export ANTHROPIC_API_KEY=…
-export BioGRID_API_KEY=…
-python -m run
-```
-
-Run the FastAPI UI:
-```bash
-python -m serve_ui
-```
-
-Execute unit tests:
-```bash
-pytest tests/test_entity_recognition.py
-```
 
 ## Repository layout
 - `run.py` – main CLI entry point orchestrating the LangGraph pipeline and saving outputs.
