@@ -10,9 +10,11 @@ import numpy as np
 
 # Hardwired benchmark CSVs (extendable)
 MODEL_FILES = {
-    "Alvessa": '/Users/sokolova/Documents/research/alvessa_agent/out/ga_alvessa_5_20251126-195657_cli/benchmark_summary.csv', #"/Users/sokolova/Documents/research/alvessa_agent/out/alvessa_half_GA_20251124-012201_cli/benchmark_summary.csv",
-    "Claude\nSonnet 4.5": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/claude_baseline_GenomeArena_20251124-1607.csv",
-    "ChatGPT 5.1": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/chatgpt_baseline_GenomeArena_20251124-1750.csv"
+    "Alvessa": '/Users/sokolova/Documents/research/alvessa_agent/out/FINAL_GA_20251216-162600_cli/benchmark_summary.csv', #"/Users/sokolova/Documents/research/alvessa_agent/out/alvessa_half_GA_20251124-012201_cli/benchmark_summary.csv",
+    "Claude\nSonnet 4.5": "/Users/sokolova/Documents/research/alvessa_agent/chat_claude_baselines/FINAL_claude_baseline_GenomeArena_20251216-0122.csv",
+    "ChatGPT 5.1": "/Users/sokolova/Documents/research/alvessa_agent/chat_claude_baselines/FINAL_chatgpt_baseline_GenomeArena_20251216-0122.csv", 
+    'Claude\nSonnet 4.5+\nsearch': "/Users/sokolova/Documents/research/claude_baseline_web_serch_N5_GenomeArena_20251216-0136_part.csv",
+
 }
 
 ALVESSA_COLOR = "#D95F02"
@@ -32,6 +34,7 @@ FOLDER_NAME_MAP = {
     "OpenTargets": "Open Targets",
     "prot": "Protein features",
     "reactome": "Reactome",
+    'aa_seq': 'Amino acid \n sequences',
 }
 
 
@@ -180,7 +183,7 @@ def _plot_by_folder(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) ->
 
     x = np.arange(len(folders))
     fig_width = max(10, len(folders) * 0.6)
-    fig, ax = plt.subplots(figsize=(fig_width, 4.5), dpi=300)
+    fig, ax = plt.subplots(figsize=(fig_width, 6), dpi=300)
 
     models_order = list(data.keys())
     styles = _compute_styles(models_order)
@@ -348,7 +351,7 @@ def _plot_by_folder_set(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str
         positions, _, _, _ = _build_positions(half)
         half_lengths.append(len(positions))
     fig_width = max(14, max(half_lengths) * 0.9 if half_lengths else 0)
-    fig, axes = plt.subplots(2, 1, figsize=(fig_width, 9.0), constrained_layout=True)
+    fig, axes = plt.subplots(2, 1, figsize=(fig_width, 10.0), constrained_layout=True)
 
     for ax, folders_subset in zip(axes, halves):
         positions_base, labels, folder_bounds, folder_order_flat = _build_positions(folders_subset)
@@ -466,8 +469,8 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
     text_color = "#111111" if theme == "white" else "#F5F5F5"
     outline_color = "white" if theme == "white" else "#FFFFFF"
 
-    fig_width = max(4.0, len(labels) * 0.8)
-    fig, ax = plt.subplots(figsize=(fig_width, 4.0), dpi=300)
+    fig_width = max(6.0, len(labels) * 0.8)
+    fig, ax = plt.subplots(figsize=(fig_width, 5.0), dpi=300)
 
     x_pos = np.arange(len(labels))
     width = 0.8  # nice wide bars

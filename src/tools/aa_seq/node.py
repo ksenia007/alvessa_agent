@@ -274,10 +274,37 @@ def aa_seq_agent(state: "State") -> "State":
         else:
             gene_obj.add_tool("AASeq")
 
-        # Attach per-gene block
-        gene_obj.update_text_summaries(
-            "*AASeq: AA sequence to UniProt mapping evidence: " + block.replace("\n", " ").strip()
-        )
+        summary_line_parts = []
+        if rep_rec:
+            acc = (rep_rec.get("canonical_acc") or rep_rec.get("acc") or "").strip()
+            coverage = rep_rec.get("coverage")
+            align_len = rep_rec.get("alignment_length")
+            query_seq = (rep_rec.get("sequence") or "").strip()
+            uniprot_seq = (rep_rec.get("uniprot_sequence") or "").strip()
+            q_len = len(query_seq) if query_seq else None
+            u_len = len(uniprot_seq) if uniprot_seq else None
+            diff_len = (q_len - u_len) if (q_len is not None and u_len is not None) else None
+            coverage_str = f"{coverage:.2f}" if isinstance(coverage, (int, float)) else str(coverage) if coverage is not None else "N/A"
+            summary_line = f"*AASeq: Matched UniProt {acc or 'unknown'}"
+            summary_bits = []
+            if coverage is not None:
+                summary_bits.append(f"coverage {coverage_str}")
+            if align_len is not None:
+                summary_bits.append(f"alignment_len {align_len}")
+            if q_len is not None:
+                summary_bits.append(f"query_len {q_len}")
+            if u_len is not None:
+                summary_bits.append(f"uniprot_len {u_len}")
+            if diff_len is not None:
+                summary_bits.append(f"length_diff {diff_len}")
+            if summary_bits:
+                summary_line += " (" + "; ".join(summary_bits) + ")"
+            summary_line += "."
+            summary_line_parts.append(summary_line)
+
+        # Attach per-gene block with evidence
+        summary_line_parts.append("*AASeq: Evidence: " + block.replace("\n", " ").strip())
+        gene_obj.update_text_summaries(" ".join(summary_line_parts))
 
     # --------------------------------------------------------------
     # Handle unmapped records with UNKNOWN_GENE (last resort)

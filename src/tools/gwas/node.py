@@ -378,12 +378,5 @@ NODES: tuple[Node, ...] = (
         description=(
             "This is a more comprehensive version of the query_gwas_by_gene tool, and it is used to retrieve more detailed information about the GWAS results. It collects an extensive list of traits/diseases associated with an extensive list of genetic variants linked to that gene. Use this tool *ONLY* if the question is very specific that requires what is equivalent to an extensive database search, not to general characterisation of the gene."
         ),
-    ),
-    Node(
-        name="expand_gene_set_by_trait",
-        entry_point=query_by_trait_agent,
-        description=(
-            "Query GWAS traits by disease/phenotype keyword to expand the working gene list. This could be used to discover more relevant genes underlying a trait, if a broader genetic context would be valuable for the analysis."
-        ),
-    ),
+    )
 )

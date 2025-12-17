@@ -14,7 +14,7 @@ import json
 from typing import Dict, List, Any, Optional
 
 from src.alvessa.clients.claude import claude_call
-from src.config import CONDITIONED_MODEL, DEBUG, N_CHARS
+from src.config import CONDITIONED_MODEL, TOOL_SELECTOR_MODEL_BACKUP, DEBUG, N_CHARS
 from src.state import State
 import re
 import numpy as np
@@ -564,14 +564,37 @@ def conditioned_claude_node(state: "State") -> "State":
     print(user_content)
     print('***')
 
-    # Call Claude
-    raw = claude_call(
-        model=CONDITIONED_MODEL,
-        temperature=0.0,
-        max_tokens=20000,
-        system=system_msg,
-        messages=[{"role": "user", "content": user_content}],
-    )
+    # Call Claude (with backup fallback)
+    model_used = CONDITIONED_MODEL
+    used_backup = False
+    try:
+        raw = claude_call(
+            model=CONDITIONED_MODEL,
+            temperature=0.0,
+            max_tokens=20000,
+            system=system_msg,
+            messages=[{"role": "user", "content": user_content}],
+        )
+    except Exception as exc:
+        if DEBUG:
+            print(f"[conditioned_claude_node] Primary model failed: {exc}")
+        if TOOL_SELECTOR_MODEL_BACKUP:
+            try:
+                raw = claude_call(
+                    model=TOOL_SELECTOR_MODEL_BACKUP,
+                    temperature=0.0,
+                    max_tokens=20000,
+                    system=system_msg,
+                    messages=[{"role": "user", "content": user_content}],
+                )
+                model_used = TOOL_SELECTOR_MODEL_BACKUP
+                used_backup = True
+            except Exception as exc2:
+                if DEBUG:
+                    print(f"[conditioned_claude_node] Backup model failed: {exc2}")
+                raise
+        else:
+            raise
     print(raw)
 
     answer_with_proofs = _anthropic_join_text(
@@ -587,6 +610,7 @@ def conditioned_claude_node(state: "State") -> "State":
         "answer": answer_plain,
         "manifest": manifest,          
         "raw_answer": raw,
+        "model_used": model_used,
     }
     
-    return {"llm_json": parsed_resp}
+    return {"llm_json": parsed_resp, "llm_backup_used": used_backup}

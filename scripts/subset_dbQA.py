@@ -13,7 +13,6 @@ def subset_dbqa(input_path: Path, output_path: Path, n: int = 100, seed: int = 4
     if df.empty:
         raise ValueError("Input CSV is empty.")
 
-    rng = random.Random(seed)
     if len(df) <= n:
         sampled = df.copy()
     else:
@@ -21,6 +20,15 @@ def subset_dbqa(input_path: Path, output_path: Path, n: int = 100, seed: int = 4
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     sampled.to_csv(output_path, index=False)
+
+
+def subset_by_phrase(input_path: Path, output_path: Path, phrase: str = "P-HIPSter") -> None:
+    df = pd.read_csv(input_path)
+    if df.empty:
+        raise ValueError("Input CSV is empty.")
+    subset = df[df["question"].str.contains(phrase, case=False, na=False)]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    subset.to_csv(output_path, index=False)
 
 
 def main() -> int:
@@ -32,15 +40,23 @@ def main() -> int:
     )
     parser.add_argument(
         "--output",
-        default="/Users/sokolova/Documents/research/alvessa_agent/benchmarks_generation/questions/dbQA/dbqa_mc_SUBSET.csv",
+        default="/Users/sokolova/Documents/research/alvessa_agent/benchmarks_generation/questions/dbQA_phipster/dbqa_mc_SUBSET.csv",
         help="Path to write the subset CSV.",
     )
     parser.add_argument("--n", type=int, default=100, help="Number of questions to sample (default: 100).")
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42).")
+    parser.add_argument("--phrase_subset", action="store_true", help="If set, create a subset of questions containing 'P-HIPSter'.")
     args = parser.parse_args()
 
     try:
-        subset_dbqa(Path(args.input), Path(args.output), n=args.n, seed=args.seed)
+        if args.phrase_subset:
+            subset_by_phrase(
+                Path(args.input),
+                Path(args.output).with_name(Path(args.output).stem + "_PHIPSTER.csv"),
+                phrase="P-HIPSter",
+            )
+        else:
+            subset_dbqa(Path(args.input), Path(args.output), n=args.n, seed=args.seed)
     except Exception as exc:
         print(f"Failed to subset dbQA: {exc}", file=sys.stderr)
         return 1
@@ -50,4 +66,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

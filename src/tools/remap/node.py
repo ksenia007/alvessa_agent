@@ -146,7 +146,7 @@ NODES: tuple[Node, ...] = (
     Node(
         name="remap_crm_agent",
         entry_point=remap_crm_agent,
-        description="Fetches cis-regulatory modules (CRMs) from the ReMap 2022 database for each gene, reporting transcription factors with ChIP-seq binding peaks near gene’s TSS. Requires Gencode (gencode_gene_node) run first. Useful for exploring transcriptional regulation.",
+        description="Fetches cis-regulatory modules (CRMs) from the ReMap 2022 database that are proximal to the transcription start site (TSS) of the input genes. Reports transcription factors with supporting ChIP-seq binding evidence overlapping these regions. Requires GENCODE annotation (gencode_gene_node) to be run first. Useful for exploratory analysis of potential transcriptional regulatory contexts.",
         dependencies=("gencode_gene_node",),
     ),
 )

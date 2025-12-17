@@ -115,6 +115,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="AllianceOfGenomes",
         entry_point=alliancegenome_predictions_agent,
-        description="Fetches Alliance of Genome - consortium of 7 model organism databases - information for genes across all available model organisms. Pulls species specific summaries and gene descriptions.",
+        description="Fetches species-specific gene summary descriptions from the Alliance of Genome Resources, a consortium integrating curated data from major model organism databases for yeast (Saccharomyces cerevisiae), worm (Caenorhabditis elegans), fruit fly (Drosophila melanogaster), zebrafish (Danio rerio), mouse (Mus musculus), rat (Rattus norvegicus), and frog (Xenopus species). The returned summaries provide high-level functional and biological context for the input genes across available model organisms (for example, core molecular function, conserved biological roles, and representative phenotypes described in model systems).",
     ),
 )

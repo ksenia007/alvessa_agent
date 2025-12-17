@@ -156,7 +156,7 @@ def miRDB_agent(state: "State") -> "State":
         gene_objs[gene].add_tool("miRDB_agent")
 
         # create a text summary about miRNA targets
-        summary = f"*miRDB: Computationally predicted gene targets for {gene} by organism: "
+        summary = f"*miRDB: miRDB: Computationally predicted microRNAs that target the input gene ({gene}), based on the MirTarget machine-learning model, with predictions available by organism: "
         for org, targets in preds_temp.items():
             summary += f"{org} - {', '.join(targets)}; "
         gene_objs[gene].update_text_summaries(summary)
@@ -168,6 +168,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="miRDB",
         entry_point=miRDB_agent,
-        description="Fetches miRDB computationally predicted gene targets of miRNA.",
+        description="Returns microRNAs predicted by miRDB to target the input gene, with organism-specific predictions.",
     ),
 )

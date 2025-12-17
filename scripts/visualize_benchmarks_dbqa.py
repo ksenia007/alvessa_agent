@@ -5,13 +5,16 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+from matplotlib.patches import FancyBboxPatch
+import argparse
 
 # Configure benchmark CSVs to compare (model name -> CSV path)
 MODEL_FILES = {
-    "Alvessa": "/Users/sokolova/Documents/research/alvessa_agent/out/sample_dbqa20251123-214810_cli/benchmark_summary.csv",
-    "Claude\nSonnet 4.5": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/claude_baseline_dbQA_20251124-1604.csv",
-    "ChatGPT 5.1": "/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_runs_done/chatgpt_baseline_dbQA_20251124-1748.csv"
+    "Alvessa": "/Users/sokolova/Documents/research/alvessa_agent/out/FINAL_DBQA_20251216-125635_cli/benchmark_summary.csv",
+    "Claude\nSonnet 4.5": "/Users/sokolova/Documents/research/alvessa_agent/chat_claude_baselines/FINAL_claude_baseline_dbQA_20251215-2308.csv",
+    "ChatGPT 5.1": "/Users/sokolova/Documents/research/alvessa_agent/chat_claude_baselines/FINAL_chatgpt_baseline_dbQA_20251215-2330.csv"
 }
 
 ALVESSA_COLOR = "#D95F02"
@@ -43,10 +46,13 @@ def _assign_group(question: str) -> str:
     return "other"
 
 
-def _load_benchmark(csv_path: Path) -> pd.DataFrame:
+def _load_benchmark(csv_path: Path, *, drop_disgenet: bool = False) -> pd.DataFrame:
     df = pd.read_csv(csv_path)
     df["is_correct"] = pd.to_numeric(df.get("is_correct", 0), errors="coerce").fillna(0).astype(int)
     df["question"] = df.get("question", "").fillna("").astype(str)
+    if drop_disgenet:
+        mask = ~df["question"].str.lower().str.contains("disgenet", na=False)
+        df = df[mask].reset_index(drop=True)
     df["source_folder"] = df.get("source_folder", "").fillna("").astype(str).str.strip()
     df["source_name"] = df.get("source_name", "").fillna("").astype(str).str.strip()
     df["question_group"] = df["question"].apply(_assign_group)
@@ -120,25 +126,65 @@ def _plot_by_group(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> 
     if "All" in groups:
         groups = ["All"] + [g for g in groups if g != "All"]
 
-    x = range(len(groups))
-    fig, ax = plt.subplots(figsize=(max(15, len(groups) * 0.7), 4.8))
+    x = np.arange(len(groups))
+    fig_width = max(10, len(groups) * 0.6)
+    fig, ax = plt.subplots(figsize=(fig_width, 5), dpi=300)
 
     models_order = list(data.keys())
     styles = _compute_styles(models_order)
     n_models = len(models_order)
-    width = min(0.8 / max(1, n_models), 0.28)
+    width = min(0.8 / max(1, n_models), 0.15)
+
+    text_color = "#111111" if theme == "white" else "#F5F5F5"
+    outline_color = "white" if theme == "white" else "#FFFFFF"
+
+    rounded_patches = []
     for idx, model in enumerate(models_order):
         df = data[model]
         acc_map = dict(zip(df["question_group"], df["accuracy"]))
         vals = [acc_map.get(g, 0.0) for g in groups]
         color, hatch = styles.get(model, ("#888888", "//"))
-        positions = [p + (idx - (n_models - 1) / 2) * width for p in x]
-        ax.bar(positions, vals, width=width, color=color, edgecolor="black", hatch=hatch, label=model)
+        positions = x + (idx - (n_models - 1) / 5) * width * 1.3
+
+        base_bars = ax.bar(
+            positions,
+            vals,
+            width=width,
+            color=color,
+            edgecolor="none",
+            alpha=0.95,
+            label=model,
+        )
+
+        for bar in base_bars:
+            height = bar.get_height()
+            if height is None or height < 1e-6:
+                continue
+            bbox = bar.get_bbox()
+            p = FancyBboxPatch(
+                (bbox.xmin, bbox.ymin),
+                bbox.width,
+                bbox.height,
+                boxstyle="round,pad=0.02",
+                linewidth=1.0,
+                facecolor=color,
+                edgecolor=outline_color,
+                hatch=hatch or "",
+            )
+            bar.remove()
+            rounded_patches.append(p)
+
+    for p in rounded_patches:
+        ax.add_patch(p)
 
     ax.set_xticks(x)
-    ax.set_xticklabels(groups, rotation=45, ha="right", fontsize=11, color=("#111111" if theme == "white" else "#f5f5f5"))
+    ax.set_xticklabels(groups, rotation=45, ha="right", fontsize=11, color=text_color)
     _style_axes(ax, theme)
-    ax.legend(fontsize=11)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_color("#A0A0A0")
+    ax.spines["bottom"].set_color("#A0A0A0")
+    ax.legend(fontsize=11, loc="upper right", bbox_to_anchor=(1.15, 1.0))
 
     fname = "benchmark_dbqa_by_group_white.png" if theme == "white" else "benchmark_dbqa_by_group_black.png"
     out_path = out_dir / fname
@@ -163,20 +209,63 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
         else:
             accuracies.append(df["accuracy"].mean() if not df.empty else 0.0)
 
-    fig, ax = plt.subplots(figsize=(max(5, len(labels) * 1.2), 4.0))
-    width = 0.6
+    text_color = "#111111" if theme == "white" else "#F5F5F5"
+    outline_color = "white" if theme == "white" else "#FFFFFF"
+
+    fig, ax = plt.subplots(figsize=(max(3.5, len(labels) * 0.8), 5.0), dpi=300)
+    width = 0.8
     colors = []
     hatches = []
     for name in labels:
         color, hatch = styles.get(name, ("#888888", "//"))
         colors.append(color)
         hatches.append(hatch)
-    bars = ax.bar(labels, accuracies, color=colors, edgecolor="black", width=width)
-    for bar, hatch in zip(bars, hatches):
-        if hatch:
-            bar.set_hatch(hatch)
-    ax.set_xticklabels(labels, rotation=0, ha="center", fontsize=12, color=("#111111" if theme == "white" else "#f5f5f5"))
+    x_pos = np.arange(len(labels))
+    base_bars = ax.bar(x_pos, accuracies, color=colors, edgecolor="none", width=width)
+
+    new_patches = []
+    for bar, color, hatch in zip(base_bars, colors, hatches):
+        height = bar.get_height()
+        if height is None or height < 1e-6:
+            continue
+        bbox = bar.get_bbox()
+        p = FancyBboxPatch(
+            (bbox.xmin, bbox.ymin),
+            bbox.width,
+            bbox.height,
+            boxstyle="round,pad=0.02",
+            linewidth=1.0,
+            facecolor=color,
+            edgecolor=outline_color,
+            hatch=hatch or "",
+        )
+        bar.remove()
+        new_patches.append(p)
+
+    for p in new_patches:
+        ax.add_patch(p)
+
+    ax.set_xticks(x_pos)
+    ax.set_xticklabels(labels, rotation=0, ha="center", fontsize=11, color=text_color)
+
+    for x, acc, patch in zip(x_pos, accuracies, new_patches):
+        height = patch.get_height()
+        ax.text(
+            x,
+            height + 0.02,
+            f"{acc:.2f}",
+            ha="center",
+            va="bottom",
+            fontsize=10,
+            fontweight="bold",
+            color="black" if theme == "white" else "white",
+        )
+
     _style_axes(ax, theme)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_color("#A0A0A0")
+    ax.spines["bottom"].set_color("#A0A0A0")
 
     fname = "benchmark_dbqa_overall_white.png" if theme == "white" else "benchmark_dbqa_overall_black.png"
     out_path = out_dir / fname
@@ -188,7 +277,15 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
     return out_path
 
 
-def main() -> int:
+def main(argv: List[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Visualize dbQA benchmark accuracy.")
+    parser.add_argument(
+        "--remove_disgenet",
+        action="store_true",
+        help="If set, drop any questions mentioning DisGeNet before computing accuracies.",
+    )
+    args = parser.parse_args(argv)
+
     figures_dir = Path("results/benchmark_figures").resolve()
     figures_dir.mkdir(parents=True, exist_ok=True)
 
@@ -200,7 +297,7 @@ def main() -> int:
             print(f"[visualize] Missing file for {name}: {p}")
             continue
         try:
-            df = _load_benchmark(p)
+            df = _load_benchmark(p, drop_disgenet=args.remove_disgenet)
             model_dfs[name] = _compute_by_group(df)
         except Exception as exc:
             print(f"[visualize] Failed to load {p} for {name}: {exc}")

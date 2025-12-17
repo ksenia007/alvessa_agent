@@ -40,6 +40,7 @@ GENE_EXTRACT_MODEL: str = "claude-sonnet-4-5-20250929"
 CONDITIONED_MODEL: str = "claude-sonnet-4-5-20250929"
 VERIFY_MODEL: str = "claude-sonnet-4-5-20250929"
 TOOL_SELECTOR_MODEL: str = "claude-sonnet-4-5-20250929" 
+TOOL_SELECTOR_MODEL_BACKUP: str = "claude-haiku-4-5-20251001"
 
 ANTHROPIC_API_KEY: str = os.environ["ANTHROPIC_API_KEY"]
 
