@@ -19,8 +19,10 @@ MODEL_FILES = {
 
 ALVESSA_COLOR = "#D95F02"
 # Palette/hatches for non-Alvessa models (cycled in order of appearance)
-OTHER_COLORS = ["#555555", "#727272", "#8C8C8C", "#A6A6A6", "#BEBEBE"]
-OTHER_HATCHES = ["//","..", "xx", "++", "--",  "\\\\", ]
+OTHER_COLORS = [ "#727272", "#555555","#8C8C8C", "#A6A6A6", "#BEBEBE"]
+OTHER_HATCHES = ["..", "xx", "//", "\\\\",  "++", "--"]
+
+WIDTH_PLOT = 3.5
 
 # Same grouping logic as visualize_dbQA_results.py
 GROUP_RULES: List[Tuple[str, callable]] = [
@@ -48,6 +50,7 @@ def _assign_group(question: str) -> str:
 
 def _load_benchmark(csv_path: Path, *, drop_disgenet: bool = False) -> pd.DataFrame:
     df = pd.read_csv(csv_path)
+    df = df.drop_duplicates('question')
     df["is_correct"] = pd.to_numeric(df.get("is_correct", 0), errors="coerce").fillna(0).astype(int)
     df["question"] = df.get("question", "").fillna("").astype(str)
     if drop_disgenet:
@@ -212,7 +215,7 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
     text_color = "#111111" if theme == "white" else "#F5F5F5"
     outline_color = "white" if theme == "white" else "#FFFFFF"
 
-    fig, ax = plt.subplots(figsize=(max(3.5, len(labels) * 0.8), 5.0), dpi=300)
+    fig, ax = plt.subplots(figsize=(WIDTH_PLOT, 5.0), dpi=300) # (max(WIDTH_PLOT, len(labels) * 0.8)
     width = 0.8
     colors = []
     hatches = []
@@ -233,7 +236,7 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
             (bbox.xmin, bbox.ymin),
             bbox.width,
             bbox.height,
-            boxstyle="round,pad=0.02",
+            boxstyle="round,pad=0.00",
             linewidth=1.0,
             facecolor=color,
             edgecolor=outline_color,
@@ -252,7 +255,7 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
         height = patch.get_height()
         ax.text(
             x,
-            height + 0.02,
+            height + 0.005,
             f"{acc:.2f}",
             ha="center",
             va="bottom",
@@ -290,6 +293,8 @@ def main(argv: List[str] | None = None) -> int:
     figures_dir.mkdir(parents=True, exist_ok=True)
 
     model_dfs: Dict[str, pd.DataFrame] = {}
+    
+    N_total = 0
 
     for name, path_str in MODEL_FILES.items():
         p = Path(path_str).expanduser()
@@ -299,6 +304,7 @@ def main(argv: List[str] | None = None) -> int:
         try:
             df = _load_benchmark(p, drop_disgenet=args.remove_disgenet)
             model_dfs[name] = _compute_by_group(df)
+            N_total += len(df)
         except Exception as exc:
             print(f"[visualize] Failed to load {p} for {name}: {exc}")
             continue
@@ -314,6 +320,8 @@ def main(argv: List[str] | None = None) -> int:
     white_overall = _plot_overall(model_dfs, figures_dir, theme="white")
     black_overall = _plot_overall(model_dfs, figures_dir, theme="black")
     print(f"Saved dbQA overall plots: {white_overall}, {black_overall}")
+    
+    print(f"Total questions across all models: {N_total}")
     return 0
 
 

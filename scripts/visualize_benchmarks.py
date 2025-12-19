@@ -8,22 +8,30 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
+from typing import Dict
+from pathlib import Path
+
+from matplotlib.patches import FancyBboxPatch
+
 
 
 # Hardwired benchmark CSVs (extendable)
 MODEL_FILES = {
     "Alvessa": '/Users/sokolova/Documents/research/alvessa_agent/out/FINAL_GA_20251216-162600_cli/benchmark_summary.csv', #"/Users/sokolova/Documents/research/alvessa_agent/out/alvessa_half_GA_20251124-012201_cli/benchmark_summary.csv",
-    'Biomni*': "/Users/sokolova/Documents/research/alvessa_benchmarking/biomni_evaluation_scripts/Biomni/biomni_baseline_GA_10_subset_20251218-2042.csv", 
     "Claude\nSonnet 4.5": "/Users/sokolova/Documents/research/alvessa_agent/chat_claude_baselines/FINAL_claude_baseline_GenomeArena_20251216-0122.csv",
     "ChatGPT 5.1": "/Users/sokolova/Documents/research/alvessa_agent/chat_claude_baselines/FINAL_chatgpt_baseline_GenomeArena_20251216-0122.csv", 
     'Claude\nSonnet 4.5+\nsearch': "/Users/sokolova/Documents/research/claude_baseline_web_serch_N5_GenomeArena_20251216-2008.csv",
 }
-
+# MODEL_FILES = {
+#     "Alvessa*": '/Users/sokolova/Documents/research/alvessa_agent/out/FINAL_GA_20251216-162600_cli/benchmark_summary.csv', #"/Users/sokolova/Documents/research/alvessa_agent/out/alvessa_half_GA_20251124-012201_cli/benchmark_summary.csv",
+#     'Biomni*': "/Users/sokolova/Documents/research/alvessa_benchmarking/biomni_evaluation_scripts/Biomni/biomni_baseline_GA_10_subset_20251218-2235.csv", 
+# }
+WIDTH_PLOT = 5.5
+MATCH_Q = True  # whether to only use questions that were attempted by all models
 ALVESSA_COLOR = "#D95F02"
 # Palette/hatches for non-Alvessa models (cycled in order of appearance)
-OTHER_COLORS = ["#555555", "#727272", "#8C8C8C", "#A6A6A6", "#BEBEBE"]
-OTHER_HATCHES = ["//","..", "xx", "++", "--",  "\\\\", ]
-
+OTHER_COLORS = [ "#727272", "#555555","#8C8C8C", "#A6A6A6", "#BEBEBE"]
+OTHER_HATCHES = ["..", "xx", "//", "\\\\",  "++", "--"]
 FOLDER_NAME_MAP = {
     "BioGRID": "BioGRID",
     "chembl": "ChEMBL",
@@ -48,6 +56,7 @@ def _format_folder(name: str) -> str:
 
 def _load_benchmark(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path)
+    df = df.drop_duplicates('question')
     # normalize correctness to int
     df["is_correct"] = pd.to_numeric(df.get("is_correct", 0), errors="coerce").fillna(0).astype(int)
     df["tool_tag"] = df.get("tool_tag", "").fillna("").astype(str).str.strip()
@@ -110,60 +119,6 @@ def _compute_styles(models_order: List[str]) -> Dict[str, Tuple[str, str | None]
             styles[model] = (color, hatch)
             other_idx += 1
     return styles
-
-
-# def _plot_by_folder(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> Path:
-#     # Align folders across models; order by Alvessa accuracy low->high if available, else alphabetical
-#     all_folders = set()
-#     for df in data.values():
-#         all_folders.update(df["tool_tag"].unique())
-#     folders = list(all_folders)
-
-#     if "Alvessa" in data:
-#         order_df = data["Alvessa"].sort_values("accuracy")
-#         ordered = [f for f in order_df["tool_tag"].tolist() if f in all_folders]
-#         for f in folders:
-#             if f not in ordered:
-#                 ordered.append(f)
-#         folders = ordered
-#     else:
-#         folders = sorted(folders)
-
-#     x = range(len(folders))
-#     fig, ax = plt.subplots(figsize=(max(15, len(folders) * 0.6), 4.5))
-
-#     models_order = list(data.keys())
-#     styles = _compute_styles(models_order)
-#     n_models = len(models_order)
-#     width = min(0.8 / max(1, n_models), 0.28)
-#     for idx, model in enumerate(models_order):
-#         df = data[model]
-#         acc_map = dict(zip(df["tool_tag"], df["accuracy"]))
-#         vals = [acc_map.get(f, 0.0) for f in folders]
-#         color, hatch = styles.get(model, ("#888888", "//"))
-#         positions = [p + (idx - (n_models - 1) / 2) * width for p in x]
-#         ax.bar(positions, vals, width=width, color=color, edgecolor="black", hatch=hatch, label=model)
-
-#     ax.set_xticks(x)
-#     ax.set_xticklabels([_format_folder(f) for f in folders], rotation=90, ha="center", fontsize=11, color=("#111111" if theme == "white" else "#f5f5f5"))
-#     _style_axes(ax, theme)
-#     ax.legend(fontsize=11)
-
-#     fname = "benchmark_by_folder_white.png" if theme == "white" else "benchmark_by_folder_black.png"
-#     out_path = out_dir / fname
-#     if theme == "white":
-#         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False, facecolor="white")
-#     else:
-#         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=True)
-#     plt.close(fig)
-#     return out_path
-from typing import Dict
-from pathlib import Path
-
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch
-import pandas as pd
 
 
 def _plot_by_folder(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> Path:
@@ -426,43 +381,6 @@ def _plot_by_folder_set(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str
     return out_path
 
 
-# def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> Path:
-#     labels = list(data.keys())
-#     accuracies = [df["accuracy"].mean() if not df.empty else 0.0 for df in data.values()]
-
-#     fig, ax = plt.subplots(figsize=(max(3, len(labels) * 1.1), 4.0))
-#     width = min(0.95 / max(1, len(labels)), 0.6)
-#     styles = _compute_styles(labels)
-#     colors = []
-#     hatches = []
-#     for name in labels:
-#         color, hatch = styles.get(name, ("#888888", "//"))
-#         colors.append(color)
-#         hatches.append(hatch)
-#     bars = ax.bar(labels, accuracies, color=colors, edgecolor="black", width=width)
-#     for bar, hatch in zip(bars, hatches):
-#         if hatch:
-#             bar.set_hatch(hatch)
-#     ax.set_xticklabels(labels, rotation=0, ha="center", fontsize=12, color=("#111111" if theme == "white" else "#f5f5f5"))
-#     _style_axes(ax, theme)
-#     ax.set_ylim(0, 1.05)
-
-#     fname = "benchmark_overall_white.png" if theme == "white" else "benchmark_overall_black.png"
-#     out_path = out_dir / fname
-#     if theme == "white":
-#         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False, facecolor="white")
-#     else:
-#         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=True)
-#     plt.close(fig)
-#     return out_path
-from typing import Dict
-from pathlib import Path
-
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch
-import pandas as pd
-
 
 def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> Path:
     labels = list(data.keys())
@@ -473,7 +391,7 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
     text_color = "#111111" if theme == "white" else "#F5F5F5"
     outline_color = "white" if theme == "white" else "#FFFFFF"
 
-    fig_width = max(6.0, len(labels) * 0.8)
+    fig_width = WIDTH_PLOT #max(6.0, len(labels) * 0.8)
     fig, ax = plt.subplots(figsize=(fig_width, 5.0), dpi=300)
 
     x_pos = np.arange(len(labels))
@@ -502,7 +420,7 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
         labels,
         rotation=0,
         ha="center",
-        fontsize=11,
+        fontsize=15,
         color=text_color,
     )
 
@@ -518,7 +436,7 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
             (bbox.xmin, bbox.ymin),
             bbox.width,
             bbox.height,
-            boxstyle="round,pad=0.02",
+            boxstyle="round,pad=0.0",
             linewidth=1.0,                 
             facecolor=color,
             edgecolor=outline_color,        
@@ -538,11 +456,11 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
             continue
         ax.text(
             x,
-            height + 0.02,
+            height + 0.005,
             f"{acc:.2f}",
             ha="center",
             va="bottom",
-            fontsize=10,
+            fontsize=12,
             fontweight="bold",
             color='black' if theme == "white" else 'white',
         )
@@ -553,7 +471,7 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
     ax.set_xlabel("", labelpad=6)
 
     ax.tick_params(axis="y", labelsize=10, colors=text_color)
-    ax.tick_params(axis="x", labelsize=10, colors=text_color)
+    ax.tick_params(axis="x", labelsize=13, colors=text_color)
 
     ax.grid(True, axis="y", linestyle="--", linewidth=0.6, alpha=0.6)
     ax.grid(False, axis="x")
@@ -588,6 +506,30 @@ def main() -> int:
 
     model_dfs_folder: Dict[str, pd.DataFrame] = {}
     model_dfs_set: Dict[str, pd.DataFrame] = {}
+    
+    if MATCH_Q:
+        print("[visualize] MATCH_Q is set to True")
+        # preload all dataframes to find common questions
+        all_dfs: Dict[str, pd.DataFrame] = {}
+        for name, path_str in MODEL_FILES.items():
+            p = Path(path_str).expanduser()
+            if not p.exists():
+                print(f"[visualize] Missing file for {name}: {p}")
+                continue
+            try:
+                df = _load_benchmark(p)
+                all_dfs[name] = df
+            except Exception as exc:
+                print(f"[visualize] Failed to load {p} for {name}: {exc}")
+                continue
+        if not all_dfs:
+            print("[visualize] No data loaded; aborting.")
+            return 1
+        # find common questions
+        common_questions = set.intersection(*(set(df["question"].tolist()) for df in all_dfs.values()))
+        print(f"[visualize] Found {len(common_questions)} common questions across all models.")
+    
+    N_total = 0
 
     for name, path_str in MODEL_FILES.items():
         p = Path(path_str).expanduser()
@@ -595,7 +537,10 @@ def main() -> int:
             print(f"[visualize] Missing file for {name}: {p}")
             continue
         try:
-            df = _load_benchmark(p)
+            df = _load_benchmark(p).drop_duplicates(subset=["question"])
+            if MATCH_Q:
+                df = df[df["question"].isin(common_questions)].reset_index(drop=True)
+            N_total += len(df)
             model_dfs_folder[name] = _compute_by_folder(df)
             model_dfs_set[name] = _compute_by_folder_set(df)
         except Exception as exc:
@@ -617,6 +562,8 @@ def main() -> int:
     white3 = _plot_overall(model_dfs_folder, figures_dir, theme="white")
     black3 = _plot_overall(model_dfs_folder, figures_dir, theme="black")
     print(f"Saved overall plots: {white3}, {black3}")
+    
+    print(f"[visualize] Processed total of {N_total} questions across {len(model_dfs_folder)} models.")
 
     return 0
 

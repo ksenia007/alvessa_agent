@@ -20,7 +20,7 @@ subset_dfs = []
 for file in all_files:
     df = pd.read_csv(file)
     total_quesitons += len(df)
-    subset_df = df.sample(frac=subset_ratio, random_state=42)
+    subset_df = df.sample(frac=subset_ratio, random_state=42, replace=False)
     print(f"Original questions: {len(df)}, Subset questions: {len(subset_df)}")
     subset_dfs.append(subset_df)
 print(f"Total questions in original GA dataset: {total_quesitons}")
@@ -29,4 +29,6 @@ print(f"Total questions in subset GA dataset: {len(final_subset_df)}")
 os.makedirs(FILE_SAVE.parent, exist_ok=True)
 final_subset_df.to_csv(FILE_SAVE, index=False)
 
+# %%
+final_subset_df.question.value_counts()
 # %%
