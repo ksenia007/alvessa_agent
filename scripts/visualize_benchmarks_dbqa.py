@@ -20,7 +20,7 @@ MODEL_FILES = {
 ALVESSA_COLOR = "#D95F02"
 # Palette/hatches for non-Alvessa models (cycled in order of appearance)
 OTHER_COLORS = ["#555555", "#727272", "#8C8C8C", "#A6A6A6", "#BEBEBE"]
-OTHER_HATCHES = ["//", "\\\\", "xx", "..", "++", "--"]
+OTHER_HATCHES = ["//","..", "xx", "++", "--",  "\\\\", ]
 
 # Same grouping logic as visualize_dbQA_results.py
 GROUP_RULES: List[Tuple[str, callable]] = [

@@ -8,13 +8,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
+
+
 # Hardwired benchmark CSVs (extendable)
 MODEL_FILES = {
     "Alvessa": '/Users/sokolova/Documents/research/alvessa_agent/out/FINAL_GA_20251216-162600_cli/benchmark_summary.csv', #"/Users/sokolova/Documents/research/alvessa_agent/out/alvessa_half_GA_20251124-012201_cli/benchmark_summary.csv",
+    'Biomni*': "/Users/sokolova/Documents/research/alvessa_benchmarking/biomni_evaluation_scripts/Biomni/biomni_baseline_GA_10_subset_20251218-2042.csv", 
     "Claude\nSonnet 4.5": "/Users/sokolova/Documents/research/alvessa_agent/chat_claude_baselines/FINAL_claude_baseline_GenomeArena_20251216-0122.csv",
     "ChatGPT 5.1": "/Users/sokolova/Documents/research/alvessa_agent/chat_claude_baselines/FINAL_chatgpt_baseline_GenomeArena_20251216-0122.csv", 
-    'Claude\nSonnet 4.5+\nsearch': "/Users/sokolova/Documents/research/claude_baseline_web_serch_N5_GenomeArena_20251216-0136_part.csv",
-
+    'Claude\nSonnet 4.5+\nsearch': "/Users/sokolova/Documents/research/claude_baseline_web_serch_N5_GenomeArena_20251216-2008.csv",
 }
 
 ALVESSA_COLOR = "#D95F02"
@@ -26,8 +28,10 @@ FOLDER_NAME_MAP = {
     "BioGRID": "BioGRID",
     "chembl": "ChEMBL",
     "gencode": "GENCODE",
+    "gencode_gene_node": "GENCODE",
     "GWAS": "GWAS",
     "gwas+alphamissense": "GWAS+\nAlphaMissense",
+    "query_gwas_extensive,alphamissense": "GWAS+\nAlphaMissense",
     "miRDB": "miRDB",
     "MSigDB": "MSigDB",
     "OMIM": "OMIM",
@@ -46,31 +50,31 @@ def _load_benchmark(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path)
     # normalize correctness to int
     df["is_correct"] = pd.to_numeric(df.get("is_correct", 0), errors="coerce").fillna(0).astype(int)
-    df["source_folder"] = df.get("source_folder", "").fillna("").astype(str).str.strip()
-    df["source_name"] = df.get("source_name", "").fillna("").astype(str).str.strip()
+    df["tool_tag"] = df.get("tool_tag", "").fillna("").astype(str).str.strip()
+    df["tool_tag"] = df.get("tool_tag", "").fillna("").astype(str).str.strip()
     df["question"] = df.get("question", "").fillna("").astype(str)
     return df
 
 
 def _compute_by_folder(df: pd.DataFrame) -> pd.DataFrame:
     grouped = (
-        df.groupby("source_folder")["is_correct"]
+        df.groupby("tool_tag")["is_correct"]
         .agg(["mean", "count"])
         .rename(columns={"mean": "accuracy", "count": "n"})
         .reset_index()
     )
-    grouped["display"] = grouped["source_folder"].apply(_format_folder)
+    grouped["display"] = grouped["tool_tag"].apply(_format_folder)
     return grouped
 
 
 def _compute_by_folder_set(df: pd.DataFrame) -> pd.DataFrame:
     grouped = (
-        df.groupby(["source_folder", "source_name"])["is_correct"]
+        df.groupby(["tool_tag"])["is_correct"]
         .agg(["mean", "count"])
         .rename(columns={"mean": "accuracy", "count": "n"})
         .reset_index()
     )
-    grouped["display_folder"] = grouped["source_folder"].apply(_format_folder)
+    grouped["display_folder"] = grouped["tool_tag"].apply(_format_folder)
     return grouped
 
 
@@ -112,12 +116,12 @@ def _compute_styles(models_order: List[str]) -> Dict[str, Tuple[str, str | None]
 #     # Align folders across models; order by Alvessa accuracy low->high if available, else alphabetical
 #     all_folders = set()
 #     for df in data.values():
-#         all_folders.update(df["source_folder"].unique())
+#         all_folders.update(df["tool_tag"].unique())
 #     folders = list(all_folders)
 
 #     if "Alvessa" in data:
 #         order_df = data["Alvessa"].sort_values("accuracy")
-#         ordered = [f for f in order_df["source_folder"].tolist() if f in all_folders]
+#         ordered = [f for f in order_df["tool_tag"].tolist() if f in all_folders]
 #         for f in folders:
 #             if f not in ordered:
 #                 ordered.append(f)
@@ -134,7 +138,7 @@ def _compute_styles(models_order: List[str]) -> Dict[str, Tuple[str, str | None]
 #     width = min(0.8 / max(1, n_models), 0.28)
 #     for idx, model in enumerate(models_order):
 #         df = data[model]
-#         acc_map = dict(zip(df["source_folder"], df["accuracy"]))
+#         acc_map = dict(zip(df["tool_tag"], df["accuracy"]))
 #         vals = [acc_map.get(f, 0.0) for f in folders]
 #         color, hatch = styles.get(model, ("#888888", "//"))
 #         positions = [p + (idx - (n_models - 1) / 2) * width for p in x]
@@ -166,12 +170,12 @@ def _plot_by_folder(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) ->
     # Align folders across models; order by Alvessa accuracy low->high if available, else alphabetical
     all_folders = set()
     for df in data.values():
-        all_folders.update(df["source_folder"].unique())
+        all_folders.update(df["tool_tag"].unique())
     folders = list(all_folders)
 
     if "Alvessa" in data:
         order_df = data["Alvessa"].sort_values("accuracy")
-        ordered = [f for f in order_df["source_folder"].tolist() if f in all_folders]
+        ordered = [f for f in order_df["tool_tag"].tolist() if f in all_folders]
         for f in folders:
             if f not in ordered:
                 ordered.append(f)
@@ -182,7 +186,7 @@ def _plot_by_folder(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) ->
     out_dir.mkdir(parents=True, exist_ok=True)
 
     x = np.arange(len(folders))
-    fig_width = max(10, len(folders) * 0.6)
+    fig_width = max(12, len(folders) * 0.6)
     fig, ax = plt.subplots(figsize=(fig_width, 6), dpi=300)
 
     models_order = list(data.keys())
@@ -198,7 +202,7 @@ def _plot_by_folder(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) ->
     all_patches = []  # if you ever want labels later
     for idx, model in enumerate(models_order):
         df = data[model]
-        acc_map = dict(zip(df["source_folder"], df["accuracy"]))
+        acc_map = dict(zip(df["tool_tag"], df["accuracy"]))
         vals = [acc_map.get(f, 0.0) for f in folders]
 
         color, hatch = styles.get(model, ("#888888", "//"))
@@ -287,10 +291,10 @@ def _plot_by_folder_set(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str
     # Build combined sorted positions by folder (aligned ordering as above)
     all_folders = set()
     for df in data.values():
-        all_folders.update(df["source_folder"].unique())
+        all_folders.update(df["tool_tag"].unique())
     if "Alvessa" in data:
         order_df = data["Alvessa"].sort_values("accuracy")
-        folders = [f for f in order_df["source_folder"].tolist() if f in all_folders]
+        folders = [f for f in order_df["tool_tag"].tolist() if f in all_folders]
         for f in all_folders:
             if f not in folders:
                 folders.append(f)
@@ -319,7 +323,7 @@ def _plot_by_folder_set(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str
         for f in folders_subset:
             names: List[str] = []
             for df in data.values():
-                names.extend(df[df["source_folder"] == f]["source_name"].tolist())
+                names.extend(df[df["tool_tag"] == f]["tool_tag"].tolist())
             seen: List[str] = []
             for n in names:
                 if n not in seen:
@@ -359,7 +363,7 @@ def _plot_by_folder_set(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str
             ax.axis("off")
             continue
         for idx, (model, df) in enumerate(data.items()):
-            acc_map = {(r["source_folder"], r["source_name"]): r["accuracy"] for _, r in df.iterrows()}
+            acc_map = {(r["tool_tag"], r["tool_tag"]): r["accuracy"] for _, r in df.iterrows()}
             vals = []
             for f, name in zip(folder_order_flat, labels):
                 key = (f, name if name.endswith(".csv") else name + ".csv")
