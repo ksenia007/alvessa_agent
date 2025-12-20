@@ -103,6 +103,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="Cosmic",
         entry_point=cosmic_agent,
-        description="Fetches information about genes linked to cancer through the COSMIC Cancer Gene Census, including cancer-driving mechanisms, biological context, and evidence tiers.",
+        description="Fetches information about genes linked to cancer through the COSMIC Cancer Gene Census, including diseases associated with somatic/germline mutations, role in cancer, biological mechanisms (hallmarks) that underlie cancer, and evidence tiers.",
     ),
 )
