@@ -11,22 +11,25 @@ from matplotlib.patches import FancyBboxPatch
 
 
 # Hardwired benchmark CSVs 
-# MODEL_FILES = {
-#     "Alvessa*": 'results/benchmark_results/FINAL_GA_20251216-162600_cli/benchmark_summary.csv', 
-#     "Biomni*": 'results/benchmark_results/biomni_baseline_GA_10_subset_20251218-2235.csv'
-# }
+MODEL_FILES = {
+    "Alvessa*": 'results/benchmark_results/FINAL_GA_20251216-162600_cli/benchmark_summary.csv', 
+    "Biomni*": 'results/benchmark_results/biomni_baseline_GA_10_subset_20251218-2235.csv'
+}
+figure_ext = '_GA'
 
 
 MODEL_FILES = {
     "Alvessa*": "results/benchmark_results/FINAL_DBQA_20251216-125635_cli/benchmark_summary.csv",
     "Biomni*": "results/benchmark_results/biomni_baseline_dbQA_subset_20251219-1701.csv",
 }
+figure_ext = '_dbQA'
 
 ALVESSA_COLOR = "#D95F02"
 OTHER_COLORS = [ "#727272", "#555555","#8C8C8C", "#A6A6A6", "#BEBEBE"]
 OTHER_HATCHES = ["..", "xx", "//", "\\\\",  "++", "--"]
-WIDTH_PLOT = 2.5
+WIDTH_PLOT = (4/3)*2
 MATCH_Q = True  # whether to only use questions that were attempted by all models
+BAR_WIDTH = 0.9  # unified bar width
 
 def _compute_styles(models_order: List[str]) -> Dict[str, Tuple[str, str | None]]:
     styles: Dict[str, Tuple[str, str | None]] = {}
@@ -53,11 +56,14 @@ def _style_axes(ax, theme: str) -> None:
         ax.figure.set_facecolor("none")
         color = "#f5f5f5"
         spine_color = "#888888"
-    ax.tick_params(axis="both", labelsize=13, colors=color)
-    ax.set_ylabel("Mean runtime (s)", fontsize=14, color=color)
+
+    ax.tick_params(axis="x", labelsize=14, colors=color)
+    ax.tick_params(axis="y", labelsize=13, colors=color)
+    ax.set_ylabel("Runtime (sec)", fontsize=15, color=color)
     for spine in ax.spines.values():
         spine.set_color(spine_color)
     ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.5, color=spine_color)
+    ax.yaxis.label.set_color(color)
     ax.tick_params(colors=color)
     ax.set_ylim(bottom=0)
 
@@ -87,9 +93,9 @@ def _plot_runtime_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: s
     text_color = "#111111" if theme == "white" else "#F5F5F5"
     outline_color = "white" if theme == "white" else "#FFFFFF"
 
-    fig, ax = plt.subplots(figsize=(WIDTH_PLOT , 5.5), dpi=300) # max(4.0, len(labels) * 0.9)
+    fig, ax = plt.subplots(figsize=(WIDTH_PLOT , 5.0), dpi=300) # standardize height with other plots
     x_pos = np.arange(len(labels))
-    width = 0.6
+    width = BAR_WIDTH
 
     colors = []
     hatches = []
@@ -131,7 +137,7 @@ def _plot_runtime_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: s
         ax.add_patch(p)
 
     ax.set_xticks(x_pos)
-    ax.set_xticklabels(labels, rotation=0, ha="center", fontsize=13, color=text_color)
+    ax.set_xticklabels(labels, rotation=0, ha="center", fontsize=14, color=text_color)
 
     # for x, mean, patch in zip(x_pos, means, new_patches):
     #     ax.text(
@@ -153,7 +159,7 @@ def _plot_runtime_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: s
 
     plt.tight_layout()
 
-    fname = "benchmark_runtime_white.png" if theme == "white" else "benchmark_runtime_black.png"
+    fname = f"benchmark_runtime_white{figure_ext}.png" if theme == "white" else f"benchmark_runtime_black{figure_ext}.png"
     out_path = out_dir / fname
     if theme == "white":
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False, facecolor="white")
