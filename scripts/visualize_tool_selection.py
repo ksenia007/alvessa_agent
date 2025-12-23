@@ -91,14 +91,15 @@ col_order = [
     'BioGRID',
     'GWAS',
     'alphamissense',
-    'variant_annotations',
-    'clinvar_node', 
     'OMIM',
     'OpenTargets',
     'gencode_gene_node',
-    'miRDB','MSigDB',
+    'miRDB',
+    'MSigDB',
     'reactome',
     'aa_seq', 'chembl', 'prot', 
+    'variant_annotations',
+    'clinvar_node', 
 'AllianceOfGenomes','DisGeNet',
        'Summarize_bioGRID_GO', 
        'drug_central',
@@ -164,8 +165,8 @@ ax.set_xlabel("Tool used", fontsize=12)
 ax.set_ylabel("Tool needed", fontsize=12)
 
 # tick label sizes
-ax.tick_params(axis='x', labelrotation=0, labelsize=9)
-ax.tick_params(axis='y', labelrotation=0, labelsize=9)
+ax.tick_params(axis='x', labelrotation=0, labelsize=10)
+ax.tick_params(axis='y', labelrotation=0, labelsize=10)
 
 # remove colorbar
 cbar = heatmap.collections[0].colorbar
