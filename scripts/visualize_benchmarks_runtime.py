@@ -10,16 +10,22 @@ import pandas as pd
 from matplotlib.patches import FancyBboxPatch
 
 
-# Hardwired benchmark CSVs (extendable)
+# Hardwired benchmark CSVs 
+# MODEL_FILES = {
+#     "Alvessa*": 'results/benchmark_results/FINAL_GA_20251216-162600_cli/benchmark_summary.csv', 
+#     "Biomni*": 'results/benchmark_results/biomni_baseline_GA_10_subset_20251218-2235.csv'
+# }
+
+
 MODEL_FILES = {
-    "Alvessa*": '/Users/sokolova/Documents/research/alvessa_agent/out/FINAL_GA_20251216-162600_cli/benchmark_summary.csv', 
-    "Biomni*": '/Users/sokolova/Documents/research/alvessa_benchmarking/biomni_evaluation_scripts/Biomni/biomni_baseline_GA_10_subset_20251218-2235.csv'
+    "Alvessa*": "results/benchmark_results/FINAL_DBQA_20251216-125635_cli/benchmark_summary.csv",
+    "Biomni*": "results/benchmark_results/biomni_baseline_dbQA_subset_20251219-1701.csv",
 }
 
 ALVESSA_COLOR = "#D95F02"
 OTHER_COLORS = [ "#727272", "#555555","#8C8C8C", "#A6A6A6", "#BEBEBE"]
 OTHER_HATCHES = ["..", "xx", "//", "\\\\",  "++", "--"]
-WIDTH_PLOT = 3.5
+WIDTH_PLOT = 2.5
 MATCH_Q = True  # whether to only use questions that were attempted by all models
 
 def _compute_styles(models_order: List[str]) -> Dict[str, Tuple[str, str | None]]:
@@ -47,7 +53,7 @@ def _style_axes(ax, theme: str) -> None:
         ax.figure.set_facecolor("none")
         color = "#f5f5f5"
         spine_color = "#888888"
-    ax.tick_params(axis="both", labelsize=12, colors=color)
+    ax.tick_params(axis="both", labelsize=13, colors=color)
     ax.set_ylabel("Mean runtime (s)", fontsize=14, color=color)
     for spine in ax.spines.values():
         spine.set_color(spine_color)
@@ -55,10 +61,13 @@ def _style_axes(ax, theme: str) -> None:
     ax.tick_params(colors=color)
     ax.set_ylim(bottom=0)
 
-
-def _load_benchmark(path: Path) -> pd.DataFrame:
-    df = pd.read_csv(path)
+def _load_benchmark(csv_path: Path, *, drop_disgenet: bool = False) -> pd.DataFrame:
+    df = pd.read_csv(csv_path)
+    df = df.drop_duplicates('question')
     df["runtime_seconds"] = pd.to_numeric(df.get("runtime_seconds", 0.0), errors="coerce")
+    if drop_disgenet:
+        mask = ~df["question"].str.lower().str.contains("disgenet", na=False)
+        df = df[mask].reset_index(drop=True)
     return df
 
 
@@ -80,7 +89,7 @@ def _plot_runtime_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: s
 
     fig, ax = plt.subplots(figsize=(WIDTH_PLOT , 5.5), dpi=300) # max(4.0, len(labels) * 0.9)
     x_pos = np.arange(len(labels))
-    width = 0.8
+    width = 0.6
 
     colors = []
     hatches = []
@@ -122,7 +131,7 @@ def _plot_runtime_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: s
         ax.add_patch(p)
 
     ax.set_xticks(x_pos)
-    ax.set_xticklabels(labels, rotation=0, ha="center", fontsize=11, color=text_color)
+    ax.set_xticklabels(labels, rotation=0, ha="center", fontsize=13, color=text_color)
 
     # for x, mean, patch in zip(x_pos, means, new_patches):
     #     ax.text(
@@ -167,6 +176,11 @@ def main(argv: List[str] | None = None) -> int:
         default="results/benchmark_figures",
         help="Directory to write figures (default: results/benchmark_figures).",
     )
+    parser.add_argument(
+        "--remove_disgenet",
+        action="store_true",
+        help="If set, drop any questions mentioning DisGeNet before computing accuracies.",
+    )
     args = parser.parse_args(argv)
 
     out_dir = Path(args.out_dir).resolve()
@@ -206,7 +220,7 @@ def main(argv: List[str] | None = None) -> int:
             print(f"[visualize] Missing file for {name}: {p}")
             continue
         try:
-            df = _load_benchmark(p).drop_duplicates(subset=["question"])
+            df = _load_benchmark(p, drop_disgenet=args.remove_disgenet).drop_duplicates(subset=["question"])
             if MATCH_Q:
                 df = df[df["question"].isin(common_questions)].reset_index(drop=True)
                 print(f"[visualize] After filtering, {name} has {len(df)} questions.")
