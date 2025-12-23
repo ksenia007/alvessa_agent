@@ -3,12 +3,23 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 # %%
-loc = '/Users/sokolova/Documents/research/alvessa_agent/out/FINAL_GA_20251216-162600_cli/benchmark_summary.csv'
+loc = '/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_results/FINAL_GA_20251216-162600_cli/benchmark_summary.csv'
 preds = pd.read_csv(loc)
 
 # --- drop rows where either tool_tag or used_tools is NaN ---
 df = preds.dropna(subset=['tool_tag', 'used_tools']).copy()
-df = df[df['tool_tag']!='query_gwas_extensive,alphamissense']
+
+
+# df = df[df['tool_tag']!='query_gwas_extensive,alphamissense']
+# replace query_gwas_extensive,alphamissense substring in tool_tag with  query_gwas_extensive+alphamissense
+df['tool_tag'] = df['tool_tag'].str.replace(
+    'query_gwas_extensive,alphamissense',
+    'query_gwas_extensive+alphamissense'
+)
+# count query_gwas_extensive+alphamissense
+print("Rows with query_gwas_extensive+alphamissense in tool_tag:",)
+print((df['tool_tag'] == 'query_gwas_extensive+alphamissense').sum())
+#%%
 
 # --- parse lists ---
 df['needed'] = df['tool_tag'].str.split(',').apply(
@@ -24,6 +35,7 @@ mapping = {
     'query_gwas_extensive': 'GWAS',
     'uniprot_gwas': 'UniProt',
     'uniprot_base': 'UniProt',
+    'query_gwas_extensive+alphamissense': 'GWAS+AlphaMissense',
 }
 
 df['needed'] = df['needed'].apply(lambda lst: [mapping.get(x, x) for x in lst])
@@ -64,6 +76,7 @@ for t_need in needed_tools:
 row_order = [
     'BioGRID',
     'GWAS',
+    'GWAS+AlphaMissense',
     'OMIM',
     'OpenTargets',
     'gencode_gene_node',
@@ -77,17 +90,25 @@ row_order = [
 col_order = [
     'BioGRID',
     'GWAS',
+    'alphamissense',
     'OMIM',
     'OpenTargets',
     'gencode_gene_node',
-    'miRDB','MSigDB',
+    'miRDB',
+    'MSigDB',
     'reactome',
     'aa_seq', 'chembl', 'prot', 
+    'variant_annotations',
+    'clinvar_node', 
 'AllianceOfGenomes','DisGeNet',
        'Summarize_bioGRID_GO', 
-       'clinvar_node', 'drug_central',
+       'drug_central',
        'humanbase_functions', 'intact_viral', 
-       'uniprot_base', 'uniprot_gwas', 'variant_annotations'
+       'UniProt',
+       'uniprot_base', 'uniprot_gwas', 
+       'remap_crm_agent', 
+       'expectosc_predictions_agent',
+       'sei',
 ]
 
 row_order = [t for t in row_order if t in crosstab_prop.index]
@@ -133,7 +154,7 @@ heatmap = sns.heatmap(
     annot=True,
     fmt=".2f",
     cmap="Blues",
-    annot_kws={"size": 8},
+    annot_kws={"size": 8.5},
     vmin=0,
     vmax=1,
     cbar_kws={"shrink": 0.9, "label": ""},
@@ -144,8 +165,8 @@ ax.set_xlabel("Tool used", fontsize=12)
 ax.set_ylabel("Tool needed", fontsize=12)
 
 # tick label sizes
-ax.tick_params(axis='x', labelrotation=0, labelsize=9)
-ax.tick_params(axis='y', labelrotation=0, labelsize=9)
+ax.tick_params(axis='x', labelrotation=0, labelsize=10)
+ax.tick_params(axis='y', labelrotation=0, labelsize=10)
 
 # remove colorbar
 cbar = heatmap.collections[0].colorbar

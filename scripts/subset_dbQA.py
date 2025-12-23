@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 
-def subset_dbqa(input_path: Path, output_path: Path, n: int = 100, seed: int = 42) -> None:
+def subset_dbqa(input_path: Path, output_path: Path, n: int = 52, seed: int = 42) -> None:
     df = pd.read_csv(input_path)
     if df.empty:
         raise ValueError("Input CSV is empty.")
@@ -40,10 +40,10 @@ def main() -> int:
     )
     parser.add_argument(
         "--output",
-        default="/Users/sokolova/Documents/research/alvessa_agent/benchmarks_generation/questions/dbQA_phipster/dbqa_mc_SUBSET.csv",
+        default="/Users/sokolova/Documents/research/alvessa_agent/benchmarks_generation/questions/dbQA_subset_52/dbqa_mc_SUBSET.csv",
         help="Path to write the subset CSV.",
     )
-    parser.add_argument("--n", type=int, default=100, help="Number of questions to sample (default: 100).")
+    parser.add_argument("--n", type=int, default=52, help="Number of questions to sample (default: 100).")
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42).")
     parser.add_argument("--phrase_subset", action="store_true", help="If set, create a subset of questions containing 'P-HIPSter'.")
     args = parser.parse_args()
