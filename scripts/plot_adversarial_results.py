@@ -90,7 +90,7 @@ print(f'Alvessa Accuracy: {alvessa_accuracy:.2%}')
 # Pretty labels for y-axis
 label_map = {
     "contradiction": "Contradiction\n(plain)",
-    "contradiction_with_proofs": "Contradiction\n(using evidence)",
+    "contradiction_with_proofs": "Contradiction",
     "overstatement": "Overstatement",
     "hallucinated_alphanumeric_entities": "Wrong alphanumeric\nvalues",
     "hallucinated_numbers": "Wrong numerical\nvalues",
@@ -120,15 +120,15 @@ plt.rcParams.update({
     "axes.titlesize": 24,
     "axes.labelsize": 22,
     "xtick.labelsize": 20,
-    "ytick.labelsize": 20,
+    "ytick.labelsize": 22,
 })
 
 palette = {
-    "baseline_correct": "tan",  
+    "baseline_correct": 'lightgrey', #"tan",  
     "alvessa_correct": "#FF7C07",   # vibrant orange
 }
 
-fig, ax = plt.subplots(figsize=(10, 9), dpi=300)
+fig, ax = plt.subplots(figsize=(10, 10), dpi=300)
 hue_order = ["baseline_correct", "alvessa_correct"]
 cat_order = modification_summary.sort_values("accuracy", ascending=False)["pretty_type"].unique().tolist()
 model_sequence = modification_summary["model"].tolist()  # preserves melted row order
@@ -156,7 +156,7 @@ for patch in bar.patches:
         (bbox.xmin, bbox.ymin),
         bbox.width,
         bbox.height,
-        boxstyle="round,pad=0.02",
+        boxstyle="round,pad=0.0",
         linewidth=0,
         facecolor=patch.get_facecolor(),
         edgecolor="none",
@@ -209,7 +209,7 @@ for idx, patch in enumerate(new_patches):
 
 # Axes formatting
 ax.set_xlim(0.0, 105)
-ax.set_xlabel("% correctly labeled", labelpad=8)
+ax.set_xlabel("% adversarial statements detected", labelpad=8)
 ax.set_ylabel("")  # no y-axis label per request
 ax.set_title("")   # no title
 ax.grid(True, axis="x", linestyle="--", linewidth=0.6, alpha=0.6)
@@ -223,10 +223,11 @@ ax.spines["bottom"].set_color("#A0A0A0")
 # Legend cleanup (manual handles so hatching shows)
 from matplotlib.patches import Patch
 legend_handles = [
-    Patch(facecolor=palette["baseline_correct"], edgecolor="antiquewhite", linewidth=0.8, hatch="///", label="Simple verifier"),
+    Patch(facecolor=palette["baseline_correct"], edgecolor="antiquewhite", linewidth=0.8, hatch="///", label="Ablated verifier"),
     Patch(facecolor=palette["alvessa_correct"], edgecolor="none", label="Context-aware verifier"),
 ]
-ax.legend(legend_handles, [h.get_label() for h in legend_handles], title="", frameon=False, loc="upper right",bbox_to_anchor=(1.1, 1.2), fontsize=16)
+ax.legend(legend_handles, [h.get_label() for h in legend_handles], title="", 
+          frameon=False, loc="upper right",bbox_to_anchor=(1.1, 1.1), fontsize=18)
 
 plt.tight_layout()
 plt.show()
@@ -235,7 +236,7 @@ plt.show()
 # Pretty labels for y-axis
 label_map = {
     "contradiction": "Contradiction\n(plain)",
-    "contradiction_with_proofs": "Contradiction\n(using evidence)",
+    "contradiction_with_proofs": "Contradiction",
     "overstatement": "Overstatement",
     "hallucinated_alphanumeric_entities": "Wrong alphanumeric\nvalues",
     "hallucinated_numbers": "Wrong numerical\nvalues",
@@ -266,7 +267,7 @@ plt.rcParams.update({
     "axes.titlesize": 24,
     "axes.labelsize": 22,
     "xtick.labelsize": 20,
-    "ytick.labelsize": 20,
+    "ytick.labelsize": 22,
 })
 
 palette = {
@@ -328,7 +329,7 @@ for patch in new_patches:
 
 # Axes formatting
 ax.set_xlim(0.0, 105)
-ax.set_xlabel("% correctly labeled", labelpad=8)
+ax.set_xlabel("%adversarial statements detected", labelpad=8)
 ax.set_ylabel("")  # no y-axis label per request
 ax.set_title("")   # no title
 ax.grid(True, axis="x", linestyle="--", linewidth=0.6, alpha=0.6)
