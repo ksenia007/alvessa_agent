@@ -124,30 +124,12 @@ def _link_titles_to_indices(proofs: List[Dict[str, Any]], manifest: List[Dict[st
 
 def _slice_proofs_from_docs(proofs: List[Dict[str, Any]], doc_texts: Dict[int, str]) -> None:
     """
-    Replace cited_text using char_range/document_index when available.
-    Raise if slicing is not possible (debugging).
+    Assume cited_text was already sliced upstream. Raise if missing/invalid.
     """
     for p in proofs:
-        di = p.get("document_index")
-        cr = p.get("char_range")
-        if di is None or not isinstance(cr, (list, tuple)) or len(cr) != 2:
-            print("[verify] Skipping proof slicing; missing document_index or char_range.")
-            print(f"[verify] Proof data: document_index={di}, char_range={cr}")
-            raise ValueError("Missing document_index or char_range for proof slicing")
-        try:
-            text = doc_texts.get(int(di), "")
-            if not text:
-                print(f"[verify] Missing document text for index={di}; cannot slice proof.")
-                raise RuntimeError("Missing document text for proof slicing")
-            start, end = int(cr[0]), int(cr[1])
-            start = max(0, start)
-            end = max(start, min(len(text), end))
-            p["cited_text"] = text[start:end]
-            if DEBUG:
-                print(f"[verify] Sliced proof for doc_index={di}, range={cr}: '{p['cited_text']}'")
-        except Exception as exc:
-            print(f"[verify] Failed to slice proof for doc_index={di}, range={cr}: {exc}")
-            raise
+        cited = p.get("cited_text")
+        if not cited or "error retrieving cited text" in str(cited):
+            raise ValueError(f"[verify] Missing or bad cited_text in proof: {p}")
 
 # -----------------------------------
 # Deterministic verdict
@@ -227,6 +209,9 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
                 for p in (s.get("proofs") or [])
             ]
         })
+        
+    print('*****************************************')
+    print(pack)
 
     system_msg = (
         "You are a meticulous research assistant. Provide qualitative feedback on whether each statement of the following answer is well supported "

@@ -998,7 +998,9 @@
             const mdScript = htmlEl.querySelector('script[src*="markdown-it"]');
             if (mdScript) {
               const inlineScript = htmlEl.ownerDocument.createElement("script");
-              inlineScript.textContent = markdownItJs;
+              // Remove source map comment to prevent browser from trying to load it
+              const cleanedJs = markdownItJs.replace(/\/\/# sourceMappingURL=.*/g, '');
+              inlineScript.textContent = cleanedJs;
               mdScript.replaceWith(inlineScript);
             }
           }
@@ -1007,7 +1009,9 @@
             const dpScript = htmlEl.querySelector('script[src*="dompurify"]');
             if (dpScript) {
               const inlineScript = htmlEl.ownerDocument.createElement("script");
-              inlineScript.textContent = dompurifyJs;
+              // Remove source map comment to prevent browser from trying to load it
+              const cleanedJs = dompurifyJs.replace(/\/\/# sourceMappingURL=.*/g, '');
+              inlineScript.textContent = cleanedJs;
               dpScript.replaceWith(inlineScript);
             }
           }
@@ -1044,17 +1048,18 @@
 
           if (mainModuleScript && answerJs && waitingJs && geneSummaryJs && variantSummaryJs) {
             // Create inline scripts for the modules (converted to global functions)
+            // Wrap each in IIFE to avoid variable collisions while exposing needed globals
             const inlineAnswerScript = htmlEl.ownerDocument.createElement("script");
-            inlineAnswerScript.textContent = answerJs;
+            inlineAnswerScript.textContent = `(function() {\n${answerJs}\nwindow.renderAnswerVerified = renderAnswerVerified;\n})();`;
 
             const inlineWaitingScript = htmlEl.ownerDocument.createElement("script");
-            inlineWaitingScript.textContent = waitingJs;
+            inlineWaitingScript.textContent = `(function() {\n${waitingJs}\nwindow.Wait = Wait;\n})();`;
 
             const inlineGeneScript = htmlEl.ownerDocument.createElement("script");
-            inlineGeneScript.textContent = geneSummaryJs;
+            inlineGeneScript.textContent = `(function() {\n${geneSummaryJs}\nwindow.renderGeneSummary = renderGeneSummary;\n})();`;
 
             const inlineVariantScript = htmlEl.ownerDocument.createElement("script");
-            inlineVariantScript.textContent = variantSummaryJs;
+            inlineVariantScript.textContent = `(function() {\n${variantSummaryJs}\nwindow.renderVariantSummary = renderVariantSummary;\n})();`;
 
             // Convert the main module script to use global functions
             let mainScriptContent = mainModuleScript.textContent;
@@ -1077,17 +1082,23 @@
           // Add boot script with STATE, LOCAL_FILES, FILE_CACHE
           const boot = htmlEl.ownerDocument.createElement("script");
           boot.type = "text/javascript";
-          const stateJson = JSON.stringify(STATE ?? {});
-          const localFilesJson = JSON.stringify(Array.from(LOCAL_FILES.entries()));
-          const fileCacheJson = JSON.stringify(Array.from(FILE_CACHE.entries()));
+
+          // Properly escape JSON for embedding in JavaScript by converting to safe string literals
+          const safeJsonString = (obj) => {
+            return JSON.stringify(JSON.stringify(obj));
+          };
+
+          const stateJson = safeJsonString(STATE ?? {});
+          const localFilesJson = safeJsonString(Array.from(LOCAL_FILES.entries()));
+          const fileCacheJson = safeJsonString(Array.from(FILE_CACHE.entries()));
           const isLight = document.body.classList.contains("light");
 
           boot.textContent = `
             (function(){
               try{
-                window.STATE = ${stateJson};
-                try{ window.LOCAL_FILES = new Map(${localFilesJson}); }catch(e){ console.warn('LOCAL_FILES restore failed:', e); }
-                try{ window.FILE_CACHE = new Map(${fileCacheJson}); }catch(e){ console.warn('FILE_CACHE restore failed:', e); }
+                window.STATE = JSON.parse(${stateJson});
+                try{ window.LOCAL_FILES = new Map(JSON.parse(${localFilesJson})); }catch(e){ console.warn('LOCAL_FILES restore failed:', e); }
+                try{ window.FILE_CACHE = new Map(JSON.parse(${fileCacheJson})); }catch(e){ console.warn('FILE_CACHE restore failed:', e); }
                 if(${isLight}) document.body.classList.add('light'); else document.body.classList.remove('light');
 
                 // Ensure we start with grid visible (not hero)

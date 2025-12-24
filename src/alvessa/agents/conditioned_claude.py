@@ -417,7 +417,7 @@ def _collect_variant_docs(state: "State") -> tuple[list[dict], list[tuple[str, i
     return docs, manifest
 
 
-def _slice_span(doc_text_by_index: dict[int, str], idx, a, b, max_len: int = 10000) -> str | None:
+def _slice_span(doc_text_by_index: dict[int, str], idx, a, b, max_len: int = 100000) -> str | None:
     if idx is None or a is None or b is None:
         return None
     try:
@@ -449,10 +449,6 @@ def _anthropic_join_text(
 
     def _safe_str(x):
         return "" if x is None else str(x)
-
-    def _short_proof(s: str, n: int = 240) -> str:
-        s = s.strip().replace("\n", " ")
-        return s if len(s) <= n else s[: n - 1].rstrip() + "…"
 
     parts = []
     content = getattr(msg, "content", []) or []
@@ -627,17 +623,15 @@ def conditioned_claude_node(state: "State") -> "State":
             "You are a research assistant. Answer strictly from the provided documents.\n"
             "Be thorough and point out all relevant and potentially interesting information."
             "Requirements:\n"
-            "- Every factual claim must be grounded in the documents and include citations.\n"
+            "- Every factual claim must be grounded in the documents and include associated citations linking it to the document.\n"
             "- When a claim is supported by multiple facts from the documents, cite each supporting "
-            "passage separately rather as a list of citations rather than citing only the first occurrence or a large chunk of text.\n"
-            "- When citing, prioritize attaching citations to complete sentences or clear factual units. "
-            "Avoid breaking sentences unnaturally unless needed for citations.\n"
+            "passage separately as a list of citations rather than citing only the first occurrence or a large chunk of text.\n"
+            " - When citing, attach citations to complete sentences or clearly delimited factual units. Do not place citations on section headers or allow a single citation to apply across multiple sections. Avoid breaking sentences unnaturally unless needed for citations.\n"
             "- Do not add outside knowledge. If key information is missing, say so briefly.\n"
             "- Lead with the direct answer to the question. Then provide supporting details in decreasing order of importance, with concise synthesis where useful (also cited).\n"
             "- Length: write as much as needed for completeness and clarity.\n"
             "- Factoid questions (Who/What/When/Where/Which/How many): if a single sentence fully answers the question, provide that one sentence. Avoid lengthy explanations unless necessary for clarity or context.\n"
             "- If the question is ambiguous, briefly note the ambiguity and address the most common interpretations.\n"
-            "- If the question is multi-part, address each part clearly and separately.\n"
             "- At the end, you may include a short section labeled **Possible speculation**: if and only if it is clearly marked as such and explicitly reasoned from the cited evidence."
         )
         
