@@ -150,6 +150,7 @@ def dbsnp_variants_agent(
     if not variant_objs:
         _debug("No variants found in state; skipping dbSNP lookup.")
         return {}
+    
 
     _debug(f"Using genome assembly: {assembly}")
     _debug(f"Processing {len(variant_objs)} rsIDs from prior GWAS calls.")

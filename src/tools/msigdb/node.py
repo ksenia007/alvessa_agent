@@ -75,10 +75,6 @@ def msigdb_agent(state: "State") -> "State":
         
             gene.add_tool("MSigDB")
 
-        print(gene)
-
-        time.sleep(0.3)  # courteous pause
-
     if DEBUG:
         print(f"[MSigDB] Predictions fetched")
 

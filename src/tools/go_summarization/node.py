@@ -88,7 +88,6 @@ def go_summarization_agent(state: "State", embedding_method: str = 'word2vec') -
 
         gobj.update_text_summaries(f"*GO: {gene} representative GO terms: " + ", ".join(picked) + ".")
 
-    time.sleep(0.1)
     return
 
 

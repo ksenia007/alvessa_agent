@@ -12,19 +12,22 @@ from src.tools.base import Node
 EXAMPLE_TOOL_SELECTION = """EXAMPLE PIPELINES (pay attention to dependencies):
 
 1. Variant regulatory activity:
-   ["extract_entities", "gencode_gene_node", "query_gwas_by_gene", "variant_annotations", "sei", "expectosc_predictions_agent", "clinvar_node", "remap_crm_agent"]
+   ["extract_entities", "gencode_gene_node", "query_gwas_by_gene", "variant_annotations", "sei", "expectosc_predictions_agent", "remap_crm_agent"]
 
 2. Variant pathogenicity:
-   ["extract_entities", "query_gwas_by_gene", "variant_annotations", "alphamissense",  "clinvar_node"] 
+   ["extract_entities", "query_gwas_by_gene", "variant_annotations", "alphamissense"] 
 
 3. Gene-level functional annotation:
-   ["extract_entities", "gencode_gene_node", "humanbase_functions", "uniprot_base", "reactome", "BioGRID", "Summarize_bioGRID_GO", "uniprot_gwas"]
+   ["extract_entities", "gencode_gene_node", "humanbase_functions", "uniprot_base", "reactome", "Summarize_bioGRID_GO", "uniprot_gwas", 'clinvar_gene_node']
 
 4. Protein structure, visualization and druggability:
    ["extract_entities", "prot", "chembl", "drug_central", "MSigDB"]
    
-5. Protein-protein interactions and gene function questions (for the most complete context):    
-    ["extract_entities", "BioGRID", "Summarize_bioGRID_GO", "reactome", "Summarize_GO", "intact_viral", "AllianceOfGenomes"]
+5. Protein-protein interactions and gene function questions summaries:    
+    ["extract_entities",  "Summarize_bioGRID_GO", "Summarize_GO",  "AllianceOfGenomes"]
+    
+6. Specific protein-protein interactions and gene function questions:  
+    ["extract_entities", "BioGRID", "reactome", "intact_viral"]
    
 Note these are only examples, and in real life you may need to run combinations of these tools **depending on the user intent and the entities extracted**.
 

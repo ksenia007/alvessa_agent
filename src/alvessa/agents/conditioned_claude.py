@@ -37,6 +37,117 @@ def ensure_json_safe(x):
     return x
 
 
+# === Token limit handling helpers ===
+
+def _parse_token_error(exc_str: str) -> tuple[int, int] | None:
+    """
+    Parse error message like: 'prompt is too long: 217552 tokens > 200000 maximum'
+    Returns: (current_tokens, max_tokens) or None if not a token limit error
+    """
+    match = re.search(r'(\d+) tokens > (\d+) maximum', str(exc_str))
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    return None
+
+
+def _estimate_document_tokens(doc: dict) -> int:
+    """
+    Rough token estimate for a document block.
+    Uses chars / 4 as conservative estimate (Claude's typical ratio).
+    """
+    try:
+        src = doc.get("source", {})
+        if isinstance(src, dict) and src.get("type") == "text":
+            text = str(src.get("data", ""))
+            return len(text) // 4  # Conservative estimate
+    except:
+        pass
+    return 0
+
+
+def _find_longest_documents(doc_blocks: list[dict], n: int = 1) -> list[int]:
+    """
+    Return indices of the N longest documents by token estimate.
+    """
+    doc_sizes = [(i, _estimate_document_tokens(doc)) for i, doc in enumerate(doc_blocks)]
+    doc_sizes.sort(key=lambda x: x[1], reverse=True)  # Largest first
+    return [idx for idx, _ in doc_sizes[:n] if idx is not None]
+
+
+def _shorten_document(doc: dict, reduction_pct: float) -> dict:
+    """
+    Shorten a document by reduction_pct (0.0 to 1.0).
+    Strategy: Keep first 70% of target length + last 30% of target length.
+    This preserves critical info at start (names, IDs) and summaries at end.
+
+    Returns a new document dict with shortened text.
+    """
+    try:
+        src = doc.get("source", {})
+
+        if DEBUG:
+            print(f"    [_shorten_document] Source type: {type(src)}, is dict: {isinstance(src, dict)}")
+            if isinstance(src, dict):
+                print(f"    [_shorten_document] Source keys: {src.keys()}")
+                print(f"    [_shorten_document] Source type field: {src.get('type')}")
+
+        if not isinstance(src, dict) or src.get("type") != "text":
+            if DEBUG:
+                print(f"    [_shorten_document] Skipping: not a text document")
+            return doc
+
+        text = str(src.get("data", ""))
+        current_len = len(text)
+        target_len = int(current_len * (1.0 - reduction_pct))
+
+        if DEBUG:
+            print(f"    [_shorten_document] Current length: {current_len:,} chars")
+            print(f"    [_shorten_document] Reduction pct: {reduction_pct:.1%}")
+            print(f"    [_shorten_document] Target length: {target_len:,} chars")
+
+        if target_len >= current_len:
+            if DEBUG:
+                print(f"    [_shorten_document] No reduction needed (target >= current)")
+            return doc  # No reduction needed
+
+        if target_len <= 0:
+            if DEBUG:
+                print(f"    [_shorten_document] ERROR: Target length is <= 0!")
+            return doc
+
+        # Split: 70% from start, 30% from end
+        keep_start = int(target_len * 0.7)
+        keep_end = int(target_len * 0.3)
+
+        if DEBUG:
+            print(f"    [_shorten_document] Keeping: first {keep_start:,} + last {keep_end:,} chars")
+
+        shortened = (
+            text[:keep_start] +
+            "\n\n[... middle section truncated to fit token limit ...]\n\n" +
+            text[-keep_end:]
+        )
+
+        shortened_len = len(shortened)
+        if DEBUG:
+            print(f"    [_shorten_document] Result length: {shortened_len:,} chars")
+            print(f"    [_shorten_document] Actual reduction: {(current_len - shortened_len) / current_len:.1%}")
+
+        # Create new doc (don't mutate original)
+        new_doc = dict(doc)
+        new_src = dict(src)
+        new_src["data"] = shortened
+        new_doc["source"] = new_src
+        return new_doc
+
+    except Exception as e:
+        if DEBUG:
+            print(f"    [_shorten_document] Exception: {e}")
+            import traceback
+            traceback.print_exc()
+        return doc
+
+
 # Data aggregation helpers
 def _extract_gene_data(state: "State", gene: str) -> Dict[str, Any]:
     """Extract all data for a single gene from state."""
@@ -538,63 +649,129 @@ def conditioned_claude_node(state: "State") -> "State":
 
     # Pull latest user question
     user_question = state["messages"][-1]["content"]
-        
-    print('USER QUESTION')
-    print(user_question)
-    
-    if added_feedback=="":
-        
-        # User turn content: documents + question text
-        user_content = list(doc_blocks) + [
-            {
-                "type": "text",
-                "text": f"{user_question}\n Use provided information to answer."
-            }
-        ]
-    else:
-        # User turn content: documents + question text + feedback
-        user_content = list(doc_blocks) + [
-            {
-                "type": "text",
-                "text": f"{user_question}\n Use provided information to answer. Additionally, consider the following feedback as you tried to answer this quesiton before:\n {added_feedback}"
-            }
-        ]
-    
-    print('USER CONTENT')
-    print(user_content)
-    print('***')
 
-    # Call Claude (with backup fallback)
+    if DEBUG:
+        print('[conditioned_claude_node] USER QUESTION:')
+        print(user_question)
+        print('---')
+
+    # Call Claude with retry logic for token limit errors
+    # NOTE: user_content is built inside the retry loop with doc_blocks_working
+    MAX_RETRIES = 2
+    doc_blocks_working = list(doc_blocks)  # Mutable copy for shortening
+    shortened_docs = []  # Track what we shortened
     model_used = CONDITIONED_MODEL
     used_backup = False
-    try:
-        raw = claude_call(
-            model=CONDITIONED_MODEL,
-            temperature=0.0,
-            max_tokens=20000,
-            system=system_msg,
-            messages=[{"role": "user", "content": user_content}],
-        )
-    except Exception as exc:
-        if DEBUG:
-            print(f"[conditioned_claude_node] Primary model failed: {exc}")
-        if TOOL_SELECTOR_MODEL_BACKUP:
-            try:
-                raw = claude_call(
-                    model=TOOL_SELECTOR_MODEL_BACKUP,
-                    temperature=0.0,
-                    max_tokens=20000,
-                    system=system_msg,
-                    messages=[{"role": "user", "content": user_content}],
-                )
-                model_used = TOOL_SELECTOR_MODEL_BACKUP
-                used_backup = True
-            except Exception as exc2:
-                if DEBUG:
-                    print(f"[conditioned_claude_node] Backup model failed: {exc2}")
-                raise
+    raw = None
+
+    for attempt in range(MAX_RETRIES + 1):
+        # Rebuild user_content with current doc_blocks_working
+        if added_feedback == "":
+            user_content = list(doc_blocks_working) + [
+                {
+                    "type": "text",
+                    "text": f"{user_question}\n Use provided information to answer."
+                }
+            ]
         else:
-            raise
+            user_content = list(doc_blocks_working) + [
+                {
+                    "type": "text",
+                    "text": f"{user_question}\n Use provided information to answer. Additionally, consider the following feedback as you tried to answer this question before:\n {added_feedback}"
+                }
+            ]
+
+        try:
+            # Try primary model
+            raw = claude_call(
+                model=CONDITIONED_MODEL,
+                temperature=0.0,
+                max_tokens=20000,
+                system=system_msg,
+                messages=[{"role": "user", "content": user_content}],
+            )
+            model_used = CONDITIONED_MODEL
+            used_backup = False
+            break  # Success!
+
+        except Exception as exc:
+            exc_str = str(exc)
+            token_info = _parse_token_error(exc_str)
+
+            # Check if it's a "prompt too long" error and we have retries left
+            if token_info and attempt < MAX_RETRIES:
+                current_tokens, max_tokens = token_info
+                overage = current_tokens - max_tokens
+                overage_pct = overage / current_tokens
+                # Add 20% buffer to ensure we get under the limit
+                reduction_needed = overage_pct + 0.20
+
+                if DEBUG:
+                    print(f"\n[conditioned_claude_node] PROMPT TOO LONG")
+                    print(f"  Current: {current_tokens:,} tokens")
+                    print(f"  Maximum: {max_tokens:,} tokens")
+                    print(f"  Overage: {overage:,} tokens ({overage_pct*100:.1f}%)")
+                    print(f"  Retry {attempt + 1}/{MAX_RETRIES}: reducing by {reduction_needed*100:.1f}%")
+
+                # Find longest document
+                longest_indices = _find_longest_documents(doc_blocks_working, n=1)
+                if not longest_indices:
+                    if DEBUG:
+                        print("ERROR: No documents to shorten!")
+                    raise
+
+                longest_idx = longest_indices[0]
+                old_doc = doc_blocks_working[longest_idx]
+                old_tokens = _estimate_document_tokens(old_doc)
+                title = old_doc.get("title", f"Doc #{longest_idx}")
+
+                # Shorten it
+                new_doc = _shorten_document(old_doc, reduction_needed)
+                new_tokens = _estimate_document_tokens(new_doc)
+                doc_blocks_working[longest_idx] = new_doc
+
+                shortened_docs.append({
+                    "title": title,
+                    "attempt": attempt + 1,
+                    "old_tokens": old_tokens,
+                    "new_tokens": new_tokens,
+                    "reduction_pct": (old_tokens - new_tokens) / old_tokens if old_tokens > 0 else 0
+                })
+
+                if DEBUG:
+                    print(f"Shortened '{title}':")
+                    print(f"    {old_tokens:,} -> {new_tokens:,} tokens ({(old_tokens-new_tokens)/old_tokens*100:.1f}% reduction)")
+
+                continue  # Retry with shortened docs
+
+            # Not a token error, or out of retries - try backup model
+            if DEBUG:
+                print(f"[conditioned_claude_node] Primary model failed: {exc}")
+
+            if TOOL_SELECTOR_MODEL_BACKUP and attempt == 0:  # Only try backup on first failure
+                try:
+                    raw = claude_call(
+                        model=TOOL_SELECTOR_MODEL_BACKUP,
+                        temperature=0.0,
+                        max_tokens=20000,
+                        system=system_msg,
+                        messages=[{"role": "user", "content": user_content}],
+                    )
+                    model_used = TOOL_SELECTOR_MODEL_BACKUP
+                    used_backup = True
+                    break  # Success with backup!
+                except Exception as exc2:
+                    if DEBUG:
+                        print(f"[conditioned_claude_node] Backup model also failed: {exc2}")
+                    raise
+            else:
+                raise  # Out of retries or no backup
+
+    if shortened_docs and DEBUG:
+        print(f"\n[conditioned_claude_node] Document shortening summary:")
+        for s in shortened_docs:
+            print(f"  Attempt {s['attempt']}: '{s['title']}' reduced by {s['reduction_pct']*100:.1f}%")
+
     print(raw)
 
     answer_with_proofs = _anthropic_join_text(

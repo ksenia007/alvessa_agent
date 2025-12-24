@@ -293,6 +293,7 @@ def _handle_benchmark(args: argparse.Namespace) -> int:
     restart_by_csv: dict[str, set[str]] = {}
     existing_correct = 0
     existing_runtime = 0.0
+    restart_file = None
     def _normalize_q(q: str) -> str:
         return (q or "").strip().strip('"').strip("'")
     if getattr(args, "restart", None):
@@ -464,6 +465,7 @@ def _handle_benchmark_all(args: argparse.Namespace) -> int:
     total_correct = 0
     total_runtime = 0.0
     next_index = 1
+    restart_file = None
     def _normalize_q(q: str) -> str:
         return (q or "").strip().strip('"').strip("'")
 
