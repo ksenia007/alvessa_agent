@@ -12,23 +12,28 @@ import argparse
 from visualize_benchmarks import _compute_styles, _style_axes, _bootstrap_ci, canon_question
 
 # Configure benchmark CSVs to compare (model name -> CSV path)
-# MODEL_FILES = {
-#     "Alvessa": "results/benchmark_results/FINAL_DBQA_20251216-125635_cli/benchmark_summary.csv",
-#     "\nClaude\nSonnet 4.5": "results/benchmark_results/FINAL_claude_baseline_dbQA_20251215-2308.csv",
-#     "ChatGPT 5.1": "results/benchmark_results/FINAL_chatgpt_baseline_dbQA_20251215-2330.csv"
-# }
-# MATCH_Q = True  # whether to only use questions that were attempted by all models
-# OTHER_HATCHES = [ "\\\\",  "xx", "//", "++", "--"]
-# WIDTH_PLOT = 2.5
+MODEL_FILES = {
+    "Alvessa": "results/benchmark_results/FINAL_DBQA_20251216-125635_cli/benchmark_summary.csv",
+    "\nClaude\nSonnet 4.5\n": "results/benchmark_results/FINAL_claude_baseline_dbQA_20251215-2308.csv",
+    "ChatGPT 5.1": "results/benchmark_results/FINAL_chatgpt_baseline_dbQA_20251215-2330.csv"
+}
+MATCH_Q = True  # whether to only use questions that were attempted by all models
+OTHER_HATCHES = [ "\\\\",  "xx", "//", "++", "--"]
+WIDTH_PLOT = 4
+figure_ext = '_LLM'
 
 
 MODEL_FILES = {
     "Alvessa*": "results/benchmark_results/FINAL_DBQA_20251216-125635_cli/benchmark_summary.csv",
-    "Biomni*": "results/benchmark_results/biomni_baseline_dbQA_subset_20251219-1701.csv",
+    "Biomni*\n\n\n": "results/benchmark_results/biomni_baseline_dbQA_subset_20251219-1701.csv",
 }
 OTHER_HATCHES = [ "..",  "xx", "//", "++", "--"]
 MATCH_Q = True
-WIDTH_PLOT = 2.0
+WIDTH_PLOT = (4/3)*2
+figure_ext = '_B'
+
+
+BAR_WIDTH = 0.85  # unified bar width across all plots
 
 ALVESSA_COLOR = "#D95F02"
 # Palette/hatches for non-Alvessa models (cycled in order of appearance)
@@ -112,8 +117,10 @@ def _style_axes(ax, theme: str) -> None:
         ax.figure.set_facecolor("none")
         color = "#f5f5f5"
         spine_color = "#888888"
-    ax.tick_params(axis="both", labelsize=12, colors=color)
-    ax.set_ylabel("Accuracy", fontsize=14, color=color)
+
+    ax.tick_params(axis="x", labelsize=14, colors=color)
+    ax.tick_params(axis="y", labelsize=13, colors=color)
+    ax.set_ylabel("Accuracy", fontsize=15, color=color)
     for spine in ax.spines.values():
         spine.set_color(spine_color)
     ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.5, color=spine_color)
@@ -158,12 +165,12 @@ def _plot_by_group(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> 
 
     x = np.arange(len(groups))
     fig_width = max(10, len(groups) * 0.6)
-    fig, ax = plt.subplots(figsize=(fig_width, 5), dpi=300)
+    fig, ax = plt.subplots(figsize=(fig_width, 6.0), dpi=300)
 
     models_order = list(data.keys())
     styles = _compute_styles(models_order)
     n_models = len(models_order)
-    width = min(0.8 / max(1, n_models), 0.15)
+    width = BAR_WIDTH
 
     text_color = "#111111" if theme == "white" else "#F5F5F5"
     outline_color = "white" if theme == "white" else "#FFFFFF"
@@ -178,7 +185,7 @@ def _plot_by_group(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> 
         err_lower = [max(0.0, v - low_map.get(g, v)) for g, v in zip(groups, vals)]
         err_upper = [max(0.0, high_map.get(g, v) - v) for g, v in zip(groups, vals)]
         color, hatch = styles.get(model, ("#888888", "//"))
-        positions = x + (idx - (n_models - 1) / 5) * width * 1.3
+        positions = x + (idx - (n_models - 1) / 2) * width
 
         base_bars = ax.bar(
             positions,
@@ -215,15 +222,16 @@ def _plot_by_group(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> 
         ax.add_patch(p)
 
     ax.set_xticks(x)
-    ax.set_xticklabels(groups, rotation=45, ha="right", fontsize=11, color=text_color)
+    ax.set_xticklabels(groups, rotation=45, ha="right", fontsize=13, color=text_color)
     _style_axes(ax, theme)
+    
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["left"].set_color("#A0A0A0")
     ax.spines["bottom"].set_color("#A0A0A0")
     ax.legend(fontsize=11, loc="upper right", bbox_to_anchor=(1.15, 1.0))
 
-    fname = "benchmark_dbqa_by_group_white.png" if theme == "white" else "benchmark_dbqa_by_group_black.png"
+    fname = f"benchmark_dbqa_by_group_white{figure_ext}.png" if theme == "white" else f"benchmark_dbqa_by_group_black{figure_ext}.png"
     out_path = out_dir / fname
     if theme == "white":
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False, facecolor="white")
@@ -257,8 +265,8 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
     text_color = "#111111" if theme == "white" else "#F5F5F5"
     outline_color = "white" if theme == "white" else "#FFFFFF"
 
-    fig, ax = plt.subplots(figsize=(WIDTH_PLOT, 5.0), dpi=300) # (max(WIDTH_PLOT, len(labels) * 0.8)
-    width = 0.6
+    fig, ax = plt.subplots(figsize=(WIDTH_PLOT, 6.0), dpi=300) # (max(WIDTH_PLOT, len(labels) * 0.8)
+    width = BAR_WIDTH
     colors = []
     hatches = []
     for name in labels:
@@ -300,15 +308,18 @@ def _plot_overall(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) -> P
         ax.add_patch(p)
 
     ax.set_xticks(x_pos)
-    ax.set_xticklabels(labels, rotation=0, ha="center", fontsize=11, color=text_color)
+    ax.set_xticklabels(labels, rotation=0, ha="center", fontsize=16, color=text_color)
 
     _style_axes(ax, theme)
+    
+
+
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["left"].set_color("#A0A0A0")
     ax.spines["bottom"].set_color("#A0A0A0")
 
-    fname = "benchmark_dbqa_overall_white.png" if theme == "white" else "benchmark_dbqa_overall_black.png"
+    fname = f"benchmark_dbqa_overall_white{figure_ext}.png" if theme == "white" else f"benchmark_dbqa_overall_black{figure_ext}.png"
     out_path = out_dir / fname
     if theme == "white":
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False, facecolor="white")

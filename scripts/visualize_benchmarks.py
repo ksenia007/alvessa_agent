@@ -20,15 +20,20 @@ MODEL_FILES = {
     "ChatGPT 5.1": "results/benchmark_results/FINAL_chatgpt_baseline_GenomeArena_20251216-0122.csv", 
     '\nClaude\nSonnet 4.5+\nsearch': "results/benchmark_results/claude_baseline_web_serch_N5_GenomeArena_20251216-2008.csv",
 }
+
 OTHER_HATCHES = [ "\\\\",  "xx", "//", "++", "--"]
-WIDTH_PLOT = 4.0
+WIDTH_PLOT = (4/3)*4
+fig_ext = '_LLM'
 
 MODEL_FILES = {
     "Alvessa*": 'results/benchmark_results/FINAL_GA_20251216-162600_cli/benchmark_summary.csv',
-    'Biomni*': "results/benchmark_results/biomni_baseline_GA_10_subset_20251218-2235.csv", 
+    'Biomni*\n\n\n': "results/benchmark_results/biomni_baseline_GA_10_subset_20251218-2235.csv", 
 }
 OTHER_HATCHES = ["..", "xx", "//", "\\\\",  "++", "--"]
-WIDTH_PLOT = 3.1#5.5
+WIDTH_PLOT = (4/3)*2
+fig_ext = '_B'
+
+BAR_WIDTH = 0.85  # unified bar width across all plots
 
 MATCH_Q = True  # whether to only use questions that were attempted by all models
 ALVESSA_COLOR = "#D95F02"
@@ -144,7 +149,7 @@ def _style_axes(ax, theme: str) -> None:
         ax.figure.set_facecolor("none")
         color = "#f5f5f5"
         spine_color = "#888888"
-    ax.tick_params(axis="both", labelsize=12, colors=color)
+    ax.tick_params(axis="both", labelsize=13, colors=color)
     ax.set_ylabel("Accuracy", fontsize=14, color=color)
     for spine in ax.spines.values():
         spine.set_color(spine_color)
@@ -193,7 +198,7 @@ def _plot_by_folder(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) ->
     models_order = list(data.keys())
     styles = _compute_styles(models_order)
     n_models = len(models_order)
-    width = min(0.8 / max(1, n_models), 0.15)
+    width = BAR_WIDTH
 
     text_color = "#111111" if theme == "white" else "#F5F5F5"
     # match overall: white outline for hatching
@@ -211,7 +216,7 @@ def _plot_by_folder(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) ->
         err_upper = [max(0.0, high_map.get(f, v) - v) for f, v in zip(folders, vals)]
 
         color, hatch = styles.get(model, ("#888888", "//"))
-        positions = x + (idx - (n_models - 1) / 5) * width*1.3
+        positions = x + (idx - (n_models - 1) / 2) * width
 
         # base bars to get geometry
         base_bars = ax.bar(
@@ -282,7 +287,7 @@ def _plot_by_folder(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) ->
 
     plt.tight_layout()
 
-    fname = "benchmark_by_folder_white.png" if theme == "white" else "benchmark_by_folder_black.png"
+    fname = f"benchmark_by_folder_white{fig_ext}.png" if theme == "white" else f"benchmark_by_folder_black{fig_ext}.png"
     out_path = out_dir / fname
     if theme == "white":
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False, facecolor="white")
@@ -326,7 +331,7 @@ def _plot_by_folder_set(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str
         folder_bounds: List[Tuple[str, float, float]] = []
         folder_order_flat: List[str] = []
         current_x = 0.0
-        gap_sets = 0.5
+        gap_sets = max(BAR_WIDTH + 0.1, 0.7)
         gap_folders = 1.2
         for f in folders_subset:
             names: List[str] = []
@@ -350,7 +355,7 @@ def _plot_by_folder_set(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str
         return positions, labels, folder_bounds, folder_order_flat
 
     styles = _compute_styles(list(data.keys()))
-    width = min(0.8 / max(1, len(data)), 0.28)
+    width = BAR_WIDTH
     n_models = max(1, len(data))
 
     # split folders into two halves to reduce horizontal sprawl
@@ -425,7 +430,7 @@ def _plot_by_folder_set(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str
     if handles:
         axes[0].legend(handles, labels_legend, fontsize=11, loc="upper right")
 
-    fname = "benchmark_by_folder_set_white.png" if theme == "white" else "benchmark_by_folder_set_black.png"
+    fname = f"benchmark_by_folder_set_white{fig_ext}.png" if theme == "white" else f"benchmark_by_folder_set_black{fig_ext}.png"
     out_path = out_dir / fname
     if theme == "white":
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False, facecolor="white")
@@ -457,11 +462,10 @@ def _plot_overall(data: Dict[str, pd.DataFrame], raw_data: Dict[str, pd.DataFram
     text_color = "#111111" if theme == "white" else "#F5F5F5"
     outline_color = "white" if theme == "white" else "#FFFFFF"
 
-    fig_width = WIDTH_PLOT #max(6.0, len(labels) * 0.8)
-    fig, ax = plt.subplots(figsize=(fig_width, 5.0), dpi=300)
+    fig_width = WIDTH_PLOT 
+    fig, ax = plt.subplots(figsize=(fig_width, 6.0), dpi=300)
 
     x_pos = np.arange(len(labels))
-    width = 0.6  # nice wide bars
 
     styles = _compute_styles(labels)
     colors = []
@@ -477,7 +481,7 @@ def _plot_overall(data: Dict[str, pd.DataFrame], raw_data: Dict[str, pd.DataFram
         accuracies,
         color=colors,
         edgecolor="none",
-        width=width,
+        width=BAR_WIDTH,
         yerr=[np.maximum(0, np.array(accuracies) - np.array(ci_lows)), np.maximum(0, np.array(ci_highs) - np.array(accuracies))],
         capsize=5,
         error_kw=dict(lw=2.3, capsize=5, capthick=3),
@@ -503,7 +507,7 @@ def _plot_overall(data: Dict[str, pd.DataFrame], raw_data: Dict[str, pd.DataFram
 
         p = FancyBboxPatch(
             (bbox.xmin, bbox.ymin),
-            bbox.width,
+            BAR_WIDTH, #bbox.width,
             bbox.height,
             boxstyle="round,pad=0.0",
             linewidth=1.0,                 
@@ -519,17 +523,17 @@ def _plot_overall(data: Dict[str, pd.DataFrame], raw_data: Dict[str, pd.DataFram
 
     # Y axis setup
     ax.set_ylim(0.0, 1.05)
-    ax.set_ylabel("Accuracy", fontsize=12, color=text_color)
-    ax.set_xlabel("", labelpad=6)
+    ax.set_ylabel("Accuracy", fontsize=15, color=text_color)
+    # ax.set_xlabel("", labelpad=6)
 
-    ax.tick_params(axis="y", labelsize=10, colors=text_color)
-    ax.tick_params(axis="x", labelsize=13, colors=text_color)
+    ax.tick_params(axis="y", labelsize=13, colors=text_color)
+    ax.tick_params(axis="x", labelsize=14, colors=text_color)
 
     ax.grid(True, axis="y", linestyle="--", linewidth=0.6, alpha=0.6)
     ax.grid(False, axis="x")
 
     # External theming hook
-    _style_axes(ax, theme)
+    # _style_axes(ax, theme)
 
     # Spines
     ax.spines["top"].set_visible(False)
@@ -539,7 +543,7 @@ def _plot_overall(data: Dict[str, pd.DataFrame], raw_data: Dict[str, pd.DataFram
 
     plt.tight_layout()
 
-    fname = "benchmark_overall_white.png" if theme == "white" else "benchmark_overall_black.png"
+    fname = f"benchmark_overall_white{fig_ext}.png" if theme == "white" else f"benchmark_overall_black{fig_ext}.png"
     out_path = out_dir / fname
     if theme == "white":
         fig.savefig(out_path, dpi=300, bbox_inches="tight", transparent=False, facecolor="white")
