@@ -887,41 +887,287 @@
       const LOCAL_FILES = new Map();
 
       // ---- Save page (snapshot) ----
-      function saveFullPageSnapshot() {
-        try {
-          const htmlEl = document.documentElement.cloneNode(true);
-          htmlEl.querySelectorAll(".cite-tip").forEach((n) => n.remove());
+      async function saveFullPageSnapshot() {
+        const saveBtn = byId("savePageBtn");
+        const originalText = saveBtn?.textContent || "Save HTML";
 
-          const boot = document.createElement("script");
+        try {
+          if (saveBtn) {
+            saveBtn.textContent = "Preparing...";
+            saveBtn.disabled = true;
+          }
+
+          // Check FILE_CACHE size
+          let totalCacheSize = 0;
+          for (const [_, content] of FILE_CACHE.entries()) {
+            totalCacheSize += (typeof content === "string" ? content.length : 0);
+          }
+          const cacheSizeMB = (totalCacheSize / (1024 * 1024)).toFixed(1);
+
+          if (totalCacheSize > 50 * 1024 * 1024) { // >50MB
+            if (!confirm(
+              `Warning: Your uploaded files total ${cacheSizeMB} MB. The saved HTML will be very large.\n\n` +
+              `This may cause issues opening the file. Continue anyway?`
+            )) {
+              return;
+            }
+          }
+
+          if (saveBtn) saveBtn.textContent = "Fetching resources...";
+
+          // Fetch external resources to inline them
+          const [markdownItJs, dompurifyJs, googleFontsCss, answerJs, waitingJs, geneSummaryJs, variantSummaryJs] = await Promise.all([
+            fetch("https://cdn.jsdelivr.net/npm/markdown-it@13/dist/markdown-it.min.js")
+              .then(r => r.text()).catch(() => ""),
+            fetch("https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js")
+              .then(r => r.text()).catch(() => ""),
+            fetch("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&display=swap")
+              .then(r => r.text()).catch(() => ""),
+            fetch("./static/answer.js")
+              .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => ""),
+            fetch("./static/waiting_module.js")
+              .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => ""),
+            fetch("./static/gene_summary.js")
+              .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => ""),
+            fetch("./static/variant_summary.js")
+              .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => "")
+          ]);
+
+          if (saveBtn) saveBtn.textContent = "Converting images...";
+
+          // Convert local images to data URIs
+          const imageMap = new Map();
+          const imageUrls = [
+            "images/rocket_logo.png",
+            "images/rocket_favicon_32.png",
+            "images/rocket_favicon_64.png",
+            "images/rocket_favicon_180.png",
+            "favicon.ico"
+          ];
+
+          for (const url of imageUrls) {
+            try {
+              const resp = await fetch(url);
+              const blob = await resp.blob();
+              const dataUrl = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+              });
+              imageMap.set(url, dataUrl);
+            } catch (e) {
+              console.warn(`Could not fetch ${url}:`, e);
+            }
+          }
+
+          if (saveBtn) saveBtn.textContent = "Building snapshot...";
+
+          // Clone the page
+          const htmlEl = document.documentElement.cloneNode(true);
+
+          // Remove interactive UI elements not needed in snapshot
+          htmlEl.querySelector(".starfield")?.remove();
+          htmlEl.querySelector(".bg-overlay")?.remove();
+          htmlEl.querySelectorAll(".gradient-orb")?.forEach(o => o.remove());
+          htmlEl.querySelector("#hero")?.remove();
+          htmlEl.querySelector(".floating-ui")?.remove();
+          htmlEl.querySelectorAll(".cite-tip")?.forEach((n) => n.remove());
+
+          // Add snapshot info banner at the top
+          const grid = htmlEl.querySelector("#grid");
+          if (grid && grid.parentNode) {
+            const banner = htmlEl.ownerDocument.createElement("div");
+            banner.style.cssText = "background: rgba(232, 93, 4, 0.15); border: 1px solid rgba(232, 93, 4, 0.3); border-radius: 12px; padding: 12px 16px; margin: 20px auto; max-width: 900px; font-size: 14px; line-height: 1.5;";
+            banner.innerHTML = `
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">📦</span>
+                <div>
+                  <strong>Alvessa Snapshot</strong> — Saved on ${new Date().toLocaleString()}
+                  <div style="opacity: 0.8; font-size: 13px; margin-top: 4px;">
+                    This is a self-contained research snapshot. All core features work offline.
+                    3D molecular visualizations require internet for RDKit.js library.
+                  </div>
+                </div>
+              </div>
+            `;
+            grid.parentNode.insertBefore(banner, grid);
+          }
+
+          // Replace external script tags with inlined versions
+          if (markdownItJs) {
+            const mdScript = htmlEl.querySelector('script[src*="markdown-it"]');
+            if (mdScript) {
+              const inlineScript = htmlEl.ownerDocument.createElement("script");
+              inlineScript.textContent = markdownItJs;
+              mdScript.replaceWith(inlineScript);
+            }
+          }
+
+          if (dompurifyJs) {
+            const dpScript = htmlEl.querySelector('script[src*="dompurify"]');
+            if (dpScript) {
+              const inlineScript = htmlEl.ownerDocument.createElement("script");
+              inlineScript.textContent = dompurifyJs;
+              dpScript.replaceWith(inlineScript);
+            }
+          }
+
+          // Replace Google Fonts link with inlined CSS
+          if (googleFontsCss) {
+            const fontLink = htmlEl.querySelector('link[href*="fonts.googleapis.com"]');
+            if (fontLink) {
+              const styleEl = htmlEl.ownerDocument.createElement("style");
+              styleEl.textContent = googleFontsCss;
+              fontLink.replaceWith(styleEl);
+            }
+          }
+
+          // Replace image URLs with data URIs
+          for (const [url, dataUrl] of imageMap.entries()) {
+            // Replace in img src
+            htmlEl.querySelectorAll(`img[src="${url}"]`).forEach(img => {
+              img.setAttribute("src", dataUrl);
+            });
+            // Replace in link href (favicons)
+            htmlEl.querySelectorAll(`link[href="${url}"]`).forEach(link => {
+              link.setAttribute("href", dataUrl);
+            });
+          }
+
+          // Remove the Google Fonts preconnect links (no longer needed)
+          htmlEl.querySelectorAll('link[rel="preconnect"]').forEach(l => l.remove());
+
+          // Inline module scripts (answer.js, gene_summary.js, etc.)
+          // Find the main module script and replace with non-module version
+          const mainModuleScript = Array.from(htmlEl.querySelectorAll('script[type="module"]'))
+            .find(s => s.textContent.includes('import { renderAnswerVerified }'));
+
+          if (mainModuleScript && answerJs && waitingJs && geneSummaryJs && variantSummaryJs) {
+            // Create inline scripts for the modules (converted to global functions)
+            const inlineAnswerScript = htmlEl.ownerDocument.createElement("script");
+            inlineAnswerScript.textContent = answerJs;
+
+            const inlineWaitingScript = htmlEl.ownerDocument.createElement("script");
+            inlineWaitingScript.textContent = waitingJs;
+
+            const inlineGeneScript = htmlEl.ownerDocument.createElement("script");
+            inlineGeneScript.textContent = geneSummaryJs;
+
+            const inlineVariantScript = htmlEl.ownerDocument.createElement("script");
+            inlineVariantScript.textContent = variantSummaryJs;
+
+            // Convert the main module script to use global functions
+            let mainScriptContent = mainModuleScript.textContent;
+            // Remove import statements
+            mainScriptContent = mainScriptContent
+              .replace(/import\s*{[^}]+}\s*from\s*["'][^"']+["'];?\s*/g, '')
+              .trim();
+
+            const newMainScript = htmlEl.ownerDocument.createElement("script");
+            newMainScript.textContent = mainScriptContent;
+
+            // Replace the module script with our inlined versions
+            mainModuleScript.replaceWith(inlineAnswerScript);
+            inlineAnswerScript.insertAdjacentElement('afterend', inlineWaitingScript);
+            inlineWaitingScript.insertAdjacentElement('afterend', inlineGeneScript);
+            inlineGeneScript.insertAdjacentElement('afterend', inlineVariantScript);
+            inlineVariantScript.insertAdjacentElement('afterend', newMainScript);
+          }
+
+          // Add boot script with STATE, LOCAL_FILES, FILE_CACHE
+          const boot = htmlEl.ownerDocument.createElement("script");
           boot.type = "text/javascript";
           const stateJson = JSON.stringify(STATE ?? {});
           const localFilesJson = JSON.stringify(Array.from(LOCAL_FILES.entries()));
           const fileCacheJson = JSON.stringify(Array.from(FILE_CACHE.entries()));
           const isLight = document.body.classList.contains("light");
+
           boot.textContent = `
-              (function(){
-                try{
-                  window.STATE = ${stateJson};
-                  try{ window.LOCAL_FILES = new Map(${localFilesJson}); }catch(_){}
-                  try{ window.FILE_CACHE  = new Map(${fileCacheJson}); }catch(_){}
-                  if(${isLight}) document.body.classList.add('light'); else document.body.classList.remove('light');
-                  if (typeof refresh === 'function') refresh();
-                }catch(e){ console.warn('Snapshot boot failed', e); }
-              })();
-            `;
+            (function(){
+              try{
+                window.STATE = ${stateJson};
+                try{ window.LOCAL_FILES = new Map(${localFilesJson}); }catch(e){ console.warn('LOCAL_FILES restore failed:', e); }
+                try{ window.FILE_CACHE = new Map(${fileCacheJson}); }catch(e){ console.warn('FILE_CACHE restore failed:', e); }
+                if(${isLight}) document.body.classList.add('light'); else document.body.classList.remove('light');
+
+                // Ensure we start with grid visible (not hero)
+                window.HERO_SHOWN = false;
+
+                // Wait for DOMContentLoaded if refresh is defined, otherwise use polling
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', function() {
+                    // Show grid, hide hero (in case CSS didn't handle it)
+                    var hero = document.getElementById('hero');
+                    var grid = document.getElementById('grid');
+                    var toolbar = document.getElementById('toolbar');
+                    if (hero) hero.style.display = 'none';
+                    if (grid) grid.style.display = 'block';
+                    if (toolbar) toolbar.style.display = 'flex';
+
+                    if (typeof refresh === 'function') refresh();
+                  });
+                } else {
+                  // Document already loaded
+                  var hero = document.getElementById('hero');
+                  var grid = document.getElementById('grid');
+                  var toolbar = document.getElementById('toolbar');
+                  if (hero) hero.style.display = 'none';
+                  if (grid) grid.style.display = 'block';
+                  if (toolbar) toolbar.style.display = 'flex';
+
+                  // Check if refresh exists
+                  let attempts = 0;
+                  const tryRefresh = setInterval(function() {
+                    attempts++;
+                    if (typeof refresh === 'function') {
+                      refresh();
+                      clearInterval(tryRefresh);
+                    } else if (attempts > 20) {
+                      console.warn('refresh() function not found after 20 attempts');
+                      clearInterval(tryRefresh);
+                    }
+                  }, 100);
+                }
+              }catch(e){
+                console.error('Snapshot boot failed:', e);
+                alert('Failed to restore saved state. Check console for details.');
+              }
+            })();
+          `;
           htmlEl.querySelector("body")?.appendChild(boot);
 
-          const doctype = "<!doctype html>\n";
+          if (saveBtn) saveBtn.textContent = "Saving file...";
+
+          // Generate final HTML
+          const doctype = "<!DOCTYPE html>\n";
           const htmlText = doctype + htmlEl.outerHTML;
           const blob = new Blob([htmlText], { type: "text/html;charset=utf-8" });
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = "alvessa_snapshot.html";
+
+          // Use timestamp in filename
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+          a.download = `alvessa_snapshot_${timestamp}.html`;
           a.click();
-          setTimeout(() => URL.revokeObjectURL(url), 800);
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          if (saveBtn) {
+            saveBtn.textContent = "✓ Saved!";
+            setTimeout(() => {
+              saveBtn.textContent = originalText;
+              saveBtn.disabled = false;
+            }, 2000);
+          }
+
         } catch (e) {
-          alert("Could not create snapshot: " + e.message);
+          console.error("Save snapshot error:", e);
+          alert("Could not create snapshot: " + e.message + "\n\nCheck console for details.");
+          if (saveBtn) {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+          }
         }
       }
 

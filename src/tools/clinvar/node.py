@@ -126,8 +126,8 @@ NODES: tuple[Node, ...] = (
         name="clinvar_variants_node",
         entry_point=clinvar_variants_node,
         description=(
-            "Pulls all of the pathogenic/likely pathogenic variants per gene as text (rsID, type, name, clinical significance) from the ClinVar database. "
-            "Should only be called if exact variant information such as amino acid subtitution or variant ID is required to answer the question, otherwise use ClinVar gene-level."
+            "Retrieves pathogenic and likely pathogenic variants for input genes (rsID, variant type, name, clinical significance) from the ClinVar database. "
+            "Should only be called if exact variant information such as amino acid substitution or variant ID is required to answer the question, otherwise use ClinVar gene-level."
             " Might create excessively long context for commonly implicated genes."
         ),
     ),

@@ -4,7 +4,6 @@ Contributors:
 Created: 2024-06-25
 Updated: 2025-10-20
 
-
 Description: 
 Self-verification node that checks if the answer matches context."""
 
@@ -33,9 +32,7 @@ def _numbers(s: str) -> Set[str]:
     """Extract standalone numeric tokens; never digits that are part of gene-like tokens."""
     return set(_NUM_RE.findall(s or ""))
 
-
 _CHARS_RE = re.compile(r"\[chars\s+(\d+)\s*[–-]\s*(\d+)\]", re.I)
-
 
 # split a semicolon list but ignore semicolons inside quotes
 def _split_proofs_safely(proofs_raw: str) -> list[str]:
@@ -53,12 +50,12 @@ def _split_proofs_safely(proofs_raw: str) -> list[str]:
 
 _CHARS_RE = re.compile(r"\[chars\s+(\d+)\s*[–-]\s*(\d+)\]", re.I | re.U)
 
-
 def _parse_one_proof(p: str) -> Dict[str, Any]:
     p = (p or "").strip()
     snippet = ""
     title = None
     char_range = None
+    doc_index = None
 
     first_quote = p.find('"')
     closing_marker = '"@'
@@ -81,10 +78,18 @@ def _parse_one_proof(p: str) -> Dict[str, Any]:
         if a <= b:
             char_range = [a, b]
 
+    # doc index marker: [doc N]
+    doc_match = re.search(r"\[doc\s+(\d+)\]", p)
+    if doc_match:
+        try:
+            doc_index = int(doc_match.group(1))
+        except Exception:
+            doc_index = None
+
     return {
         "cited_text": snippet,
         "title": title,
-        "document_index": None,  # will be resolved via manifest
+        "document_index": doc_index,  # optional, may be resolved via manifest
         "char_range": char_range
     }
 
@@ -117,15 +122,32 @@ def _link_titles_to_indices(proofs: List[Dict[str, Any]], manifest: List[Dict[st
         if title and title in title2idx:
             p["document_index"] = title2idx[title]
 
-
-
-def _link_titles_to_indices(proofs: List[Dict[str, Any]], manifest: List[Dict[str, Any]]) -> None:
-    title2idx = {str(m["title"]).strip(): int(m["index"])
-                 for m in manifest if "title" in m and "index" in m}
+def _slice_proofs_from_docs(proofs: List[Dict[str, Any]], doc_texts: Dict[int, str]) -> None:
+    """
+    Replace cited_text using char_range/document_index when available.
+    Raise if slicing is not possible (debugging).
+    """
     for p in proofs:
-        title = (p.get("title") or "").strip()
-        if title and title in title2idx:
-            p["document_index"] = title2idx[title]
+        di = p.get("document_index")
+        cr = p.get("char_range")
+        if di is None or not isinstance(cr, (list, tuple)) or len(cr) != 2:
+            print("[verify] Skipping proof slicing; missing document_index or char_range.")
+            print(f"[verify] Proof data: document_index={di}, char_range={cr}")
+            raise ValueError("Missing document_index or char_range for proof slicing")
+        try:
+            text = doc_texts.get(int(di), "")
+            if not text:
+                print(f"[verify] Missing document text for index={di}; cannot slice proof.")
+                raise RuntimeError("Missing document text for proof slicing")
+            start, end = int(cr[0]), int(cr[1])
+            start = max(0, start)
+            end = max(start, min(len(text), end))
+            p["cited_text"] = text[start:end]
+            if DEBUG:
+                print(f"[verify] Sliced proof for doc_index={di}, range={cr}: '{p['cited_text']}'")
+        except Exception as exc:
+            print(f"[verify] Failed to slice proof for doc_index={di}, range={cr}: {exc}")
+            raise
 
 # -----------------------------------
 # Deterministic verdict
@@ -311,7 +333,6 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
         parsed = {}    
     return parsed
 
-
 def _merge_chunked_feedback(chunks: List[Dict[str, Any]] | None) -> Dict[str, Any]:
     if DEBUG:
         print(f"[_merge_chunked_feedback] Merging {len(chunks) if chunks else 0} chunks")
@@ -350,10 +371,8 @@ def _merge_chunked_feedback(chunks: List[Dict[str, Any]] | None) -> Dict[str, An
     return combined
 
 
-
 def _is_speculation_text(text: str) -> bool:
     return (text or "").lstrip().lower().startswith("possible speculation:")
-
 
 def verify_evidence_node(state: "State") -> "State":
     if DEBUG:
@@ -376,7 +395,31 @@ def verify_evidence_node(state: "State") -> "State":
 
     idx2title = {int(m["index"]): str(m["title"]) for m in manifest if "index" in m and "title" in m}
 
-    # 3) Deterministic categorical verdicts
+    # Build index -> raw document text lookup (from manifest; fall back to reply docs or manifest text)
+    doc_texts: Dict[int, str] = {}
+    for m in manifest:
+        try:
+            i = int(m.get("index"))
+        except Exception:
+            continue
+        txt = m.get("text")
+        if txt:
+            doc_texts[i] = str(txt)
+    # If reply carries a documents dict, merge it
+    docs_dict = reply.get("documents") or {}
+    if isinstance(docs_dict, dict):
+        for k, v in docs_dict.items():
+            try:
+                ki = int(k)
+            except Exception:
+                continue
+            doc_texts[ki] = str(v or "")
+
+    # 3) Slice proofs using char ranges where possible
+    for s in statements:
+        _slice_proofs_from_docs(s.get("proofs", []), doc_texts)
+
+    # 4) Deterministic categorical verdicts
     verified: List[Dict[str, Any]] = []
     for s in statements:
         verdict, reasons = _deterministic_verdict(s["text"], s.get("proofs", []), idx2title)
@@ -388,7 +431,7 @@ def verify_evidence_node(state: "State") -> "State":
             "is_speculation": _is_speculation_text(s["text"]),
         })
 
-    # 4) LLM PASS
+    # 5) LLM PASS
     overall_feedback = _llm_feedback(verified, question)
     
     support_quality = None

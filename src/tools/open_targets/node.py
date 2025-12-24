@@ -240,6 +240,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="OpenTargets",
         entry_point=opentargets_agent,
-        description="Fetches target-disease associations, tissue-specific expression, essentiality, genetic constraint for synonymous, missense, and loss-of-function variants, target gene to drug adverse effect associations, and variant to drug response associations from Open Targets for the input genes.",
+        description="Fetches target-disease associations, tissue-specific expression, essentiality, genetic constraint for synonymous, missense, and loss-of-function variants, associations between target genes and drug-induced adverse effects, and variant to drug response associations from Open Targets for the input genes.",
     ),
 )

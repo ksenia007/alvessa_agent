@@ -481,21 +481,21 @@ def _anthropic_join_text(
 
             # Fallback to model-provided cited_text
             if not snippet and cited:
-                snippet = _short_proof(cited, n=240)
+                snippet = _short_proof(cited, n=2400)
 
             # Resolve title via manifest if missing
             if (not title) and idx2title is not None and d_idx is not None:
                 title = idx2title.get(int(d_idx), "")
 
             if snippet:
-                # Include where-span so the join text is self-sufficient
                 where = ""
                 if typ == "char_location" and a is not None and b_ is not None:
                     where = f" [chars {a}–{b_}]"
+                idx_marker = f" [doc {d_idx}]" if d_idx is not None else ""
                 if title:
-                    proofs.append(f"\"{snippet}\"@{title}{where}")
+                    proofs.append(f"\"{snippet}\"@{title}{where}{idx_marker}")
                 else:
-                    proofs.append(f"\"{snippet}\"{where}")
+                    proofs.append(f"\"{snippet}\"{where}{idx_marker}")
 
         proofs_repr = "NONE" if not proofs else "; ".join(proofs)
         parts.append((proofs_repr, text))
@@ -628,7 +628,10 @@ def conditioned_claude_node(state: "State") -> "State":
             "Be thorough and point out all relevant and potentially interesting information."
             "Requirements:\n"
             "- Every factual claim must be grounded in the documents and include citations.\n"
-            "- When citing, prioritize attaching citations to complete sentences or clear factual units. Avoid breaking sentences unnaturally or through sections, split by sentences is prioritized.\n"
+            "- When a claim is supported by multiple facts from the documents, cite each supporting "
+            "passage separately rather as a list of citations rather than citing only the first occurrence or a large chunk of text.\n"
+            "- When citing, prioritize attaching citations to complete sentences or clear factual units. "
+            "Avoid breaking sentences unnaturally unless needed for citations.\n"
             "- Do not add outside knowledge. If key information is missing, say so briefly.\n"
             "- Lead with the direct answer to the question. Then provide supporting details in decreasing order of importance, with concise synthesis where useful (also cited).\n"
             "- Length: write as much as needed for completeness and clarity.\n"
@@ -785,7 +788,9 @@ def conditioned_claude_node(state: "State") -> "State":
     parsed_resp = {
         "answer_with_proofs": answer_with_proofs,
         "answer": answer_plain,
-        "manifest": manifest,          
+        "manifest": manifest,
+        # pass raw documents so verifier can slice by char_range
+        "documents": {i: t for i, t in doc_text_by_index.items()},
         "raw_answer": raw,
         "model_used": model_used,
     }
