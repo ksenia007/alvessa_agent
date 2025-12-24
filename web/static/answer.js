@@ -629,7 +629,7 @@ function normalizeRawText(src) {
   /* Pills / badges */
   .answer-topbar { margin: -2px 0 10px; }
   .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; border:1px solid currentColor; }
-  .badge-supported  { color:#065f46; background:rgba(16,185,129,.20); border-color:rgba(5,150,105,.40); }
+  .badge-supported  { color:#d1fae5; background:rgba(16,185,129,.20); border-color:rgba(5,150,105,.55); }
   .badge-partial    { color:#8a6100; background:rgba(234,179,8,.20);  border-color:rgba(161,98,7,.40); }
   .badge-unsupported{ color:#f8fafc; background:rgba(255,255,255,.16); border-color:rgba(255,255,255,.32); }
   body.light .badge-supported  { color:#065f46; background:rgba(5,150,105,.14); border-color:rgba(5,150,105,.34); }

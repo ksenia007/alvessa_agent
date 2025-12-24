@@ -843,10 +843,6 @@
             <div id="aaSeqMount"></div>
           </div>
 
-          <div id="rawCard" class="card" style="display:none">
-            <div class="title">Raw State (debug)</div>
-            <pre id="raw" class="mono" style="max-height:340px; overflow:auto"></pre>
-          </div>
         </div>
       </div>
     </div>
@@ -1096,13 +1092,24 @@
           boot.textContent = `
             (function(){
               try{
-                window.STATE = JSON.parse(${stateJson});
-                try{ window.LOCAL_FILES = new Map(JSON.parse(${localFilesJson})); }catch(e){ console.warn('LOCAL_FILES restore failed:', e); }
-                try{ window.FILE_CACHE = new Map(JSON.parse(${fileCacheJson})); }catch(e){ console.warn('FILE_CACHE restore failed:', e); }
+                // Restore app bindings (STATE is let; LOCAL_FILES/FILE_CACHE are const Maps)
+                STATE = JSON.parse(${stateJson});
+                try{
+                  LOCAL_FILES.clear();
+                  for (const [k, v] of JSON.parse(${localFilesJson})) LOCAL_FILES.set(k, v);
+                }catch(e){ console.warn('LOCAL_FILES restore failed:', e); }
+                try{
+                  FILE_CACHE.clear();
+                  for (const [k, v] of JSON.parse(${fileCacheJson})) FILE_CACHE.set(k, v);
+                }catch(e){ console.warn('FILE_CACHE restore failed:', e); }
+                // Keep window aliases for debugging
+                window.STATE = STATE;
+                window.LOCAL_FILES = LOCAL_FILES;
+                window.FILE_CACHE = FILE_CACHE;
                 if(${isLight}) document.body.classList.add('light'); else document.body.classList.remove('light');
 
                 // Ensure we start with grid visible (not hero)
-                window.HERO_SHOWN = false;
+                HERO_SHOWN = false;
 
                 // Wait for DOMContentLoaded if refresh is defined, otherwise use polling
                 if (document.readyState === 'loading') {
@@ -1538,16 +1545,6 @@
         });
       }
 
-      function renderRaw(st) {
-        const card = byId("rawCard");
-        if (!st) {
-          card.style.display = "none";
-          return;
-        }
-        byId("raw").textContent = JSON.stringify(st, null, 2);
-        card.style.display = "block";
-      }
-
       async function refresh(qOverride) {
         if (!STATE) return;
 
@@ -1603,7 +1600,6 @@
         renderProt(STATE);
         renderChembl(STATE);
         renderAaSeq(STATE);
-        renderRaw(STATE);
         broadcastThemeToIframes();
       }
 
