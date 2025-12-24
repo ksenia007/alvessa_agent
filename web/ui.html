@@ -12,6 +12,11 @@
     <link rel="apple-touch-icon" sizes="180x180" href="images/rocket_favicon_180.png?v=10" />
     <meta name="theme-color" content="#0b1020" />
 
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet">
+
     <!-- Markdown parser + sanitizer -->
     <script src="https://cdn.jsdelivr.net/npm/markdown-it@13/dist/markdown-it.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
@@ -19,29 +24,40 @@
     <style>
       :root {
         /* DARK THEME (default) */
-        --bg: #0b1020;
-        --fg: #e6e8ef;
-        --card: #121832;
-        --muted: #aab4d6;
-        --line: #1e2a52;
-        --accent: #2a3a72;
-        --input: #0e1430;
-        --shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+        --bg: #0a0908;
+        --bg-2: #0c0b0a;
+        --fg: #f3f0ea;
+        --muted: #9fa8c2;
+        --line: rgba(255, 180, 120, 0.12);
+        --card: rgba(255, 200, 150, 0.04);
+        --card-strong: rgba(12, 18, 36, 0.75);
+        --input: rgba(255, 255, 255, 0.06);
+        --accent: #e85d04;
+        --accent-2: #f48c06;
+        --accent-3: #faa307;
+        --teal: #2dd4bf;
+        --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
         --radius: 16px;
-        --r-sm: 10px;
+        --r-sm: 12px;
         --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+        --sans: 'DM Sans', -apple-system, system-ui, sans-serif;
+        --serif: 'Fraunces', 'DM Sans', serif;
       }
 
       body.light {
-        --bg: #ffffff;
-        --fg: #0b1020;
+        --bg: #f8f7f5;
+        --bg-2: #ffffff;
+        --fg: #0b0f1a;
+        --muted: #5c6375;
+        --line: rgba(12, 18, 36, 0.12);
         --card: #ffffff;
-        --muted: #6b7280;
-        --line: #d8dce6;
-        --input: #ffffff;
-        --shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
-        --accent: #afc5ff; /* bright blue accent for light theme */
+        --card-strong: #f6f6f6;
+        --input: #f2f2f4;
+        --accent: #e85d04;
+        --accent-2: #f48c06;
+        --accent-3: #faa307;
+        --teal: #1f9d8c;
+        --shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
       }
 
       * {
@@ -55,7 +71,7 @@
 
       body {
         margin: 0;
-        background: var(--bg);
+        background: linear-gradient(180deg, var(--bg), var(--bg-2));
         color: var(--fg);
         font-family: var(--sans);
         overflow-anchor: none;
@@ -68,10 +84,110 @@
         text-underline-offset: 2px;
       }
 
+      .bg-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(1400px 1400px at 15% 15%, rgba(232, 93, 4, 0.12), transparent 55%),
+          radial-gradient(1200px 1200px at 80% 10%, rgba(232, 93, 4, 0.08), transparent 50%),
+          radial-gradient(1600px 1600px at 50% 85%, rgba(10, 9, 8, 0.55), transparent 65%);
+        filter: blur(52px);
+        opacity: 0.55;
+        z-index: 0;
+      }
+
+      .starfield {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.35), transparent 60%),
+          radial-gradient(1px 1px at 60% 10%, rgba(255,255,255,0.28), transparent 60%),
+          radial-gradient(1px 1px at 80% 50%, rgba(255,255,255,0.22), transparent 60%),
+          radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,0.30), transparent 60%);
+        background-repeat: repeat;
+        background-size: 240px 240px;
+        opacity: 0.35;
+        z-index: 0;
+        animation: twinkle 8s ease-in-out infinite;
+      }
+
+      @keyframes twinkle {
+        0% { opacity: 0.3; }
+        50% { opacity: 0.4; }
+        100% { opacity: 0.3; }
+      }
+
+      /* Gradient orbs */
+      .gradient-orb {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.3;
+        pointer-events: none;
+        z-index: 0;
+        will-change: transform;
+      }
+
+      .orb-1 {
+        width: 600px;
+        height: 450px;
+        background: radial-gradient(ellipse, rgba(232, 93, 4, 0.25) 0%, rgba(180, 60, 0, 0.12) 40%, transparent 70%);
+        top: -150px;
+        left: -100px;
+        animation: float-1 40s ease-in-out infinite;
+      }
+
+      .orb-2 {
+        width: 500px;
+        height: 400px;
+        background: radial-gradient(ellipse, rgba(26, 58, 58, 0.3) 0%, rgba(20, 80, 80, 0.15) 40%, transparent 70%);
+        bottom: -80px;
+        right: -80px;
+        animation: float-2 45s ease-in-out infinite;
+      }
+
+      @keyframes float-1 {
+        0%, 100% {
+          transform: translate(0, 0) scale(1);
+          opacity: 0.3;
+        }
+        33% {
+          transform: translate(15px, -10px) scale(1.02);
+          opacity: 0.35;
+        }
+        66% {
+          transform: translate(-10px, 12px) scale(0.98);
+          opacity: 0.28;
+        }
+      }
+
+      @keyframes float-2 {
+        0%, 100% {
+          transform: translate(0, 0) scale(1);
+          opacity: 0.3;
+        }
+        33% {
+          transform: translate(-12px, 8px) scale(1.01);
+          opacity: 0.32;
+        }
+        66% {
+          transform: translate(10px, -15px) scale(0.99);
+          opacity: 0.28;
+        }
+      }
+
+      body.light .gradient-orb {
+        opacity: 0.15;
+      }
+
       .wrap {
-        max-width: 1100px;
-        margin: 24px auto;
-        padding: 0 16px;
+        position: relative;
+        z-index: 1;
+        max-width: 1200px;
+        margin: 24px auto 60px;
+        padding: 0 18px;
       }
 
       /* GRID */
@@ -91,19 +207,21 @@
         align-items: center;
         justify-content: center;
         gap: 12px;
-        padding: 8px 0;
+        padding: 8px 180px 8px 0;
       }
 
       .logo-brand {
-        height: 44px;
+        height: 48px;
       }
 
       .brand-title {
         margin: 0;
-        font-weight: 800;
+        font-weight: 600;
         text-align: center;
-        font-size: clamp(24px, 3.2vw, 38px);
-        letter-spacing: 0.2px;
+        font-size: clamp(24px, 3.5vw, 36px);
+        letter-spacing: -0.02em;
+        font-family: var(--serif);
+        line-height: 1.2;
       }
 
       .main-col {
@@ -114,16 +232,17 @@
       /* CARD */
       .card {
         background: var(--card);
-        border: none;
+        border: 1px solid var(--line);
         border-radius: var(--radius);
         padding: 20px;
         box-shadow: var(--shadow);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
       }
 
       .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 22px 55px rgba(0, 0, 0, 0.45);
+        border-color: rgba(255, 180, 120, 0.25);
       }
 
       body.light .card {
@@ -131,16 +250,25 @@
         box-shadow: var(--shadow);
       }
 
+      body.light .card:hover {
+        box-shadow: 0 22px 55px rgba(0, 0, 0, 0.18);
+        border-color: rgba(232, 93, 4, 0.2);
+      }
+
       /* TYPOGRAPHY */
       .title {
-        font-size: 22px;
-        font-weight: 700;
-        margin: 0 0 10px;
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0 0 12px;
+        font-family: var(--serif);
+        letter-spacing: -0.01em;
+        line-height: 1.3;
       }
 
       .muted {
         color: var(--muted);
-        font-size: 13px;
+        font-size: 14px;
+        line-height: 1.5;
       }
 
       .row {
@@ -156,22 +284,25 @@
         width: 100%;
         padding: 12px 14px;
         font-size: 15px;
-        border: none;
+        border: 1px solid var(--line);
         border-radius: 14px;
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--input);
         color: var(--fg);
-        box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.05);
-        transition: background 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.04);
+        transition: background 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
       }
 
-      input[type="text"]:focus {
+      input[type="text"]:focus,
+      select:focus {
         outline: none;
-        box-shadow: 0 0 0 2px #4b6ef5;
-        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(232, 93, 4, 0.7);
+        box-shadow: 0 0 0 2px rgba(232, 93, 4, 0.2);
+        background: rgba(255, 255, 255, 0.08);
       }
 
-      body.light input[type="text"] {
-        background: rgba(0, 0, 0, 0.05);
+      body.light input[type="text"],
+      body.light select {
+        background: var(--input);
         color: var(--fg);
       }
 
@@ -179,21 +310,24 @@
       button,
       label.pill {
         padding: 10px 18px;
-        font-weight: 600;
+        font-weight: 700;
         font-size: 14px;
-        color: var(--fg);
-        background: var(--accent);
+        color: #0a0a0a;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
         border: none;
         border-radius: 999px;
         cursor: pointer;
-        transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
       }
 
       button:hover,
       label.pill:hover {
         transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        filter: brightness(1.03);
       }
 
       button:focus-visible {
@@ -248,6 +382,15 @@
       @media (max-width: 640px) {
         .variant-controls__download {
           margin-left: 0;
+        }
+
+        .brand-header {
+          padding-right: 0;
+          flex-direction: column;
+        }
+
+        .brand-title {
+          font-size: 20px;
         }
       }
 
@@ -331,7 +474,8 @@
         display: flex;
         gap: 10px;
         align-items: center;
-        background: rgba(20, 24, 45, 0.5);
+        background: rgba(12, 11, 10, 0.85);
+        border: 1px solid rgba(255, 180, 120, 0.15);
         backdrop-filter: blur(10px) saturate(150%);
         border-radius: 16px;
         padding: 6px 10px;
@@ -339,7 +483,8 @@
       }
 
       body.light .floating-ui {
-        background: rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.85);
+        border-color: rgba(12, 18, 36, 0.12);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
 
@@ -568,6 +713,13 @@
   </head>
 
   <body>
+    <div class="bg-overlay"></div>
+    <div class="starfield"></div>
+
+    <!-- Animated gradient orbs -->
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+
     <!-- Floating toolbar -->
     <div class="floating-ui" aria-label="Quick actions">
       <button id="savePageBtn" class="btn-ghost" title="Download a snapshot of this page">Save HTML</button>
@@ -585,7 +737,7 @@
         <div class="card">
           <div class="title" style="display:flex; align-items:center; justify-content:center; gap:8px">
             <img src="images/rocket_logo.png" alt="Alvessa logo" style="height:40px" />
-            <span>Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</span>
+            <span style="font-family: var(--serif); font-weight:600;">Alvessa: Agentic evidence-grounded research assistant for biology</span>
           </div>
           <p class="muted" style="margin-bottom:12px">
             Ask a question or load a folder
@@ -620,7 +772,7 @@
         <div class="brand-header">
           <img src="images/rocket_logo.png" alt="Alvessa logo" class="logo-brand" />
           <h1 class="brand-title">
-            Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics
+            Alvessa: Agentic evidence-grounded research assistant for biology
           </h1>
         </div>
 
