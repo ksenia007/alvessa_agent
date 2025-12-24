@@ -1,12 +1,12 @@
 /* === Theme Variables === */
 :root {
-  --bg-main: #0b1020;
-  --bg-card: #121832;
-  --bg-panel: #0e1430;
-  --border: #1e2a52;
-  --border-strong: #2a3a72;
-  --text-main: #e6e8ef;
-  --text-muted: #aab4d6;
+  --bg-main: #0a0908;
+  --bg-card: #0c0b0a;
+  --bg-panel: #0b0a0a;
+  --border: rgba(255, 180, 120, 0.18);
+  --border-strong: rgba(255, 180, 120, 0.28);
+  --text-main: #f3f0ea;
+  --text-muted: #a89a8a;
 
   /* Tooltips + legend colors (default = dark theme) */
   --tooltip-bg: rgba(0, 0, 0, 0.9);
@@ -17,13 +17,13 @@
 
 /* Light theme overrides */
 body.light {
-  --bg-main: #ffffff;
+  --bg-main: #f8f7f5;
   --bg-card: #ffffff;
   --bg-panel: #ffffff;
-  --border: #d8dce6;
+  --border: rgba(12, 18, 36, 0.12);
   --border-strong: #cbd5e1;
-  --text-main: #0b1020;
-  --text-muted: #6b7280;
+  --text-main: #0b0f1a;
+  --text-muted: #5c6375;
 
   --tooltip-bg: rgba(255, 255, 255, 0.95);
   --tooltip-fg: #000000;
@@ -33,7 +33,7 @@ body.light {
 
 /* === Global Defaults === */
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'DM Sans', -apple-system, system-ui, sans-serif;
   margin: 0;
   padding: 0;
   background: var(--bg-panel);
