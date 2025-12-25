@@ -68,10 +68,7 @@ def omim_agent(state: "State") -> "State":
                     gene.add_tool("OMIM")
 
         except:
-            print(gene)
-
-
-        time.sleep(0.3)  # courteous pause
+            print('Error in OMIM tool for ', gene)
 
     if DEBUG:
         print(f"[OMIM] Predictions fetched")

@@ -101,7 +101,6 @@ def sei_predictions_agent(state: "State") -> "State":
             warnings.warn(f"[SEI] Failed to process {var_id}: {e}")
             continue
 
-    time.sleep(0.3)  # courteous pause
     return
 
 

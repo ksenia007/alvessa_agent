@@ -88,7 +88,6 @@ def go_summarization_agent(state: "State", embedding_method: str = 'word2vec') -
 
         gobj.update_text_summaries(f"*GO: {gene} representative GO terms: " + ", ".join(picked) + ".")
 
-    time.sleep(0.1)
     return
 
 
@@ -177,7 +176,8 @@ NODES: tuple[Node, ...] = (
         name="Summarize_bioGRID_GO",
         entry_point=summarize_biogrid_go_agent,
         description=(
-            "This is a summarized version of BIOGRID that can be run instead or in addition to BioGRID when individual interactor names are not needed or a summary of interactions would be helpful to answer the query. Provides a summarized list of GO terms significantly enriched for the interacting genes of each input gene fetched from BioGRID."
+            ""
+            "This is a summarized version of BIOGRID that queries BioGRID but returns summarized GO enrichment rather than individual interactors. Use when individual interactor names are not needed or a summary of interactions would be helpful to answer the query. Provides a summarized list of GO terms significantly enriched for the interacting genes of each input gene fetched from BioGRID."
         ),
         dependencies=("BioGRID",),
     ),

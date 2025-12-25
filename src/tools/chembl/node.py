@@ -131,7 +131,7 @@ def chembl_agent(state: "State") -> "State":
         last_gene = genes[-1]
         if state["gene_entities"].get(last_gene):
             state["gene_entities"][last_gene].update_text_summaries(
-                "*ChEMBL: " + interpretation_notes(include_bioactivity=True).replace("\n", " ").strip()
+                "*ChEMBL: " + interpretation_notes(include_bioactivity=True).strip()
             )
 
     # --- Build HTML frontend ---

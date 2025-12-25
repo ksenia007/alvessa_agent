@@ -11,13 +11,10 @@ Tool to query OpenTarget annotations with a list of gene symbols"""
 
 from __future__ import annotations
 
-import time
-
 from src.state import State
 from src.tools.base import Node
-from .utils import read_all_parquet_in_folder
 from pathlib import Path
-from typing import Dict, Iterable, List, Sequence
+from typing import List
 import pickle
 
 DEBUG = True
@@ -38,7 +35,7 @@ CONSTRAINT_TYPES = {
     'lof': "Loss-of-function variants - include nonsense, frameshift, and canonical splice site variants"
 }
 
-def opentargets_agent(state: "State") -> "State":
+def opentargets_agent(state: "State"):
     """
     LangGraph node that annotates each gene with Open Target data.
 
@@ -51,29 +48,71 @@ def opentargets_agent(state: "State") -> "State":
     -------
     State
         Updated state with the open target fields filled.
-        
+
     """
     gene_entities = state.get("gene_entities") or {}
     variant_entities = state.get("variant_entities") or {}
 
-    with open(TARGET_DISEASE_DATA, 'rb') as file:
-        target_disease_dict = pickle.load(file)
+    # Early return if nothing to process
+    if not gene_entities and not variant_entities:
+        if DEBUG:
+            print("[Open Targets] No entities to process, skipping")
+        return
 
-    with open(EXPRESSION_DATA, 'rb') as file:
-        expression_dict = pickle.load(file)
+    # Load gene-related data only if we have genes
+    target_disease_dict = {}
+    expression_dict = {}
+    essentiality_dict = {}
+    constraint_dict = {}
+    pharmocovigilance_dict = {}
 
-    with open(ESSENTIALITY_DATA, 'rb') as file:
-        essentiality_dict = pickle.load(file)
+    if gene_entities:
+        try:
+            if TARGET_DISEASE_DATA.exists():
+                with open(TARGET_DISEASE_DATA, 'rb') as file:
+                    target_disease_dict = pickle.load(file)
+        except Exception as e:
+            print(f"Failed to load target disease data: {e}")
 
-    with open(CONSTRAINT_DATA, 'rb') as file:
-        constraint_dict = pickle.load(file)
+        try:
+            if EXPRESSION_DATA.exists():
+                with open(EXPRESSION_DATA, 'rb') as file:
+                    expression_dict = pickle.load(file)
+        except Exception as e:
+            print(f"Failed to load expression data: {e}")
 
-    with open(PHARMACOVIGILANCE_DATA, 'rb') as file:
-        pharmocovigilance_dict = pickle.load(file)
+        try:
+            if ESSENTIALITY_DATA.exists():
+                with open(ESSENTIALITY_DATA, 'rb') as file:
+                    essentiality_dict = pickle.load(file)
+        except Exception as e:
+            print(f"Failed to load essentiality data: {e}")
 
-    with open(PHARMACOGENOMICS_DATA, 'rb') as file:
-        pharmacogenomics_dict = pickle.load(file)
+        try:
+            if CONSTRAINT_DATA.exists():
+                with open(CONSTRAINT_DATA, 'rb') as file:
+                    constraint_dict = pickle.load(file)
+        except Exception as e:
+            print(f"Failed to load constraint data: {e}")
 
+        try:
+            if PHARMACOVIGILANCE_DATA.exists():
+                with open(PHARMACOVIGILANCE_DATA, 'rb') as file:
+                    pharmocovigilance_dict = pickle.load(file)
+        except Exception as e:
+            print(f"Failed to load pharmacovigilance data: {e}")
+
+    # Load variant-related data only if we have variants
+    pharmacogenomics_dict = {}
+    if variant_entities:
+        try:
+            if PHARMACOGENOMICS_DATA.exists():
+                with open(PHARMACOGENOMICS_DATA, 'rb') as file:
+                    pharmacogenomics_dict = pickle.load(file)
+        except Exception as e:
+            print(f"Failed to load pharmacogenomics data: {e}")
+
+    # Process genes
     for gene_name, gene in gene_entities.items():
         if not gene_name:
             continue
@@ -158,44 +197,49 @@ def opentargets_agent(state: "State") -> "State":
 
         if summary_lines:
             gene.update_text_summaries(" ".join(summary_lines))
-        
             gene.add_tool("OpenTargets")
 
-        time.sleep(0.3)  # courteous pause
+    # Process variants - ONLY loop over variants that exist in the data
+    if pharmacogenomics_dict and variant_entities:
+        # Find intersection: only variants we have AND have data for
+        variant_rsids_with_data = set(pharmacogenomics_dict.keys())
+        variants_to_process = {
+            variant_name: variant
+            for variant_name, variant in variant_entities.items()
+            if variant_name and hasattr(variant, 'rsID') and variant.rsID in variant_rsids_with_data
+        }
 
-    for variant_name, variant in variant_entities.items():
-        if not variant_name:
-            continue
+        if DEBUG and variants_to_process:
+            print(f"[Open Targets] Processing {len(variants_to_process)}/{len(variant_entities)} variants with pharmacogenomics data")
 
-        summary_lines: List[str] = []
+        for variant_name, variant in variants_to_process.items():
+            summary_lines: List[str] = []
 
-        try:       
-            # Pharmacogenomics
-            variant_effects = pharmacogenomics_dict[variant.rsID]
-            variant.add_many_drug_response_effects(variant_effects)
-            summary_lines.append(
-                f"*OpenTargets: Drug response annotations for {variant.rsID}: "
-                + ', '.join(variant_effects) + "."
-            )
-        
-        except Exception as e:
-            print(f"Failed to pull pharmacogenomics: {variant}, {e}")
+            try:
+                # Pharmacogenomics - we KNOW this variant is in the dict
+                variant_effects = pharmacogenomics_dict[variant.rsID]
+                variant.add_many_drug_response_effects(variant_effects)
+                summary_lines.append(
+                    f"*OpenTargets: Drug response annotations for {variant.rsID}: "
+                    + ', '.join(variant_effects) + "."
+                )
 
-        if summary_lines:
-            variant.update_text_summaries(" ".join(summary_lines))
-        
-            variant.add_tool("OpenTargets")
+            except Exception as e:
+                print(f"Failed to pull pharmacogenomics: {variant}, {e}")
 
-        time.sleep(0.3)  # courteous pause
+            if summary_lines:
+                variant.update_text_summaries(" ".join(summary_lines))
+                variant.add_tool("OpenTargets")
 
     if DEBUG:
         print(f"[Open Targets] Predictions fetched")
 
     return 
+
 NODES: tuple[Node, ...] = (
     Node(
         name="OpenTargets",
         entry_point=opentargets_agent,
-        description="Fetches target-disease associations, tissue-specific expression, essentiality, genetic constraint for synonymous, missense, and loss-of-function variants, target gene to drug adverse effect associations, and variant to drug response associations from Open Targets for the input genes.",
+        description="Fetches target-disease associations, tissue-specific expression, essentiality, genetic constraint for synonymous, missense, and loss-of-function variants, associations between target genes and drug-induced adverse effects, and variant to drug response associations from Open Targets for the input genes.",
     ),
 )

@@ -75,10 +75,6 @@ def msigdb_agent(state: "State") -> "State":
         
             gene.add_tool("MSigDB")
 
-        print(gene)
-
-        time.sleep(0.3)  # courteous pause
-
     if DEBUG:
         print(f"[MSigDB] Predictions fetched")
 
@@ -87,6 +83,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="MSigDB",
         entry_point=msigdb_agent,
-        description="Fetches MSigDB annotations for input genes across collections (H, C1–C8), including hallmark biological processes, positional cytogenetic bands per gene, curated pathways, regulatory target information (e.g. transcription-factor binding in promoter region of the gene and microRNA targets), computational signatures from cancer-oriented expression data, oncogenic signatures of pathways dysregulated in cancer, immunologic signatures, and cell-type markers.",
+        description="Fetches MSigDB annotations for input genes across collections (H, C1–C8), including hallmark biological processes, positional cytogenetic bands per gene, curated pathways, regulatory target information (e.g. transcription-factor binding in promoter region of the gene and miRNAs predicted to target this gene), computational signatures from cancer-oriented expression data, oncogenic signatures of pathways dysregulated in cancer, immunologic signatures, and cell-type markers.",
     ),
 )

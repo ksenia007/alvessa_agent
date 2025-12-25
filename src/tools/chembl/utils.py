@@ -762,7 +762,10 @@ def make_summary_text(gene: str, uniprot_id: str, target_data: Dict[str, List]) 
             if drug.get("indication"):
                 grouped[cid]["indications"].add(drug["indication"])
 
-        # Format grouped entries
+        # Format grouped entries & count approved, withdrawn, black-box
+        counter_approved = 0
+        counter_withdrawn = 0
+        counter_black_box = 0
         for cid, info in grouped.items():
             entry_head = _fmt_entry(cid, info["molecule_type"])
             if info.get("pref_name"):
@@ -772,8 +775,10 @@ def make_summary_text(gene: str, uniprot_id: str, target_data: Dict[str, List]) 
             details = []
             if info["first_approval"]:
                 details.append(f"approved {info['first_approval']}")
+                counter_approved += 1
             if info["withdrawn"]:
                 details.append("withdrawn")
+                counter_withdrawn += 1
             if info["indications"]:
                 ind_list = ", ".join(sorted(info["indications"]))
                 details.append(f"for {ind_list}")
@@ -781,9 +786,10 @@ def make_summary_text(gene: str, uniprot_id: str, target_data: Dict[str, List]) 
                 details.append(f"MoA: {info['mechanism']}")
             if info["black_box"]:
                 details.append("black box warning")
+                counter_black_box += 1
             if details:
                 entry += " - " + ", ".join(details)
-            lines.append(entry)
+            
 
             # Single warning section per unique drug (indented for clarity)
             if info.get("black_box_text"):
@@ -791,9 +797,23 @@ def make_summary_text(gene: str, uniprot_id: str, target_data: Dict[str, List]) 
                 lines.append(f"          {warning_text}")
             # if info.get("black_box_url"):
             #     lines.append(f"          FDA Label: {info['black_box_url']}")
+            lines.append(entry+'\n')
+        lines.append(
+            f"    Summary: in total in ChEMBL there are {counter_approved} approved (ever) drug entities, "
+            f"{counter_withdrawn} withdrawn, "
+            f"{counter_black_box} with black-box warnings."
+        )
+        
 
     if target_data["clinical_trials"]:
         lines.append("  Clinical/preclinical trials:")
+        # counter
+        counter_trials ={
+            'preclinical':0,
+            'phase 1':0,
+            'phase 2':0,
+            'phase 3':0
+        }
         for row in target_data["clinical_trials"]:
             # Supports old (5 fields) and new (6 fields with pref_name) shapes
             chembl_id, phase, mtype, *rest = row
@@ -806,6 +826,20 @@ def make_summary_text(gene: str, uniprot_id: str, target_data: Dict[str, List]) 
             if pref_name:
                 entry_head += f" ({pref_name})"
             lines.append(f"    - {entry_head} ({phase_str})")
+            if phase == 0:
+                counter_trials['preclinical'] += 1
+            elif phase == 1:
+                counter_trials['phase 1'] += 1
+            elif phase == 2:
+                counter_trials['phase 2'] += 1
+            elif phase == 3:
+                counter_trials['phase 3'] += 1
+        lines.append(
+            f"    Summary: in total in the current snapshot of ChEMBL there are {counter_trials['preclinical']} preclinical, "
+            f"{counter_trials['phase 1']} phase 1, "
+            f"{counter_trials['phase 2']} phase 2, "
+            f"{counter_trials['phase 3']} phase 3 trial drug entities."
+        )
 
     if target_data["bioactivity"]:
         lines.append("  Bioactivity evidence (normalized to nM):")

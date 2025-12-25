@@ -843,10 +843,6 @@
             <div id="aaSeqMount"></div>
           </div>
 
-          <div id="rawCard" class="card" style="display:none">
-            <div class="title">Raw State (debug)</div>
-            <pre id="raw" class="mono" style="max-height:340px; overflow:auto"></pre>
-          </div>
         </div>
       </div>
     </div>
@@ -887,41 +883,493 @@
       const LOCAL_FILES = new Map();
 
       // ---- Save page (snapshot) ----
-      function saveFullPageSnapshot() {
-        try {
-          const htmlEl = document.documentElement.cloneNode(true);
-          htmlEl.querySelectorAll(".cite-tip").forEach((n) => n.remove());
+      async function saveFullPageSnapshot() {
+        const saveBtn = byId("savePageBtn");
+        const originalText = saveBtn?.textContent || "Save HTML";
 
-          const boot = document.createElement("script");
-          boot.type = "text/javascript";
-          const stateJson = JSON.stringify(STATE ?? {});
-          const localFilesJson = JSON.stringify(Array.from(LOCAL_FILES.entries()));
-          const fileCacheJson = JSON.stringify(Array.from(FILE_CACHE.entries()));
-          const isLight = document.body.classList.contains("light");
-          boot.textContent = `
-              (function(){
-                try{
-                  window.STATE = ${stateJson};
-                  try{ window.LOCAL_FILES = new Map(${localFilesJson}); }catch(_){}
-                  try{ window.FILE_CACHE  = new Map(${fileCacheJson}); }catch(_){}
-                  if(${isLight}) document.body.classList.add('light'); else document.body.classList.remove('light');
-                  if (typeof refresh === 'function') refresh();
-                }catch(e){ console.warn('Snapshot boot failed', e); }
-              })();
+        try {
+          if (saveBtn) {
+            saveBtn.textContent = "Preparing...";
+            saveBtn.disabled = true;
+          }
+
+          // Check FILE_CACHE size
+          let totalCacheSize = 0;
+          for (const [_, content] of FILE_CACHE.entries()) {
+            totalCacheSize += (typeof content === "string" ? content.length : 0);
+          }
+          const cacheSizeMB = (totalCacheSize / (1024 * 1024)).toFixed(1);
+
+          if (totalCacheSize > 50 * 1024 * 1024) { // >50MB
+            if (!confirm(
+              `Warning: Your uploaded files total ${cacheSizeMB} MB. The saved HTML will be very large.\n\n` +
+              `This may cause issues opening the file. Continue anyway?`
+            )) {
+              return;
+            }
+          }
+
+          if (saveBtn) saveBtn.textContent = "Fetching resources...";
+
+          // Fetch external resources to inline them
+          const [markdownItJs, dompurifyJs, googleFontsCss, answerJs, waitingJs, geneSummaryJs, variantSummaryJs] = await Promise.all([
+            fetch("https://cdn.jsdelivr.net/npm/markdown-it@13/dist/markdown-it.min.js")
+              .then(r => r.text()).catch(() => ""),
+            fetch("https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js")
+              .then(r => r.text()).catch(() => ""),
+            fetch("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&display=swap")
+              .then(r => r.text()).catch(() => ""),
+            fetch("./static/answer.js")
+              .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => ""),
+            fetch("./static/waiting_module.js")
+              .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => ""),
+            fetch("./static/gene_summary.js")
+              .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => ""),
+            fetch("./static/variant_summary.js")
+              .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => "")
+          ]);
+
+          const escapeInlineScript = (s) => String(s).replace(/<\/script>/gi, "<\\/script>");
+
+          if (saveBtn) saveBtn.textContent = "Converting images...";
+
+          // Convert local images to data URIs
+          const imageMap = new Map();
+          const imageUrls = [
+            "images/rocket_logo.png",
+            "images/rocket_favicon_32.png",
+            "images/rocket_favicon_64.png",
+            "images/rocket_favicon_180.png",
+            "favicon.ico"
+          ];
+
+          for (const url of imageUrls) {
+            try {
+              const resp = await fetch(url);
+              const blob = await resp.blob();
+              const dataUrl = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+              });
+              imageMap.set(url, dataUrl);
+            } catch (e) {
+              console.warn(`Could not fetch ${url}:`, e);
+            }
+          }
+
+          if (saveBtn) saveBtn.textContent = "Building snapshot...";
+
+          // Clone the page
+          const htmlEl = document.documentElement.cloneNode(true);
+
+          // Remove interactive UI elements not needed in snapshot
+          htmlEl.querySelector(".starfield")?.remove();
+          htmlEl.querySelector(".bg-overlay")?.remove();
+          htmlEl.querySelectorAll(".gradient-orb")?.forEach(o => o.remove());
+          htmlEl.querySelector("#hero")?.remove();
+          htmlEl.querySelector(".floating-ui")?.remove();
+          htmlEl.querySelectorAll(".cite-tip")?.forEach((n) => n.remove());
+
+          // Embed verification summary for static snapshot (no state restore)
+          try {
+            const card = htmlEl.querySelector("#answerCard");
+            if (card && STATE?.verification) {
+              card.setAttribute("data-verification", JSON.stringify(STATE.verification));
+            }
+          } catch (e) {
+            console.warn("Could not embed verification data:", e);
+          }
+
+          // Add snapshot info banner at the top
+          const grid = htmlEl.querySelector("#grid");
+          if (grid && grid.parentNode) {
+            const banner = htmlEl.ownerDocument.createElement("div");
+            banner.style.cssText = "background: rgba(232, 93, 4, 0.15); border: 1px solid rgba(232, 93, 4, 0.3); border-radius: 12px; padding: 12px 16px; margin: 20px auto; max-width: 900px; font-size: 14px; line-height: 1.5;";
+            banner.innerHTML = `
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">📦</span>
+                <div>
+                  <strong>Alvessa Snapshot</strong> — Saved on ${new Date().toLocaleString()}
+                  <div style="opacity: 0.8; font-size: 13px; margin-top: 4px;">
+                    This is a self-contained research snapshot. All core features work offline.
+                    3D molecular visualizations require internet for RDKit.js library.
+                  </div>
+                </div>
+              </div>
             `;
+            grid.parentNode.insertBefore(banner, grid);
+          }
+
+          // Replace external script tags with inlined versions
+          if (markdownItJs) {
+            const mdScript = htmlEl.querySelector('script[src*="markdown-it"]');
+            if (mdScript) {
+              const inlineScript = htmlEl.ownerDocument.createElement("script");
+              // Remove source map comment to prevent browser from trying to load it
+              const cleanedJs = markdownItJs.replace(/\/\/# sourceMappingURL=.*/g, '');
+              inlineScript.textContent = escapeInlineScript(cleanedJs);
+              mdScript.replaceWith(inlineScript);
+            }
+          }
+
+          if (dompurifyJs) {
+            const dpScript = htmlEl.querySelector('script[src*="dompurify"]');
+            if (dpScript) {
+              const inlineScript = htmlEl.ownerDocument.createElement("script");
+              // Remove source map comment to prevent browser from trying to load it
+              const cleanedJs = dompurifyJs.replace(/\/\/# sourceMappingURL=.*/g, '');
+              inlineScript.textContent = escapeInlineScript(cleanedJs);
+              dpScript.replaceWith(inlineScript);
+            }
+          }
+
+          // Replace Google Fonts link with inlined CSS
+          if (googleFontsCss) {
+            const fontLink = htmlEl.querySelector('link[href*="fonts.googleapis.com"]');
+            if (fontLink) {
+              const styleEl = htmlEl.ownerDocument.createElement("style");
+              styleEl.textContent = googleFontsCss;
+              fontLink.replaceWith(styleEl);
+            }
+          }
+
+          // Replace image URLs with data URIs
+          for (const [url, dataUrl] of imageMap.entries()) {
+            // Replace in img src
+            htmlEl.querySelectorAll(`img[src="${url}"]`).forEach(img => {
+              img.setAttribute("src", dataUrl);
+            });
+            // Replace in link href (favicons)
+            htmlEl.querySelectorAll(`link[href="${url}"]`).forEach(link => {
+              link.setAttribute("href", dataUrl);
+            });
+          }
+
+          // Remove the Google Fonts preconnect links (no longer needed)
+          htmlEl.querySelectorAll('link[rel="preconnect"]').forEach(l => l.remove());
+
+          // Inline module scripts (answer.js, gene_summary.js, etc.)
+          // Find the main module script and replace with non-module version
+          const mainModuleScript = Array.from(htmlEl.querySelectorAll('script[type="module"]'))
+            .find(s => s.textContent.includes('import { renderAnswerVerified }'));
+
+          if (mainModuleScript && answerJs && waitingJs && geneSummaryJs && variantSummaryJs) {
+            // Create inline scripts for the modules (converted to global functions)
+            // Wrap each in IIFE to avoid variable collisions while exposing needed globals
+            const inlineAnswerScript = htmlEl.ownerDocument.createElement("script");
+            inlineAnswerScript.textContent = `(function() {\n${escapeInlineScript(answerJs)}\nwindow.renderAnswerVerified = renderAnswerVerified;\n})();`;
+
+            const inlineWaitingScript = htmlEl.ownerDocument.createElement("script");
+            inlineWaitingScript.textContent = `(function() {\n${escapeInlineScript(waitingJs)}\nwindow.Wait = Wait;\n})();`;
+
+            const inlineGeneScript = htmlEl.ownerDocument.createElement("script");
+            inlineGeneScript.textContent = `(function() {\n${escapeInlineScript(geneSummaryJs)}\nwindow.renderGeneSummary = renderGeneSummary;\n})();`;
+
+            const inlineVariantScript = htmlEl.ownerDocument.createElement("script");
+            inlineVariantScript.textContent = `(function() {\n${escapeInlineScript(variantSummaryJs)}\nwindow.renderVariantSummary = renderVariantSummary;\n})();`;
+
+            // Convert the main module script to use global functions
+            let mainScriptContent = mainModuleScript.textContent;
+            // Remove import statements
+            mainScriptContent = mainScriptContent
+              .replace(/import\s*{[^}]+}\s*from\s*["'][^"']+["'];?\s*/g, '')
+              .trim();
+
+            const newMainScript = htmlEl.ownerDocument.createElement("script");
+            newMainScript.textContent = escapeInlineScript(mainScriptContent);
+
+            // Replace the module script with our inlined versions
+            mainModuleScript.replaceWith(inlineAnswerScript);
+            inlineAnswerScript.insertAdjacentElement('afterend', inlineWaitingScript);
+            inlineWaitingScript.insertAdjacentElement('afterend', inlineGeneScript);
+            inlineGeneScript.insertAdjacentElement('afterend', inlineVariantScript);
+            inlineVariantScript.insertAdjacentElement('afterend', newMainScript);
+          }
+
+          // Add minimal snapshot boot (no state restore; rewire tooltips + refs)
+          const boot = htmlEl.ownerDocument.createElement("script");
+          boot.type = "text/javascript";
+          boot.textContent = `
+            (function(){
+              function esc(s){
+                return String(s ?? "").replace(/[&<>"']/g, function(ch){
+                  return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]);
+                });
+              }
+              function safeJson(str){
+                try { return JSON.parse(str); } catch(_) { return null; }
+              }
+              function ensureSnapshotStyles(){
+                if (document.getElementById('snapshot-tip-styles')) return;
+                var style = document.createElement('style');
+                style.id = 'snapshot-tip-styles';
+                style.textContent = [
+                  '.cite-tip{position:fixed;z-index:10000;max-width:560px;background:rgba(12,11,10,.95);color:#f3f0ea;border:1px solid rgba(255,180,120,.25);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .08s ease,transform .08s ease;white-space:normal;overflow-wrap:anywhere;word-break:break-word;}',
+                  '.cite-tip.show{opacity:1;transform:translateY(0);}',
+                  '.cite-tip .tip-line + .tip-line{margin-top:4px;}',
+                  '.cite-tip .pill{display:inline-block;margin:2px 4px 0 0;padding:1px 6px;border-radius:999px;font-size:11px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);} ',
+                  '.cite-tip .pill.warn{background:rgba(234,179,8,.18);border-color:rgba(234,179,8,.35);}',
+                  'body.light .cite-tip{background:rgba(255,255,255,.98);color:#0b0f1a;border-color:rgba(12,18,36,.2);box-shadow:0 8px 24px rgba(0,0,0,.15);} ',
+                  '#proofsModal{position:fixed;inset:0;display:none;z-index:10001;}',
+                  '#proofsModal.open{display:flex;align-items:center;justify-content:center;padding:4vh 14px;}',
+                  '#proofsModal .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(2px);} ',
+                  '#proofsModal .modal-sheet{position:relative;width:min(100%,1040px);max-height:84vh;background:#0c0b0a;color:var(--fg,#f3f0ea);border:1px solid rgba(255,180,120,.20);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.5);display:flex;flex-direction:column;overflow:hidden;}',
+                  '#proofsModal .modal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid rgba(255,180,120,.12);} ',
+                  '#proofsModal .modal-title{font-weight:700;}',
+                  '#proofsModal .modal-body{padding:12px 14px;overflow:auto;}',
+                  'body.light #proofsModal .modal-sheet{background:#ffffff;color:#0b1020;border-color:#d8dce6;box-shadow:0 18px 46px rgba(0,0,0,.2);} ',
+                  '.refs-list{margin:0;padding-left:20px;}',
+                  '.ref-item{margin:4px 0;}',
+                  '.ref-details{border:1px solid rgba(255,180,120,.12);border-radius:8px;padding:6px 8px;background:rgba(255,200,150,.03);} ',
+                  '.ref-details[open]{background:rgba(255,200,150,.06);} ',
+                  '.ref-summary{cursor:pointer;font-weight:600;list-style:none;}',
+                  '.ref-summary::-webkit-details-marker{display:none;}',
+                  '.cite-block{margin:8px 0 4px 0;padding:8px 10px;border-left:3px solid rgba(255,180,120,.25);background:rgba(255,255,255,.03);white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;}'
+                ].join('');
+                document.head.appendChild(style);
+              }
+              function makeTooltipHTML(opts){
+                var feedback = opts && opts.feedback ? String(opts.feedback) : '';
+                var reasons = Array.isArray(opts && opts.reasons) ? opts.reasons : [];
+                var speculation = !!(opts && opts.speculation);
+                var out = [];
+                if (speculation) out.push('<div class="tip-line"><span class="pill warn">Speculation</span></div>');
+                if (feedback) out.push('<div class="tip-line"><strong>Verifier:</strong> ' + esc(feedback) + '</div>');
+                if (reasons.length) {
+                  out.push('<div class="tip-line"><strong>Reasons:</strong> ' + reasons.map(function(r){return '<span class="pill">' + esc(r) + '</span>';}).join(' ') + '</div>');
+                }
+                return out.join('');
+              }
+              var TIP;
+              function ensureTip(){
+                if (!TIP){
+                  TIP = document.createElement('div');
+                  TIP.className = 'cite-tip';
+                  document.body.appendChild(TIP);
+                }
+              }
+              function positionTip(e){
+                var pad = 12;
+                TIP.style.left = (e.clientX + pad) + 'px';
+                TIP.style.top = (e.clientY + pad) + 'px';
+              }
+              function wireTooltips(scope){
+                ensureTip();
+                scope.querySelectorAll('.answer-chunk').forEach(function(node){
+                  node.addEventListener('mouseenter', function(e){
+                    var card = document.getElementById('answerCard');
+                    if (card && card.dataset.highlights !== 'on') return;
+                    var stmt = safeJson(node.dataset.statement || '{}');
+                    if (!stmt) return;
+                    var html = makeTooltipHTML({
+                      feedback: stmt.llm_feedback,
+                      reasons: Array.isArray(stmt.reasons) ? stmt.reasons : [],
+                      speculation: !!stmt.is_speculation
+                    });
+                    if (!html) return;
+                    TIP.innerHTML = html;
+                    TIP.classList.add('show');
+                    positionTip(e);
+                  });
+                  node.addEventListener('mousemove', function(e){
+                    var card = document.getElementById('answerCard');
+                    if (card && card.dataset.highlights !== 'on') return;
+                    if (!TIP) return;
+                    positionTip(e);
+                  });
+                  node.addEventListener('mouseleave', function(){
+                    if (!TIP) return;
+                    TIP.classList.remove('show');
+                    TIP.style.left = TIP.style.top = '';
+                  });
+                });
+              }
+              var MODAL;
+              function ensureModal(){
+                if (MODAL) return;
+                MODAL = document.createElement('div');
+                MODAL.id = 'proofsModal';
+                MODAL.innerHTML = [
+                  '<div class="modal-backdrop"></div>',
+                  '<div class="modal-sheet">',
+                  '  <div class="modal-head">',
+                  '    <div class="modal-title">References</div>',
+                  '    <button class="ghost modal-close" aria-label="Close">X</button>',
+                  '  </div>',
+                  '  <div class="modal-body"></div>',
+                  '</div>'
+                ].join('');
+                document.body.appendChild(MODAL);
+                MODAL.querySelector('.modal-backdrop').addEventListener('click', closeModal);
+                MODAL.querySelector('.modal-close').addEventListener('click', closeModal);
+                document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
+              }
+              function openModal(){
+                MODAL.classList.add('open');
+              }
+              function closeModal(){
+                MODAL.classList.remove('open');
+              }
+              function openProofsModal(stmt){
+                if (!stmt) return;
+                ensureModal();
+                var body = MODAL.querySelector('.modal-body');
+                var proofs = Array.isArray(stmt.proofs) ? stmt.proofs : [];
+                if (!proofs.length) {
+                  body.innerHTML = '<div class="muted">No references available for this statement.</div>';
+                  openModal();
+                  return;
+                }
+                var list = proofs.map(function(p, i){
+                  var title = p && (p.title || p.source) ? (p.title || p.source) : ('Citation ' + (i + 1));
+                  var cited = p && p.cited_text
+                    ? '<blockquote class="cite-block">' + esc(String(p.cited_text)) + '</blockquote>'
+                    : '<div class="muted">No cited text provided.</div>';
+                  var url = p && p.url
+                    ? '<div class="muted sm"><a href="' + esc(p.url) + '" target="_blank" rel="noopener">Open source</a></div>'
+                    : '';
+                  return [
+                    '<li class="ref-item">',
+                    '  <details class="ref-details"' + (i === 0 ? ' open' : '') + '>',
+                    '    <summary class="ref-summary">' + esc(title) + '</summary>',
+                    cited,
+                    url,
+                    '  </details>',
+                    '</li>'
+                  ].join('');
+                }).join('');
+                body.innerHTML = '<ul class="refs-list">' + list + '</ul>';
+                openModal();
+              }
+              function wireClicks(scope){
+                scope.querySelectorAll('.answer-chunk').forEach(function(el){
+                  el.addEventListener('click', function(){
+                    var stmt = safeJson(el.dataset.statement || '{}');
+                    openProofsModal(stmt);
+                  });
+                });
+              }
+              function wireVerifDetails(){
+                var btn = document.getElementById('verifDetailsBtn');
+                var modal = document.getElementById('verifModal');
+                var card = document.getElementById('answerCard');
+                if (!btn || !modal) return;
+                var backdrop = modal.querySelector('.modal-backdrop');
+                var closeBtn = modal.querySelector('.modal-close');
+                btn.addEventListener('click', function(){
+                  try{
+                    var raw = card ? card.getAttribute('data-verification') : null;
+                    var ver = raw ? safeJson(raw) : null;
+                    if (ver) {
+                      var body = modal.querySelector('.modal-body');
+                      var overall = (ver.evidence && ver.evidence.overall) || ver.overall || {};
+                      var quality = overall.support_quality ? '<span class="pill">' + esc(overall.support_quality) + '</span>' : '';
+                      var summary = overall.summary ? '<p class="wrap">' + esc(overall.summary) + '</p>' : '<p class="muted">No overall summary.</p>';
+                      var concerns = Array.isArray(overall.concerns) && overall.concerns.length
+                        ? '<ul class="md-list">' + overall.concerns.map(function(c){ return '<li>' + esc(String(c)) + '</li>'; }).join('') + '</ul>'
+                        : '<div class="muted">No concerns listed.</div>';
+                      var v = String(ver.verdict || '').toLowerCase();
+                      var verdictClass = v === 'pass' ? 'badge badge-supported'
+                        : v === 'partial' ? 'badge badge-partial'
+                        : 'badge badge-unsupported';
+                      body.innerHTML = [
+                        '<section class="verif-section">',
+                        '<h3 class="md-h3">Overall quality: ' + quality + '</h3>',
+                        summary,
+                        '</section>',
+                        '<section class="verif-section">',
+                        '<h4 class="md-h4">Concerns</h4>',
+                        concerns,
+                        '</section>',
+                        (ver.verdict ? '<section class="verif-section"><h4 class="md-h4">Verdict</h4><p><span class="' + verdictClass + '">VERDICT: ' + esc(String(ver.verdict).toUpperCase()) + '</span></p></section>' : '')
+                      ].join('');
+                    } else {
+                      var bodyEmpty = modal.querySelector('.modal-body');
+                      if (bodyEmpty) {
+                        bodyEmpty.innerHTML = '<div class="muted">No verification details available in this snapshot.</div>';
+                      }
+                    }
+                  } catch(e) {
+                    console.warn('Verification details render failed:', e);
+                  }
+                  modal.classList.add('open');
+                });
+                if (backdrop) backdrop.addEventListener('click', function(){ modal.classList.remove('open'); });
+                if (closeBtn) closeBtn.addEventListener('click', function(){ modal.classList.remove('open'); });
+                document.addEventListener('keydown', function(e){
+                  if (e.key === 'Escape') modal.classList.remove('open');
+                });
+              }
+              function wireHighlightToggle(){
+                var card = document.getElementById('answerCard');
+                var tgl = document.getElementById('hlToggle');
+                var lbl = document.getElementById('hlToggleLabel');
+                if (!card || !tgl || !lbl) return;
+                tgl.checked = true;
+                card.dataset.highlights = 'on';
+                var updateLabel = function(){
+                  lbl.textContent = tgl.checked ? 'Hide verifier highlights' : 'Show verifier highlights';
+                };
+                updateLabel();
+                tgl.addEventListener('change', function(){
+                  card.dataset.highlights = tgl.checked ? 'on' : 'off';
+                  updateLabel();
+                  if (!tgl.checked && TIP) {
+                    TIP.classList.remove('show');
+                    TIP.style.left = TIP.style.top = '';
+                  }
+                });
+              }
+              function init(){
+                ensureSnapshotStyles();
+                var scope = document.getElementById('answer') || document.body;
+                wireTooltips(scope);
+                wireClicks(scope);
+                wireVerifDetails();
+                wireHighlightToggle();
+              }
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+              } else {
+                init();
+              }
+            })();
+          `;
           htmlEl.querySelector("body")?.appendChild(boot);
 
-          const doctype = "<!doctype html>\n";
+          if (saveBtn) saveBtn.textContent = "Saving file...";
+
+          // Generate final HTML
+          const doctype = "<!DOCTYPE html>\n";
           const htmlText = doctype + htmlEl.outerHTML;
           const blob = new Blob([htmlText], { type: "text/html;charset=utf-8" });
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = "alvessa_snapshot.html";
+
+          // Use timestamp in filename
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+          a.download = `alvessa_snapshot_${timestamp}.html`;
           a.click();
-          setTimeout(() => URL.revokeObjectURL(url), 800);
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          if (saveBtn) {
+            saveBtn.textContent = "✓ Saved!";
+            setTimeout(() => {
+              saveBtn.textContent = originalText;
+              saveBtn.disabled = false;
+            }, 2000);
+          }
+
         } catch (e) {
-          alert("Could not create snapshot: " + e.message);
+          console.error("Save snapshot error:", e);
+          alert("Could not create snapshot: " + e.message + "\n\nCheck console for details.");
+          if (saveBtn) {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+          }
         }
       }
 
@@ -1281,16 +1729,6 @@
         });
       }
 
-      function renderRaw(st) {
-        const card = byId("rawCard");
-        if (!st) {
-          card.style.display = "none";
-          return;
-        }
-        byId("raw").textContent = JSON.stringify(st, null, 2);
-        card.style.display = "block";
-      }
-
       async function refresh(qOverride) {
         if (!STATE) return;
 
@@ -1346,7 +1784,6 @@
         renderProt(STATE);
         renderChembl(STATE);
         renderAaSeq(STATE);
-        renderRaw(STATE);
         broadcastThemeToIframes();
       }
 
@@ -1558,7 +1995,7 @@
 
       const DEMO_PATH = "out/20250924-004900_ui/demo.json"; // the hardwired demo folder
 
-      byId("tryDemoLink").addEventListener("click", async (e) => {
+      byId("tryDemoLink")?.addEventListener("click", async (e) => {
         e.preventDefault();
         try {
           const r = await fetch(DEMO_PATH, { cache: "no-store" });
@@ -1571,7 +2008,7 @@
         }
       });
 
-      byId("loadFolderBtn").addEventListener("click", () => {
+      byId("loadFolderBtn")?.addEventListener("click", () => {
         byId("folderPicker").click();
       });
     </script>

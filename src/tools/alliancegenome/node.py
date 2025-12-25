@@ -101,7 +101,7 @@ def alliancegenome_predictions_agent(state: "State") -> "State":
                 if DEBUG:
                     print(f"[AllianceOfGenomes] No info found for ID {alliance_id}")
                 continue
-            gene.add_alliancegenome_info(info)  # need to implement this method in Gene class, structured to future UI consumption
+            gene.add_alliancegenome_info(info) 
             
             # save summary text info. Create a string:
             summary += f"Matched to {alliance_id}, {info.get('species', {}).get('name', 'unknown species')}. Summary: {info.get('geneSynopsis', 'No summary available.')}. Auto-summary: {info.get('automatedGeneSynopsis', 'No auto-summary available.')}. "

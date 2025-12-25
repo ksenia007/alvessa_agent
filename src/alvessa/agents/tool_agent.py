@@ -33,7 +33,7 @@ def format_state_for_prompt(state: State) -> str:
     question = state["messages"][-1]["content"]
     catalog = "\n".join(f"- {name}: {desc}" for name, desc in TOOL_CATALOG.items())
 
-    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" \n\n If the question mentioned a database or tool and we do not have it, use the most similar available ones. If there are multiple tools with complementary or similar information, list all the tools to get the most complete context. Try to get as much relevant information as possible. Available tools: {catalog}.\n\n Examples selection and outputs: {EXAMPLE_TOOL_SELECTION}"""
+    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" \n\n If the question mentioned a database or tool and we do not have it, use the most similar available ones. If there are multiple tools with complementary or similar information, you are allowed to use complementary tools. However, avoid calling tools that create long context unless needed to answer the question. Try to get as much relevant information as possible. Available tools: {catalog}.\n\n Examples selection and outputs: {EXAMPLE_TOOL_SELECTION}"""
 
 def _safe_merge(acc: dict, out: dict) -> None:
     """Merge tool output into acc without mutating caller state."""
@@ -195,12 +195,7 @@ def select_tools(state: "State") -> "State":
         used_backup = bool(selected_tools)
 
     selected_tools_main = [t for t in selected_tools if t in TOOL_FN_MAP and t not in used_tools]
-    # special case for 'twosample_mr_agent' which allows more complicated semi match, as fomatted twosample_mr_agent-value1-value2
-    found_2sample = [
-        t for t in selected_tools if t.startswith("twosample_mr_agent") 
-    ]
-    if found_2sample:
-        selected_tools_main.append(found_2sample)
+    
     if DEBUG:
         print(f"[TOOL SELECTION] Selected tools: {selected_tools}")
 
