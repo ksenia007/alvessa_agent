@@ -4,14 +4,21 @@ import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib.patches import Patch
+
 #%%
 
 file_locations = [
+    '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151910_adversarial_eval/baseline-20251225-162012', # contr proof
+    '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151903_adversarial_eval/baseline-20251225-162100', 
+    # '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151857_adversarial_eval/baseline-20251225-162121', 
+    '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151850_adversarial_eval/baseline-20251225-162128',
+    '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151846_adversarial_eval/baseline-20251225-162136'
     # '/Users/sokolova/Documents/research/alvessa_agent/out/MODE1-20251129-195241_adversarial_eval/baseline-20251129-213415', 
-    '/Users/sokolova/Documents/research/alvessa_agent/out/MODE2-20251129-195253_adversarial_eval/baseline-20251129-213614', 
-    '/Users/sokolova/Documents/research/alvessa_agent/out/MODE3-20251129-213401_adversarial_eval/baseline-20251129-222411',
-    '/Users/sokolova/Documents/research/alvessa_agent/out/MODE4-20251129-213154_adversarial_eval/baseline-20251129-222433',
-    '/Users/sokolova/Documents/research/alvessa_agent/out/MODE5_20251129-193500_adversarial_eval/baseline-20251129-213515'
+    #'/Users/sokolova/Documents/research/alvessa_agent/out/MODE2-20251129-195253_adversarial_eval/baseline-20251129-213614', 
+    #'/Users/sokolova/Documents/research/alvessa_agent/out/MODE3-20251129-213401_adversarial_eval/baseline-20251129-222411',
+    #'/Users/sokolova/Documents/research/alvessa_agent/out/MODE4-20251129-213154_adversarial_eval/baseline-20251129-222433',
+    #'/Users/sokolova/Documents/research/alvessa_agent/out/MODE5_20251129-193500_adversarial_eval/baseline-20251129-213515'
     
 #    '/Users/sokolova/Documents/research/alvessa_agent/out/20251127-194054_adversarial_eval/baseline-20251127-205858', 
 #    '/Users/sokolova/Documents/research/alvessa_agent/out/20251127-194549_adversarial_eval/baseline-20251127-205845', 
@@ -89,7 +96,7 @@ print(f'Alvessa Accuracy: {alvessa_accuracy:.2%}')
 # ------------------------------------------------------------------
 # Pretty labels for y-axis
 label_map = {
-    "contradiction": "Contradiction\n(plain)",
+    # "contradiction": "Contradiction\n(plain)",
     "contradiction_with_proofs": "Contradiction",
     "overstatement": "Overstatement",
     "hallucinated_alphanumeric_entities": "Wrong alphanumeric\nvalues",
@@ -191,7 +198,7 @@ for idx, patch in enumerate(new_patches):
             color="black",
         )
 
-    else:
+    elif model_key == "alvessa_correct":
         patch.set_hatch("")
         patch.set_edgecolor("none")
         y_center = patch.get_y() + patch.get_height() / 2.0
@@ -221,7 +228,6 @@ ax.spines["bottom"].set_color("#A0A0A0")
 
 
 # Legend cleanup (manual handles so hatching shows)
-from matplotlib.patches import Patch
 legend_handles = [
     Patch(facecolor=palette["baseline_correct"], edgecolor="antiquewhite", linewidth=0.8, hatch="///", label="Ablated verifier"),
     Patch(facecolor=palette["alvessa_correct"], edgecolor="none", label="Context-aware verifier"),
@@ -232,129 +238,32 @@ ax.legend(legend_handles, [h.get_label() for h in legend_handles], title="",
 plt.tight_layout()
 plt.show()
 
-# %% md
-# Pretty labels for y-axis
+# %%
+# write into .txt: original, adversarial,  baseline label, alvessa label
 label_map = {
-    "contradiction": "Contradiction\n(plain)",
     "contradiction_with_proofs": "Contradiction",
     "overstatement": "Overstatement",
-    "hallucinated_alphanumeric_entities": "Wrong alphanumeric\nvalues",
-    "hallucinated_numbers": "Wrong numerical\nvalues",
+    "hallucinated_alphanumeric_entities": "Wrong alphanumeric values",
+    "hallucinated_numbers": "Wrong numerical values",
 }
+txt_output_path = Path('/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_results/adversarial_examples_summary.txt')
+with txt_output_path.open('w', encoding='utf-8') as f:
+    for idx, row in df.iterrows():
+        f.write(f"Question ID: {row['question_id']}\n")
+        f.write(f"Modification Type: {label_map.get(row['modification_type'], None)} \n")
+        f.write(f"Original Statement: {row['original_statement']}\n")
+        f.write(f"Adversarial Statement: {row['adversarial_statement']}\n")
+        f.write(f"Baseline Label: {row['baseline_label']}\n")
+        f.write(f"Alvessa Label: {row['alvessa_label']}\n")
+        f.write("-" * 80 + "\n")
 
-modification_summary = (
-    df.groupby("modification_type")
-      .agg(
-          alvessa_correct=("alvessa_correct", "mean"),
-      )
-      .reset_index()
-)
-
-# sort
-modification_summary["pretty_type"] = modification_summary["modification_type"].map(label_map).fillna(modification_summary["modification_type"])
-modification_summary = modification_summary.melt(
-    id_vars=["modification_type", "pretty_type"],
-    var_name="model",
-    value_name="accuracy",
-)
-modification_summary = modification_summary.sort_values(by="accuracy", ascending=False)
-modification_summary['accuracy'] = modification_summary['accuracy']*100
-
-# Styling
-sns.set_theme(style="whitegrid")
-plt.rcParams.update({
-    "font.size": 22,
-    "axes.titlesize": 24,
-    "axes.labelsize": 22,
-    "xtick.labelsize": 20,
-    "ytick.labelsize": 22,
-})
-
-palette = {
-    "alvessa_correct": "#FF7C07",   # vibrant orange
-}
-
-fig, ax = plt.subplots(figsize=(7, 6), dpi=300)
-hue_order = ["alvessa_correct"]
-cat_order = modification_summary.sort_values("accuracy", ascending=False)["pretty_type"].unique().tolist()
-model_sequence = modification_summary["model"].tolist()  # preserves melted row order
-bar = sns.barplot(
-    data=modification_summary,
-    x="accuracy",
-    y="pretty_type",
-    hue="model",
-    hue_order=hue_order,
-    order=cat_order,
-    palette=palette,
-    ax=ax,
-    dodge=True,
-    edgecolor="none",
-)
-
-# Rounded corners for bars + hatching on baseline
-from matplotlib.patches import FancyBboxPatch
-new_patches = []
-for patch in bar.patches:
-    bbox = patch.get_bbox()
-    p = FancyBboxPatch(
-        (bbox.xmin, bbox.ymin),
-        bbox.width,
-        bbox.height,
-        boxstyle="round,pad=0.01",
-        linewidth=0,
-        facecolor=patch.get_facecolor(),
-        edgecolor="none",
-    )
-    patch.remove()
-    new_patches.append(p)
-for p in new_patches:
-    ax.add_patch(p)
-    
-for patch in new_patches:
-    width = patch.get_width()
-    if width is None or width < 1e-3:   
-        continue
-    y_center = patch.get_y() + patch.get_height() / 2.0
-
-    ax.text(
-        width - 1,              
-        y_center,
-        f"{width:.1f}%",      
-        va="center",
-        ha="right",
-        fontsize=16,
-        fontweight="bold",
-        color="white",
-    )
-
-# Axes formatting
-ax.set_xlim(0.0, 105)
-ax.set_xlabel("%adversarial statements detected", labelpad=8)
-ax.set_ylabel("")  # no y-axis label per request
-ax.set_title("")   # no title
-ax.grid(True, axis="x", linestyle="--", linewidth=0.6, alpha=0.6)
-ax.grid(False, axis="y")
-ax.spines["top"].set_visible(False)
-ax.spines["right"].set_visible(False)
-ax.spines["left"].set_color("#A0A0A0")
-ax.spines["bottom"].set_color("#A0A0A0")
-
-
-ax.get_legend().remove()
-plt.tight_layout()
-plt.show()
-
-# %%
-# find overstatement cases where alvessa failed
-overstatement_failures = df[
-    (~df["alvessa_correct"])
-]
-# %%
-for i in overstatement_failures.index:
-    print("Question ID:", overstatement_failures.at[i, 'question_id'])
-    print("Modification Type:", overstatement_failures.at[i, 'modification_type'])
-    print("Original Statement:", overstatement_failures.at[i, 'original_statement'])
-    print("Adversarial Statement:", overstatement_failures.at[i, 'adversarial_statement'])
-    print("Original Proof:", overstatement_failures.at[i, 'original_proof'])
-    print("----")
+for idx, row in df.iterrows():
+    print(f"Question ID: {row['question_id']}")
+    print(f"Modification Type: {label_map.get(row['modification_type'], None)} ")
+    print(f"Original Statement: {row['original_statement']}")
+    print(f"Adversarial Statement: {row['adversarial_statement']}")
+    print(f"Baseline Label: {row['baseline_label']}")
+    print(f"Alvessa Label: {row['alvessa_label']}")
+    print("-" * 80)
+    break
 # %%

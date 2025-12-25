@@ -585,7 +585,7 @@ class GeneTextPresenter:
                 lines.append(loc_line)
 
         txp = self.gene.transcriptome
-        if txp.transcript_count is not None:
+        if txp.transcript_count is not None and txp.transcript_count!=0:
             tx_bits = [f"n_transcripts={txp.transcript_count}:"]
             # add transcript name + exon count
             for tx_id, tx_info in txp.transcripts.items():
