@@ -1093,14 +1093,14 @@
             (function(){
               try{
                 // Restore app bindings (STATE is let; LOCAL_FILES/FILE_CACHE are const Maps)
-                STATE = JSON.parse(${stateJson});
+                STATE = JSON.parse(JSON.parse(${stateJson}));
                 try{
                   LOCAL_FILES.clear();
-                  for (const [k, v] of JSON.parse(${localFilesJson})) LOCAL_FILES.set(k, v);
+                  for (const [k, v] of JSON.parse(JSON.parse(${localFilesJson}))) LOCAL_FILES.set(k, v);
                 }catch(e){ console.warn('LOCAL_FILES restore failed:', e); }
                 try{
                   FILE_CACHE.clear();
-                  for (const [k, v] of JSON.parse(${fileCacheJson})) FILE_CACHE.set(k, v);
+                  for (const [k, v] of JSON.parse(JSON.parse(${fileCacheJson}))) FILE_CACHE.set(k, v);
                 }catch(e){ console.warn('FILE_CACHE restore failed:', e); }
                 // Keep window aliases for debugging
                 window.STATE = STATE;
