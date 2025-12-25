@@ -1077,80 +1077,200 @@
             inlineVariantScript.insertAdjacentElement('afterend', newMainScript);
           }
 
-          // Add boot script with STATE, LOCAL_FILES, FILE_CACHE
+          // Add minimal snapshot boot (no state restore; rewire tooltips + refs)
           const boot = htmlEl.ownerDocument.createElement("script");
           boot.type = "text/javascript";
-
-          // Properly escape JSON for embedding in JavaScript by converting to safe string literals
-          const safeJsonString = (obj) => {
-            return JSON.stringify(JSON.stringify(obj));
-          };
-
-          const stateJson = safeJsonString(STATE ?? {});
-          const localFilesJson = safeJsonString(Array.from(LOCAL_FILES.entries()));
-          const fileCacheJson = safeJsonString(Array.from(FILE_CACHE.entries()));
-          const isLight = document.body.classList.contains("light");
-
           boot.textContent = `
             (function(){
-              try{
-                // Restore app bindings (STATE is let; LOCAL_FILES/FILE_CACHE are const Maps)
-                STATE = JSON.parse(JSON.parse(${stateJson}));
-                try{
-                  LOCAL_FILES.clear();
-                  for (const [k, v] of JSON.parse(JSON.parse(${localFilesJson}))) LOCAL_FILES.set(k, v);
-                }catch(e){ console.warn('LOCAL_FILES restore failed:', e); }
-                try{
-                  FILE_CACHE.clear();
-                  for (const [k, v] of JSON.parse(JSON.parse(${fileCacheJson}))) FILE_CACHE.set(k, v);
-                }catch(e){ console.warn('FILE_CACHE restore failed:', e); }
-                // Keep window aliases for debugging
-                window.STATE = STATE;
-                window.LOCAL_FILES = LOCAL_FILES;
-                window.FILE_CACHE = FILE_CACHE;
-                if(${isLight}) document.body.classList.add('light'); else document.body.classList.remove('light');
-
-                // Ensure we start with grid visible (not hero)
-                HERO_SHOWN = false;
-
-                // Wait for DOMContentLoaded if refresh is defined, otherwise use polling
-                if (document.readyState === 'loading') {
-                  document.addEventListener('DOMContentLoaded', function() {
-                    // Show grid, hide hero (in case CSS didn't handle it)
-                    var hero = document.getElementById('hero');
-                    var grid = document.getElementById('grid');
-                    var toolbar = document.getElementById('toolbar');
-                    if (hero) hero.style.display = 'none';
-                    if (grid) grid.style.display = 'block';
-                    if (toolbar) toolbar.style.display = 'flex';
-
-                    if (typeof refresh === 'function') refresh();
-                  });
-                } else {
-                  // Document already loaded
-                  var hero = document.getElementById('hero');
-                  var grid = document.getElementById('grid');
-                  var toolbar = document.getElementById('toolbar');
-                  if (hero) hero.style.display = 'none';
-                  if (grid) grid.style.display = 'block';
-                  if (toolbar) toolbar.style.display = 'flex';
-
-                  // Check if refresh exists
-                  let attempts = 0;
-                  const tryRefresh = setInterval(function() {
-                    attempts++;
-                    if (typeof refresh === 'function') {
-                      refresh();
-                      clearInterval(tryRefresh);
-                    } else if (attempts > 20) {
-                      console.warn('refresh() function not found after 20 attempts');
-                      clearInterval(tryRefresh);
-                    }
-                  }, 100);
+              function esc(s){
+                return String(s ?? "").replace(/[&<>"']/g, function(ch){
+                  return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]);
+                });
+              }
+              function safeJson(str){
+                try { return JSON.parse(str); } catch(_) { return null; }
+              }
+              function ensureSnapshotStyles(){
+                if (document.getElementById('snapshot-tip-styles')) return;
+                var style = document.createElement('style');
+                style.id = 'snapshot-tip-styles';
+                style.textContent = [
+                  '.cite-tip{position:fixed;z-index:10000;max-width:560px;background:rgba(12,11,10,.95);color:#f3f0ea;border:1px solid rgba(255,180,120,.25);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .08s ease,transform .08s ease;white-space:normal;overflow-wrap:anywhere;word-break:break-word;}',
+                  '.cite-tip.show{opacity:1;transform:translateY(0);}',
+                  '.cite-tip .tip-line + .tip-line{margin-top:4px;}',
+                  '.cite-tip .pill{display:inline-block;margin:2px 4px 0 0;padding:1px 6px;border-radius:999px;font-size:11px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);} ',
+                  '.cite-tip .pill.warn{background:rgba(234,179,8,.18);border-color:rgba(234,179,8,.35);}',
+                  'body.light .cite-tip{background:rgba(255,255,255,.98);color:#0b0f1a;border-color:rgba(12,18,36,.2);box-shadow:0 8px 24px rgba(0,0,0,.15);} ',
+                  '#proofsModal{position:fixed;inset:0;display:none;z-index:10001;}',
+                  '#proofsModal.open{display:flex;align-items:center;justify-content:center;padding:4vh 14px;}',
+                  '#proofsModal .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(2px);} ',
+                  '#proofsModal .modal-sheet{position:relative;width:min(100%,1040px);max-height:84vh;background:#0c0b0a;color:var(--fg,#f3f0ea);border:1px solid rgba(255,180,120,.20);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.5);display:flex;flex-direction:column;overflow:hidden;}',
+                  '#proofsModal .modal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid rgba(255,180,120,.12);} ',
+                  '#proofsModal .modal-title{font-weight:700;}',
+                  '#proofsModal .modal-body{padding:12px 14px;overflow:auto;}',
+                  'body.light #proofsModal .modal-sheet{background:#ffffff;color:#0b1020;border-color:#d8dce6;box-shadow:0 18px 46px rgba(0,0,0,.2);} ',
+                  '.refs-list{margin:0;padding-left:20px;}',
+                  '.ref-item{margin:4px 0;}',
+                  '.ref-details{border:1px solid rgba(255,180,120,.12);border-radius:8px;padding:6px 8px;background:rgba(255,200,150,.03);} ',
+                  '.ref-details[open]{background:rgba(255,200,150,.06);} ',
+                  '.ref-summary{cursor:pointer;font-weight:600;list-style:none;}',
+                  '.ref-summary::-webkit-details-marker{display:none;}',
+                  '.cite-block{margin:8px 0 4px 0;padding:8px 10px;border-left:3px solid rgba(255,180,120,.25);background:rgba(255,255,255,.03);white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;}'
+                ].join('');
+                document.head.appendChild(style);
+              }
+              function makeTooltipHTML(opts){
+                var feedback = opts && opts.feedback ? String(opts.feedback) : '';
+                var reasons = Array.isArray(opts && opts.reasons) ? opts.reasons : [];
+                var speculation = !!(opts && opts.speculation);
+                var out = [];
+                if (speculation) out.push('<div class="tip-line"><span class="pill warn">Speculation</span></div>');
+                if (feedback) out.push('<div class="tip-line"><strong>Verifier:</strong> ' + esc(feedback) + '</div>');
+                if (reasons.length) {
+                  out.push('<div class="tip-line"><strong>Reasons:</strong> ' + reasons.map(function(r){return '<span class="pill">' + esc(r) + '</span>';}).join(' ') + '</div>');
                 }
-              }catch(e){
-                console.error('Snapshot boot failed:', e);
-                alert('Failed to restore saved state. Check console for details.');
+                return out.join('');
+              }
+              var TIP;
+              function ensureTip(){
+                if (!TIP){
+                  TIP = document.createElement('div');
+                  TIP.className = 'cite-tip';
+                  document.body.appendChild(TIP);
+                }
+              }
+              function positionTip(e){
+                var pad = 12;
+                TIP.style.left = (e.clientX + pad) + 'px';
+                TIP.style.top = (e.clientY + pad) + 'px';
+              }
+              function wireTooltips(scope){
+                ensureTip();
+                scope.querySelectorAll('.answer-chunk').forEach(function(node){
+                  node.addEventListener('mouseenter', function(e){
+                    var card = document.getElementById('answerCard');
+                    if (card && card.dataset.highlights !== 'on') return;
+                    var stmt = safeJson(node.dataset.statement || '{}');
+                    if (!stmt) return;
+                    var html = makeTooltipHTML({
+                      feedback: stmt.llm_feedback,
+                      reasons: Array.isArray(stmt.reasons) ? stmt.reasons : [],
+                      speculation: !!stmt.is_speculation
+                    });
+                    if (!html) return;
+                    TIP.innerHTML = html;
+                    TIP.classList.add('show');
+                    positionTip(e);
+                  });
+                  node.addEventListener('mousemove', function(e){
+                    var card = document.getElementById('answerCard');
+                    if (card && card.dataset.highlights !== 'on') return;
+                    if (!TIP) return;
+                    positionTip(e);
+                  });
+                  node.addEventListener('mouseleave', function(){
+                    if (!TIP) return;
+                    TIP.classList.remove('show');
+                    TIP.style.left = TIP.style.top = '';
+                  });
+                });
+              }
+              var MODAL;
+              function ensureModal(){
+                if (MODAL) return;
+                MODAL = document.createElement('div');
+                MODAL.id = 'proofsModal';
+                MODAL.innerHTML = [
+                  '<div class="modal-backdrop"></div>',
+                  '<div class="modal-sheet">',
+                  '  <div class="modal-head">',
+                  '    <div class="modal-title">References</div>',
+                  '    <button class="ghost modal-close" aria-label="Close">X</button>',
+                  '  </div>',
+                  '  <div class="modal-body"></div>',
+                  '</div>'
+                ].join('');
+                document.body.appendChild(MODAL);
+                MODAL.querySelector('.modal-backdrop').addEventListener('click', closeModal);
+                MODAL.querySelector('.modal-close').addEventListener('click', closeModal);
+                document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
+              }
+              function openModal(){
+                MODAL.classList.add('open');
+              }
+              function closeModal(){
+                MODAL.classList.remove('open');
+              }
+              function openProofsModal(stmt){
+                if (!stmt) return;
+                ensureModal();
+                var body = MODAL.querySelector('.modal-body');
+                var proofs = Array.isArray(stmt.proofs) ? stmt.proofs : [];
+                if (!proofs.length) {
+                  body.innerHTML = '<div class="muted">No references available for this statement.</div>';
+                  openModal();
+                  return;
+                }
+                var list = proofs.map(function(p, i){
+                  var title = p && (p.title || p.source) ? (p.title || p.source) : ('Citation ' + (i + 1));
+                  var cited = p && p.cited_text
+                    ? '<blockquote class="cite-block">' + esc(String(p.cited_text)) + '</blockquote>'
+                    : '<div class="muted">No cited text provided.</div>';
+                  var url = p && p.url
+                    ? '<div class="muted sm"><a href="' + esc(p.url) + '" target="_blank" rel="noopener">Open source</a></div>'
+                    : '';
+                  return [
+                    '<li class="ref-item">',
+                    '  <details class="ref-details"' + (i === 0 ? ' open' : '') + '>',
+                    '    <summary class="ref-summary">' + esc(title) + '</summary>',
+                    cited,
+                    url,
+                    '  </details>',
+                    '</li>'
+                  ].join('');
+                }).join('');
+                body.innerHTML = '<ul class="refs-list">' + list + '</ul>';
+                openModal();
+              }
+              function wireClicks(scope){
+                scope.querySelectorAll('.answer-chunk').forEach(function(el){
+                  el.addEventListener('click', function(){
+                    var stmt = safeJson(el.dataset.statement || '{}');
+                    openProofsModal(stmt);
+                  });
+                });
+              }
+              function wireHighlightToggle(){
+                var card = document.getElementById('answerCard');
+                var tgl = document.getElementById('hlToggle');
+                var lbl = document.getElementById('hlToggleLabel');
+                if (!card || !tgl || !lbl) return;
+                tgl.checked = true;
+                card.dataset.highlights = 'on';
+                var updateLabel = function(){
+                  lbl.textContent = tgl.checked ? 'Hide verifier highlights' : 'Show verifier highlights';
+                };
+                updateLabel();
+                tgl.addEventListener('change', function(){
+                  card.dataset.highlights = tgl.checked ? 'on' : 'off';
+                  updateLabel();
+                  if (!tgl.checked && TIP) {
+                    TIP.classList.remove('show');
+                    TIP.style.left = TIP.style.top = '';
+                  }
+                });
+              }
+              function init(){
+                ensureSnapshotStyles();
+                var scope = document.getElementById('answer') || document.body;
+                wireTooltips(scope);
+                wireClicks(scope);
+                wireHighlightToggle();
+              }
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+              } else {
+                init();
               }
             })();
           `;
