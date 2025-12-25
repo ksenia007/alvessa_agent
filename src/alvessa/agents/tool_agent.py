@@ -195,12 +195,7 @@ def select_tools(state: "State") -> "State":
         used_backup = bool(selected_tools)
 
     selected_tools_main = [t for t in selected_tools if t in TOOL_FN_MAP and t not in used_tools]
-    # special case for 'twosample_mr_agent' which allows more complicated semi match, as fomatted twosample_mr_agent-value1-value2
-    found_2sample = [
-        t for t in selected_tools if t.startswith("twosample_mr_agent") 
-    ]
-    if found_2sample:
-        selected_tools_main.append(found_2sample)
+    
     if DEBUG:
         print(f"[TOOL SELECTION] Selected tools: {selected_tools}")
 

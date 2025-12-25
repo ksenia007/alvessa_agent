@@ -116,11 +116,6 @@ statements.forEach((s, idx) => {
         span.className = "answer-chunk";
         span.dataset.idx = String(idx);
         span.dataset.statement = JSON.stringify(s);
-        span.dataset.tooltip = makeTooltipHTML({
-          feedback: s?.llm_feedback,
-          reasons: Array.isArray(s?.reasons) ? s.reasons : [],
-          speculation: !!s?.is_speculation,
-        });
   
         const llm = String(s?.llm_label || "").toLowerCase();
         const v   = String(s?.verdict   || "").toLowerCase();
@@ -162,11 +157,6 @@ statements.forEach((s, idx) => {
           span.className = "answer-chunk";
           span.dataset.idx = String(idx);
           span.dataset.statement = JSON.stringify(s);
-          span.dataset.tooltip = makeTooltipHTML({
-            feedback: s?.llm_feedback,
-            reasons: Array.isArray(s?.reasons) ? s.reasons : [],
-            speculation: !!s?.is_speculation,
-          });
   
           const llm = String(s?.llm_label || "").toLowerCase();
           const v   = String(s?.verdict   || "").toLowerCase();
@@ -223,11 +213,6 @@ statements.forEach((s, idx) => {
     span.className = "answer-chunk";
     span.dataset.idx = String(idx);
     span.dataset.statement = JSON.stringify(s);
-    span.dataset.tooltip = makeTooltipHTML({
-      feedback: s?.llm_feedback,
-      reasons: Array.isArray(s?.reasons) ? s.reasons : [],
-      speculation: !!s?.is_speculation,
-    });
   
     const llm = String(s?.llm_label || "").toLowerCase();
     const v   = String(s?.verdict   || "").toLowerCase();
@@ -403,7 +388,14 @@ function normalizeRawText(src) {
     scope.querySelectorAll(".answer-chunk").forEach(node => {
       node.addEventListener("mouseenter", (e) => {
         if (byId("answerCard")?.dataset.highlights !== "on") return;
-        const html = node.dataset.tooltip || "";
+        // Generate tooltip HTML dynamically from statement data to avoid HTML escaping issues
+        const stmt = safeJson(node.dataset.statement || "{}");
+        if (!stmt) return;
+        const html = makeTooltipHTML({
+          feedback: stmt.llm_feedback,
+          reasons: Array.isArray(stmt.reasons) ? stmt.reasons : [],
+          speculation: !!stmt.is_speculation
+        });
         if (!html) return;
         TIP.innerHTML = html;
         TIP.classList.add("show");

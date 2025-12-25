@@ -929,6 +929,8 @@
               .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => "")
           ]);
 
+          const escapeInlineScript = (s) => String(s).replace(/<\/script>/gi, "<\\/script>");
+
           if (saveBtn) saveBtn.textContent = "Converting images...";
 
           // Convert local images to data URIs
@@ -996,7 +998,7 @@
               const inlineScript = htmlEl.ownerDocument.createElement("script");
               // Remove source map comment to prevent browser from trying to load it
               const cleanedJs = markdownItJs.replace(/\/\/# sourceMappingURL=.*/g, '');
-              inlineScript.textContent = cleanedJs;
+              inlineScript.textContent = escapeInlineScript(cleanedJs);
               mdScript.replaceWith(inlineScript);
             }
           }
@@ -1007,7 +1009,7 @@
               const inlineScript = htmlEl.ownerDocument.createElement("script");
               // Remove source map comment to prevent browser from trying to load it
               const cleanedJs = dompurifyJs.replace(/\/\/# sourceMappingURL=.*/g, '');
-              inlineScript.textContent = cleanedJs;
+              inlineScript.textContent = escapeInlineScript(cleanedJs);
               dpScript.replaceWith(inlineScript);
             }
           }
@@ -1046,16 +1048,16 @@
             // Create inline scripts for the modules (converted to global functions)
             // Wrap each in IIFE to avoid variable collisions while exposing needed globals
             const inlineAnswerScript = htmlEl.ownerDocument.createElement("script");
-            inlineAnswerScript.textContent = `(function() {\n${answerJs}\nwindow.renderAnswerVerified = renderAnswerVerified;\n})();`;
+            inlineAnswerScript.textContent = `(function() {\n${escapeInlineScript(answerJs)}\nwindow.renderAnswerVerified = renderAnswerVerified;\n})();`;
 
             const inlineWaitingScript = htmlEl.ownerDocument.createElement("script");
-            inlineWaitingScript.textContent = `(function() {\n${waitingJs}\nwindow.Wait = Wait;\n})();`;
+            inlineWaitingScript.textContent = `(function() {\n${escapeInlineScript(waitingJs)}\nwindow.Wait = Wait;\n})();`;
 
             const inlineGeneScript = htmlEl.ownerDocument.createElement("script");
-            inlineGeneScript.textContent = `(function() {\n${geneSummaryJs}\nwindow.renderGeneSummary = renderGeneSummary;\n})();`;
+            inlineGeneScript.textContent = `(function() {\n${escapeInlineScript(geneSummaryJs)}\nwindow.renderGeneSummary = renderGeneSummary;\n})();`;
 
             const inlineVariantScript = htmlEl.ownerDocument.createElement("script");
-            inlineVariantScript.textContent = `(function() {\n${variantSummaryJs}\nwindow.renderVariantSummary = renderVariantSummary;\n})();`;
+            inlineVariantScript.textContent = `(function() {\n${escapeInlineScript(variantSummaryJs)}\nwindow.renderVariantSummary = renderVariantSummary;\n})();`;
 
             // Convert the main module script to use global functions
             let mainScriptContent = mainModuleScript.textContent;
@@ -1065,7 +1067,7 @@
               .trim();
 
             const newMainScript = htmlEl.ownerDocument.createElement("script");
-            newMainScript.textContent = mainScriptContent;
+            newMainScript.textContent = escapeInlineScript(mainScriptContent);
 
             // Replace the module script with our inlined versions
             mainModuleScript.replaceWith(inlineAnswerScript);
@@ -1811,7 +1813,7 @@
 
       const DEMO_PATH = "out/20250924-004900_ui/demo.json"; // the hardwired demo folder
 
-      byId("tryDemoLink").addEventListener("click", async (e) => {
+      byId("tryDemoLink")?.addEventListener("click", async (e) => {
         e.preventDefault();
         try {
           const r = await fetch(DEMO_PATH, { cache: "no-store" });
@@ -1824,7 +1826,7 @@
         }
       });
 
-      byId("loadFolderBtn").addEventListener("click", () => {
+      byId("loadFolderBtn")?.addEventListener("click", () => {
         byId("folderPicker").click();
       });
     </script>
