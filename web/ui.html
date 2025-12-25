@@ -971,6 +971,16 @@
           htmlEl.querySelector(".floating-ui")?.remove();
           htmlEl.querySelectorAll(".cite-tip")?.forEach((n) => n.remove());
 
+          // Embed verification summary for static snapshot (no state restore)
+          try {
+            const card = htmlEl.querySelector("#answerCard");
+            if (card && STATE?.verification) {
+              card.setAttribute("data-verification", JSON.stringify(STATE.verification));
+            }
+          } catch (e) {
+            console.warn("Could not embed verification data:", e);
+          }
+
           // Add snapshot info banner at the top
           const grid = htmlEl.querySelector("#grid");
           if (grid && grid.parentNode) {
@@ -1240,6 +1250,57 @@
                   });
                 });
               }
+              function wireVerifDetails(){
+                var btn = document.getElementById('verifDetailsBtn');
+                var modal = document.getElementById('verifModal');
+                var card = document.getElementById('answerCard');
+                if (!btn || !modal) return;
+                var backdrop = modal.querySelector('.modal-backdrop');
+                var closeBtn = modal.querySelector('.modal-close');
+                btn.addEventListener('click', function(){
+                  try{
+                    var raw = card ? card.getAttribute('data-verification') : null;
+                    var ver = raw ? safeJson(raw) : null;
+                    if (ver) {
+                      var body = modal.querySelector('.modal-body');
+                      var overall = (ver.evidence && ver.evidence.overall) || ver.overall || {};
+                      var quality = overall.support_quality ? '<span class="pill">' + esc(overall.support_quality) + '</span>' : '';
+                      var summary = overall.summary ? '<p class="wrap">' + esc(overall.summary) + '</p>' : '<p class="muted">No overall summary.</p>';
+                      var concerns = Array.isArray(overall.concerns) && overall.concerns.length
+                        ? '<ul class="md-list">' + overall.concerns.map(function(c){ return '<li>' + esc(String(c)) + '</li>'; }).join('') + '</ul>'
+                        : '<div class="muted">No concerns listed.</div>';
+                      var v = String(ver.verdict || '').toLowerCase();
+                      var verdictClass = v === 'pass' ? 'badge badge-supported'
+                        : v === 'partial' ? 'badge badge-partial'
+                        : 'badge badge-unsupported';
+                      body.innerHTML = [
+                        '<section class="verif-section">',
+                        '<h3 class="md-h3">Overall quality: ' + quality + '</h3>',
+                        summary,
+                        '</section>',
+                        '<section class="verif-section">',
+                        '<h4 class="md-h4">Concerns</h4>',
+                        concerns,
+                        '</section>',
+                        (ver.verdict ? '<section class="verif-section"><h4 class="md-h4">Verdict</h4><p><span class="' + verdictClass + '">VERDICT: ' + esc(String(ver.verdict).toUpperCase()) + '</span></p></section>' : '')
+                      ].join('');
+                    } else {
+                      var bodyEmpty = modal.querySelector('.modal-body');
+                      if (bodyEmpty) {
+                        bodyEmpty.innerHTML = '<div class="muted">No verification details available in this snapshot.</div>';
+                      }
+                    }
+                  } catch(e) {
+                    console.warn('Verification details render failed:', e);
+                  }
+                  modal.classList.add('open');
+                });
+                if (backdrop) backdrop.addEventListener('click', function(){ modal.classList.remove('open'); });
+                if (closeBtn) closeBtn.addEventListener('click', function(){ modal.classList.remove('open'); });
+                document.addEventListener('keydown', function(e){
+                  if (e.key === 'Escape') modal.classList.remove('open');
+                });
+              }
               function wireHighlightToggle(){
                 var card = document.getElementById('answerCard');
                 var tgl = document.getElementById('hlToggle');
@@ -1265,6 +1326,7 @@
                 var scope = document.getElementById('answer') || document.body;
                 wireTooltips(scope);
                 wireClicks(scope);
+                wireVerifDetails();
                 wireHighlightToggle();
               }
               if (document.readyState === 'loading') {

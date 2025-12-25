@@ -13,7 +13,7 @@ from visualize_benchmarks import _compute_styles, _style_axes, _bootstrap_ci, ca
 
 # Configure benchmark CSVs to compare (model name -> CSV path)
 MODEL_FILES = {
-    "Alvessa": "results/benchmark_results/FINAL_DBQA_20251216-125635_cli/benchmark_summary.csv",
+    "Alvessa": "results/benchmark_results/FINAL2_DBQA_20251224-215445_cli/benchmark_summary.csv",
     "\nClaude\nSonnet 4.5\n": "results/benchmark_results/FINAL_claude_baseline_dbQA_20251215-2308.csv",
     "ChatGPT 5.1": "results/benchmark_results/FINAL_chatgpt_baseline_dbQA_20251215-2330.csv"
 }
@@ -24,13 +24,13 @@ figure_ext = '_LLM'
 
 
 MODEL_FILES = {
-    "Alvessa*": '/Users/sokolova/Documents/research/alvessa_agent/out/20251224-015110_cli/benchmark_summary.csv', #"results/benchmark_results/FINAL_DBQA_20251216-125635_cli/benchmark_summary.csv",
+    "Alvessa*": "results/benchmark_results/FINAL2_DBQA_20251224-215445_cli/benchmark_summary.csv",
     "Biomni*\n\n\n": "results/benchmark_results/biomni_baseline_dbQA_subset_20251219-1701.csv",
 }
 OTHER_HATCHES = [ "..",  "xx", "//", "++", "--"]
 MATCH_Q = True
 WIDTH_PLOT = (4/3)*2
-figure_ext = '_B_TEMP'
+figure_ext = '_B'
 
 
 BAR_WIDTH = 0.85  # unified bar width across all plots

@@ -15,7 +15,7 @@ import unicodedata
 
 # Hardwired benchmark CSVs (extendable)
 MODEL_FILES = {
-    "Alvessa": 'results/benchmark_results/FINAL_GA_20251216-162600_cli/benchmark_summary.csv',
+    "Alvessa": 'results/benchmark_results/FINAL2_GA_20251224-200223_cli/benchmark_summary.csv',
     "\nClaude\nSonnet 4.5": "results/benchmark_results/FINAL_claude_baseline_GenomeArena_20251216-0122.csv",
     "ChatGPT 5.1": "results/benchmark_results/FINAL_chatgpt_baseline_GenomeArena_20251216-0122.csv", 
     '\nClaude\nSonnet 4.5+\nsearch': "results/benchmark_results/claude_baseline_web_serch_N5_GenomeArena_20251216-2008.csv",
@@ -26,7 +26,7 @@ WIDTH_PLOT = (4/3)*4
 fig_ext = '_LLM'
 
 MODEL_FILES = {
-    "Alvessa*": 'results/benchmark_results/FINAL_GA_20251216-162600_cli/benchmark_summary.csv',
+    "Alvessa*": 'results/benchmark_results/FINAL2_GA_20251224-200223_cli/benchmark_summary.csv',
     'Biomni*\n\n\n': "results/benchmark_results/biomni_baseline_GA_10_subset_20251218-2235.csv", 
 }
 OTHER_HATCHES = ["..", "xx", "//", "\\\\",  "++", "--"]

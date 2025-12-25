@@ -12,14 +12,14 @@ from matplotlib.patches import FancyBboxPatch
 
 # Hardwired benchmark CSVs 
 MODEL_FILES = {
-    "Alvessa*": 'results/benchmark_results/FINAL_GA_20251216-162600_cli/benchmark_summary.csv', 
+    "Alvessa*": 'results/benchmark_results/FINAL2_GA_20251224-200223_cli/benchmark_summary.csv', 
     "Biomni*": 'results/benchmark_results/biomni_baseline_GA_10_subset_20251218-2235.csv'
 }
 figure_ext = '_GA'
 
 
 MODEL_FILES = {
-    "Alvessa*": "results/benchmark_results/FINAL_DBQA_20251216-125635_cli/benchmark_summary.csv",
+    "Alvessa*": "results/benchmark_results/FINAL2_DBQA_20251224-215445_cli/benchmark_summary.csv",
     "Biomni*": "results/benchmark_results/biomni_baseline_dbQA_subset_20251219-1701.csv",
 }
 figure_ext = '_dbQA'
