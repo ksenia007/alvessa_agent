@@ -92,8 +92,13 @@ def evaluate_file(client: anthropic.Anthropic, model: str, path: Path, out_dir: 
         return
 
     statements = data.get("verification", {}).get("statements", []) or []
-    texts = [str(s.get("text", "")).strip() for s in statements if s.get("text")]
-    if not texts:
+    indexed_texts = [
+        (i, str(s.get("text", "")).strip())
+        for i, s in enumerate(statements)
+        if s.get("text")
+    ]
+    texts = [t for _, t in indexed_texts]
+    if not indexed_texts:
         print(f"[eval] No statements found in {path}")
         return
     
@@ -126,16 +131,16 @@ def evaluate_file(client: anthropic.Anthropic, model: str, path: Path, out_dir: 
     results = []
     false_count = 0
     is_adversarial = False
-    for i, text in enumerate(texts):
-        
-        if i in adv_indices_list:
+    for pos, (orig_idx, text) in enumerate(indexed_texts):
+
+        if orig_idx in adv_indices_list:
             # verify that the text matches the new_statement
-            adv_text = adv_indices[i]['new_statement']
+            adv_text = adv_indices[orig_idx]['new_statement']
             if adv_text is None:
                 continue
             # strip of all extra spaces for comparison
             if text.strip() != adv_text.strip():
-                print(f"[eval] Warning: statement index {i} text does not match adversarial new_statement text.", file=sys.stderr)
+                print(f"[eval] Warning: statement index {orig_idx} text does not match adversarial new_statement text.", file=sys.stderr)
                 print(f"[eval] Statement text: {text}", file=sys.stderr)
                 print(f"[eval] Adversarial new_statement text: {adv_text}", file=sys.stderr)
                 continue
@@ -143,19 +148,19 @@ def evaluate_file(client: anthropic.Anthropic, model: str, path: Path, out_dir: 
         else:
             is_adversarial = False
 
-        entry = per_stmt.get(str(i), {}) or {}
+        entry = per_stmt.get(str(pos), {}) or {}
         verdict = entry.get("label")
         reason = entry.get("reason")
-        if verdict and verdict.lower() == "false":
+        if verdict and verdict.lower() == "fail":
             false_count += 1
-        alvessa_label = statements[i].get("verdict")
-        alvessa_reason = statements[i].get("llm_feedback")
+        alvessa_label = statements[orig_idx].get("verdict")
+        alvessa_reason = statements[orig_idx].get("llm_feedback")
         
         if is_adversarial:
-            original_entry = adv_indices[i]['original_statement']
-            adversarial_entry = adv_indices[i]['new_statement']
-            original_proof = adv_indices[i].get('original_proofs', '')
-            modification = adv_indices[i].get('modification_type', '')
+            original_entry = adv_indices[orig_idx]['original_statement']
+            adversarial_entry = adv_indices[orig_idx]['new_statement']
+            original_proof = adv_indices[orig_idx].get('original_proofs', '')
+            modification = adv_indices[orig_idx].get('modification_type', '')
         else:
             original_entry = ""
             adversarial_entry = ""
@@ -165,6 +170,7 @@ def evaluate_file(client: anthropic.Anthropic, model: str, path: Path, out_dir: 
             
         results.append(
             {
+                "statement_index": orig_idx,
                 "text": text,
                 "baseline_label": verdict,
                 "baseline_reason": reason,

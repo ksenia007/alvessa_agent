@@ -9,22 +9,22 @@ from matplotlib.patches import Patch
 #%%
 
 file_locations = [
-    '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151910_adversarial_eval/baseline-20251225-162012', # contr proof
-    '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151903_adversarial_eval/baseline-20251225-162100', 
-    # '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151857_adversarial_eval/baseline-20251225-162121', 
-    '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151850_adversarial_eval/baseline-20251225-162128',
-    '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151846_adversarial_eval/baseline-20251225-162136'
-    # '/Users/sokolova/Documents/research/alvessa_agent/out/MODE1-20251129-195241_adversarial_eval/baseline-20251129-213415', 
+    '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-165728_adversarial_eval/baseline-20251225-181505', 
+    '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-165722_adversarial_eval/baseline-20251225-181449', 
+    '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151850_adversarial_eval/baseline-20251225-181857', 
+    '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151846_adversarial_eval/baseline-20251225-181942', 
+    
+    
+    # '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151910_adversarial_eval/baseline-20251225-162012', # contr proof
+    # '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151903_adversarial_eval/baseline-20251225-162100', 
+    # # '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151857_adversarial_eval/baseline-20251225-162121', 
+    # '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151850_adversarial_eval/baseline-20251225-162128',
+    # '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151846_adversarial_eval/baseline-20251225-162136'
+    # # '/Users/sokolova/Documents/research/alvessa_agent/out/MODE1-20251129-195241_adversarial_eval/baseline-20251129-213415', 
     #'/Users/sokolova/Documents/research/alvessa_agent/out/MODE2-20251129-195253_adversarial_eval/baseline-20251129-213614', 
     #'/Users/sokolova/Documents/research/alvessa_agent/out/MODE3-20251129-213401_adversarial_eval/baseline-20251129-222411',
     #'/Users/sokolova/Documents/research/alvessa_agent/out/MODE4-20251129-213154_adversarial_eval/baseline-20251129-222433',
     #'/Users/sokolova/Documents/research/alvessa_agent/out/MODE5_20251129-193500_adversarial_eval/baseline-20251129-213515'
-    
-#    '/Users/sokolova/Documents/research/alvessa_agent/out/20251127-194054_adversarial_eval/baseline-20251127-205858', 
-#    '/Users/sokolova/Documents/research/alvessa_agent/out/20251127-194549_adversarial_eval/baseline-20251127-205845', 
-# # '/Users/sokolova/Documents/research/alvessa_agent/out/20251128-005836_adversarial_eval/baseline-20251128-014418',
-#    '/Users/sokolova/Documents/research/alvessa_agent/out/20251128-005841_adversarial_eval/baseline-20251128-014434', 
-#    '/Users/sokolova/Documents/research/alvessa_agent/out/20251128-015745_adversarial_eval/baseline-20251128-140730', 
 ]
 
 # load all jsons from the file locations; 
@@ -57,8 +57,6 @@ for file_location in file_locations:
             
 overall_df = pd.DataFrame(overall_data)
 overall_df.head()
-# %%
-content['baseline_overall_llm'].keys()
 # %%
 # per statement data
 data = []
@@ -182,8 +180,8 @@ for idx, patch in enumerate(new_patches):
     patch.set_facecolor(palette.get(model_key, patch.get_facecolor()))
     width = patch.get_width()
     if model_key == "baseline_correct":
-        patch.set_hatch("///")
-        patch.set_edgecolor("antiquewhite")
+        patch.set_hatch("//")
+        patch.set_edgecolor("grey")
         patch.set_linewidth(0.8)
         y_center = patch.get_y() + patch.get_height() / 2.0
         print('y_center', y_center)
@@ -229,7 +227,7 @@ ax.spines["bottom"].set_color("#A0A0A0")
 
 # Legend cleanup (manual handles so hatching shows)
 legend_handles = [
-    Patch(facecolor=palette["baseline_correct"], edgecolor="antiquewhite", linewidth=0.8, hatch="///", label="Ablated verifier"),
+    Patch(facecolor=palette["baseline_correct"], edgecolor="grey", linewidth=0.8, hatch="///", label="Ablated verifier"),
     Patch(facecolor=palette["alvessa_correct"], edgecolor="none", label="Context-aware verifier"),
 ]
 ax.legend(legend_handles, [h.get_label() for h in legend_handles], title="", 
@@ -246,7 +244,7 @@ label_map = {
     "hallucinated_alphanumeric_entities": "Wrong alphanumeric values",
     "hallucinated_numbers": "Wrong numerical values",
 }
-txt_output_path = Path('/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_results/adversarial_examples_summary.txt')
+txt_output_path = Path('/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_results/adversarial_statements_summary.txt')
 with txt_output_path.open('w', encoding='utf-8') as f:
     for idx, row in df.iterrows():
         f.write(f"Question ID: {row['question_id']}\n")
@@ -257,13 +255,4 @@ with txt_output_path.open('w', encoding='utf-8') as f:
         f.write(f"Alvessa Label: {row['alvessa_label']}\n")
         f.write("-" * 80 + "\n")
 
-for idx, row in df.iterrows():
-    print(f"Question ID: {row['question_id']}")
-    print(f"Modification Type: {label_map.get(row['modification_type'], None)} ")
-    print(f"Original Statement: {row['original_statement']}")
-    print(f"Adversarial Statement: {row['adversarial_statement']}")
-    print(f"Baseline Label: {row['baseline_label']}")
-    print(f"Alvessa Label: {row['alvessa_label']}")
-    print("-" * 80)
-    break
 # %%
