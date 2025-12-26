@@ -82,7 +82,6 @@ print(f'Alvessa Accuracy: {alvessa_accuracy:.2%}')
 # ------------------------------------------------------------------
 # Pretty labels for y-axis
 label_map = {
-    # "contradiction": "Contradiction\n(plain)",
     "contradiction_with_proofs": "Contradiction",
     "overstatement": "Overstatement",
     "hallucinated_alphanumeric_entities": "Wrong alphanumeric\nvalues",
