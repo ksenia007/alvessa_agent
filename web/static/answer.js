@@ -438,6 +438,8 @@ function normalizeRawText(src) {
     document.addEventListener("keydown", (e) => e.key === "Escape" && closeModal());
   }
   function openProofsModal(stmt){
+    if (!stmt) return;
+    ensureModal();  // Initialize modal if not already created
     const body = MODAL.querySelector(".modal-body");
     const proofs = Array.isArray(stmt?.proofs) ? stmt.proofs : [];
     const reasons = Array.isArray(stmt?.reasons) ? stmt.reasons : [];
@@ -471,7 +473,7 @@ function normalizeRawText(src) {
       <ol class="refs-list">${list || `<li class="muted">No proofs attached.</li>`}</ol>
   
       <div class="muted" style="margin:10px 0 6px;">Feedback & reasons</div>
-      <div class="mono wrap">${esc(feedback || "—")}</div>
+      <div class="mono wrap">${feedback ? mdToHTML(feedback) : "—"}</div>
       <div>${spec} ${reasonsPills}</div>
     `;
     MODAL.classList.add("open");
@@ -500,6 +502,8 @@ function normalizeRawText(src) {
     document.addEventListener("keydown", (e) => e.key === "Escape" && closeVerif());
   }
   function openVerifModal(ver){
+    if (!ver) return;
+    ensureVerifModal();  // Initialize modal if not already created
     const body = VERIF_MODAL.querySelector(".modal-body");
     const overall = ver?.evidence?.overall || ver?.overall || {};
     const quality = overall?.support_quality ? `<span class="pill">${esc(overall.support_quality)}</span>` : "";
