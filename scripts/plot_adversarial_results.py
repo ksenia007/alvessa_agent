@@ -13,18 +13,6 @@ file_locations = [
     '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-165722_adversarial_eval/baseline-20251225-181449', 
     '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151850_adversarial_eval/baseline-20251225-181857', 
     '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151846_adversarial_eval/baseline-20251225-181942', 
-    
-    
-    # '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151910_adversarial_eval/baseline-20251225-162012', # contr proof
-    # '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151903_adversarial_eval/baseline-20251225-162100', 
-    # # '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151857_adversarial_eval/baseline-20251225-162121', 
-    # '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151850_adversarial_eval/baseline-20251225-162128',
-    # '/Users/sokolova/Documents/research/alvessa_agent/out/20251225-151846_adversarial_eval/baseline-20251225-162136'
-    # # '/Users/sokolova/Documents/research/alvessa_agent/out/MODE1-20251129-195241_adversarial_eval/baseline-20251129-213415', 
-    #'/Users/sokolova/Documents/research/alvessa_agent/out/MODE2-20251129-195253_adversarial_eval/baseline-20251129-213614', 
-    #'/Users/sokolova/Documents/research/alvessa_agent/out/MODE3-20251129-213401_adversarial_eval/baseline-20251129-222411',
-    #'/Users/sokolova/Documents/research/alvessa_agent/out/MODE4-20251129-213154_adversarial_eval/baseline-20251129-222433',
-    #'/Users/sokolova/Documents/research/alvessa_agent/out/MODE5_20251129-193500_adversarial_eval/baseline-20251129-213515'
 ]
 
 # load all jsons from the file locations; 
