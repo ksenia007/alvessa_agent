@@ -28,28 +28,33 @@ organism_codes = {
     'rno': 'rat'
 }
 
-def _standardize_miRNA_name(symbol: str): 
-    symbol = symbol.lower().replace('_', '-')
+
+def _standardize_miRNA_name(symbol: str):
+    symbol = symbol.strip().lower().replace("_", "-")
     organism = None
 
     for code in organism_codes.keys():
-        if symbol.startswith(code + '-'):
+        if symbol.startswith(code + "-"):
             organism = code
-            symbol = symbol[len(code)+1:] 
+            symbol = symbol[len(code) + 1:]
             break
 
-    pattern = re.compile(r'mir-?(\d+)(-?(5p|3p))?')
-
+    # Accept: mir, miR, let, lin (case-insensitive already handled by lower())
+    # Examples matched:
+    #   mir-21, mir21, let-7, let7, mir-21-5p, let-7-3p
+    pattern = re.compile(r'^(?:mi?r|let|lin)-?(\d+)(?:-?(5p|3p))?$')
     match = pattern.match(symbol)
+
     if not match:
-        pattern_simple = re.compile(r'(\d+)(-?(5p|3p))?')
+        # Optional fallback: allow just "21" or "21-5p"
+        pattern_simple = re.compile(r'^(\d+)(?:-?(5p|3p))?$')
         match = pattern_simple.match(symbol)
 
     if not match:
         standardized_name = symbol
     else:
         number = match.group(1)
-        arm = match.group(3)  
+        arm = match.group(2)  # 5p/3p
         standardized_name = f"miR-{number}"
         if arm:
             standardized_name += f"-{arm}"
@@ -58,9 +63,6 @@ def _standardize_miRNA_name(symbol: str):
         standardized_name = f"{organism}-{standardized_name}"
 
     return organism, standardized_name
-
-
-import requests
 
 def _refseq_to_symbol(refseq_ids):
     url = "http://mygene.info/v3/query"
@@ -113,7 +115,7 @@ def miRDB_agent(state: "State") -> "State":
     )
 
     for gene in gene_objs.keys():
-        if 'mir' not in gene.lower():
+        if 'mir' not in gene.lower() and 'let' not in gene.lower() and 'lin' not in gene.lower():
             continue
 
         organism, standardized_miRNA = _standardize_miRNA_name(gene)
@@ -156,10 +158,9 @@ def miRDB_agent(state: "State") -> "State":
         gene_objs[gene].add_tool("miRDB_agent")
 
         # create a text summary about miRNA targets
-        summary = f"All computationally predicted gene targets for {gene} (from the miRDB database), separated by organism, include: "
+        summary = f"*miRDB: miRDB: Computationally predicted microRNAs that target the input gene ({gene}), based on the MirTarget machine-learning model, with predictions available by organism: "
         for org, targets in preds_temp.items():
             summary += f"{org} - {', '.join(targets)}; "
-        summary += f" End of record for {gene} |"
         gene_objs[gene].update_text_summaries(summary)
 
     return 
@@ -169,6 +170,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="miRDB",
         entry_point=miRDB_agent,
-        description="Fetches miRDB computationally predicted gene targets of miRNA.",
+        description="Looks up predicted target genes for the miRNA of interest using miRDB, with organism-specific predictions.",
     ),
 )

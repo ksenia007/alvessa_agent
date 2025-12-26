@@ -116,11 +116,6 @@ statements.forEach((s, idx) => {
         span.className = "answer-chunk";
         span.dataset.idx = String(idx);
         span.dataset.statement = JSON.stringify(s);
-        span.dataset.tooltip = makeTooltipHTML({
-          feedback: s?.llm_feedback,
-          reasons: Array.isArray(s?.reasons) ? s.reasons : [],
-          speculation: !!s?.is_speculation,
-        });
   
         const llm = String(s?.llm_label || "").toLowerCase();
         const v   = String(s?.verdict   || "").toLowerCase();
@@ -162,11 +157,6 @@ statements.forEach((s, idx) => {
           span.className = "answer-chunk";
           span.dataset.idx = String(idx);
           span.dataset.statement = JSON.stringify(s);
-          span.dataset.tooltip = makeTooltipHTML({
-            feedback: s?.llm_feedback,
-            reasons: Array.isArray(s?.reasons) ? s.reasons : [],
-            speculation: !!s?.is_speculation,
-          });
   
           const llm = String(s?.llm_label || "").toLowerCase();
           const v   = String(s?.verdict   || "").toLowerCase();
@@ -223,11 +213,6 @@ statements.forEach((s, idx) => {
     span.className = "answer-chunk";
     span.dataset.idx = String(idx);
     span.dataset.statement = JSON.stringify(s);
-    span.dataset.tooltip = makeTooltipHTML({
-      feedback: s?.llm_feedback,
-      reasons: Array.isArray(s?.reasons) ? s.reasons : [],
-      speculation: !!s?.is_speculation,
-    });
   
     const llm = String(s?.llm_label || "").toLowerCase();
     const v   = String(s?.verdict   || "").toLowerCase();
@@ -403,7 +388,14 @@ function normalizeRawText(src) {
     scope.querySelectorAll(".answer-chunk").forEach(node => {
       node.addEventListener("mouseenter", (e) => {
         if (byId("answerCard")?.dataset.highlights !== "on") return;
-        const html = node.dataset.tooltip || "";
+        // Generate tooltip HTML dynamically from statement data to avoid HTML escaping issues
+        const stmt = safeJson(node.dataset.statement || "{}");
+        if (!stmt) return;
+        const html = makeTooltipHTML({
+          feedback: stmt.llm_feedback,
+          reasons: Array.isArray(stmt.reasons) ? stmt.reasons : [],
+          speculation: !!stmt.is_speculation
+        });
         if (!html) return;
         TIP.innerHTML = html;
         TIP.classList.add("show");
@@ -629,9 +621,9 @@ function normalizeRawText(src) {
   /* Pills / badges */
   .answer-topbar { margin: -2px 0 10px; }
   .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; border:1px solid currentColor; }
-  .badge-supported  { color:#045d47; background:rgba(16,185,129,.18); border-color:rgba(5,150,105,.35); }
-  .badge-partial    { color:#7a5207; background:rgba(234,179,8,.18);  border-color:rgba(161,98,7,.35); }
-  .badge-unsupported{ color:#334155; background:rgba(148,163,184,.22); border-color:rgba(51,65,85,.35); }
+  .badge-supported  { color:#d1fae5; background:rgba(16,185,129,.20); border-color:rgba(5,150,105,.55); }
+  .badge-partial    { color:#8a6100; background:rgba(234,179,8,.20);  border-color:rgba(161,98,7,.40); }
+  .badge-unsupported{ color:#f8fafc; background:rgba(255,255,255,.16); border-color:rgba(255,255,255,.32); }
   body.light .badge-supported  { color:#065f46; background:rgba(5,150,105,.14); border-color:rgba(5,150,105,.34); }
   body.light .badge-partial    { color:#854d0e; background:rgba(234,179,8,.16);  border-color:rgba(202,138,4,.34); }
   body.light .badge-unsupported{ color:#1f2937; background:rgba(148,163,184,.20); border-color:rgba(51,65,85,.30); }
@@ -647,8 +639,8 @@ function normalizeRawText(src) {
   /* Tooltip (wraps) */
   .cite-tip {
     position:fixed; z-index:10000; max-width: 560px;
-    background:var(--input,#0e1430); color:var(--fg,#e6e8ef);
-    border:1px solid var(--pill-line,#2a3a72); border-radius:10px;
+    background:rgba(12, 11, 10, 0.95); color:#f3f0ea;
+    border:1px solid rgba(255,180,120,0.25); border-radius:10px;
     padding:8px 10px; font-size:12px; line-height:1.45;
     box-shadow:0 8px 24px rgba(0,0,0,.4); pointer-events:none;
     opacity:0; transform:translateY(4px);
@@ -658,35 +650,42 @@ function normalizeRawText(src) {
   .cite-tip.show { opacity:1; transform:translateY(0); }
   .cite-tip .tip-line + .tip-line { margin-top:4px; }
   .cite-tip .pill { margin:2px 4px 0 0; }
+
+  body.light .cite-tip {
+    background: rgba(255, 255, 255, 0.98);
+    color: #0b0f1a;
+    border-color: rgba(12, 18, 36, 0.2);
+    box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  }
   
   /* Modals */
   #proofsModal, #verifModal { position: fixed; inset: 0; display: none; z-index: 10001; }
   #proofsModal.open, #verifModal.open { display: flex; align-items: center; justify-content: center; padding: 4vh 14px; }
-  #proofsModal .modal-backdrop, #verifModal .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); }
+  #proofsModal .modal-backdrop, #verifModal .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(2px); }
   #proofsModal .modal-sheet, #verifModal .modal-sheet {
     position: relative; width: min(100%, 1040px); max-height: 84vh;
-    background: var(--card, #121832); color: var(--fg, #e6e8ef);
-    border: 1px solid var(--line, #1e2a52); border-radius: 14px;
-    box-shadow: var(--shadow, 0 6px 24px rgba(0,0,0,.2));
+    background: #0c0b0a; color: var(--fg, #f3f0ea);
+    border: 1px solid rgba(255,180,120,0.20); border-radius: 14px;
+    box-shadow: 0 18px 46px rgba(0,0,0,.5);
     display: flex; flex-direction: column; overflow: hidden;
   }
-  #proofsModal .modal-head, #verifModal .modal-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px; border-bottom:1px solid var(--line,#1e2a52); }
+  #proofsModal .modal-head, #verifModal .modal-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px; border-bottom:1px solid rgba(255,180,120,0.12); }
   #proofsModal .modal-title, #verifModal .modal-title { font-weight:700; }
   #proofsModal .modal-body, #verifModal .modal-body { padding:12px 14px; overflow:auto; }
   body.light #proofsModal .modal-sheet, body.light #verifModal .modal-sheet {
-    background:#fff; color:#0b1020; border-color:#d8dce6; box-shadow: 0 6px 24px rgba(0,0,0,.06);
+    background:#ffffff; color:#0b1020; border-color:#d8dce6; box-shadow: 0 18px 46px rgba(0,0,0,.2);
   }
   
   /* Proofs list */
   .refs-list { margin:0; padding-left: 20px; }
   .ref-item { margin: 4px 0; }
-  .ref-details { border:1px solid var(--line,#1e2a52); border-radius:8px; padding:6px 8px; background: var(--bg-soft,#0b1020); }
-  .ref-details[open] { background: var(--card,#121832); }
+  .ref-details { border:1px solid rgba(255,180,120,0.12); border-radius:8px; padding:6px 8px; background: rgba(255,200,150,0.03); }
+  .ref-details[open] { background: rgba(255,200,150,0.06); }
   .ref-summary { cursor:pointer; font-weight:600; list-style:none; }
   .ref-summary::-webkit-details-marker { display:none; }
   .cite-block {
     margin:8px 0 4px 0; padding:8px 10px;
-    border-left:3px solid var(--pill-line,#2a3a72);
+    border-left:3px solid rgba(255,180,120,0.25);
     background: rgba(255,255,255,.03);
     white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;
   }

@@ -5,20 +5,20 @@
 
 /* === Theme Variables === */
 :root {
-  --bg-main: #0b1020;          /* matches --bg */
-  --bg-card: #121832;          /* matches --card */
-  --bg-panel: #1a2347;         /* matches --pill-bg */
-  --text-main: #e6e8ef;        /* matches --fg */
-  --text-muted: #aab4d6;       /* matches --muted */
-  --border: #1e2a52;           /* matches --line */
-  --border-strong: #2a3a72;    /* matches --accent */
-  --accent: #2a3a72;           /* brand blue-accent */
+  --bg-main: #0a0908;
+  --bg-card: #0c0b0a;
+  --bg-panel: rgba(255, 200, 150, 0.04);
+  --text-main: #f3f0ea;
+  --text-muted: #a89a8a;
+  --border: rgba(255, 180, 120, 0.12);
+  --border-strong: rgba(255, 180, 120, 0.28);
+  --accent: #e85d04;
 
   /* High-contrast link colors for dark theme */
-  --link: #9cc9ff;
-  --link-hover: #d6e7ff;
-  --link-visited: #b9d6ff;
-  --focus-ring: 0 0 0 3px rgba(156, 201, 255, 0.35);
+  --link: #faa307;
+  --link-hover: #f48c06;
+  --link-visited: #e85d04;
+  --focus-ring: 0 0 0 3px rgba(232, 93, 4, 0.35);
 
   /* Status colors */
   --withdrawn: #ff6b6b;        /* withdrawn highlight (dark) */
@@ -31,19 +31,19 @@
 
 /* === Light Theme === */
 body.light {
-  --bg-main: #ffffff;
+  --bg-main: #f8f7f5;
   --bg-card: #ffffff;
   --bg-panel: #f5f7fb;
-  --text-main: #0b1020;
-  --text-muted: #6b7280;
-  --border: #d8dce6;
-  --border-strong: #c8cfe0;
-  --accent: #1b2450;
+  --text-main: #0b0f1a;
+  --text-muted: #5c6375;
+  --border: rgba(12, 18, 36, 0.12);
+  --border-strong: #cbd5e1;
+  --accent: #e85d04;
 
-  --link: #1b45f0;
-  --link-hover: #0d36c7;
-  --link-visited: #5a3be6;
-  --focus-ring: 0 0 0 3px rgba(27, 69, 240, 0.25);
+  --link: #e85d04;
+  --link-hover: #d04f03;
+  --link-visited: #f48c06;
+  --focus-ring: 0 0 0 3px rgba(232, 93, 4, 0.25);
 
   --withdrawn: #c22;           /* withdrawn highlight (light) */
 }

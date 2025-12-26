@@ -1,3 +1,4 @@
+# src/alvessa/domain/drug_class.py
 from __future__ import annotations
 
 import json
@@ -5,100 +6,124 @@ from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List, Optional
 
 
-def canon_drug_key(name: str) -> str:
-    """Normalize drug keys to lowercase alnum-only."""
-    return "".join(ch for ch in (name or "").lower() if ch.isalnum())
-
-
 def _unique_preserve(items: List[str]) -> List[str]:
+    """
+    Return a list with duplicates removed, preserving the first occurrence
+    (case-insensitive comparison).
+    """
     seen = set()
-    cleaned: List[str] = []
+    out: List[str] = []
     for item in items or []:
-        norm = (item or "").strip()
-        if not norm or norm.lower() in seen:
+        s = (item or "").strip()
+        if not s:
             continue
-        cleaned.append(norm)
-        seen.add(norm.lower())
-    return cleaned
+        key = s.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(s)
+    return out
 
 
 @dataclass
 class DrugIdentifiers:
-    """Core identifiers for a drug/small molecule."""
+    """
+    Minimal identifier bundle for a small molecule / drug.
 
+    This class is focused on *identification and lookup*, not on
+    downstream properties like activity or clinical status.
+
+    All IDs are "hard" identifiers coming from external databases.
+    No canonical key is stored here; merging logic lives in higher layers.
+    """
+
+    # Primary human-readable name (e.g., "neratinib").
     name: str
-    canon_key: Optional[str] = None
-    synonyms: List[str] = field(default_factory=list)
-    catalog_number: Optional[str] = None
-    cas_number: Optional[str] = None
+
+    # Hard identifiers from external DBs (optional).
     chembl_id: Optional[str] = None
+    drugcentral_id: Optional[str] = None
+    cas_number: Optional[str] = None
+    catalog_number: Optional[str] = None
+
+    # Any additional aliases or trade names.
+    synonyms: List[str] = field(default_factory=list)
+
+    def normalize(self) -> None:
+        """Normalize identifiers in-place (trim, deduplicate synonyms)."""
+        if self.name:
+            self.name = self.name.strip()
+
+        if self.chembl_id:
+            self.chembl_id = str(self.chembl_id).strip()
+
+        if self.drugcentral_id:
+            self.drugcentral_id = str(self.drugcentral_id).strip()
+
+        if self.cas_number:
+            self.cas_number = str(self.cas_number).strip()
+
+        if self.catalog_number:
+            self.catalog_number = str(self.catalog_number).strip()
+
+        self.synonyms = _unique_preserve(self.synonyms)
 
 
 @dataclass
 class Drug:
-    """Aggregates drug-related data, mirroring the Gene class pattern."""
+    """
+    Compact representation of a drug / small molecule.
+
+    Responsibilities:
+      - Hold *identifiers* and *how/where* it was mentioned.
+      - Be easy to match and merge across data sources.
+      - Stay agnostic to downstream properties (activities, PK, etc.).
+    """
 
     identifiers: DrugIdentifiers
-    smiles: Optional[str] = None
-    research_areas: List[str] = field(default_factory=list)
-    clinical_status: Optional[str] = None
-    targets: List[str] = field(default_factory=list)  # gene/protein targets
-    notes: List[str] = field(default_factory=list)
-    text_summaries_from_tools: List[str] = field(default_factory=list)
+
+    # Where/how this drug was mentioned in the conversation / text.
+    # Example entry: {"text": "neratinib", "match_type": "exact", "source": "medchemexpress"}
     mentions: List[Dict[str, Any]] = field(default_factory=list)
+
+    # Free-form metadata; reserved for future use (e.g., provenance flags).
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    # Bookkeeping for which tools have enriched this object.
     tools_run: List[str] = field(default_factory=list)
 
     # ------------------------------------------------------------------
     # Normalization
     # ------------------------------------------------------------------
     def normalize(self) -> None:
-        if self.identifiers.name:
-            self.identifiers.name = self.identifiers.name.strip()
-        if self.identifiers.canon_key:
-            self.identifiers.canon_key = canon_drug_key(self.identifiers.canon_key)
-        self.identifiers.synonyms = _unique_preserve(self.identifiers.synonyms)
-        self.targets = [t.upper().strip() for t in _unique_preserve(self.targets)]
-        self.research_areas = _unique_preserve(self.research_areas)
-        self.notes = _unique_preserve(self.notes)
-        self.text_summaries_from_tools = _unique_preserve(self.text_summaries_from_tools)
+        """Normalize identifiers, mentions, and tool list."""
+        self.identifiers.normalize()
         self.tools_run = _unique_preserve(self.tools_run)
 
+        # Normalize mention texts a bit (optional, non-destructive)
+        normalized_mentions: List[Dict[str, Any]] = []
+        for m in self.mentions or []:
+            if not isinstance(m, dict):
+                continue
+            m_copy = dict(m)
+            if "text" in m_copy and isinstance(m_copy["text"], str):
+                m_copy["text"] = m_copy["text"].strip()
+            normalized_mentions.append(m_copy)
+        self.mentions = normalized_mentions
+
     # ------------------------------------------------------------------
-    # Setters / adders
+    # Mutators / helpers
     # ------------------------------------------------------------------
-    def set_smiles(self, smiles: str) -> None:
-        smiles = (smiles or "").strip()
-        if smiles:
-            self.smiles = smiles
-
-    def add_research_area(self, area: str) -> None:
-        area = (area or "").strip()
-        if area and area not in self.research_areas:
-            self.research_areas.append(area)
-
-    def set_clinical_status(self, status: str) -> None:
-        status = (status or "").strip()
-        if status:
-            self.clinical_status = status
-
-    def add_target(self, target: str) -> None:
-        target = (target or "").strip()
-        if target and target.upper() not in [t.upper() for t in self.targets]:
-            self.targets.append(target)
-
-    def add_note(self, note: str) -> None:
-        note = (note or "").strip()
-        if note and note not in self.notes:
-            self.notes.append(note)
-
-    def update_text_summaries(self, summary: str) -> None:
-        summary = (summary or "").strip()
-        if summary and summary not in self.text_summaries_from_tools:
-            self.text_summaries_from_tools.append(summary)
-
     def add_mention(self, mention: Dict[str, Any]) -> None:
-        if mention and mention not in self.mentions:
+        """
+        Add a mention record for this drug.
+
+        A "mention" is a small dict capturing how this drug appeared
+        in the text (e.g., substring, match type, source).
+        """
+        if not mention or not isinstance(mention, dict):
+            return
+        if mention not in self.mentions:
             self.mentions.append(mention)
 
     def add_tool(self, tool_name: str) -> None:
@@ -122,38 +147,40 @@ class Drug:
         return json.dumps(self.to_dict(), ensure_ascii=False)
 
     def summarize_text(self) -> str:
+        """
+        Produce a short bullet-style textual summary suitable for
+        UI cards or export. Focuses only on identifiers and mentions.
+        """
         self.normalize()
+        ids = self.identifiers
+
         lines: List[str] = []
 
-        ids = self.identifiers
-        id_bits = []
+        id_bits: List[str] = []
         if ids.name:
             id_bits.append(f"Name: {ids.name}")
-        if ids.canon_key:
-            id_bits.append(f"Key: {ids.canon_key}")
+        if ids.chembl_id:
+            id_bits.append(f"ChEMBL: {ids.chembl_id}")
+        if ids.drugcentral_id:
+            id_bits.append(f"DrugCentral: {ids.drugcentral_id}")
         if ids.cas_number:
             id_bits.append(f"CAS: {ids.cas_number}")
         if ids.catalog_number:
             id_bits.append(f"Catalog: {ids.catalog_number}")
-        if ids.chembl_id:
-            id_bits.append(f"ChEMBL: {ids.chembl_id}")
         if ids.synonyms:
             id_bits.append(f"Synonyms: {', '.join(ids.synonyms)}")
+
         if id_bits:
             lines.append(" | ".join(id_bits))
 
-        if self.clinical_status:
-            lines.append(f"Clinical status: {self.clinical_status}")
-        if self.research_areas:
-            lines.append(f"Research areas: {', '.join(self.research_areas)}")
-        if self.targets:
-            lines.append(f"Targets: {', '.join(self.targets)}")
-        if self.smiles:
-            lines.append(f"SMILES: {self.smiles}")
-        if self.notes:
-            lines.append(f"Notes: {' | '.join(self.notes)}")
-        if self.text_summaries_from_tools:
-            lines.extend(self.text_summaries_from_tools)
+        if self.mentions:
+            texts = _unique_preserve(
+                [str(m.get("text", "")).strip() for m in self.mentions if isinstance(m, dict)]
+            )
+            if texts:
+                lines.append(f"Mentions in text: {', '.join(texts)}")
+
+        if self.tools_run:
+            lines.append(f"Tools: {', '.join(self.tools_run)}")
 
         return "\n".join([f"• {line}" for line in lines if line])
-

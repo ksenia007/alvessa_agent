@@ -283,10 +283,10 @@ def _kmer_approx_search_hits(
     return Hit instances sorted by similarity (descending).
 
     Similarity definition:
-        similarity_raw = shared_kmers / total_query_kmers
-        similarity_percent = 100 * similarity_raw
+        similarity_raw = distinct_shared_kmers / distinct_query_kmers
+        similarity_percent = 100 * similarity_raw, clamped to [0, 100].
 
-    Hit.score stores similarity_percent.
+    Hit.score stores similarity_percent (0..100).
     """
     query_seq = query_seq.strip().upper()
     if not query_seq:
@@ -294,8 +294,9 @@ def _kmer_approx_search_hits(
             print("[UniProt seq_search] K-mer search: empty query; no hits.")
         return []
 
-    query_kmers = _generate_kmers(query_seq, k)
-    if not query_kmers:
+    # All k-mers, then dedupe for counting
+    query_kmers_all = _generate_kmers(query_seq, k)
+    if not query_kmers_all:
         if debug:
             print(
                 f"[UniProt seq_search] K-mer search: query too short for k={k}; "
@@ -303,11 +304,17 @@ def _kmer_approx_search_hits(
             )
         return []
 
+    query_kmers = sorted(set(query_kmers_all))
     total_query_kmers = len(query_kmers)
+    if total_query_kmers == 0:
+        if debug:
+            print("[UniProt seq_search] K-mer search: no distinct k-mers; no hits.")
+        return []
+
     if debug:
         print(
             f"[UniProt seq_search] K-mer search: "
-            f"total_query_kmers={total_query_kmers}, k={k}"
+            f"distinct_query_kmers={total_query_kmers}, k={k}"
         )
 
     path = _resolve_db_path(db_path)
@@ -323,7 +330,7 @@ def _kmer_approx_search_hits(
             u.sequence,
             u.gene_name,
             u.entrez_gene_id,
-            COUNT(*) AS shared_kmers
+            COUNT(DISTINCT ki.kmer) AS shared_kmers
         FROM kmer_index AS ki
         JOIN uniprot_gene_index AS u
           ON u.acc = ki.acc
@@ -360,7 +367,14 @@ def _kmer_approx_search_hits(
 
     for acc, canonical_acc, sequence, gene_name, entrez_gene_id, shared_kmers in rows:
         shared = int(shared_kmers)
+
         similarity_raw = shared / float(total_query_kmers)
+        # Guard against any unexpected >1 due to quirks
+        if similarity_raw > 1.0:
+            similarity_raw = 1.0
+        if similarity_raw < 0.0:
+            similarity_raw = 0.0
+
         similarity_percent = 100.0 * similarity_raw
         coverage = similarity_raw
         align_len = int(round(coverage * query_len))
@@ -477,7 +491,7 @@ def resolve_sequences_to_gene_records(
 
     for idx, seq in enumerate(sequences):
         raw_seq = seq
-        seq = seq.strip().upper()
+        seq = (seq or "").strip().upper()
 
         if not seq:
             if debug:
@@ -551,6 +565,27 @@ def resolve_sequences_to_gene_records(
         # 6) Convert to plain dicts and append to global records list
         for h in hits:
             d = asdict(h)
+
+            # Defensive clamping to keep invariants:
+            #   score in [0, 100], coverage in [0, 1],
+            #   alignment_length <= query length.
+            score = float(d.get("score") or 0.0)
+            if score < 0.0:
+                score = 0.0
+            if score > 100.0:
+                score = 100.0
+
+            coverage = float(d.get("coverage") or 0.0)
+            if coverage < 0.0:
+                coverage = 0.0
+            if coverage > 1.0:
+                coverage = 1.0
+
+            align_len_raw = int(d.get("alignment_length") or 0)
+            if align_len_raw < 0:
+                align_len_raw = 0
+            alignment_length = min(align_len_raw, len(seq))
+
             records.append(
                 {
                     "sequence": raw_seq,  # keep original sequence as a field
@@ -558,9 +593,9 @@ def resolve_sequences_to_gene_records(
                     "entrez_gene_id": d["entrez_gene_id"],
                     "acc": d["acc"],
                     "canonical_acc": d["canonical_acc"],
-                    "score": d["score"],
-                    "coverage": d["coverage"],
-                    "alignment_length": d["alignment_length"],
+                    "score": score,
+                    "coverage": coverage,
+                    "alignment_length": alignment_length,
                     "uniprot_sequence": d.get("uniprot_sequence") or "",
                 }
             )
@@ -596,13 +631,13 @@ if __name__ == "__main__":
     DEBUG = True
 
     aa_sequences: List[str] = [
-        "MVQKSRNGGVYPGPSGEKKLKVGFVGLDPGAPDSTRDGALLIAGSEAPKRGSILSKPRAGGAGAGKPPKRNAFYRKLQNFLYNVLERPRGWAFIYHAYVFLLVFSCLVLSVFSTIKEYEKSSEGALYILEIVTIVVFGVEYFVRIWAAGCCCRYRGWRGRLKFARKPFCVIDIMVLIASIAVLAAGSQGNVFATSALRSLRFLQILRMIRMDRRGGTWKLLGSVVYAHSKELVTAWYIGFLCLILASFLVYLAEKGENDHFDTYADALWWGLITLTTIGYGDKYPQTWNGRLLAATFTLIGVSFFALPAGILGSGFALKVQEQHRQKHFEKRRNPAAGLIQSAWRFYATNLSRTDLHSTWQYYERTVTVPMYSSQTQTYGASRLIPPLNQLELLRNLKSKSGLAFRKDPPPEPSPSKGSPCRGPLCGCCPGRSSQKVSLKDRVFSSPRGVAAKGKGSPQAQTVRRSPSADQSLEDSPSKVPKSWSFGDRSRARQAFRIKGAASRQNSEEASLPGEDIVDDKSCPCEFVTEDLTPGLKVSIRAVCVMRFLVSKRKFKESLRPYDVMDVIEQYSAGHLDMLSRIKSLQSRVDQIVGRGPAITDKDRTKGPAEAELPEDPSMMGRLGKVEKQVLSMEKKLDFLVNIYMQRMGIPPTETEAYFGAKEPEPAPPYHSPEDSREHVDRHGCIVKIVRSSSSTGQKNFSAPPAAPPVQCPPSTSWQPQSHPRQGHGTSPVGDHGSLVRIPPPPAHERSLSAYGGGNRASMEFLRQEDTPGCRPPEGNLRDSDTSISIPSVDHEELERSFSGFSISQSKENLDALNSCYAAVAPCAKVRPYIAEGESDTDSDLCTPCGPPPRSATGEGPFGDVGWAGPRK"
+        "DIGDSFGHPACPLVSRSRNSPVEVDDDEDDVVFTEIIQPPSASWPKIADQRNFIFASSKNEKHKGNYSVIPPSSRDLASQKGNISETIVIDDEEDIETNGGARKKSSCWIEWTLPGTKNK"
     ]
 
     result = resolve_sequences_to_gene_records(
         aa_sequences,
         top_n=100,
-        min_score=80.0,
+        min_score=50.0,
         debug=DEBUG,
     )
 

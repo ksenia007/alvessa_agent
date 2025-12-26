@@ -1,37 +1,48 @@
 """
 Author: Ksenia Sokolova <sokolova@princeton.edu>
-Contributors: 
+Contributors:
 Created: 2024-06-25
 Updated: 2025-06-26
 
+Description:
 
-Description: 
-
-TypedDict schema describing the mutable LangGraph state + functions to extract info from it."""
+TypedDict schema describing the mutable LangGraph state + functions to extract info from it.
+"""
 
 from __future__ import annotations
+
 import operator
-from typing import Annotated, Any, Dict, List
-from src.alvessa.domain.gene_class import Gene
-from src.alvessa.domain.variant_class import Variant
-from src.alvessa.domain.drug_class import Drug
-from typing_extensions import TypedDict
-import os
-import csv
-import json
-from pathlib import Path
-from typing import Any, Dict, List
-
-from src.alvessa.domain.gene_class import Gene
-from src.alvessa.domain.variant_class import Variant
-
 import csv
 import json
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Annotated, Any, Dict, List, Optional, Tuple
 
+from typing_extensions import TypedDict
 
+from src.alvessa.domain.gene_class import Gene
+from src.alvessa.domain.variant_class import Variant
+from src.alvessa.domain.drug_class import Drug
+
+def merge_html(old: Optional[str], new: Optional[str]) -> Optional[str]:
+    """
+    Reducer for HTML blobs (prot_html, chembl_html, aa_seq_html, drug_central_html).
+    Latest non-empty value wins instead of concatenating strings.
+    """
+    if new is None or new == "":
+        return old
+    return new
+
+def merge_notes(old: Optional[List[str]], new: Optional[List[str]]) -> List[str]:
+    """
+    Reducer for text_notes that concatenates then de-duplicates while preserving order.
+    """
+    combined: List[str] = []
+    for part in (old or [], new or []):
+        for x in (part or []):
+            if x and x not in combined:
+                combined.append(x)
+    return combined
 
 class State(TypedDict, total=False):
     # Conversation
@@ -47,12 +58,12 @@ class State(TypedDict, total=False):
     prompt: Annotated[str, operator.add]
     mc_setup: Annotated[bool, operator.or_]
     aa_sequences: Annotated[List[str], operator.add]
-    #AA Sequence-to-Gene data
+
+    # AA Sequence-to-Gene data
     aa_seq_result: Annotated[Dict[str, Any], operator.or_]
     aa_seq_summary: Annotated[str, operator.add]
-    
-    
-    # to replace the keys commented out below w/ proper gene objects
+
+    # Object-level entities
     gene_entities: Annotated[Dict[str, "Gene"], operator.or_]
     variant_entities: Annotated[Dict[str, "Variant"], operator.or_]
     drug_entities: Annotated[Dict[str, "Drug"], operator.or_]
@@ -65,22 +76,24 @@ class State(TypedDict, total=False):
     tool_updates: int
     used_tools: Annotated[List[str], operator.add]
     use_tools: Annotated[List[str], operator.add]  # tools to use in the current run
-    
-    
-    # interactive view
+
+    # Interactive view
     ui: Annotated[Dict[str, Any], operator.or_]  # e.g., {"panels": [...]}
 
     # Protein structure and druggablility visualization
-    prot_html: Annotated[str, operator.add]
+    prot_html: Annotated[str, merge_html]
 
     # For ChemBL drug-target interactive viewer
-    chembl_html: Annotated[str, operator.add]
+    chembl_html: Annotated[str, merge_html]
+
+    # For DrugCentral drug-target interactive viewer
+    drug_central_html: Annotated[str, merge_html]
 
     # For AA Sequence-to-Gene interactive viewer
-    aa_seq_html: Annotated[str, operator.add]
+    aa_seq_html: Annotated[str, merge_html]
 
     # General free-text annotations (not tied to a specific gene)
-    text_notes: Annotated[List[str], operator.add]
+    text_notes: Annotated[List[str], merge_notes]
 
 
 
@@ -90,6 +103,7 @@ class State(TypedDict, total=False):
 def _ensure_dir(p: Path) -> None:
     p.mkdir(parents=True, exist_ok=True)
 
+
 def _safe_name(s: Optional[str], fallback: str = "UNKNOWN") -> str:
     if not s:
         return fallback
@@ -98,12 +112,14 @@ def _safe_name(s: Optional[str], fallback: str = "UNKNOWN") -> str:
         return fallback
     return "".join(c for c in s if c.isalnum() or c in ("_", "-", ".", ":"))
 
+
 def _write_csv(path: Path, rows: List[Dict[str, Any]], field_order: List[str]) -> None:
     with path.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=field_order)
         writer.writeheader()
         for r in rows:
             writer.writerow({k: r.get(k, "") for k in field_order})
+
 
 def _write_tsv(path: Path, rows: List[Dict[str, Any]], field_order: Optional[List[str]] = None) -> None:
     if not rows and not field_order:
@@ -116,8 +132,9 @@ def _write_tsv(path: Path, rows: List[Dict[str, Any]], field_order: Optional[Lis
         for r in rows:
             writer.writerow({k: r.get(k, "") for k in keys})
 
+
 # =========================
-# Gene extractors 
+# Gene extractors
 # =========================
 def _gene_index_row(g: Gene) -> Dict[str, Any]:
     loc = g.get_location() or (None, None, None, None)
@@ -143,21 +160,25 @@ def _gene_index_row(g: Gene) -> Dict[str, Any]:
         "tools_run": ";".join(g.tools_run or []),
     }
 
+
 def _gene_transcripts_rows(g: Gene) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
     for tx_id, tx_info in (g.transcriptome.transcripts or {}).items():
         rows.append({"transcript_id": tx_id, "n_exons": tx_info.get("n_exons", ""), "source": "transcripts"})
     for iso_id, rec in (g.transcriptome.isoforms or {}).items():
-        rows.append({
-            "transcript_id": iso_id,
-            "name": rec.get("name", ""),
-            "status": rec.get("status", ""),
-            "aliases": ",".join(rec.get("aliases", []) or []),
-            "locations": ",".join(rec.get("locations", []) or []),
-            "notes": " | ".join(rec.get("notes", []) or []),
-            "source": "isoforms",
-        })
+        rows.append(
+            {
+                "transcript_id": iso_id,
+                "name": rec.get("name", ""),
+                "status": rec.get("status", ""),
+                "aliases": ",".join(rec.get("aliases", []) or []),
+                "locations": ",".join(rec.get("locations", []) or []),
+                "notes": " | ".join(rec.get("notes", []) or []),
+                "source": "isoforms",
+            }
+        )
     return rows
+
 
 def _gene_interactions_rows(g: Gene, *, nonhuman: bool = False) -> List[Dict[str, Any]]:
     table = g.interactions.nonhuman_interactions if nonhuman else g.interactions.human_interactions
@@ -167,24 +188,29 @@ def _gene_interactions_rows(g: Gene, *, nonhuman: bool = False) -> List[Dict[str
             rows.append({"experiment_type": exp_type, "partner_symbol": partner})
     return rows
 
+
 # =========================
 # Drug extractors
 # =========================
 def _drug_index_row(d: Drug) -> Dict[str, Any]:
+    """
+    Compact index row for drugs.
+
+    Focuses strictly on identifiers + basic counts, consistent with the
+    lean Drug/DrugIdentifiers design (no derived properties).
+    """
     ids = d.identifiers
     return {
         "name": ids.name or "",
-        "canon_key": ids.canon_key or "",
+        "chembl_id": ids.chembl_id or "",
+        "drugcentral_id": ids.drugcentral_id or "",
         "cas_number": ids.cas_number or "",
         "catalog_number": ids.catalog_number or "",
-        "chembl_id": ids.chembl_id or "",
         "n_synonyms": len(ids.synonyms or []),
-        "n_targets": len(d.targets or []),
-        "n_research_areas": len(d.research_areas or []),
-        "clinical_status": d.clinical_status or "",
-        "has_smiles": int(bool(d.smiles)),
+        "n_mentions": len(d.mentions or []),
         "tools_run": ";".join(d.tools_run or []),
     }
+
 
 # =========================
 # Variant extractors (CSV-only, no per-variant dirs)
@@ -199,6 +225,7 @@ def _best_variant_id(v: Variant) -> str:
         if chrom and pos:
             return _safe_name(f"{chrom}:{pos}")
     return "VARIANT"
+
 
 def _variant_index_row(v: Variant) -> Dict[str, Any]:
     build, chrom, pos = "", "", ""
@@ -221,6 +248,7 @@ def _variant_index_row(v: Variant) -> Dict[str, Any]:
         "has_text_summary": int(bool(v.text_summary or v.variant_summaries)),
     }
 
+
 def _variant_locations_rows(v_id: str, v: Variant) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
     for build, rec in (v.loc_by_build or {}).items():
@@ -228,8 +256,18 @@ def _variant_locations_rows(v_id: str, v: Variant) -> List[Dict[str, Any]]:
         alts = rec.get("alt", [])
         ref = ",".join(refs) if isinstance(refs, list) else (refs or "")
         alt = ",".join(alts) if isinstance(alts, list) else (alts or "")
-        rows.append({"variant_id": v_id, "build": build, "chrom": rec.get("chrom", ""), "pos": rec.get("pos", ""), "ref": ref, "alt": alt})
+        rows.append(
+            {
+                "variant_id": v_id,
+                "build": build,
+                "chrom": rec.get("chrom", ""),
+                "pos": rec.get("pos", ""),
+                "ref": ref,
+                "alt": alt,
+            }
+        )
     return rows
+
 
 def _variant_per_gene_traits_rows(v_id: str, v: Variant) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
@@ -245,11 +283,20 @@ def _variant_per_gene_traits_rows(v_id: str, v: Variant) -> List[Dict[str, Any]]
             rows.append(row)
     return rows
 
+
 def _variant_per_gene_context_rows(v_id: str, v: Variant) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
     for gene, ctx in (v.per_gene_context or {}).items():
-        rows.append({"variant_id": v_id, "gene": gene, "context": ctx.get("context", ""), "variant_category": ctx.get("variant_category", "")})
+        rows.append(
+            {
+                "variant_id": v_id,
+                "gene": gene,
+                "context": ctx.get("context", ""),
+                "variant_category": ctx.get("variant_category", ""),
+            }
+        )
     return rows
+
 
 def _variant_func_pred_rows(v_id: str, v: Variant) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
@@ -259,6 +306,7 @@ def _variant_func_pred_rows(v_id: str, v: Variant) -> List[Dict[str, Any]]:
             for sc in sc_list:
                 rows.append({"variant_id": v_id, "gene": gene, "tool": tool, "score": sc})
     return rows
+
 
 def _variant_af_rows(v_id: str, v: Variant) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
@@ -274,6 +322,7 @@ def _variant_af_rows(v_id: str, v: Variant) -> List[Dict[str, Any]]:
         }
         rows.append(row)
     return rows
+
 
 def _variant_summary_text(v: Variant) -> str:
     # Prefer the class’s own builder, fall back gracefully if it raises
@@ -292,6 +341,7 @@ def _variant_summary_text(v: Variant) -> str:
         if v.text_summary:
             bits.append(v.text_summary)
         return " | ".join(bits)
+
 
 # =========================
 # Main export
@@ -320,43 +370,85 @@ def create_files_from_state(state: "State", output_dir: str) -> None:
         _ensure_dir(gdir)
 
         # summary.txt (bulleted for the card body)
-        (gdir / "summary.txt").write_text(g.summarize_text(include_go=True, include_pathways=True), encoding="utf-8")
+        (gdir / "summary.txt").write_text(
+            g.summarize_text(include_go=True, include_pathways=True),
+            encoding="utf-8",
+        )
 
         # lossless JSON
-        (gdir / "gene.json").write_text(json.dumps(asdict(g), ensure_ascii=False, indent=2), encoding="utf-8")
+        (gdir / "gene.json").write_text(
+            json.dumps(asdict(g), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
 
         # transcripts + isoforms
-        _write_tsv(gdir / "transcripts.tsv", _gene_transcripts_rows(g),
-                   field_order=["transcript_id", "n_exons", "name", "status", "aliases", "locations", "notes", "source"])
+        _write_tsv(
+            gdir / "transcripts.tsv",
+            _gene_transcripts_rows(g),
+            field_order=[
+                "transcript_id",
+                "n_exons",
+                "name",
+                "status",
+                "aliases",
+                "locations",
+                "notes",
+                "source",
+            ],
+        )
 
         # interactions
-        _write_tsv(gdir / "interactions_human.tsv", _gene_interactions_rows(g, nonhuman=False),
-                   field_order=["experiment_type", "partner_symbol"])
-        _write_tsv(gdir / "interactions_nonhuman.tsv", _gene_interactions_rows(g, nonhuman=True),
-                   field_order=["experiment_type", "partner_symbol"])
+        _write_tsv(
+            gdir / "interactions_human.tsv",
+            _gene_interactions_rows(g, nonhuman=False),
+            field_order=["experiment_type", "partner_symbol"],
+        )
+        _write_tsv(
+            gdir / "interactions_nonhuman.tsv",
+            _gene_interactions_rows(g, nonhuman=True),
+            field_order=["experiment_type", "partner_symbol"],
+        )
 
         # compact index row
         idx = _gene_index_row(g)
-        idx.update({
-            "summary_relpath": f"genes/{symbol}/summary.txt",
-            "json_relpath": f"genes/{symbol}/gene.json",
-            "transcripts_relpath": f"genes/{symbol}/transcripts.tsv",
-            "interactions_human_relpath": f"genes/{symbol}/interactions_human.tsv",
-            "interactions_nonhuman_relpath": f"genes/{symbol}/interactions_nonhuman.tsv",
-        })
+        idx.update(
+            {
+                "summary_relpath": f"genes/{symbol}/summary.txt",
+                "json_relpath": f"genes/{symbol}/gene.json",
+                "transcripts_relpath": f"genes/{symbol}/transcripts.tsv",
+                "interactions_human_relpath": f"genes/{symbol}/interactions_human.tsv",
+                "interactions_nonhuman_relpath": f"genes/{symbol}/interactions_nonhuman.tsv",
+            }
+        )
         gene_index_rows.append(idx)
 
     _write_csv(
         genes_dir / "genes.index.csv",
         gene_index_rows,
         field_order=[
-            "symbol", "gene_type", "entrez_id", "uniprot_id", "ensembl_id",
-            "chrom", "start", "end", "strand",
-            "n_transcripts", "has_gwas", "gwas_total",
-            "n_variants", "n_interaction_partners",
-            "n_binding_peaks", "n_mirna_targets", "n_traits", "tools_run",
-            "summary_relpath", "json_relpath",
-            "transcripts_relpath", "interactions_human_relpath", "interactions_nonhuman_relpath",
+            "symbol",
+            "gene_type",
+            "entrez_id",
+            "uniprot_id",
+            "ensembl_id",
+            "chrom",
+            "start",
+            "end",
+            "strand",
+            "n_transcripts",
+            "has_gwas",
+            "gwas_total",
+            "n_variants",
+            "n_interaction_partners",
+            "n_binding_peaks",
+            "n_mirna_targets",
+            "n_traits",
+            "tools_run",
+            "summary_relpath",
+            "json_relpath",
+            "transcripts_relpath",
+            "interactions_human_relpath",
+            "interactions_nonhuman_relpath",
         ],
     )
 
@@ -375,22 +467,34 @@ def create_files_from_state(state: "State", output_dir: str) -> None:
         _ensure_dir(ddir)
 
         (ddir / "summary.txt").write_text(d.summarize_text(), encoding="utf-8")
-        (ddir / "drug.json").write_text(json.dumps(asdict(d), ensure_ascii=False, indent=2), encoding="utf-8")
+        (ddir / "drug.json").write_text(
+            json.dumps(asdict(d), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
 
         idx = _drug_index_row(d)
-        idx.update({
-            "summary_relpath": f"drugs/{name}/summary.txt",
-            "json_relpath": f"drugs/{name}/drug.json",
-        })
+        idx.update(
+            {
+                "summary_relpath": f"drugs/{name}/summary.txt",
+                "json_relpath": f"drugs/{name}/drug.json",
+            }
+        )
         drug_index_rows.append(idx)
 
     _write_csv(
         drugs_dir / "drugs.index.csv",
         drug_index_rows,
         field_order=[
-            "name", "canon_key", "cas_number", "catalog_number", "chembl_id",
-            "n_synonyms", "n_targets", "n_research_areas", "clinical_status", "has_smiles", "tools_run",
-            "summary_relpath", "json_relpath",
+            "name",
+            "chembl_id",
+            "drugcentral_id",
+            "cas_number",
+            "catalog_number",
+            "n_synonyms",
+            "n_mentions",
+            "tools_run",
+            "summary_relpath",
+            "json_relpath",
         ],
     )
 
@@ -398,13 +502,13 @@ def create_files_from_state(state: "State", output_dir: str) -> None:
     variants_dir = out_root / "variants"
     _ensure_dir(variants_dir)
 
-    variants_csv                = variants_dir / "variants.csv"
-    locations_csv               = variants_dir / "locations.csv"
-    per_gene_traits_csv         = variants_dir / "per_gene_traits.csv"
-    per_gene_context_csv        = variants_dir / "per_gene_context.csv"
-    functional_predictions_csv  = variants_dir / "functional_predictions.csv"
-    allele_frequencies_csv      = variants_dir / "allele_frequencies.csv"
-    summaries_csv               = variants_dir / "summaries.csv"
+    variants_csv = variants_dir / "variants.csv"
+    locations_csv = variants_dir / "locations.csv"
+    per_gene_traits_csv = variants_dir / "per_gene_traits.csv"
+    per_gene_context_csv = variants_dir / "per_gene_context.csv"
+    functional_predictions_csv = variants_dir / "functional_predictions.csv"
+    allele_frequencies_csv = variants_dir / "allele_frequencies.csv"
+    summaries_csv = variants_dir / "summaries.csv"
 
     variant_entities: Dict[str, Variant] = (state or {}).get("variant_entities", {}) or {}
 
@@ -413,9 +517,9 @@ def create_files_from_state(state: "State", output_dir: str) -> None:
     loc_rows: List[Dict[str, Any]] = []
     pgt_rows: List[Dict[str, Any]] = []
     pgc_rows: List[Dict[str, Any]] = []
-    fp_rows:  List[Dict[str, Any]] = []
-    af_rows:  List[Dict[str, Any]] = []
-    sm_rows:  List[Dict[str, Any]] = []
+    fp_rows: List[Dict[str, Any]] = []
+    af_rows: List[Dict[str, Any]] = []
+    sm_rows: List[Dict[str, Any]] = []
 
     for _, v in sorted(variant_entities.items(), key=lambda kv: (kv[0] or "")):
         if not isinstance(v, Variant):
@@ -440,8 +544,17 @@ def create_files_from_state(state: "State", output_dir: str) -> None:
         variants_csv,
         idx_rows,
         field_order=[
-            "variant_id", "organism", "primary_build", "primary_chrom", "primary_pos",
-            "n_related_genes", "n_traits", "n_af_freqs", "n_func_pred_genes", "tools_run", "has_text_summary",
+            "variant_id",
+            "organism",
+            "primary_build",
+            "primary_chrom",
+            "primary_pos",
+            "n_related_genes",
+            "n_traits",
+            "n_af_freqs",
+            "n_func_pred_genes",
+            "tools_run",
+            "has_text_summary",
         ],
     )
     _write_csv(

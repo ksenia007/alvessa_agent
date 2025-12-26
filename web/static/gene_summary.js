@@ -309,6 +309,39 @@ function msigdbCategoryNote(cat) {
     `;
   }
 
+  function renderViralInteractionsBlock(viralInteractions) {
+    if (!Array.isArray(viralInteractions) || viralInteractions.length === 0) return "";
+
+    const rows = viralInteractions.map((rec, idx) => {
+      const partner = Array.isArray(rec.partner_aliases) && rec.partner_aliases.length
+        ? rec.partner_aliases.join(", ")
+        : (rec.partner_aliases || "Unknown");
+      const det = rec.detection_method ? `Method: ${escapeInline(rec.detection_method)}` : "";
+      const src = rec.source_db ? `Source: ${escapeInline(rec.source_db)}` : "";
+      const taxa = [];
+      if (rec.tax_a) taxa.push(`TaxA: ${escapeInline(rec.tax_a)}`);
+      if (rec.tax_b) taxa.push(`TaxB: ${escapeInline(rec.tax_b)}`);
+      const meta = [det, src, taxa.join(" | ")].filter(Boolean).join(" • ");
+
+      return `
+        <div style="margin:8px 0; padding:8px; border:1px solid var(--line); border-radius:8px; background:var(--input);">
+          <div class="muted" style="font-weight:700; margin-bottom:4px;">Interaction ${idx + 1}</div>
+          <div style="margin-bottom:4px;">${escapeInline(partner)}</div>
+          ${meta ? `<div class="muted" style="font-size:13px;">${meta}</div>` : ""}
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <details style="margin-top:8px;">
+        <summary ${TOP_SUMMARY_STYLE}>Viral Interactions (IntAct) (${viralInteractions.length})</summary>
+        <div style="margin-top:6px;">
+          ${rows}
+        </div>
+      </details>
+    `;
+  }
+
   function renderGwasTraitsBlock(gwasObj, traitsArr){
     const hasGwas = gwasObj && typeof gwasObj === "object" && Object.keys(gwasObj).length;
     const hasTraits = Array.isArray(traitsArr) && traitsArr.length > 0;
@@ -596,6 +629,9 @@ sections.push(renderIsoformsSection(tx.isoforms));
       const interactionsBlock = renderInteractionsBlock({
         sym, humanTSV, nonTSV, humanCount, nonhumanCount, goEnrichment: g.interactions?.go_enrichment
       });
+      const viralBlock = renderViralInteractionsBlock(
+        g.viral_interactions || st?.gene_entities?.[sym]?.viral_interactions
+      );
   
       // assemble card
       blocks.push(`
@@ -612,6 +648,7 @@ sections.push(renderIsoformsSection(tx.isoforms));
   
           ${sections.filter(Boolean).join("\n")}
           ${interactionsBlock}
+          ${viralBlock}
         </div>
       `);
     }

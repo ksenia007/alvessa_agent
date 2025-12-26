@@ -40,6 +40,7 @@ GENE_EXTRACT_MODEL: str = "claude-sonnet-4-5-20250929"
 CONDITIONED_MODEL: str = "claude-sonnet-4-5-20250929"
 VERIFY_MODEL: str = "claude-sonnet-4-5-20250929"
 TOOL_SELECTOR_MODEL: str = "claude-sonnet-4-5-20250929" 
+TOOL_SELECTOR_MODEL_BACKUP: str = "claude-haiku-4-5-20251001"
 
 ANTHROPIC_API_KEY: str = os.environ["ANTHROPIC_API_KEY"]
 
@@ -54,7 +55,3 @@ except:
     print("Warning: DISGENET_API_KEY not found in environment variables.")
     DISGENET_API_KEY: str = ""
 
-# -----------------------------------------------------------------------------
-# Protein tool configuration
-# -----------------------------------------------------------------------------
-TOOL_PROT_MAX_GENES = 10 #Maximal number of proteins to be displayed by tool_prot.py

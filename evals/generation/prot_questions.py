@@ -1,6 +1,6 @@
 # alvessa_agent/evals/generation/prot_questions.py
 # Author: Dmitri Kosenkov
-# Updated: 2025-10-16
+# Updated: 2025-12-10
 #
 # Description
 # -----------
@@ -11,9 +11,12 @@
 #   alvessa_agent/local_dbs/known_tool_prot_genes_list.tsv
 #   Columns: gene_symbol  uniprot_id
 #
-# Output (default, strict 3-column TSV):
-#   alvessa_agent/out/prot_validation_questions.tsv
-#   Columns (tab-separated, with header): question    answer  tool
+# Output (CSV):
+#   alvessa_agent/results/set1.csv
+#   alvessa_agent/results/set2.csv
+#   ...
+#   Each CSV has exactly 20 questions from a single template.
+#   Columns: question, answer, tool, tool_specified_in_question
 #
 
 import sys
@@ -65,8 +68,8 @@ KNOWN_GENE_LIST_PATH = ROOT / "local_dbs" / "known_tool_prot_genes_list.tsv"
 # Script-local config (simplified)
 # =============================================================================
 SEED = 42
-MAX_ATTEMPTS_PER_Q = 60
-TEMPLATE_MAX_PER_ID = 3  # exactly 3 per template (best effort)
+MAX_ATTEMPTS_PER_Q = 200
+QUESTIONS_PER_SET = 20  # exactly 20 per set (best effort)
 
 # Margin constants (percent) for float metrics; do not apply to plddt_mean or biolip_n_sites
 DISORDER_PCT_LOWEST_PER_CENT = 30.0
@@ -80,12 +83,24 @@ PLDDT_MEAN_GT_THRESHOLD = 70.0
 # BioLiP2 threshold constant for ">= N sites" condition
 BIOLIP_SITES_AT_LEAST = 1
 
+# Keywords for detecting when a question explicitly specifies a tool or DB
+_TOOL_NAME_KEYWORDS = [
+    "protein tool",
+    "AlphaFold",
+    "FPocket",
+    "FreeSASA",
+    "IUPred3",
+    "BioLiP2",
+    "CysDB",
+]
+
 # =============================================================================
 # Logging
 # =============================================================================
 def _now_str() -> str:
     import datetime as _dt
     return _dt.datetime.now().strftime("%H:%M:%S")
+
 
 class Progress:
     """
@@ -150,6 +165,7 @@ def get_num(m: Optional[Dict[str, Any]], key: str) -> Optional[float]:
     except Exception:
         return None
 
+
 def resolve_by_uniprot(conn, gene_symbol: str, uniprot_id: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     protein_id = None
     pdb_file = None
@@ -178,6 +194,23 @@ def metrics_for_gene(conn, gene_symbol: str, uniprot_id: str) -> Optional[Dict[s
         sasa_stats, _, pi_stats, _, _ = fetch_sasa_pi(conn, protein_id)
         disorder_stats, _, morf_stats, _ = fetch_disorder(conn, protein_id, uniprot_id)
         biolip_summary, _ = fetch_biolip2(conn, uniprot_id)
+
+        # CysDB hyperreactive residues: count per protein_id
+        cysdb_hyper_n = None
+        try:
+            row = conn.execute(
+                """
+                SELECT COUNT(*) FROM data_cys_db_residues
+                WHERE protein_id = ? AND hyperreactive = 1
+                """,
+                (protein_id,),
+            ).fetchone()
+            if row is not None:
+                cysdb_hyper_n = int(row[0])
+        except Exception as e_cys:
+            warnings.warn(f"[prot] CysDB hyperreactive count failed for {gene_symbol}: {e_cys}")
+            cysdb_hyper_n = None
+
     except Exception as e:
         warnings.warn(f"[prot] feature extraction failed for {gene_symbol}: {e}")
         return None
@@ -215,6 +248,7 @@ def metrics_for_gene(conn, gene_symbol: str, uniprot_id: str) -> Optional[Dict[s
         "morf_max": s(morf_stats, "max"),
         "morf_pct_high": s(morf_stats, "pct_high"),
         "biolip_n_sites": biolip_n_sites,
+        "cysdb_hyperreactive_n": cysdb_hyper_n,
     }
 
 # =============================================================================
@@ -228,9 +262,11 @@ def _idx_unique_extreme(values: List[Optional[float]], mode: str) -> Optional[in
     cand = [i for i, v in nums if v == target]
     return cand[0] if len(cand) == 1 else None
 
+
 def _idx_first_true_unique(mask: List[bool]) -> Optional[int]:
     cand = [i for i, t in enumerate(mask) if t]
     return cand[0] if len(cand) == 1 else None
+
 
 def _diagnose_failure(metric: str, vals: List[Optional[float]], mask: Optional[List[bool]] = None) -> str:
     finite = sum(v is not None for v in vals)
@@ -243,7 +279,9 @@ def _diagnose_failure(metric: str, vals: List[Optional[float]], mask: Optional[L
     size = len([v for v in vals if v is not None])
     return "not_unique_extremum" if uniq != size else "internal_eval_fail"
 
+
 Template = Tuple[str, str, Optional[str], Callable[[List[Optional[Dict[str, Any]]]], Tuple[Optional[int], Dict[str, Any]]]]
+
 
 def _ev_stat(ms, key, mode):
     vals = [get_num(m, key) for m in ms]
@@ -252,6 +290,7 @@ def _ev_stat(ms, key, mode):
     if idx is None:
         diag["reason"] = _diagnose_failure(key, vals)
     return idx, diag
+
 
 def _ev_threshold_unique(ms, key, thr, op: str):
     vals = [get_num(m, key) for m in ms]
@@ -304,25 +343,64 @@ def _ev_biolip_sites(ms, min_sites: int = BIOLIP_SITES_AT_LEAST):
     diag = {"metric": "biolip_n_sites", "vals": vals, "mask": mask, "reason": reason, "min_sites": min_sites}
     return idx, diag
 
+
 PROT_TEMPLATES: List[Template] = [
-    ("According to AlphaFold pLDDT, which gene's protein has the highest average pLDDT?",
-     "plddt_mean_highest", "plddt_mean", lambda ms: _ev_stat(ms, "plddt_mean", "max")),
-    ("According to AlphaFold pLDDT, which gene's protein has an average pLDDT above 70?",
-     "plddt_mean_gt_70", "plddt_mean", lambda ms: _ev_threshold_unique(ms, "plddt_mean", PLDDT_MEAN_GT_THRESHOLD, ">")),
-    ("According to FPocket, which gene's protein has the most druggable pocket (highest pocket score across all pockets)?",
-     "fpocket_max_highest", "fpocket_max", lambda ms: _ev_stat(ms, "fpocket_max", "max")),
-    ("According to FreeSASA, which gene's protein has the highest average solvent-accessible surface area (SASA)?",
-     "sasa_avg_highest", "sasa_avg", lambda ms: _ev_stat_with_margin(ms, "sasa_avg", "max", SASA_AVG_HIGHEST_PER_CENT)),
-    ("According to the surface Polarity Index (PI), which gene's protein has the highest average surface polarity (PI)?",
-     "pi_mean_surface_highest", "pi_mean_surface",
-     lambda ms: _ev_stat_with_margin(ms, "pi_mean_surface", "max", PI_MEAN_SURFACE_HIGHEST_PER_CENT)),
-    ("According to IUPred3, which gene's protein has the lowest percentage of disordered residues?",
-     "disorder_pct_lowest", "disorder_pct", lambda ms: _ev_stat_with_margin(ms, "disorder_pct", "min", DISORDER_PCT_LOWEST_PER_CENT)),
-    ("According to IUPred3 MoRF propensity, which gene's protein has the highest maximum MoRF score?",
-     "morf_max_highest", "morf_max", lambda ms: _ev_stat_with_margin(ms, "morf_max", "max", MORF_MAX_HIGHEST_PER_CENT)),
-    (f"According to BioLiP2, which gene's protein has the highest number of experimentally supported binding sites (≥{int(BIOLIP_SITES_AT_LEAST)}) ?",
-     "biolip_sites_pref_ge1_else_max", "biolip_n_sites",
-     lambda ms: _ev_biolip_sites(ms, BIOLIP_SITES_AT_LEAST)),
+    (
+        "According to AlphaFold pLDDT, which gene's protein has the highest average pLDDT?",
+        "plddt_mean_highest",
+        "plddt_mean",
+        lambda ms: _ev_stat(ms, "plddt_mean", "max"),
+    ),
+    (
+        "According to AlphaFold pLDDT, which gene's protein has an average pLDDT above 70?",
+        "plddt_mean_gt_70",
+        "plddt_mean",
+        lambda ms: _ev_threshold_unique(ms, "plddt_mean", PLDDT_MEAN_GT_THRESHOLD, ">"),
+    ),
+    (
+        "According to FPocket, which gene's protein has the most druggable pocket (highest pocket score across all pockets)?",
+        "fpocket_max_highest",
+        "fpocket_max",
+        lambda ms: _ev_stat(ms, "fpocket_max", "max"),
+    ),
+    (
+        "According to FreeSASA, which gene's protein has the highest average solvent-accessible surface area (SASA)?",
+        "sasa_avg_highest",
+        "sasa_avg",
+        lambda ms: _ev_stat_with_margin(ms, "sasa_avg", "max", SASA_AVG_HIGHEST_PER_CENT),
+    ),
+    (
+        "According to the surface Polarity Index (PI), which gene's protein has the highest average surface polarity (PI)?",
+        "pi_mean_surface_highest",
+        "pi_mean_surface",
+        lambda ms: _ev_stat_with_margin(ms, "pi_mean_surface", "max", PI_MEAN_SURFACE_HIGHEST_PER_CENT),
+    ),
+    (
+        "According to IUPred3, which gene's protein has the lowest percentage of disordered residues?",
+        "disorder_pct_lowest",
+        "disorder_pct",
+        lambda ms: _ev_stat_with_margin(ms, "disorder_pct", "min", DISORDER_PCT_LOWEST_PER_CENT),
+    ),
+    (
+        "According to IUPred3 MoRF propensity, which gene's protein has the highest maximum MoRF score?",
+        "morf_max_highest",
+        "morf_max",
+        lambda ms: _ev_stat_with_margin(ms, "morf_max", "max", MORF_MAX_HIGHEST_PER_CENT),
+    ),
+    (
+        "According to BioLiP2, which gene's protein has the highest number of experimentally supported binding sites (>={}) ?".format(
+            int(BIOLIP_SITES_AT_LEAST)
+        ),
+        "biolip_sites_pref_ge1_else_max",
+        "biolip_n_sites",
+        lambda ms: _ev_biolip_sites(ms, BIOLIP_SITES_AT_LEAST),
+    ),
+    (
+        "According to CysDB, which gene's protein has the highest number of hyperreactive cysteines?",
+        "cysdb_hyperreactive_n_highest",
+        "cysdb_hyperreactive_n",
+        lambda ms: _ev_stat(ms, "cysdb_hyperreactive_n", "max"),
+    ),
 ]
 
 # =============================================================================
@@ -350,15 +428,173 @@ class QuartetSampler:
 def _letters():
     return ["A", "B", "C", "D"]
 
+
 def _format_option(gene: str) -> str:
     return gene  # no metric text in options
+
+
+def _tool_specified_in_question(q_text: str) -> str:
+    """
+    Return "True" if the question explicitly names a tool or database
+    (AlphaMissense, ClinVar, DrugCentral, CysDB, protein tool, etc.), else "False".
+    Comparison is case-insensitive.
+    """
+    q_lower = q_text.lower()
+    for kw in _TOOL_NAME_KEYWORDS:
+        if kw.lower() in q_lower:
+            return "True"
+    return "False"
+
+
+def _generate_set_for_template(
+    conn,
+    sampler: QuartetSampler,
+    template: Template,
+    set_index: int,
+    out_dir: Path,
+    seed: Optional[int] = SEED,
+) -> Path:
+    """
+    Generate exactly QUESTIONS_PER_SET questions for a single template and write to CSV.
+    Returns the output path.
+    """
+    template_text, template_id, metric_key, evaluator = template
+    rows: List[Dict[str, Any]] = []
+
+    p = Progress(f"ProtQGen_set{set_index}_{template_id}", target=QUESTIONS_PER_SET)
+    if DEBUG:
+        print(
+            f"[{_now_str()}] Starting set {set_index} for template={template_id}: "
+            f"target={QUESTIONS_PER_SET}, attempts per item={MAX_ATTEMPTS_PER_Q}, seed={seed}",
+            flush=True,
+        )
+
+    for q_idx in range(1, QUESTIONS_PER_SET + 1):
+        success = False
+        last_diag: Optional[Dict[str, Any]] = None
+
+        for attempt in range(1, MAX_ATTEMPTS_PER_Q + 1):
+            quartet = sampler.sample()
+            genes = [g for g, _ in quartet]
+            p.bump_attempt(genes)
+
+            # Collect metrics (fresh each time)
+            metrics_list: List[Optional[Dict[str, Any]]] = []
+            for g, u in quartet:
+                try:
+                    metrics_list.append(metrics_for_gene(conn, g, u))
+                except Exception as e:
+                    warnings.warn(f"[prot] metrics failed for {g}: {e}")
+                    metrics_list.append(None)
+
+            idx, diag = evaluator(metrics_list)
+            last_diag = diag
+
+            if idx is not None:
+                letters = _letters()
+                ans_letter = letters[idx]
+                correct_gene = genes[idx]
+
+                # Build options (no metrics in text)
+                opt_texts = [_format_option(genes[i]) for i in range(4)]
+                q_text = (
+                    f"{template_text} [A] {opt_texts[0]} [B] {opt_texts[1]} "
+                    f"[C] {opt_texts[2]} [D] {opt_texts[3]}"
+                )
+
+                tool_flag = _tool_specified_in_question(q_text)
+
+                rows.append(
+                    {
+                        "question": q_text,
+                        "answer": ans_letter,
+                        "tool": "prot",
+                        "tool_specified_in_question": tool_flag,
+                    }
+                )
+
+                # ---- Console metrics print for selected questions ----
+                metric_name = diag.get("metric")
+                vals = diag.get("vals", [None, None, None, None])
+                vals_s = "[" + ",".join(("NA" if v is None else f"{float(v):.4g}") for v in vals) + "]"
+                print(
+                    f"[{_now_str()}] SET{set_index:02d} Q{q_idx:02d} attempt#{attempt:02d} "
+                    f"ok tmpl={template_id} genes={genes} metric={metric_name} "
+                    f"vals={vals_s} answer={ans_letter} {correct_gene}",
+                    flush=True,
+                )
+                # ----------------------------------------------------
+
+                p.bump_success()
+                success = True
+                break
+            else:
+                if DEBUG:
+                    print(
+                        f"[{_now_str()}] SET{set_index:02d} Q{q_idx:02d} attempt#{attempt:02d} "
+                        f"fail tmpl={template_id} genes={genes}",
+                        flush=True,
+                    )
+
+        if not success:
+            p.bump_skip()
+            print(
+                f"[{_now_str()}] SET{set_index:02d} Q{q_idx:02d}: "
+                f"SKIPPED after {MAX_ATTEMPTS_PER_Q} attempts (tmpl={template_id})"
+            )
+            if last_diag is not None:
+                vals = last_diag.get("vals", [])
+                vals_s = "[" + ",".join(("NA" if v is None else f"{float(v):.4g}") for v in vals) + "]"
+                print(
+                    f"[{_now_str()}] SET{set_index:02d} Q{q_idx:02d} last diag "
+                    f"metric={last_diag.get('metric')} vals={vals_s} "
+                    f"reason={last_diag.get('reason')}"
+                )
+            # Hard requirement: 20 questions per set. Fail fast if we cannot generate.
+            raise RuntimeError(
+                f"Failed to generate question {q_idx} for template {template_id} "
+                f"in set {set_index} after {MAX_ATTEMPTS_PER_Q} attempts."
+            )
+
+    p.report(intermediate=False)
+
+    # Write CSV for this set
+    out_path = out_dir / f"set{set_index}.csv"
+    df_out = pd.DataFrame(
+        rows,
+        columns=["question", "answer", "tool", "tool_specified_in_question"],
+    )
+    df_out.to_csv(out_path, index=False, header=True)
+    print(f"[{_now_str()}] OK Wrote {len(df_out)} questions -> {out_path}")
+    return out_path
+
 
 def generate_prot_questions(
     out_path: Optional[Path] = None,
     seed: Optional[int] = SEED,
-):
+) -> List[Path]:
+    """
+    Generate question sets for all PROT_TEMPLATES.
+
+    Each set:
+      - Contains exactly QUESTIONS_PER_SET questions.
+      - Uses a single question stem from PROT_TEMPLATES.
+      - Is written to setN.csv (N starts at 1) in the target directory.
+
+    Returns:
+      List of Paths to the generated CSV files.
+    """
     if seed is not None:
         random.seed(seed)
+
+    # Decide output directory based on out_path
+    if out_path is not None and out_path.is_dir():
+        out_dir = out_path
+    elif out_path is not None:
+        out_dir = out_path.parent
+    else:
+        out_dir = OUT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     # Load TSV with columns: gene_symbol, uniprot_id
     tsv_path = KNOWN_GENE_LIST_PATH
@@ -370,108 +606,35 @@ def generate_prot_questions(
     if "gene_symbol" not in df.columns or "uniprot_id" not in df.columns:
         raise ValueError("Input TSV must contain columns: gene_symbol, uniprot_id")
 
-    pairs = [(r["gene_symbol"].strip(), r["uniprot_id"].strip()) for _, r in df.iterrows()
-             if str(r["gene_symbol"]).strip() and str(r["uniprot_id"]).strip()]
+    pairs = [
+        (r["gene_symbol"].strip(), r["uniprot_id"].strip())
+        for _, r in df.iterrows()
+        if str(r["gene_symbol"]).strip() and str(r["uniprot_id"]).strip()
+    ]
     if len(pairs) < 4:
-        raise ValueError("Need at least 4 (gene_symbol, uniprot_id) pairs in known_tool_prot_genes_list.tsv")
+        raise ValueError(
+            "Need at least 4 (gene_symbol, uniprot_id) pairs in known_tool_prot_genes_list.tsv"
+        )
 
     sampler = QuartetSampler(pairs, seed=seed)
     conn = get_connection()
-    rows: List[Dict[str, Any]] = []
-
-    # Build a worklist with each template repeated TEMPLATE_MAX_PER_ID times
-    tmpl_ids = [t[1] for t in PROT_TEMPLATES]
-    worklist: List[str] = []
-    for tid in tmpl_ids:
-        worklist.extend([tid] * TEMPLATE_MAX_PER_ID)
-    random.shuffle(worklist)
-
-    # Map id -> template tuple
-    tmpl_by_id = {tid: t for (txt, tid, key, ev) in PROT_TEMPLATES for t in [(txt, tid, key, ev)]}
-
-    p = Progress("ProtQGen", target=len(worklist))
-    if DEBUG:
-        print(f"[{_now_str()}] Starting generation: target={len(worklist)} (exactly {TEMPLATE_MAX_PER_ID} per template), "
-              f"attempts per item={MAX_ATTEMPTS_PER_Q}, seed={seed}")
+    output_files: List[Path] = []
 
     try:
-        for idx_wl, template_id in enumerate(worklist, start=1):
-            template, _, metric_key, evaluator = tmpl_by_id[template_id]
-            success = False
-            last_diag: Optional[Dict[str, Any]] = None
-
-            for attempt in range(1, MAX_ATTEMPTS_PER_Q + 1):
-                quartet = sampler.sample()
-                genes = [g for g, _ in quartet]
-                p.bump_attempt(genes)
-
-                # Collect metrics (fresh each time)
-                metrics_list: List[Optional[Dict[str, Any]]] = []
-                for g, u in quartet:
-                    try:
-                        metrics_list.append(metrics_for_gene(conn, g, u))
-                    except Exception as e:
-                        warnings.warn(f"[prot] metrics failed for {g}: {e}")
-                        metrics_list.append(None)
-
-                idx, diag = evaluator(metrics_list)
-                last_diag = diag
-
-                if idx is not None:
-                    letters = _letters()
-                    ans_letter = letters[idx]
-                    correct_gene = genes[idx]
-
-                    # Build options (no metrics in text)
-                    opt_texts = [_format_option(genes[i]) for i in range(4)]
-                    q_text = f"{template} [A] {opt_texts[0]} [B] {opt_texts[1]} [C] {opt_texts[2]} [D] {opt_texts[3]}"
-
-                    # Append ONLY the 3 required fields
-                    rows.append({
-                        "question": q_text,
-                        "answer": ans_letter,
-                        "tool": "prot",
-                    })
-
-                    # ---- Console metrics print for selected questions ----
-                    metric_name = diag.get("metric")
-                    vals = diag.get("vals", [None, None, None, None])
-                    vals_s = "[" + ",".join(("NA" if v is None else f"{float(v):.4g}") for v in vals) + "]"
-                    print(
-                        f"[{_now_str()}] WL{idx_wl:02d} attempt#{attempt:02d} ok tmpl={template_id} "
-                        f"genes={genes} metric={metric_name} vals={vals_s} "
-                        f"answer={ans_letter} {correct_gene}",
-                        flush=True,
-                    )
-                    # ----------------------------------------------------
-
-                    p.bump_success()
-                    success = True
-                    break
-                else:
-                    if DEBUG:
-                        print(f"[{_now_str()}] WL{idx_wl:02d} attempt#{attempt:02d} fail tmpl={template_id} genes={genes}", flush=True)
-
-            if not success:
-                p.bump_skip()
-                print(f"[{_now_str()}] WL{idx_wl:02d}: SKIPPED after {MAX_ATTEMPTS_PER_Q} attempts (tmpl={template_id})")
-                if last_diag is not None:
-                    vals = last_diag.get("vals", [])
-                    vals_s = "[" + ",".join(("NA" if v is None else f"{float(v):.4g}") for v in vals) + "]"
-                    print(f"[{_now_str()}] WL{idx_wl:02d} last diag metric={last_diag.get('metric')} "
-                          f"vals={vals_s} reason={last_diag.get('reason')}")
-
+        for set_index, template in enumerate(PROT_TEMPLATES, start=1):
+            out_file = _generate_set_for_template(
+                conn=conn,
+                sampler=sampler,
+                template=template,
+                set_index=set_index,
+                out_dir=out_dir,
+                seed=seed,
+            )
+            output_files.append(out_file)
     finally:
         conn.close()
 
-    # ---------- Write ONLY question, answer, tool as TSV ----------
-    out_path = out_path or (OUT_DIR / "prot_validation_questions.tsv")
-    df_out = pd.DataFrame(rows, columns=["question", "answer", "tool"])
-    df_out.to_csv(out_path, sep="\t", index=False, header=True)
-    print(f"[{_now_str()}] OK Wrote {len(df_out)} -> {out_path}")
-    # --------------------------------------------------------------
-
-    p.report(intermediate=False)
+    return output_files
 
 # =============================================================================
 # Main

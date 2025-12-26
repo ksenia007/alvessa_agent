@@ -1,67 +1,150 @@
-# Alvessa: agentic AI scientist
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/2bdd5321-8ffe-44ae-aaff-be11a715bdc5" alt="Alvessa" width="1100"/>
+</p>
+<h1 align="center">
+  <strong>Alvessa: Agentic Evidence-Grounded Research Assistant for Genomics</strong>
+</h1>
+<h1 align="center">
+  <strong>CAUTION: ADVERSARIAL EVALUATION BRANCH</strong>
+</h1>
 
-# IMPORTANT: THIS IS AN ADVERSARIAL EVALUATION BRANCH
 
-This branch is designed as evaluation of the verification process. As such, it's output will not be reliable. Use with caution
+<p align="center">
+  <a href="#-key-features">Features</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-usage">Usage</a> •
+  <a href="#-contribute-tools">Contribute Tools</a> •
+  <a href="#-genomearena">Benchmarks</a> •
+  <a href="#-contribute-questions">Contribute Questions</a> •
+  <a href="#-citation">Citation</a>
+</p>
 
-## Installation
+---
+
+Alvessa is a multi-agent framework that provides **verifiable, evidence-grounded answers** to genomics questions. Unlike general-purpose LLMs that can hallucinate identifiers or fabricate specifics, Alvessa enforces statement-level verification against retrieved database records, with feedback and explanations for each claim.
+
+## ✨ Key Features
+
+| Capability | Description |
+|------------|-------------|
+| 🔍 **Entity Recognition** | Ensemble NER for genes, variants, drugs, miRNAs, and protein sequences |
+| 🛠️ **Tool Orchestration** | Context-aware orchestration of validated tools (dbSNP, ClinVar, UniProt, ChEMBL, AlphaFold, etc.) |
+| 📎 **Evidence Grounding** | Answers constrained to retrieved database records with inline citations |
+| ✅ **Verification Loop** | Per-statement evaluation flags unsupported claims and triggers revision |
+| 🖥️ **Interactive UI** | Web interface with citation links and verification feedback |
+
+## 🚀 Quick Start
+
 ```bash
+# Clone and install
+git clone https://github.com/ksenia007/alvessa_agent.git
+cd alvessa_agent
 conda activate agents
 pip install -e .
+
+# Set API keys
+export ANTHROPIC_API_KEY="your-key"
+export BIOGRID_API_KEY="your-key"        # optional
+export DISGENET_API_KEY="your-key"       # optional
+
+# Launch the UI
+alvessa ui 8000
+# Open http://127.0.0.1:8000
 ```
 
-Export required API tokens:
+**Requirements:** Python 3.10+, local database files in `local_dbs/`
+
+## 💻 Usage
+
+### CLI Commands
+
+In addition to `alvessa ui`, the following commands are available:
+
 ```bash
-export ANTHROPIC_API_KEY=...
-export BioGRID_API_KEY=...
-export DISGENET_API_KEY=...
+# Ask a question
+alvessa question "What pathways involve BRCA1 and what drugs target it?"
+
+# List available tools
+alvessa tools
+
+# Run benchmarks
+alvessa benchmark_all <folder> --shuffle --N <int> --save_intermediate --shuffle --restart <path.to.csv>
 ```
 
-### CLI usage
-- `alvessa question "Summarize GO terms enriched for interactors of TP53"`
-- `alvessa tools`
-- `alvessa ui 9000` (serves the UI on `http://127.0.0.1:9000`; default is 8000)
+## 🔧 Contribute Tools
 
-## Quickstart commands
-```bash
-# install environment from requirements.txt
-conda activate agents
-pip install -r requirements.txt
-export ANTHROPIC_API_KEY=…
-export BioGRID_API_KEY=…
-python -m run
+We welcome new tools! All tools are self-documenting with the structure `src/tools/<n>/node.py`. Register your tool in the tool catalog and Alvessa will automatically consider it during orchestration. See the [tutorials](tutorials/) for detailed information and requirements.
+
+## 🏆 GenomeArena
+
+A curated benchmark of **720 multiple-choice questions** spanning:
+
+- Variant annotation
+- Gene annotation  
+- Pathways & interactions
+- miRNA targets
+- Drug-target relationships
+- Protein structure
+- Gene-phenotype associations
+
+## 💡 Contribute Questions
+
+Did you discover a good (or bad) example case? [Let us know!](https://github.com/ksenia007/alvessa_agent/issues)
+
+We are also crowdsourcing a dataset of questions where the answer is known but requires multi-step reasoning. If you'd like to contribute evaluation cases, please contact us.
+
+## 🗄️ Integrated Data Sources
+
+<details>
+<summary><strong>Click to expand full tool list</strong></summary>
+
+**Variant Annotation:** dbSNP, ClinVar, AlphaMissense, Sei, ExpectoSC
+
+**Gene Annotation:** GENCODE, UniProt, Alliance of Genome Resources, OMIM
+
+**Pathways & Interactions:** Reactome, MSigDB, BioGRID, Gene Ontology
+
+**Regulatory:** ReMap, miRDB
+
+**Drug & Druggability:** ChEMBL, DrugCentral, CysDB, OpenTargets
+
+**Protein Structure:** AlphaFold, FPocket, FreeSASA, IUPred3, DisProt, BioLiP2
+
+**Disease Associations:** GWAS Catalog, OpenTargets, ClinVar
+
+</details>
+
+## 📁 Outputs
+
+Each run generates:
+
+| File | Description |
+|------|-------------|
+| `demo.json` | Serialized pipeline state for UI |
+| `demo.txt` | Human-readable answers with citations |
+| `demo.log` | Full execution trace including tool calls |
+
+As well as structured entity artifacts:
+
+- 🧬 **Genes:** `genes/` — collected information per gene (`summary.txt`, `gene.json`, `transcripts.tsv`, `interactions_human.tsv`, `interactions_nonhuman.tsv`)
+- 💊 **Drugs:** `drugs/` — per drug (`summary.txt`, `drug.json`)
+- 🧬 **Variants:** `variants/` — CSVs for batch processing: `variants.csv` (index), `locations.csv`, `per_gene_traits.csv`, `per_gene_context.csv`, `functional_predictions.csv`, `allele_frequencies.csv`, `summaries.csv`
+
+## 📄 Citation
+
+If you use Alvessa in your research, please cite:
+
+```bibtex
+@article{TBD}
 ```
 
-Run the FastAPI UI:
-```bash
-python -m serve_ui
-```
+## 📜 License
 
-Execute unit tests:
-```bash
-pytest tests/test_entity_recognition.py
-```
+[License details here]
 
-## Repository layout
-- `run.py` – main CLI entry point orchestrating the LangGraph pipeline and saving outputs.
-- `src/alvessa/workflow/graph_builder.py` – builds graph nodes, edges, and workflow diagram.
-- `src/alvessa/clients/claude.py` – Claude client with rate limiting and retries.
-- `src/config.py` – central configuration and environment variable accessors.
-- `src/state.py` – shared LangGraph state structure definition.
-- `src/alvessa/domain/` – classes for genes, variants, and related entities.
-- `src/alvessa/agents/` – Claude-backed tool selector, verification, entity extraction, and summarization agents.
-- `src/tools/<name>/node.py` – deterministic tool adapters and shared utilities.
-- `web/` – UI assets (`ui.html`, `static/`, `images/`) consumed by `serve_ui.py`.
-- `serve_ui.py` – FastAPI app that serves the dashboard and proxies pipeline runs.
-- `evals/generation/` – benchmark dataset generation (GWAS, BioGRID, Reactome, Gencode, LabBench).
-- `evals/benchmarks_general.py` – common harness used by benchmark runners.
-- `evals/plots/plot_evaluations.py` – plotting utilities for benchmark CSVs.
-- `tests/` – pytest suites with `test_entity_recognition.py` as the primary unit test.
-- `local_dbs/` – reference datasets required by generation scripts and tools (read-only).
-- `out/` – run outputs refreshed by `python -m run`.
+---
 
-## Artifacts & logs
-- `demo.txt` – saved answers and evidence summaries.
-- `demo.log` – pipeline log including tool call traces.
-- `demo.json` – serialized pipeline state for UI consumption.
-- `graph_diagram.png` – LangGraph visualization generated by the workflow builder.
+<p align="center">
+  <a href="https://github.com/ksenia007/alvessa_agent/issues">🐛 Report Bug</a> •
+  <a href="https://github.com/ksenia007/alvessa_agent/issues">✨ Request Feature</a>
+</p>

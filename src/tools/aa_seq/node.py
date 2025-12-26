@@ -68,7 +68,7 @@ from src.tools.aa_seq.utils import (
 
 # Default parameters for the underlying resolver
 AA_SEQ_TOP_N: int = 5
-AA_SEQ_MIN_SCORE: float = 80.0
+AA_SEQ_MIN_SCORE: float = 60.0
 
 
 # --------------------------------------------------------------------
@@ -274,10 +274,37 @@ def aa_seq_agent(state: "State") -> "State":
         else:
             gene_obj.add_tool("AASeq")
 
-        # Attach per-gene block
-        gene_obj.update_text_summaries(
-            "AA sequence to UniProt mapping evidence (aa_seq tool):\n" + block
-        )
+        summary_line_parts = []
+        if rep_rec:
+            acc = (rep_rec.get("canonical_acc") or rep_rec.get("acc") or "").strip()
+            coverage = rep_rec.get("coverage")
+            align_len = rep_rec.get("alignment_length")
+            query_seq = (rep_rec.get("sequence") or "").strip()
+            uniprot_seq = (rep_rec.get("uniprot_sequence") or "").strip()
+            q_len = len(query_seq) if query_seq else None
+            u_len = len(uniprot_seq) if uniprot_seq else None
+            diff_len = (q_len - u_len) if (q_len is not None and u_len is not None) else None
+            coverage_str = f"{coverage:.2f}" if isinstance(coverage, (int, float)) else str(coverage) if coverage is not None else "N/A"
+            summary_line = f"*AASeq: Matched UniProt {acc or 'unknown'}"
+            summary_bits = []
+            if coverage is not None:
+                summary_bits.append(f"coverage {coverage_str}")
+            if align_len is not None:
+                summary_bits.append(f"alignment_len {align_len}")
+            if q_len is not None:
+                summary_bits.append(f"query_len {q_len}")
+            if u_len is not None:
+                summary_bits.append(f"uniprot_len {u_len}")
+            if diff_len is not None:
+                summary_bits.append(f"length_diff {diff_len}")
+            if summary_bits:
+                summary_line += " (" + "; ".join(summary_bits) + ")"
+            summary_line += "."
+            summary_line_parts.append(summary_line)
+
+        # Attach per-gene block with evidence
+        summary_line_parts.append("*AASeq: Evidence: " + block.replace("\n", " ").strip())
+        gene_obj.update_text_summaries(" ".join(summary_line_parts))
 
     # --------------------------------------------------------------
     # Handle unmapped records with UNKNOWN_GENE (last resort)
@@ -298,8 +325,8 @@ def aa_seq_agent(state: "State") -> "State":
         unknown_block = _build_unmapped_block_for_unknown_gene(unmapped_records)
         if unknown_block:
             unknown_gene.update_text_summaries(
-                "AA sequence to UniProt mapping evidence (no gene symbol available):\n"
-                + unknown_block
+                "*AASeq: AA sequence to UniProt mapping evidence (no gene symbol): "
+                + unknown_block.replace("\n", " ").strip()
             )
 
     # Write back gene_entities and genes list
@@ -360,7 +387,8 @@ if __name__ == "__main__":
         # fallback demo sequence (HRAS fragment, or any other test sequence)
         # raw_args = ["MTEYKLVVVGAGGVGKSALTIQLIQNHFVD"]
         #raw_args = ["CKCWHGQLRCFPQAFLPGCDGLVMDEHLVA"]
-        raw_args = ["LENLQIIRGN", "LENLQIIRGG", "LENLQIIGGG", "VDRVDYDRQSGSAVITFVEI","DDRVDYDRQSGSAVITFVEI"]
+        #raw_args = ["LENLQIIRGN", "LENLQIIRGG", "LENLQIIGGG", "VDRVDYDRQSGSAVITFVEI","DDRVDYDRQSGSAVITFVEI"]
+        raw_args = ["SWPSRSLPAQEAVVKLRVEGMTCQSCVSSIEGKVRKLQGVVRVKVSLSNQEAVITYQPYLIQPEDLRDHVNDMGFEAAIKSKVAPLSLGPIDIERLQSTNPKRPLSSANQNFNNSETLGH"]
         
 
     sequences = raw_args

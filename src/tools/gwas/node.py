@@ -105,7 +105,7 @@ def _build_gene_summary(gene_symbol: str, profile: GeneGWASProfile) -> str:
         return f"No genome-wide significant GWAS associations found for {gene_symbol}."
 
     header = (
-        f"Gene {gene_symbol} has {profile.total_associations} GWAS associations "
+        f"*GWAS: Gene {gene_symbol} has {profile.total_associations} GWAS associations "
         f"({profile.significant_associations} significant) across {profile.total_studies} studies."
     )
 
@@ -170,7 +170,7 @@ def _apply_gene_result(
         if payload.get("traits_truncated"):
             total = payload.get("total_trait_count", len(trait_map))
             variant.update_text_summaries(
-                f"GWAS associations truncated to top 20 of {total} traits for {gene.symbol}."
+                f"*GWAS: Associations truncated to top 20 of {total} traits for {gene.symbol}."
             )
 
         gene.link_variant(variant)
@@ -378,12 +378,5 @@ NODES: tuple[Node, ...] = (
         description=(
             "This is a more comprehensive version of the query_gwas_by_gene tool, and it is used to retrieve more detailed information about the GWAS results. It collects an extensive list of traits/diseases associated with an extensive list of genetic variants linked to that gene. Use this tool *ONLY* if the question is very specific that requires what is equivalent to an extensive database search, not to general characterisation of the gene."
         ),
-    ),
-    Node(
-        name="expand_gene_set_by_trait",
-        entry_point=query_by_trait_agent,
-        description=(
-            "Query GWAS traits by disease/phenotype keyword to expand the working gene list. This could be used to discover more relevant genes underlying a trait, if a broader genetic context would be valuable for the analysis."
-        ),
-    ),
+    )
 )

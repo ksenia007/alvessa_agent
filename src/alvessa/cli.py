@@ -13,6 +13,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable, List
+import pandas as pd
 
 from src.alvessa.pipeline import run_pipeline
 from src.alvessa.ui.server import serve as serve_ui
@@ -23,13 +24,13 @@ from src.state import create_files_from_state
 
 MC_BENCHMARK_SYS_MSG = (
     "You are answering multiple-choice questions. Each question lists answer choices "
-    "labeled [A], [B], [C], [D]. Respond with exactly one capital letter (A, B, C, or D) inside <answer> tags."
-    " Do not provide any explanations or additional text."
+    "labeled [A], [B], [C], [D]. Think step by step using information provided and put a final answer as a capital letter (A, B, C, or D) inside <answer> tags."
+    "If the information is insufficient to determine a unique correct answer, choose the option that is most directly supported by the given text (i.e., requires the fewest additional assumptions), even if multiple options seem plausible."
 )
 
 MC_BENCHMARK_PROMPT_ADD = (
     "Given the question, think silently."
-    "Then output the final choice as a single letter only, inside <answer></answer> tags. \n"
+    "Then output the final choice as a single letter inside <answer></answer> tags. \n"
 )
 
 def _extract_answer_letter(answer: str) -> str:
@@ -63,6 +64,9 @@ def _run_benchmark_rows(
     skip_questions: set[str] | None = None,
 ) -> tuple[int, int, float, int]:
     """Execute up to ``limit`` question rows, appending metadata to the CSV writer."""
+    def _normalize_q(q: str) -> str:
+        return (q or "").strip().strip('"').strip("'")
+
     processed = 0
     correct = 0
     total_runtime = 0.0
@@ -72,10 +76,10 @@ def _run_benchmark_rows(
     for local_idx, row in enumerate(rows):
         if processed >= max_questions:
             break
-        question = (row.get("question") or "").strip()
+        question = _normalize_q(row.get("question") or "")
         if not question:
             continue
-        if skip_questions and question in skip_questions:
+        if skip_questions and _normalize_q(question) in skip_questions:
             continue
         expected = (row.get("answer") or "").strip()
         tool_tag = row.get("tool") or ""
@@ -285,32 +289,29 @@ def _handle_benchmark(args: argparse.Namespace) -> int:
         print(f"[alvessa] No questions found in {csv_path}", file=sys.stderr)
         return 1
 
-    restart_rows: List[dict] = []
     restart_questions: set[str] = set()
     restart_by_csv: dict[str, set[str]] = {}
     existing_correct = 0
     existing_runtime = 0.0
+    restart_file = None
+    def _normalize_q(q: str) -> str:
+        return (q or "").strip().strip('"').strip("'")
     if getattr(args, "restart", None):
         restart_path = Path(args.restart)
         if not restart_path.exists():
             print(f"[alvessa] Restart file not found: {restart_path}", file=sys.stderr)
             return 1
         try:
-            with restart_path.open("r", encoding="utf-8") as fh:
-                reader = csv.DictReader(fh)
-                for row in reader:
-                    restart_rows.append(row)
-                    q = (row.get("question") or "").strip()
-                    if q:
-                        restart_questions.add(q)
-                        src = row.get("source_csv") or ""
-                        restart_by_csv.setdefault(src, set()).add(q)
-                    try:
-                        existing_correct += int(row.get("is_correct", "0"))
-                        existing_runtime += float(row.get("runtime_seconds", "0") or 0.0)
-                    except Exception:
-                        pass
-            print(f"[alvessa] Restart: loaded {len(restart_rows)} prior rows; skipping {len(restart_questions)} questions.")
+            restart_file = pd.read_csv(restart_path)
+            for i, row in restart_file.iterrows():
+                q = row.get("question")
+                restart_questions.add(q)
+                src = row.get("source_csv") or ""
+                restart_by_csv.setdefault(src, set()).add(q)
+                existing_correct += int(row.get("is_correct", "0"))
+                existing_runtime += float(row.get("runtime_seconds", "0") or 0.0)
+
+            print(f"[alvessa] Restart: loaded {restart_file.shape} prior rows; skipping {len(restart_questions)} questions.")
         except Exception as exc:
             print(f"[alvessa] Restart load failed: {exc}", file=sys.stderr)
             return 1
@@ -355,12 +356,12 @@ def _handle_benchmark(args: argparse.Namespace) -> int:
         writer = csv.writer(csvfile)
         writer.writerow(header)
         # copy prior rows if restart
-        if restart_rows:
-            for row in restart_rows:
+        if restart_file is not None:
+            for i, row in restart_file.iterrows():
                 writer.writerow([row.get(col, "") for col in header])
             csvfile.flush()
-
-        start_idx = len(restart_rows) + 1
+            
+        start_idx = len(restart_questions) + 1
         if limit > 0:
             processed, n_correct, total_runtime, _ = _run_benchmark_rows(
                 rows,
@@ -378,7 +379,7 @@ def _handle_benchmark(args: argparse.Namespace) -> int:
             total_runtime = 0.0
 
     outputs = build_output_paths(run_dir)
-    total_q = processed + len(restart_rows)
+    total_q = processed + len(restart_questions)
     total_c = n_correct + existing_correct
     total_t = total_runtime + existing_runtime
     accuracy = total_c / total_q if total_q else 0.0
@@ -464,6 +465,9 @@ def _handle_benchmark_all(args: argparse.Namespace) -> int:
     total_correct = 0
     total_runtime = 0.0
     next_index = 1
+    restart_file = None
+    def _normalize_q(q: str) -> str:
+        return (q or "").strip().strip('"').strip("'")
 
     if getattr(args, "restart", None):
         restart_path = Path(args.restart)
@@ -471,22 +475,15 @@ def _handle_benchmark_all(args: argparse.Namespace) -> int:
             print(f"[alvessa] Restart file not found: {restart_path}", file=sys.stderr)
             return 1
         try:
-            with restart_path.open("r", encoding="utf-8") as fh:
-                reader = csv.DictReader(fh)
-                for row in reader:
-                    restart_rows.append(row)
-                    q = (row.get("question") or "").strip()
-                    if q:
-                        restart_questions.add(q)
-                        src = row.get("source_csv") or ""
-                        restart_by_csv.setdefault(src, set()).add(q)
-                    try:
-                        total_questions += 1
-                        total_correct += int(row.get("is_correct", "0"))
-                        total_runtime += float(row.get("runtime_seconds", "0") or 0.0)
-                    except Exception:
-                        pass
-            next_index = len(restart_rows) + 1
+            restart_file = pd.read_csv(restart_path)
+            for _, row in restart_file.iterrows():
+                restart_questions.add(row.get("question"))
+                src = row.get("source_csv") or ""
+                restart_by_csv.setdefault(src, set()).add(row.get("question"))
+                total_questions += 1
+                total_correct += int(row.get("is_correct", "0"))
+                total_runtime += float(row.get("runtime_seconds", "0") or 0.0)
+            # next_index = len(restart_rows) + 1
             print(f"[alvessa] Restart-all: loaded {len(restart_rows)} prior rows; skipping {len(restart_questions)} questions.")
         except Exception as exc:
             print(f"[alvessa] Restart-all load failed: {exc}", file=sys.stderr)
@@ -495,8 +492,8 @@ def _handle_benchmark_all(args: argparse.Namespace) -> int:
     with summary_csv.open("w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(header)
-        if restart_rows:
-            for row in restart_rows:
+        if restart_file is not None:
+            for _, row in restart_file.iterrows():
                 writer.writerow([row.get(col, "") for col in header])
             csvfile.flush()
 
@@ -510,6 +507,7 @@ def _handle_benchmark_all(args: argparse.Namespace) -> int:
 
             base_limit = args.N if args.N and args.N > 0 else len(rows)
             already_done_here = len(restart_by_csv.get(str(csv_file), set()))
+            print(f"[alvessa] Processing {csv_file} ({len(rows)} questions; {already_done_here} already done; limit {base_limit})")
             limit = max(0, base_limit - already_done_here)
             if limit > 0:
                 processed, correct, runtime, next_index = _run_benchmark_rows(

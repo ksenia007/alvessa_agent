@@ -111,6 +111,7 @@ def _save_group_assignments(df: pd.DataFrame, out_dir: Path) -> Path:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Visualize dbQA accuracy by inferred question group.")
     parser.add_argument("file_path", help="Path to benchmark_summary.csv")
+    parser.add_argument("--exclude-disgenet", action="store_true", help="Also plot a version excluding DisGeNet questions.")
     args = parser.parse_args()
 
     csv_path = Path(args.file_path).expanduser().resolve()
@@ -128,18 +129,28 @@ def main() -> int:
         print("No data to plot (empty CSV).", file=sys.stderr)
         return 1
 
-    overall_acc = df["is_correct"].mean()
-    overall_row = pd.DataFrame({"question_group": ["All"], "accuracy": [overall_acc], "n": [len(df)]})
-    group_acc = _compute_accuracy(df)
-    full = pd.concat([overall_row, group_acc], ignore_index=True)
+    def plot_and_save(data: pd.DataFrame, suffix: str = ""):
+        overall_acc = data["is_correct"].mean()
+        overall_row = pd.DataFrame({"question_group": ["All"], "accuracy": [overall_acc], "n": [len(data)]})
+        group_acc = _compute_accuracy(data)
+        full = pd.concat([overall_row, group_acc], ignore_index=True)
+        figures_dir = csv_path.parent / "figures"
+        white_path, black_path = _plot_groups(full, out_dir=figures_dir, dpi=300 if not suffix else 300)
+        assign_path = _save_group_assignments(data, figures_dir)
+        print(f"Saved white plot{suffix} to: {white_path}")
+        print(f"Saved black plot{suffix} to: {black_path}")
+        print(f"Saved question->group assignments{suffix} to: {assign_path}")
 
-    figures_dir = csv_path.parent / "figures"
-    white_path, black_path = _plot_groups(full, out_dir=figures_dir)
-    assign_path = _save_group_assignments(df, figures_dir)
+    # Plot full data
+    plot_and_save(df, suffix="")
 
-    print(f"Saved white plot to: {white_path}")
-    print(f"Saved black plot to: {black_path}")
-    print(f"Saved question->group assignments to: {assign_path}")
+    # Optionally plot excluding DisGeNet
+    if args.exclude_disgenet:
+        df_no_disgenet = df[df["question_group"] != "DisGeNet+\nOMIM"].copy()
+        if df_no_disgenet.empty:
+            print("No data left after excluding DisGeNet; skipping filtered plots.", file=sys.stderr)
+        else:
+            plot_and_save(df_no_disgenet, suffix=" (no DisGeNet)")
     return 0
 
 

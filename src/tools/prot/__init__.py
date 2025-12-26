@@ -27,10 +27,13 @@ DISPROT_JSON = LOCAL_DBS_DIR / "DisProt release_2025_06 with_ambiguous_evidences
 
 # --- Database validation metadata ---
 REQUIRED_META = {
-    "schema_version": "1.0",
-    "build_time": "2025-09-26T18:53:44Z",
+    "schema_version": "1.1",
+    "build_time": "2025-12-08T15:33:35Z",
 }
 UPDATE_MSG = f"Please update to the latest {DB_PATH.name} file."
+
+# --- Maximal number of proteins to be displayed ---
+TOOL_PROT_MAX_GENES = 100
 
 # --- Thresholds & Cutoffs ---
 PLDDT_HIGH_CUTOFF: float = 90.0
@@ -47,6 +50,8 @@ FMT_FLOAT_DEFAULT: str = "NA"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 __all__ = [
+    # Maximal number of genes to be displayed
+    "TOOL_PROT_MAX_GENES",
     # Roots & storage
     "PACKAGE_ROOT", "REPO_ROOT",
     "LOCAL_DBS_DIR", "OUTPUT_DIR",

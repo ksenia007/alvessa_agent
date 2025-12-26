@@ -1,70 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</title>
 
-  <!-- Favicon / icons -->
-  <link rel="icon" href="favicon.ico?v=10" />
-  <link rel="icon" type="image/png" sizes="32x32" href="images/rocket_favicon_32.png?v=10" />
-  <link rel="icon" type="image/png" sizes="64x64" href="images/rocket_favicon_64.png?v=10" />
-  <link rel="apple-touch-icon" sizes="180x180" href="images/rocket_favicon_180.png?v=10" />
-  <meta name="theme-color" content="#0b1020" />
+    <!-- Favicon / icons -->
+    <link rel="icon" href="favicon.ico?v=10" />
+    <link rel="icon" type="image/png" sizes="32x32" href="images/rocket_favicon_32.png?v=10" />
+    <link rel="icon" type="image/png" sizes="64x64" href="images/rocket_favicon_64.png?v=10" />
+    <link rel="apple-touch-icon" sizes="180x180" href="images/rocket_favicon_180.png?v=10" />
+    <meta name="theme-color" content="#0b1020" />
 
-  <!-- Markdown parser + sanitizer -->
-<script src="https://cdn.jsdelivr.net/npm/markdown-it@13/dist/markdown-it.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet">
 
+    <!-- Markdown parser + sanitizer -->
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@13/dist/markdown-it.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 
-  <style>
-    :root {
+    <style>
+      :root {
         /* DARK THEME (default) */
-        --bg: #0b1020;
-        --fg: #e6e8ef;
-        --card: #121832;
-        --muted: #aab4d6;
-        --line: #1e2a52;
-        --accent: #2a3a72;
-        --input: #0e1430;
-        --shadow: 0 6px 24px rgba(0,0,0,.2);
+        --bg: #0a0908;
+        --bg-2: #0c0b0a;
+        --fg: #f3f0ea;
+        --muted: #9fa8c2;
+        --line: rgba(255, 180, 120, 0.12);
+        --card: rgba(255, 200, 150, 0.04);
+        --card-strong: rgba(12, 18, 36, 0.75);
+        --input: rgba(255, 255, 255, 0.06);
+        --accent: #e85d04;
+        --accent-2: #f48c06;
+        --accent-3: #faa307;
+        --teal: #2dd4bf;
+        --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
         --radius: 16px;
-        --r-sm: 10px;
+        --r-sm: 12px;
         --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+        --sans: 'DM Sans', -apple-system, system-ui, sans-serif;
+        --serif: 'Fraunces', 'DM Sans', serif;
       }
-      body.light {
-        --bg: #ffffff;
-        --fg: #0b1020;
-        --card: #ffffff;
-        --muted: #6b7280;
-        --line: #d8dce6;
-        --input: #ffffff;
-        --shadow: 0 6px 24px rgba(0,0,0,.06);
-        --accent: #afc5ff; /* bright blue accent for light theme */
 
+      body.light {
+        --bg: #f8f7f5;
+        --bg-2: #ffffff;
+        --fg: #0b0f1a;
+        --muted: #5c6375;
+        --line: rgba(12, 18, 36, 0.12);
+        --card: #ffffff;
+        --card-strong: #f6f6f6;
+        --input: #f2f2f4;
+        --accent: #e85d04;
+        --accent-2: #f48c06;
+        --accent-3: #faa307;
+        --teal: #1f9d8c;
+        --shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
       }
-      
-      * { box-sizing: border-box; }
-      html, body { height: 100%; }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
       body {
         margin: 0;
-        background: var(--bg);
+        background: linear-gradient(180deg, var(--bg), var(--bg-2));
         color: var(--fg);
         font-family: var(--sans);
         overflow-anchor: none;
         transition: background 0.3s ease, color 0.3s ease;
       }
+
       a {
         color: inherit;
         text-decoration: underline;
         text-underline-offset: 2px;
       }
-      .wrap {
-        max-width: 1100px;
-        margin: 24px auto;
-        padding: 0 16px;
+
+      .bg-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(1400px 1400px at 15% 15%, rgba(232, 93, 4, 0.12), transparent 55%),
+          radial-gradient(1200px 1200px at 80% 10%, rgba(232, 93, 4, 0.08), transparent 50%),
+          radial-gradient(1600px 1600px at 50% 85%, rgba(10, 9, 8, 0.55), transparent 65%);
+        filter: blur(52px);
+        opacity: 0.55;
+        z-index: 0;
       }
-      
+
+      .starfield {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.35), transparent 60%),
+          radial-gradient(1px 1px at 60% 10%, rgba(255,255,255,0.28), transparent 60%),
+          radial-gradient(1px 1px at 80% 50%, rgba(255,255,255,0.22), transparent 60%),
+          radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,0.30), transparent 60%);
+        background-repeat: repeat;
+        background-size: 240px 240px;
+        opacity: 0.35;
+        z-index: 0;
+        animation: twinkle 8s ease-in-out infinite;
+      }
+
+      @keyframes twinkle {
+        0% { opacity: 0.3; }
+        50% { opacity: 0.4; }
+        100% { opacity: 0.3; }
+      }
+
+      /* Gradient orbs */
+      .gradient-orb {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.3;
+        pointer-events: none;
+        z-index: 0;
+        will-change: transform;
+      }
+
+      .orb-1 {
+        width: 600px;
+        height: 450px;
+        background: radial-gradient(ellipse, rgba(232, 93, 4, 0.25) 0%, rgba(180, 60, 0, 0.12) 40%, transparent 70%);
+        top: -150px;
+        left: -100px;
+        animation: float-1 40s ease-in-out infinite;
+      }
+
+      .orb-2 {
+        width: 500px;
+        height: 400px;
+        background: radial-gradient(ellipse, rgba(26, 58, 58, 0.3) 0%, rgba(20, 80, 80, 0.15) 40%, transparent 70%);
+        bottom: -80px;
+        right: -80px;
+        animation: float-2 45s ease-in-out infinite;
+      }
+
+      @keyframes float-1 {
+        0%, 100% {
+          transform: translate(0, 0) scale(1);
+          opacity: 0.3;
+        }
+        33% {
+          transform: translate(15px, -10px) scale(1.02);
+          opacity: 0.35;
+        }
+        66% {
+          transform: translate(-10px, 12px) scale(0.98);
+          opacity: 0.28;
+        }
+      }
+
+      @keyframes float-2 {
+        0%, 100% {
+          transform: translate(0, 0) scale(1);
+          opacity: 0.3;
+        }
+        33% {
+          transform: translate(-12px, 8px) scale(1.01);
+          opacity: 0.32;
+        }
+        66% {
+          transform: translate(10px, -15px) scale(0.99);
+          opacity: 0.28;
+        }
+      }
+
+      body.light .gradient-orb {
+        opacity: 0.15;
+      }
+
+      .wrap {
+        position: relative;
+        z-index: 1;
+        max-width: 1200px;
+        margin: 24px auto 60px;
+        padding: 0 18px;
+      }
+
       /* GRID */
       .grid {
         display: grid;
@@ -75,111 +200,166 @@
           "main";
         align-items: start;
       }
+
       .brand-header {
         grid-area: brand-header;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 12px;
-        padding: 8px 0;
+        padding: 8px 180px 8px 0;
       }
-      .logo-brand { height: 44px; }
+
+      .logo-brand {
+        height: 48px;
+      }
+
       .brand-title {
         margin: 0;
-        font-weight: 800;
+        font-weight: 600;
         text-align: center;
-        font-size: clamp(24px,3.2vw,38px);
-        letter-spacing: .2px;
+        font-size: clamp(24px, 3.5vw, 36px);
+        letter-spacing: -0.02em;
+        font-family: var(--serif);
+        line-height: 1.2;
       }
-      .main-col { grid-area: main; min-width: 0; }
-      
+
+      .main-col {
+        grid-area: main;
+        min-width: 0;
+      }
+
       /* CARD */
       .card {
         background: var(--card);
-        border: none;
+        border: 1px solid var(--line);
         border-radius: var(--radius);
         padding: 20px;
         box-shadow: var(--shadow);
-        transition: transform .2s ease, box-shadow .2s ease;
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
       }
+
       .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 36px rgba(0,0,0,.35);
+        box-shadow: 0 22px 55px rgba(0, 0, 0, 0.45);
+        border-color: rgba(255, 180, 120, 0.25);
       }
+
       body.light .card {
         background: var(--card);
         box-shadow: var(--shadow);
       }
-      
+
+      body.light .card:hover {
+        box-shadow: 0 22px 55px rgba(0, 0, 0, 0.18);
+        border-color: rgba(232, 93, 4, 0.2);
+      }
+
       /* TYPOGRAPHY */
-      .title { font-size: 22px; font-weight: 700; margin: 0 0 10px; }
-      .muted { color: var(--muted); font-size: 13px; }
-      .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-      
+      .title {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0 0 12px;
+        font-family: var(--serif);
+        letter-spacing: -0.01em;
+        line-height: 1.3;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
       /* INPUTS */
-      input[type="text"], select {
+      input[type="text"],
+      select {
         width: 100%;
         padding: 12px 14px;
         font-size: 15px;
-        border: none;
+        border: 1px solid var(--line);
         border-radius: 14px;
-        background: rgba(255,255,255,0.06);
+        background: var(--input);
         color: var(--fg);
-        box-shadow: inset 0 1px 3px rgba(255,255,255,0.05);
-        transition: background .2s ease, box-shadow .2s ease;
+        box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.04);
+        transition: background 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
       }
-      input[type="text"]:focus {
+
+      input[type="text"]:focus,
+      select:focus {
         outline: none;
-        box-shadow: 0 0 0 2px #4b6ef5;
-        background: rgba(255,255,255,0.1);
+        border-color: rgba(232, 93, 4, 0.7);
+        box-shadow: 0 0 0 2px rgba(232, 93, 4, 0.2);
+        background: rgba(255, 255, 255, 0.08);
       }
-      body.light input[type="text"] {
-        background: rgba(0,0,0,0.05);
+
+      body.light input[type="text"],
+      body.light select {
+        background: var(--input);
         color: var(--fg);
       }
-      
+
       /* BUTTONS */
-      button, label.pill {
+      button,
+      label.pill {
         padding: 10px 18px;
-        font-weight: 600;
+        font-weight: 700;
         font-size: 14px;
-        color: var(--fg);
-        background: var(--accent);
+        color: #0a0a0a;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
         border: none;
         border-radius: 999px;
         cursor: pointer;
-        transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
-        box-shadow: 0 4px 12px rgba(0,0,0,.2);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
       }
-      button:hover, label.pill:hover {
+
+      button:hover,
+      label.pill:hover {
         transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(0,0,0,.3);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        filter: brightness(1.03);
       }
+
       button:focus-visible {
         outline: 2px solid var(--accent);
         outline-offset: 2px;
       }
+
       .vs-link {
         border: 1px solid var(--line);
-        background: rgba(148,163,184,0.08);
+        background: rgba(148, 163, 184, 0.08);
         color: inherit;
         font-size: 12px;
         padding: 4px 10px;
         border-radius: 999px;
         cursor: pointer;
       }
+
       .vs-link.active {
-        background: rgba(148,163,184,0.2);
-        border-color: rgba(148,163,184,0.5);
+        background: rgba(148, 163, 184, 0.2);
+        border-color: rgba(148, 163, 184, 0.5);
       }
+
       button.ghost {
         background: transparent;
         box-shadow: none;
       }
+
       .variant-controls .vs-link.active {
-        background: rgba(148,163,184,0.22);
-        border-color: rgba(148,163,184,0.6);
+        background: rgba(148, 163, 184, 0.22);
+        border-color: rgba(148, 163, 184, 0.6);
       }
+
       .variant-controls {
         display: flex;
         flex-wrap: wrap;
@@ -187,25 +367,46 @@
         align-items: center;
         margin-bottom: 8px;
       }
+
       .variant-controls__sorts {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
         align-items: center;
       }
+
       .variant-controls__download {
         margin-left: auto;
       }
+
       @media (max-width: 640px) {
         .variant-controls__download {
           margin-left: 0;
         }
+
+        .brand-header {
+          padding-right: 0;
+          flex-direction: column;
+        }
+
+        .brand-title {
+          font-size: 20px;
+        }
       }
-      
+
       /* HERO */
-      #hero { min-height: 50vh; display: grid; place-items: center; }
-      #hero .card { width: 100%; max-width: 720px; text-align: center; }
-      
+      #hero {
+        min-height: 50vh;
+        display: grid;
+        place-items: center;
+      }
+
+      #hero .card {
+        width: 100%;
+        max-width: 720px;
+        text-align: center;
+      }
+
       /* TOOLBAR */
       #toolbar {
         background: var(--card);
@@ -217,19 +418,22 @@
         flex-direction: column;
         gap: 10px;
       }
+
       #toolbar .toolbar-title {
         font-weight: 600;
         color: var(--muted);
         text-transform: uppercase;
         font-size: 12px;
-        letter-spacing: .5px;
+        letter-spacing: 0.5px;
       }
+
       #toolbar .toolbar-row {
         display: flex;
         align-items: center;
         gap: 8px;
         width: 100%;
       }
+
       #toolbar input[type="text"] {
         flex: 1;
         background: var(--input);
@@ -238,12 +442,14 @@
         border-radius: 999px;
         padding: 10px 14px;
         font-size: 15px;
-        transition: box-shadow .2s ease, background .2s ease;
+        transition: box-shadow 0.2s ease, background 0.2s ease;
       }
+
       #toolbar input[type="text"]:focus {
         outline: none;
         box-shadow: 0 0 0 2px #4b6ef5;
       }
+
       #toolbar button {
         background: var(--accent);
         color: var(--fg);
@@ -252,10 +458,13 @@
         padding: 10px 18px;
         font-weight: 600;
         font-size: 14px;
-        transition: transform .15s ease, background .15s ease;
+        transition: transform 0.15s ease, background 0.15s ease;
       }
-      #toolbar button:hover { transform: translateY(-1px); }
-      
+
+      #toolbar button:hover {
+        transform: translateY(-1px);
+      }
+
       /* FLOATING TOOLBAR */
       .floating-ui {
         position: fixed;
@@ -265,17 +474,20 @@
         display: flex;
         gap: 10px;
         align-items: center;
-        background: rgba(20,24,45,0.5);
+        background: rgba(12, 11, 10, 0.85);
+        border: 1px solid rgba(255, 180, 120, 0.15);
         backdrop-filter: blur(10px) saturate(150%);
         border-radius: 16px;
         padding: 6px 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       }
+
       body.light .floating-ui {
-        background: rgba(255,255,255,0.7);
-        box-shadow: 0 2px 8px rgba(0,0,0,.1);
+        background: rgba(255, 255, 255, 0.85);
+        border-color: rgba(12, 18, 36, 0.12);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
-      
+
       /* THEME TOGGLE */
       .theme-toggle {
         display: inline-flex;
@@ -283,11 +495,13 @@
         cursor: pointer;
         user-select: none;
       }
+
       .theme-toggle input {
         position: absolute;
         opacity: 0;
         pointer-events: none;
       }
+
       .theme-toggle .track {
         width: 56px;
         height: 28px;
@@ -295,8 +509,9 @@
         background: linear-gradient(180deg, #1e274f, #141a39);
         border: 1px solid var(--line);
         position: relative;
-        transition: background .2s ease, border-color .2s ease;
+        transition: background 0.2s ease, border-color 0.2s ease;
       }
+
       .theme-toggle .thumb {
         position: absolute;
         top: 2px;
@@ -309,27 +524,30 @@
         font-size: 14px;
         background: #0e1430;
         color: #fff;
-        transition: transform .22s ease, background .2s ease;
-        box-shadow: 0 2px 8px rgba(0,0,0,.35);
+        transition: transform 0.22s ease, background 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
       }
+
       .theme-toggle input:checked + .track {
         background: #e9eefc;
         border-color: #c8cfe0;
       }
+
       .theme-toggle input:checked + .track .thumb {
         transform: translateX(28px);
         background: #fff;
         color: #111827;
       }
 
-       /* Protein viewer iframe */
-    .prot-frame {
+      /* Protein viewer iframe */
+      .prot-frame {
         width: 100%;
         height: 720px;
         border: 1px solid #1e2a52;
         border-radius: 12px;
         background: #0e1430;
       }
+
       body.light .prot-frame {
         background: #ffffff;
         border-color: #cbd5e1;
@@ -338,159 +556,214 @@
       .blk-text {
         white-space: normal;
         line-height: 1.45;
-        font-size: 14px;     
+        font-size: 14px;
       }
-      
 
       /* bump global sizes */
-body { font-size: 16px; line-height: 1.55; }
-.muted { font-size: 14px; }
+      body {
+        font-size: 16px;
+        line-height: 1.55;
+      }
 
-/* section titles like “MSigDB”, “Open Targets”, etc. */
-.section-title {
-  font-size: 18px;
-  font-weight: 800;
-  margin: 14px 0 6px;
-}
+      .muted {
+        font-size: 14px;
+      }
 
-/* details headers (“Functions”, “Diseases”, etc.) */
-details > summary.sect-hdr {
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 700;
-}
+      /* section titles like “MSigDB”, “Open Targets”, etc. */
+      .section-title {
+        font-size: 18px;
+        font-weight: 800;
+        margin: 14px 0 6px;
+      }
 
-/* --- layout primitives --- */
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;              
-  align-items: center;
-}
+      /* details headers (“Functions”, “Diseases”, etc.) */
+      details > summary.sect-hdr {
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 700;
+      }
 
-/* rows: small vertical row-gap, normal horizontal gap */
-.row { 
-  display: flex; 
-  flex-wrap: wrap; 
-  column-gap: 6px;   /* horiz spacing */
-  row-gap: 3px;      
-  align-items: center;
-}
+      /* --- layout primitives --- */
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+      }
 
-/* chips & pills: smaller + tighter */
-.chip, .pill {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  vertical-align: top;
-  padding: 2px 8px;          
-  border-radius: 999px;
-  line-height: 1.1;         
-  font-size: 12.5px;        
-  color: var(--fg);
-  background: rgba(255,255,255,0.08);
-}
-body.light .chip, body.light .pill { background: rgba(0,0,0,0.06); }
+      /* rows: small vertical row-gap, normal horizontal gap */
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 6px; /* horiz spacing */
+        row-gap: 3px;
+        align-items: center;
+      }
 
-/* wrapping variants */
-.chip { white-space: nowrap; }
-.chip.wrap { white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
+      /* chips & pills: smaller + tighter */
+      .chip,
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
+        vertical-align: top;
+        padding: 2px 8px;
+        border-radius: 999px;
+        line-height: 1.1;
+        font-size: 12.5px;
+        color: var(--fg);
+        background: rgba(255, 255, 255, 0.08);
+      }
 
-/* long notes still readable but compact */
-.chip-note{
-  display: inline-block;   /* switch from inline-flex so text wraps naturally */
-  white-space: normal;     /* override .chip's nowrap */
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  line-height: 1.25;
-  padding: 6px 8px;
-  max-width: 100%;        
-  font-size: 12px;
-  opacity: .9;
-}
+      body.light .chip,
+      body.light .pill {
+        background: rgba(0, 0, 0, 0.06);
+      }
 
-/* header sizes: top vs inner */
-.sect-hdr { cursor: pointer; }
-.top-hdr  { font-weight: 700; font-size: 15px; }
-.sub      { font-size: 12px; }
+      /* wrapping variants */
+      .chip {
+        white-space: nowrap;
+      }
 
-/* utility */
-.wrap { white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
+      .chip.wrap {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
 
-/* tables (unchanged, just here for completeness) */
-.vs-table {
-  border-collapse: separate;
-  border-spacing: 0 8px; /* add air between rows without changing line spacing */
-}
-.vs-table th,
-.vs-table td {
-  font-size: 14px;
-  line-height: 1.35;
-  padding: 10px 14px;
-}
+      /* long notes still readable but compact */
+      .chip-note {
+        display: inline-block; /* switch from inline-flex so text wraps naturally */
+        white-space: normal; /* override .chip's nowrap */
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        line-height: 1.25;
+        padding: 6px 8px;
+        max-width: 100%;
+        font-size: 12px;
+        opacity: 0.9;
+      }
 
-      
+      /* header sizes: top vs inner */
+      .sect-hdr {
+        cursor: pointer;
+      }
 
-/* keep page container margins */
-body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
+      .top-hdr {
+        font-weight: 700;
+        font-size: 15px;
+      }
 
-/* neutralize when .wrap is used on chips/pills */
-.chip.wrap,
-.pill.wrap {
-  margin: 0 !important;
-  padding-top: 2px;   /* whatever you like */
-  padding-bottom: 2px;
-}
+      .sub {
+        font-size: 12px;
+      }
 
-/* make .wrap mean 'text wrapping' ONLY when on chips */
-.chip.wrap,
-.pill.wrap {
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
+      /* utility */
+      .wrap {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
 
-/* optional: ensure the row itself isn’t adding extra spacing */
-.row { display:flex; flex-wrap:wrap; column-gap:6px; row-gap:3px; align-items:center; }
+      /* tables (unchanged, just here for completeness) */
+      .vs-table {
+        border-collapse: separate;
+        border-spacing: 0 8px; /* add air between rows without changing line spacing */
+      }
 
-      
-      
-  </style>
+      .vs-table th,
+      .vs-table td {
+        font-size: 14px;
+        line-height: 1.35;
+        padding: 10px 14px;
+      }
+
+      /* keep page container margins */
+      body > .wrap {
+        max-width: 1100px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+
+      /* neutralize when .wrap is used on chips/pills */
+      .chip.wrap,
+      .pill.wrap {
+        margin: 0 !important;
+        padding-top: 2px;
+        padding-bottom: 2px;
+      }
+
+      /* make .wrap mean 'text wrapping' ONLY when on chips */
+      .chip.wrap,
+      .pill.wrap {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+
+      /* optional: ensure the row itself isn’t adding extra spacing */
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 6px;
+        row-gap: 3px;
+        align-items: center;
+      }
+    </style>
+  </head>
 
   <body>
+    <div class="bg-overlay"></div>
+    <div class="starfield"></div>
+
+    <!-- Animated gradient orbs -->
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+
     <!-- Floating toolbar -->
-<div class="floating-ui" aria-label="Quick actions">
-    <button id="savePageBtn" class="btn-ghost" title="Download a snapshot of this page">Save HTML</button>
-  
-    <!-- Emoji theme slider -->
-    <label class="theme-toggle" title="Toggle theme">
-      <input id="themeCheckbox" type="checkbox" aria-label="Toggle theme (light/dark)">
-      <span class="track"><span class="thumb">🌙</span></span>
-    </label>
-  </div>
-  
+    <div class="floating-ui" aria-label="Quick actions">
+      <button id="savePageBtn" class="btn-ghost" title="Download a snapshot of this page">Save HTML</button>
+
+      <!-- Emoji theme slider -->
+      <label class="theme-toggle" title="Toggle theme">
+        <input id="themeCheckbox" type="checkbox" aria-label="Toggle theme (light/dark)" />
+        <span class="track"><span class="thumb">🌙</span></span>
+      </label>
+    </div>
+
     <div class="wrap">
       <!-- Landing -->
       <div id="hero" role="region" aria-label="Landing">
         <div class="card">
           <div class="title" style="display:flex; align-items:center; justify-content:center; gap:8px">
             <img src="images/rocket_logo.png" alt="Alvessa logo" style="height:40px" />
-            <span>Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</span>
+            <span style="font-family: var(--serif); font-weight:600;">Alvessa: Agentic evidence-grounded research assistant for biology</span>
           </div>
           <p class="muted" style="margin-bottom:12px">
-            Ask a question or load a folder 
+            Ask a question or load a folder
           </p>
           <div class="row" style="justify-content:center; width:100%; gap:12px; margin-bottom:8px">
-            <input id="q" type="text" placeholder="Ask a question… e.g., Genes interacting with TP53" aria-label="Question" />
+            <input
+              id="q"
+              type="text"
+              placeholder="Ask a question… e.g., Genes interacting with TP53"
+              aria-label="Question"
+            />
             <button id="runBtn" aria-label="Run query">Run</button>
             <button id="loadFolderBtn" aria-label="Load Folder">Load Folder</button>
             <input id="folderPicker" type="file" webkitdirectory directory style="display:none" />
-
           </div>
           <div style="text-align:center; margin-top:12px">
-            <a id="tryDemoLink" href="#" style="font-size:14px; color:var(--accent); text-decoration:underline">Try Demo</a>
+            <a
+              id="tryDemoLink"
+              href="#"
+              style="font-size:14px; color:var(--accent); text-decoration:underline"
+              >Try Demo</a
+            >
           </div>
-          <div class="muted" style="margin-top:8px">Tip: nothing loads until you choose a file, a folder, or click Run.</div>
+          <div class="muted" style="margin-top:8px">
+            Tip: nothing loads until you choose a file, a folder, or click Run.
+          </div>
         </div>
       </div>
 
@@ -498,7 +771,9 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
       <div id="grid" class="grid" style="display:none">
         <div class="brand-header">
           <img src="images/rocket_logo.png" alt="Alvessa logo" class="logo-brand" />
-          <h1 class="brand-title">Alvessa: An Agentic Evidence-Grounded Research Assistant for Genomics</h1>
+          <h1 class="brand-title">
+            Alvessa: Agentic evidence-grounded research assistant for biology
+          </h1>
         </div>
 
         <aside class="side-col">
@@ -509,19 +784,24 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
         </aside>
 
         <div class="main-col">
-            <!-- Ask another question toolbar -->
-            <div id="toolbar" class="card" style="display:none">
-                <div class="toolbar-title">Ask another question</div>
-                <div class="toolbar-row">
-                  <input id="q2" type="text" placeholder="Type your next question..." aria-label="Another question" />
-                  <button id="runBtn2">Run</button>
-                  <label class="pill" style="cursor:pointer">
-                    Load Folder
-                    <input id="folderPicker2" type="file" webkitdirectory directory style="display:none" />
-                  </label>
-                </div>
-              </div>
-              
+          <!-- Ask another question toolbar -->
+          <div id="toolbar" class="card" style="display:none">
+            <div class="toolbar-title">Ask another question</div>
+            <div class="toolbar-row">
+              <input
+                id="q2"
+                type="text"
+                placeholder="Type your next question..."
+                aria-label="Another question"
+              />
+              <button id="runBtn2">Run</button>
+              <label class="pill" style="cursor:pointer">
+                Load Folder
+                <input id="folderPicker2" type="file" webkitdirectory directory style="display:none" />
+              </label>
+            </div>
+          </div>
+
           <div class="card">
             <div class="title" id="questionTitle">Question</div>
             <div id="question" style="font-size:18px"></div>
@@ -537,21 +817,25 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
             <div class="title">Gene Summary</div>
             <div id="geneSummary"></div>
           </div>
-          
+
           <div id="variantSummaryCard" class="card" style="display:none">
             <div class="title">Variant Summary</div>
             <div id="variantSummary"></div>
           </div>
-          
 
-          <div id="protCard" class="card full" data-section style="display: none">
-            <div class="title">Protein Structure</div>
-            <div id="protMount"></div>
+          <div id="drugCentralCard" class="card" style="display:none">
+            <div class="title">DrugCentral Data</div>
+            <div id="drugCentralMount"></div>
           </div>
 
           <div id="chemblCard" class="card" style="display:none">
-            <div class="title">ChEMBL Data</div>
+            <div class="title">ChEMBL Gene-Centric Data</div>
             <div id="chemblMount"></div>
+          </div>
+
+          <div id="protCard" class="card full" data-section style="display:none">
+            <div class="title">Protein Structure</div>
+            <div id="protMount"></div>
           </div>
 
           <div id="aaSeqCard" class="card" style="display:none">
@@ -559,271 +843,832 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
             <div id="aaSeqMount"></div>
           </div>
 
-          <div id="rawCard" class="card" style="display:none">
-            <div class="title">Raw State (debug)</div>
-            <pre id="raw" class="mono" style="max-height:340px; overflow:auto"></pre>
-          </div>
         </div>
       </div>
     </div>
 
     <!-- App boot + small utilities; Answer renderer is imported from static/answer.js -->
     <script type="module">
-        import { renderAnswerVerified } from "./static/answer.js";
-        import { Wait } from "./static/waiting_module.js";
-        import { renderGeneSummary } from "./static/gene_summary.js";
-        import { renderVariantSummary } from "./static/variant_summary.js";
+      import { renderAnswerVerified } from "./static/answer.js";
+      import { Wait } from "./static/waiting_module.js";
+      import { renderGeneSummary } from "./static/gene_summary.js";
+      import { renderVariantSummary } from "./static/variant_summary.js";
 
+      // ---- Helpers  ----
+      const byId = (id) => document.getElementById(id);
+      const show = (id) => {
+        const el = byId(id);
+        if (!el) return;
+        el.style.display = el.classList.contains("grid") ? "grid" : "block";
+      };
+      const hide = (id) => {
+        const el = byId(id);
+        if (el) el.style.display = "none";
+      };
+      const setText = (id, t) => {
+        const el = byId(id);
+        if (el) el.textContent = t ?? "";
+      };
 
-      
-        // ---- Helpers  ----
-        const byId = (id) => document.getElementById(id);
-        const show = (id) => { const el = byId(id); if (!el) return; el.style.display = el.classList.contains("grid") ? "grid" : "block"; };
-        const hide = (id) => { const el = byId(id); if (el) el.style.display = "none"; };
-        const setText = (id, t) => { const el = byId(id); if (el) el.textContent = t ?? ""; };
+      function setArtifactBaseFromState(st) {
+        const cand = st?.ui?.artifact_base || st?.artifact_base || st?.ui?.base_path || "";
+        if (cand) ARTIFACT_BASE = cand.endsWith("/") ? cand : cand + "/";
+      }
 
-        function setArtifactBaseFromState(st){
-            const cand = st?.ui?.artifact_base || st?.artifact_base || st?.ui?.base_path || "";
-            if (cand) ARTIFACT_BASE = cand.endsWith("/") ? cand : (cand + "/");
+      // ---- App state ----
+      let STATE = null;
+      let HERO_SHOWN = true;
+      let ARTIFACT_BASE = "";
+      const FILE_CACHE = new Map();
+      const LOCAL_FILES = new Map();
+
+      // ---- Save page (snapshot) ----
+      async function saveFullPageSnapshot() {
+        const saveBtn = byId("savePageBtn");
+        const originalText = saveBtn?.textContent || "Save HTML";
+
+        try {
+          if (saveBtn) {
+            saveBtn.textContent = "Preparing...";
+            saveBtn.disabled = true;
           }
-      
-        // ---- App state ----
-        let STATE = null;
-        let HERO_SHOWN = true;
-        let ARTIFACT_BASE = "";
-        const FILE_CACHE = new Map();
-        const LOCAL_FILES = new Map();
-      
-        // ---- Save page (snapshot) ----
-        function saveFullPageSnapshot(){
-          try{
-            const htmlEl = document.documentElement.cloneNode(true);
-            htmlEl.querySelectorAll(".cite-tip").forEach(n => n.remove());
-      
-            const boot = document.createElement("script");
-            boot.type = "text/javascript";
-            const stateJson = JSON.stringify(STATE ?? {});
-            const localFilesJson = JSON.stringify(Array.from(LOCAL_FILES.entries()));
-            const fileCacheJson  = JSON.stringify(Array.from(FILE_CACHE.entries()));
-            const isLight = document.body.classList.contains("light");
-            boot.textContent = `
-              (function(){
-                try{
-                  window.STATE = ${stateJson};
-                  try{ window.LOCAL_FILES = new Map(${localFilesJson}); }catch(_){}
-                  try{ window.FILE_CACHE  = new Map(${fileCacheJson}); }catch(_){}
-                  if(${isLight}) document.body.classList.add('light'); else document.body.classList.remove('light');
-                  if (typeof refresh === 'function') refresh();
-                }catch(e){ console.warn('Snapshot boot failed', e); }
-              })();
-            `;
-            htmlEl.querySelector("body")?.appendChild(boot);
-      
-            const doctype = "<!doctype html>\n";
-            const htmlText = doctype + htmlEl.outerHTML;
-            const blob = new Blob([htmlText], { type: "text/html;charset=utf-8" });
-            const url  = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url; a.download = "alvessa_snapshot.html"; a.click();
-            setTimeout(() => URL.revokeObjectURL(url), 800);
-          }catch(e){
-            alert("Could not create snapshot: " + e.message);
-          }
-        }
-        byId("savePageBtn")?.addEventListener("click", saveFullPageSnapshot);
-      
-        // ---- Theme slider (emoji) ----
-        const themeCb = byId("themeCheckbox");
-        function applyTheme(light){
-          document.body.classList.toggle("light", !!light);
-          const thumb = document.querySelector(".theme-toggle .thumb");
-          if (thumb) thumb.textContent = light ? "☀️" : "🌙";
-          try{ localStorage.setItem("alvessa_theme", light ? "light" : "dark"); }catch(_){}
-        }
-        (function initTheme(){
-          let pref = null;
-          try{ pref = localStorage.getItem("alvessa_theme"); }catch(_){}
-          const startLight = pref ? (pref === "light") : false;
-          applyTheme(startLight);
-          if (themeCb) themeCb.checked = startLight;
-          broadcastThemeToIframes();
-        })();
 
-        function broadcastThemeToIframes() {
-            const isLight = document.body.classList.contains("light");
-            document.querySelectorAll("iframe").forEach((frame) => {
-              try {
-                frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
-              } catch (_) {}
-            });
+          // Check FILE_CACHE size
+          let totalCacheSize = 0;
+          for (const [_, content] of FILE_CACHE.entries()) {
+            totalCacheSize += (typeof content === "string" ? content.length : 0);
           }
-          
-          themeCb?.addEventListener("change", (e) => {
-            applyTheme(e.target.checked);
-            broadcastThemeToIframes();
-          });
-          
-          
-        function setArtifactBaseFromUrl(url){
+          const cacheSizeMB = (totalCacheSize / (1024 * 1024)).toFixed(1);
+
+          if (totalCacheSize > 50 * 1024 * 1024) { // >50MB
+            if (!confirm(
+              `Warning: Your uploaded files total ${cacheSizeMB} MB. The saved HTML will be very large.\n\n` +
+              `This may cause issues opening the file. Continue anyway?`
+            )) {
+              return;
+            }
+          }
+
+          if (saveBtn) saveBtn.textContent = "Fetching resources...";
+
+          // Fetch external resources to inline them
+          const [markdownItJs, dompurifyJs, googleFontsCss, answerJs, waitingJs, geneSummaryJs, variantSummaryJs] = await Promise.all([
+            fetch("https://cdn.jsdelivr.net/npm/markdown-it@13/dist/markdown-it.min.js")
+              .then(r => r.text()).catch(() => ""),
+            fetch("https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js")
+              .then(r => r.text()).catch(() => ""),
+            fetch("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&display=swap")
+              .then(r => r.text()).catch(() => ""),
+            fetch("./static/answer.js")
+              .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => ""),
+            fetch("./static/waiting_module.js")
+              .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => ""),
+            fetch("./static/gene_summary.js")
+              .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => ""),
+            fetch("./static/variant_summary.js")
+              .then(r => r.text()).then(t => t.replace(/^export /gm, "")).catch(() => "")
+          ]);
+
+          const escapeInlineScript = (s) => String(s).replace(/<\/script>/gi, "<\\/script>");
+
+          if (saveBtn) saveBtn.textContent = "Converting images...";
+
+          // Convert local images to data URIs
+          const imageMap = new Map();
+          const imageUrls = [
+            "images/rocket_logo.png",
+            "images/rocket_favicon_32.png",
+            "images/rocket_favicon_64.png",
+            "images/rocket_favicon_180.png",
+            "favicon.ico"
+          ];
+
+          for (const url of imageUrls) {
+            try {
+              const resp = await fetch(url);
+              const blob = await resp.blob();
+              const dataUrl = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+              });
+              imageMap.set(url, dataUrl);
+            } catch (e) {
+              console.warn(`Could not fetch ${url}:`, e);
+            }
+          }
+
+          if (saveBtn) saveBtn.textContent = "Building snapshot...";
+
+          // Clone the page
+          const htmlEl = document.documentElement.cloneNode(true);
+
+          // Remove interactive UI elements not needed in snapshot
+          htmlEl.querySelector(".starfield")?.remove();
+          htmlEl.querySelector(".bg-overlay")?.remove();
+          htmlEl.querySelectorAll(".gradient-orb")?.forEach(o => o.remove());
+          htmlEl.querySelector("#hero")?.remove();
+          htmlEl.querySelector(".floating-ui")?.remove();
+          htmlEl.querySelectorAll(".cite-tip")?.forEach((n) => n.remove());
+
+          // Embed verification summary for static snapshot (no state restore)
           try {
-            const u = new URL(url, window.location.href);
-            const parts = u.pathname.split("/"); parts.pop();
-            ARTIFACT_BASE = parts.join("/") + "/";
-            if (u.origin && !/^https?:\/\//.test(ARTIFACT_BASE)) ARTIFACT_BASE = u.origin + ARTIFACT_BASE;
-          } catch {
-            const p = String(url || "").split("/"); p.pop();
-            ARTIFACT_BASE = (p.join("/") + "/").replace(/\/\/+/g, "/");
+            const card = htmlEl.querySelector("#answerCard");
+            if (card && STATE?.verification) {
+              card.setAttribute("data-verification", JSON.stringify(STATE.verification));
+            }
+          } catch (e) {
+            console.warn("Could not embed verification data:", e);
           }
-        }
-        function withBase(path){
-          if (!path) return path;
-          if (/^https?:\/\//i.test(path)) return path;
-          if (!ARTIFACT_BASE) return path;
-          return (ARTIFACT_BASE + path).replace(/([^:]\/)\/+/g, "$1");
-        }
-        async function fetchTextCached(path){
-          if (LOCAL_FILES.has(path)) return LOCAL_FILES.get(path);
-          // ends-with match for folder loads
-          for (const k of LOCAL_FILES.keys()) {
-            if (k.endsWith("/"+path) || k === path) return LOCAL_FILES.get(k);
+
+          // Add snapshot info banner at the top
+          const grid = htmlEl.querySelector("#grid");
+          if (grid && grid.parentNode) {
+            const banner = htmlEl.ownerDocument.createElement("div");
+            banner.style.cssText = "background: rgba(232, 93, 4, 0.15); border: 1px solid rgba(232, 93, 4, 0.3); border-radius: 12px; padding: 12px 16px; margin: 20px auto; max-width: 900px; font-size: 14px; line-height: 1.5;";
+            banner.innerHTML = `
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">📦</span>
+                <div>
+                  <strong>Alvessa Snapshot</strong> — Saved on ${new Date().toLocaleString()}
+                  <div style="opacity: 0.8; font-size: 13px; margin-top: 4px;">
+                    This is a self-contained research snapshot. All core features work offline.
+                    3D molecular visualizations require internet for RDKit.js library.
+                  </div>
+                </div>
+              </div>
+            `;
+            grid.parentNode.insertBefore(banner, grid);
           }
-          const url = withBase(path);
-          if (FILE_CACHE.has(url)) return FILE_CACHE.get(url);
-          const res = await fetch(url, { cache:"no-store" });
-          if (!res.ok) throw new Error(`Fetch failed: ${url} (${res.status})`);
-          const txt = await res.text();
-          FILE_CACHE.set(url, txt);
-          return txt;
-        }
-      
-        // ---- Renderers ----
-        function setBusy(busy) {
-            const ids = ["runBtn", "runBtn2", "loadFolderBtn"];
-            for (const id of ids) {
-              const el = byId(id);
-              if (el) { el.disabled = !!busy; el.style.opacity = busy ? 0.7 : 1; el.style.pointerEvents = busy ? "none" : "auto"; }
+
+          // Replace external script tags with inlined versions
+          if (markdownItJs) {
+            const mdScript = htmlEl.querySelector('script[src*="markdown-it"]');
+            if (mdScript) {
+              const inlineScript = htmlEl.ownerDocument.createElement("script");
+              // Remove source map comment to prevent browser from trying to load it
+              const cleanedJs = markdownItJs.replace(/\/\/# sourceMappingURL=.*/g, '');
+              inlineScript.textContent = escapeInlineScript(cleanedJs);
+              mdScript.replaceWith(inlineScript);
             }
           }
 
-        function renderQuestion(st){
-          const msgs = st?.messages || [];
-          const lastUser = [...msgs].reverse().find(m => m?.role === "user");
-          const q = lastUser?.content || st?.prompt || "";
-          setText("question", q || "");
-          setText("questionTitle", "Question");
-        }
-        function renderProt(st) {
-            const mount = document.getElementById("protMount");
-            if (!mount) return;
-    
-            const html = st?.prot_html;
-            const iframeUrl = st?.prot_iframe_url;
-            const pdbId = st?.pdb_id;
-    
-            mount.innerHTML = "";
-            if (!html && !iframeUrl && !pdbId) {
-              return (document.getElementById("protCard").style.display = "none");
+          if (dompurifyJs) {
+            const dpScript = htmlEl.querySelector('script[src*="dompurify"]');
+            if (dpScript) {
+              const inlineScript = htmlEl.ownerDocument.createElement("script");
+              // Remove source map comment to prevent browser from trying to load it
+              const cleanedJs = dompurifyJs.replace(/\/\/# sourceMappingURL=.*/g, '');
+              inlineScript.textContent = escapeInlineScript(cleanedJs);
+              dpScript.replaceWith(inlineScript);
             }
-    
-            const frame = document.createElement("iframe");
-            frame.className = "prot-frame";
-            // Updated sandbox for full link functionality and downloads
-            frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
-            frame.setAttribute("referrerpolicy", "no-referrer");
-    
-            if (html && typeof html === "string" && html.trim()) {
-              frame.srcdoc = html;
-    
-              const saveBtn = document.createElement("button");
-              saveBtn.className = "mini";
-              saveBtn.textContent = "Save HTML";
-              saveBtn.style.margin = "6px 0 10px";
-              saveBtn.onclick = () => {
-                const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "protein_view.html";
-                a.click();
-                setTimeout(() => URL.revokeObjectURL(url), 800);
-              };
-              mount.appendChild(saveBtn);
-            } else if (iframeUrl) {
-              frame.src = iframeUrl;
-            } else if (pdbId) {
-              frame.src = `https://www.ebi.ac.uk/pdbe/entry-files/molstar.html?structureId=${encodeURIComponent(pdbId)}`;
-            }
-    
-            mount.appendChild(frame);
+          }
 
-            document.getElementById("protCard").style.display = "block";
-    
-            // Updated theme broadcast after load
-            const isLight = document.body.classList.contains("light");
-            frame.addEventListener("load", () => {
-              frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
+          // Replace Google Fonts link with inlined CSS
+          if (googleFontsCss) {
+            const fontLink = htmlEl.querySelector('link[href*="fonts.googleapis.com"]');
+            if (fontLink) {
+              const styleEl = htmlEl.ownerDocument.createElement("style");
+              styleEl.textContent = googleFontsCss;
+              fontLink.replaceWith(styleEl);
+            }
+          }
+
+          // Replace image URLs with data URIs
+          for (const [url, dataUrl] of imageMap.entries()) {
+            // Replace in img src
+            htmlEl.querySelectorAll(`img[src="${url}"]`).forEach(img => {
+              img.setAttribute("src", dataUrl);
             });
-          }
-        
-          function renderChembl(st) {
-            const mount = document.getElementById("chemblMount");
-            const card  = document.getElementById("chemblCard");
-            if (!mount || !card) return;
-          
-            const rawHtml   = st?.chembl_html || st?.ui?.chembl_html;           // srcdoc (preferred)
-            const iframeUrl = st?.chembl_iframe_url || st?.ui?.chembl_iframe_url;
-          
-            if (!rawHtml && !iframeUrl) { card.style.display = "none"; mount.innerHTML = ""; return; }
-          
-            mount.innerHTML = "";
-            card.style.display = "block";
-          
-            const frame = document.createElement("iframe");
-            frame.className = "prot-frame";
-            frame.setAttribute("sandbox","allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads");
-            frame.setAttribute("referrerpolicy","no-referrer");
-          
-            if (rawHtml && typeof rawHtml === "string") {
-              const isLight = document.body.classList.contains("light");
-          
-              // Inject starting theme directly into the child HTML to avoid a flash
-              const html = isLight
-                ? rawHtml.replace(/<body(\s|>)/i, '<body class="light"$1')
-                : rawHtml;
-          
-              frame.srcdoc = html;
-          
-              const saveBtn = document.createElement("button");
-              saveBtn.className = "ghost";
-              saveBtn.textContent = "Save HTML";
-              saveBtn.style.margin = "6px 0 10px";
-              saveBtn.onclick = () => {
-                const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url; a.download = "chembl_view.html"; a.click();
-                setTimeout(() => URL.revokeObjectURL(url), 800);
-              };
-              mount.appendChild(saveBtn);
-            } else {
-              frame.src = iframeUrl;
-            }
-          
-            mount.appendChild(frame);
-          
-            const isLightNow = document.body.classList.contains("light");
-            frame.addEventListener("load", () => {
-              frame.contentWindow?.postMessage({ type:"theme", theme: isLightNow ? "light" : "dark" }, "*");
+            // Replace in link href (favicons)
+            htmlEl.querySelectorAll(`link[href="${url}"]`).forEach(link => {
+              link.setAttribute("href", dataUrl);
             });
           }
 
-          function renderAaSeq(st) {
+          // Remove the Google Fonts preconnect links (no longer needed)
+          htmlEl.querySelectorAll('link[rel="preconnect"]').forEach(l => l.remove());
+
+          // Inline module scripts (answer.js, gene_summary.js, etc.)
+          // Find the main module script and replace with non-module version
+          const mainModuleScript = Array.from(htmlEl.querySelectorAll('script[type="module"]'))
+            .find(s => s.textContent.includes('import { renderAnswerVerified }'));
+
+          if (mainModuleScript && answerJs && waitingJs && geneSummaryJs && variantSummaryJs) {
+            // Create inline scripts for the modules (converted to global functions)
+            // Wrap each in IIFE to avoid variable collisions while exposing needed globals
+            const inlineAnswerScript = htmlEl.ownerDocument.createElement("script");
+            inlineAnswerScript.textContent = `(function() {\n${escapeInlineScript(answerJs)}\nwindow.renderAnswerVerified = renderAnswerVerified;\n})();`;
+
+            const inlineWaitingScript = htmlEl.ownerDocument.createElement("script");
+            inlineWaitingScript.textContent = `(function() {\n${escapeInlineScript(waitingJs)}\nwindow.Wait = Wait;\n})();`;
+
+            const inlineGeneScript = htmlEl.ownerDocument.createElement("script");
+            inlineGeneScript.textContent = `(function() {\n${escapeInlineScript(geneSummaryJs)}\nwindow.renderGeneSummary = renderGeneSummary;\n})();`;
+
+            const inlineVariantScript = htmlEl.ownerDocument.createElement("script");
+            inlineVariantScript.textContent = `(function() {\n${escapeInlineScript(variantSummaryJs)}\nwindow.renderVariantSummary = renderVariantSummary;\n})();`;
+
+            // Convert the main module script to use global functions
+            let mainScriptContent = mainModuleScript.textContent;
+            // Remove import statements
+            mainScriptContent = mainScriptContent
+              .replace(/import\s*{[^}]+}\s*from\s*["'][^"']+["'];?\s*/g, '')
+              .trim();
+
+            const newMainScript = htmlEl.ownerDocument.createElement("script");
+            newMainScript.textContent = escapeInlineScript(mainScriptContent);
+
+            // Replace the module script with our inlined versions
+            mainModuleScript.replaceWith(inlineAnswerScript);
+            inlineAnswerScript.insertAdjacentElement('afterend', inlineWaitingScript);
+            inlineWaitingScript.insertAdjacentElement('afterend', inlineGeneScript);
+            inlineGeneScript.insertAdjacentElement('afterend', inlineVariantScript);
+            inlineVariantScript.insertAdjacentElement('afterend', newMainScript);
+          }
+
+          // Add minimal snapshot boot (no state restore; rewire tooltips + refs)
+          const boot = htmlEl.ownerDocument.createElement("script");
+          boot.type = "text/javascript";
+          boot.textContent = `
+            (function(){
+              function esc(s){
+                return String(s ?? "").replace(/[&<>"']/g, function(ch){
+                  return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]);
+                });
+              }
+              function safeJson(str){
+                try { return JSON.parse(str); } catch(_) { return null; }
+              }
+              function ensureSnapshotStyles(){
+                if (document.getElementById('snapshot-tip-styles')) return;
+                var style = document.createElement('style');
+                style.id = 'snapshot-tip-styles';
+                style.textContent = [
+                  '.cite-tip{position:fixed;z-index:10000;max-width:560px;background:rgba(12,11,10,.95);color:#f3f0ea;border:1px solid rgba(255,180,120,.25);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .08s ease,transform .08s ease;white-space:normal;overflow-wrap:anywhere;word-break:break-word;}',
+                  '.cite-tip.show{opacity:1;transform:translateY(0);}',
+                  '.cite-tip .tip-line + .tip-line{margin-top:4px;}',
+                  '.cite-tip .pill{display:inline-block;margin:2px 4px 0 0;padding:1px 6px;border-radius:999px;font-size:11px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);} ',
+                  '.cite-tip .pill.warn{background:rgba(234,179,8,.18);border-color:rgba(234,179,8,.35);}',
+                  'body.light .cite-tip{background:rgba(255,255,255,.98);color:#0b0f1a;border-color:rgba(12,18,36,.2);box-shadow:0 8px 24px rgba(0,0,0,.15);} ',
+                  '#proofsModal{position:fixed;inset:0;display:none;z-index:10001;}',
+                  '#proofsModal.open{display:flex;align-items:center;justify-content:center;padding:4vh 14px;}',
+                  '#proofsModal .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(2px);} ',
+                  '#proofsModal .modal-sheet{position:relative;width:min(100%,1040px);max-height:84vh;background:#0c0b0a;color:var(--fg,#f3f0ea);border:1px solid rgba(255,180,120,.20);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.5);display:flex;flex-direction:column;overflow:hidden;}',
+                  '#proofsModal .modal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid rgba(255,180,120,.12);} ',
+                  '#proofsModal .modal-title{font-weight:700;}',
+                  '#proofsModal .modal-body{padding:12px 14px;overflow:auto;}',
+                  'body.light #proofsModal .modal-sheet{background:#ffffff;color:#0b1020;border-color:#d8dce6;box-shadow:0 18px 46px rgba(0,0,0,.2);} ',
+                  '.refs-list{margin:0;padding-left:20px;}',
+                  '.ref-item{margin:4px 0;}',
+                  '.ref-details{border:1px solid rgba(255,180,120,.12);border-radius:8px;padding:6px 8px;background:rgba(255,200,150,.03);} ',
+                  '.ref-details[open]{background:rgba(255,200,150,.06);} ',
+                  '.ref-summary{cursor:pointer;font-weight:600;list-style:none;}',
+                  '.ref-summary::-webkit-details-marker{display:none;}',
+                  '.cite-block{margin:8px 0 4px 0;padding:8px 10px;border-left:3px solid rgba(255,180,120,.25);background:rgba(255,255,255,.03);white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;}'
+                ].join('');
+                document.head.appendChild(style);
+              }
+              function makeTooltipHTML(opts){
+                var feedback = opts && opts.feedback ? String(opts.feedback) : '';
+                var reasons = Array.isArray(opts && opts.reasons) ? opts.reasons : [];
+                var speculation = !!(opts && opts.speculation);
+                var out = [];
+                if (speculation) out.push('<div class="tip-line"><span class="pill warn">Speculation</span></div>');
+                if (feedback) out.push('<div class="tip-line"><strong>Verifier:</strong> ' + esc(feedback) + '</div>');
+                if (reasons.length) {
+                  out.push('<div class="tip-line"><strong>Reasons:</strong> ' + reasons.map(function(r){return '<span class="pill">' + esc(r) + '</span>';}).join(' ') + '</div>');
+                }
+                return out.join('');
+              }
+              var TIP;
+              function ensureTip(){
+                if (!TIP){
+                  TIP = document.createElement('div');
+                  TIP.className = 'cite-tip';
+                  document.body.appendChild(TIP);
+                }
+              }
+              function positionTip(e){
+                var pad = 12;
+                TIP.style.left = (e.clientX + pad) + 'px';
+                TIP.style.top = (e.clientY + pad) + 'px';
+              }
+              function wireTooltips(scope){
+                ensureTip();
+                scope.querySelectorAll('.answer-chunk').forEach(function(node){
+                  node.addEventListener('mouseenter', function(e){
+                    var card = document.getElementById('answerCard');
+                    if (card && card.dataset.highlights !== 'on') return;
+                    var stmt = safeJson(node.dataset.statement || '{}');
+                    if (!stmt) return;
+                    var html = makeTooltipHTML({
+                      feedback: stmt.llm_feedback,
+                      reasons: Array.isArray(stmt.reasons) ? stmt.reasons : [],
+                      speculation: !!stmt.is_speculation
+                    });
+                    if (!html) return;
+                    TIP.innerHTML = html;
+                    TIP.classList.add('show');
+                    positionTip(e);
+                  });
+                  node.addEventListener('mousemove', function(e){
+                    var card = document.getElementById('answerCard');
+                    if (card && card.dataset.highlights !== 'on') return;
+                    if (!TIP) return;
+                    positionTip(e);
+                  });
+                  node.addEventListener('mouseleave', function(){
+                    if (!TIP) return;
+                    TIP.classList.remove('show');
+                    TIP.style.left = TIP.style.top = '';
+                  });
+                });
+              }
+              var MODAL;
+              function ensureModal(){
+                if (MODAL) return;
+                MODAL = document.createElement('div');
+                MODAL.id = 'proofsModal';
+                MODAL.innerHTML = [
+                  '<div class="modal-backdrop"></div>',
+                  '<div class="modal-sheet">',
+                  '  <div class="modal-head">',
+                  '    <div class="modal-title">References</div>',
+                  '    <button class="ghost modal-close" aria-label="Close">X</button>',
+                  '  </div>',
+                  '  <div class="modal-body"></div>',
+                  '</div>'
+                ].join('');
+                document.body.appendChild(MODAL);
+                MODAL.querySelector('.modal-backdrop').addEventListener('click', closeModal);
+                MODAL.querySelector('.modal-close').addEventListener('click', closeModal);
+                document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
+              }
+              function openModal(){
+                MODAL.classList.add('open');
+              }
+              function closeModal(){
+                MODAL.classList.remove('open');
+              }
+              function openProofsModal(stmt){
+                if (!stmt) return;
+                ensureModal();
+                var body = MODAL.querySelector('.modal-body');
+                var proofs = Array.isArray(stmt.proofs) ? stmt.proofs : [];
+                if (!proofs.length) {
+                  body.innerHTML = '<div class="muted">No references available for this statement.</div>';
+                  openModal();
+                  return;
+                }
+                var list = proofs.map(function(p, i){
+                  var title = p && (p.title || p.source) ? (p.title || p.source) : ('Citation ' + (i + 1));
+                  var cited = p && p.cited_text
+                    ? '<blockquote class="cite-block">' + esc(String(p.cited_text)) + '</blockquote>'
+                    : '<div class="muted">No cited text provided.</div>';
+                  var url = p && p.url
+                    ? '<div class="muted sm"><a href="' + esc(p.url) + '" target="_blank" rel="noopener">Open source</a></div>'
+                    : '';
+                  return [
+                    '<li class="ref-item">',
+                    '  <details class="ref-details"' + (i === 0 ? ' open' : '') + '>',
+                    '    <summary class="ref-summary">' + esc(title) + '</summary>',
+                    cited,
+                    url,
+                    '  </details>',
+                    '</li>'
+                  ].join('');
+                }).join('');
+                body.innerHTML = '<ul class="refs-list">' + list + '</ul>';
+                openModal();
+              }
+              function wireClicks(scope){
+                scope.querySelectorAll('.answer-chunk').forEach(function(el){
+                  el.addEventListener('click', function(){
+                    var stmt = safeJson(el.dataset.statement || '{}');
+                    openProofsModal(stmt);
+                  });
+                });
+              }
+              function wireVerifDetails(){
+                var btn = document.getElementById('verifDetailsBtn');
+                var modal = document.getElementById('verifModal');
+                var card = document.getElementById('answerCard');
+                if (!btn || !modal) return;
+                var backdrop = modal.querySelector('.modal-backdrop');
+                var closeBtn = modal.querySelector('.modal-close');
+                btn.addEventListener('click', function(){
+                  try{
+                    var raw = card ? card.getAttribute('data-verification') : null;
+                    var ver = raw ? safeJson(raw) : null;
+                    if (ver) {
+                      var body = modal.querySelector('.modal-body');
+                      var overall = (ver.evidence && ver.evidence.overall) || ver.overall || {};
+                      var quality = overall.support_quality ? '<span class="pill">' + esc(overall.support_quality) + '</span>' : '';
+                      var summary = overall.summary ? '<p class="wrap">' + esc(overall.summary) + '</p>' : '<p class="muted">No overall summary.</p>';
+                      var concerns = Array.isArray(overall.concerns) && overall.concerns.length
+                        ? '<ul class="md-list">' + overall.concerns.map(function(c){ return '<li>' + esc(String(c)) + '</li>'; }).join('') + '</ul>'
+                        : '<div class="muted">No concerns listed.</div>';
+                      var v = String(ver.verdict || '').toLowerCase();
+                      var verdictClass = v === 'pass' ? 'badge badge-supported'
+                        : v === 'partial' ? 'badge badge-partial'
+                        : 'badge badge-unsupported';
+                      body.innerHTML = [
+                        '<section class="verif-section">',
+                        '<h3 class="md-h3">Overall quality: ' + quality + '</h3>',
+                        summary,
+                        '</section>',
+                        '<section class="verif-section">',
+                        '<h4 class="md-h4">Concerns</h4>',
+                        concerns,
+                        '</section>',
+                        (ver.verdict ? '<section class="verif-section"><h4 class="md-h4">Verdict</h4><p><span class="' + verdictClass + '">VERDICT: ' + esc(String(ver.verdict).toUpperCase()) + '</span></p></section>' : '')
+                      ].join('');
+                    } else {
+                      var bodyEmpty = modal.querySelector('.modal-body');
+                      if (bodyEmpty) {
+                        bodyEmpty.innerHTML = '<div class="muted">No verification details available in this snapshot.</div>';
+                      }
+                    }
+                  } catch(e) {
+                    console.warn('Verification details render failed:', e);
+                  }
+                  modal.classList.add('open');
+                });
+                if (backdrop) backdrop.addEventListener('click', function(){ modal.classList.remove('open'); });
+                if (closeBtn) closeBtn.addEventListener('click', function(){ modal.classList.remove('open'); });
+                document.addEventListener('keydown', function(e){
+                  if (e.key === 'Escape') modal.classList.remove('open');
+                });
+              }
+              function wireHighlightToggle(){
+                var card = document.getElementById('answerCard');
+                var tgl = document.getElementById('hlToggle');
+                var lbl = document.getElementById('hlToggleLabel');
+                if (!card || !tgl || !lbl) return;
+                tgl.checked = true;
+                card.dataset.highlights = 'on';
+                var updateLabel = function(){
+                  lbl.textContent = tgl.checked ? 'Hide verifier highlights' : 'Show verifier highlights';
+                };
+                updateLabel();
+                tgl.addEventListener('change', function(){
+                  card.dataset.highlights = tgl.checked ? 'on' : 'off';
+                  updateLabel();
+                  if (!tgl.checked && TIP) {
+                    TIP.classList.remove('show');
+                    TIP.style.left = TIP.style.top = '';
+                  }
+                });
+              }
+              function init(){
+                ensureSnapshotStyles();
+                var scope = document.getElementById('answer') || document.body;
+                wireTooltips(scope);
+                wireClicks(scope);
+                wireVerifDetails();
+                wireHighlightToggle();
+              }
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+              } else {
+                init();
+              }
+            })();
+          `;
+          htmlEl.querySelector("body")?.appendChild(boot);
+
+          if (saveBtn) saveBtn.textContent = "Saving file...";
+
+          // Generate final HTML
+          const doctype = "<!DOCTYPE html>\n";
+          const htmlText = doctype + htmlEl.outerHTML;
+          const blob = new Blob([htmlText], { type: "text/html;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+
+          // Use timestamp in filename
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+          a.download = `alvessa_snapshot_${timestamp}.html`;
+          a.click();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          if (saveBtn) {
+            saveBtn.textContent = "✓ Saved!";
+            setTimeout(() => {
+              saveBtn.textContent = originalText;
+              saveBtn.disabled = false;
+            }, 2000);
+          }
+
+        } catch (e) {
+          console.error("Save snapshot error:", e);
+          alert("Could not create snapshot: " + e.message + "\n\nCheck console for details.");
+          if (saveBtn) {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+          }
+        }
+      }
+
+      byId("savePageBtn")?.addEventListener("click", saveFullPageSnapshot);
+
+      // ---- Theme slider (emoji) ----
+      const themeCb = byId("themeCheckbox");
+
+      function applyTheme(light) {
+        document.body.classList.toggle("light", !!light);
+        const thumb = document.querySelector(".theme-toggle .thumb");
+        if (thumb) thumb.textContent = light ? "☀️" : "🌙";
+        try {
+          localStorage.setItem("alvessa_theme", light ? "light" : "dark");
+        } catch (_) {}
+      }
+
+      (function initTheme() {
+        let pref = null;
+        try {
+          pref = localStorage.getItem("alvessa_theme");
+        } catch (_) {}
+        const startLight = pref ? pref === "light" : false;
+        applyTheme(startLight);
+        if (themeCb) themeCb.checked = startLight;
+        broadcastThemeToIframes();
+      })();
+
+      function broadcastThemeToIframes() {
+        const isLight = document.body.classList.contains("light");
+        document.querySelectorAll("iframe").forEach((frame) => {
+          try {
+            frame.contentWindow?.postMessage({ type: "theme", theme: isLight ? "light" : "dark" }, "*");
+          } catch (_) {}
+        });
+      }
+
+      themeCb?.addEventListener("change", (e) => {
+        applyTheme(e.target.checked);
+        broadcastThemeToIframes();
+      });
+
+      function setArtifactBaseFromUrl(url) {
+        try {
+          const u = new URL(url, window.location.href);
+          const parts = u.pathname.split("/");
+          parts.pop();
+          ARTIFACT_BASE = parts.join("/") + "/";
+          if (u.origin && !/^https?:\/\//.test(ARTIFACT_BASE)) ARTIFACT_BASE = u.origin + ARTIFACT_BASE;
+        } catch {
+          const p = String(url || "").split("/");
+          p.pop();
+          ARTIFACT_BASE = (p.join("/") + "/").replace(/\/\/+/g, "/");
+        }
+      }
+
+      function withBase(path) {
+        if (!path) return path;
+        if (/^https?:\/\//i.test(path)) return path;
+        if (!ARTIFACT_BASE) return path;
+        return (ARTIFACT_BASE + path).replace(/([^:]\/)\/+/g, "$1");
+      }
+
+      async function fetchTextCached(path) {
+        if (LOCAL_FILES.has(path)) return LOCAL_FILES.get(path);
+        // ends-with match for folder loads
+        for (const k of LOCAL_FILES.keys()) {
+          if (k.endsWith("/" + path) || k === path) return LOCAL_FILES.get(k);
+        }
+        const url = withBase(path);
+        if (FILE_CACHE.has(url)) return FILE_CACHE.get(url);
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Fetch failed: ${url} (${res.status})`);
+        const txt = await res.text();
+        FILE_CACHE.set(url, txt);
+        return txt;
+      }
+
+      // ---- Renderers ----
+      function setBusy(busy) {
+        const ids = ["runBtn", "runBtn2", "loadFolderBtn"];
+        for (const id of ids) {
+          const el = byId(id);
+          if (el) {
+            el.disabled = !!busy;
+            el.style.opacity = busy ? 0.7 : 1;
+            el.style.pointerEvents = busy ? "none" : "auto";
+          }
+        }
+      }
+
+      function renderQuestion(st) {
+        const msgs = st?.messages || [];
+        const lastUser = [...msgs].reverse().find((m) => m?.role === "user");
+        const q = lastUser?.content || st?.prompt || "";
+        setText("question", q || "");
+        setText("questionTitle", "Question");
+      }
+
+      function renderDrugCentral(st) {
+        const mount = document.getElementById("drugCentralMount");
+        const card = document.getElementById("drugCentralCard");
+        if (!mount || !card) return;
+
+        // Back-end: set either of these
+        //   st.drug_central_html or st.ui.drug_central_html
+        //   st.drug_central_iframe_url or st.ui.drug_central_iframe_url
+        const rawHtml = st?.drug_central_html || st?.ui?.drug_central_html;
+        const iframeUrl = st?.drug_central_iframe_url || st?.ui?.drug_central_iframe_url;
+
+        if (!rawHtml && !iframeUrl) {
+          card.style.display = "none";
+          mount.innerHTML = "";
+          return;
+        }
+
+        mount.innerHTML = "";
+        card.style.display = "block";
+
+        const frame = document.createElement("iframe");
+        frame.className = "prot-frame";
+        frame.setAttribute(
+          "sandbox",
+          "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads",
+        );
+        frame.setAttribute("referrerpolicy", "no-referrer");
+
+        if (rawHtml && typeof rawHtml === "string") {
+          const isLight = document.body.classList.contains("light");
+
+          // Inject starting theme into the DrugCentral HTML to avoid flash
+          const html = isLight
+            ? rawHtml.replace(/<body(\s|>)/i, '<body class="light"$1')
+            : rawHtml;
+
+          frame.srcdoc = html;
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "ghost";
+          saveBtn.textContent = "Save HTML";
+          saveBtn.style.margin = "6px 0 10px";
+          saveBtn.onclick = () => {
+            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "drug_central_view.html";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 800);
+          };
+          mount.appendChild(saveBtn);
+        } else {
+          // Fallback to external URL if provided
+          frame.src = iframeUrl;
+        }
+
+        mount.appendChild(frame);
+
+        // Keep DrugCentral viewer in sync with theme
+        const isLightNow = document.body.classList.contains("light");
+        frame.addEventListener("load", () => {
+          frame.contentWindow?.postMessage(
+            { type: "theme", theme: isLightNow ? "light" : "dark" },
+            "*",
+          );
+        });
+      }
+
+      function renderChembl(st) {
+        const mount = document.getElementById("chemblMount");
+        const card = document.getElementById("chemblCard");
+        if (!mount || !card) return;
+
+        const rawHtml = st?.chembl_html || st?.ui?.chembl_html; // srcdoc (preferred)
+        const iframeUrl = st?.chembl_iframe_url || st?.ui?.chembl_iframe_url;
+
+        if (!rawHtml && !iframeUrl) {
+          card.style.display = "none";
+          mount.innerHTML = "";
+          return;
+        }
+
+        mount.innerHTML = "";
+        card.style.display = "block";
+
+        const frame = document.createElement("iframe");
+        frame.className = "prot-frame";
+        frame.setAttribute(
+          "sandbox",
+          "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads",
+        );
+        frame.setAttribute("referrerpolicy", "no-referrer");
+
+        if (rawHtml && typeof rawHtml === "string") {
+          const isLight = document.body.classList.contains("light");
+
+          // Inject starting theme directly into the child HTML to avoid a flash
+          const html = isLight
+            ? rawHtml.replace(/<body(\s|>)/i, '<body class="light"$1')
+            : rawHtml;
+
+          frame.srcdoc = html;
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "ghost";
+          saveBtn.textContent = "Save HTML";
+          saveBtn.style.margin = "6px 0 10px";
+          saveBtn.onclick = () => {
+            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "chembl_view.html";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 800);
+          };
+          mount.appendChild(saveBtn);
+        } else {
+          frame.src = iframeUrl;
+        }
+
+        mount.appendChild(frame);
+
+        const isLightNow = document.body.classList.contains("light");
+        frame.addEventListener("load", () => {
+          frame.contentWindow?.postMessage(
+            { type: "theme", theme: isLightNow ? "light" : "dark" },
+            "*",
+          );
+        });
+      }
+
+      function renderProt(st) {
+        const mount = document.getElementById("protMount");
+        if (!mount) return;
+
+        const html = st?.prot_html;
+        const iframeUrl = st?.prot_iframe_url;
+        const pdbId = st?.pdb_id;
+
+        mount.innerHTML = "";
+        if (!html && !iframeUrl && !pdbId) {
+          document.getElementById("protCard").style.display = "none";
+          return;
+        }
+
+        const frame = document.createElement("iframe");
+        frame.className = "prot-frame";
+        frame.setAttribute(
+          "sandbox",
+          "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads",
+        );
+        frame.setAttribute("referrerpolicy", "no-referrer");
+
+        if (html && typeof html === "string" && html.trim()) {
+          frame.srcdoc = html;
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "mini";
+          saveBtn.textContent = "Save HTML";
+          saveBtn.style.margin = "6px 0 10px";
+          saveBtn.onclick = () => {
+            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "protein_view.html";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 800);
+          };
+          mount.appendChild(saveBtn);
+        } else if (iframeUrl) {
+          frame.src = iframeUrl;
+        } else if (pdbId) {
+          frame.src = `https://www.ebi.ac.uk/pdbe/entry-files/molstar.html?structureId=${encodeURIComponent(
+            pdbId,
+          )}`;
+        }
+
+        mount.appendChild(frame);
+        document.getElementById("protCard").style.display = "block";
+
+        // Updated theme broadcast after load
+        const isLight = document.body.classList.contains("light");
+        frame.addEventListener("load", () => {
+          frame.contentWindow?.postMessage(
+            { type: "theme", theme: isLight ? "light" : "dark" },
+            "*",
+          );
+        });
+      }
+
+      function renderAaSeq(st) {
         const mount = document.getElementById("aaSeqMount");
-        const card  = document.getElementById("aaSeqCard");
+        const card = document.getElementById("aaSeqCard");
         if (!mount || !card) return;
 
         // Back-end currently sets aa_seq_html; leave room for future iframe URL
-        const rawHtml   = st?.aa_seq_html || st?.ui?.aa_seq_html;
+        const rawHtml = st?.aa_seq_html || st?.ui?.aa_seq_html;
         const iframeUrl = st?.aa_seq_iframe_url || st?.ui?.aa_seq_iframe_url;
 
         if (!rawHtml && !iframeUrl) {
@@ -839,7 +1684,7 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
         frame.className = "prot-frame";
         frame.setAttribute(
           "sandbox",
-          "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads"
+          "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads",
         );
         frame.setAttribute("referrerpolicy", "no-referrer");
 
@@ -879,229 +1724,293 @@ body > .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
         frame.addEventListener("load", () => {
           frame.contentWindow?.postMessage(
             { type: "theme", theme: isLightNow ? "light" : "dark" },
-            "*"
+            "*",
           );
         });
       }
 
-          function renderRaw(st){
-          const card = byId("rawCard");
-          if (!st) { card.style.display = "none"; return; }
-          byId("raw").textContent = JSON.stringify(st, null, 2);
-          card.style.display = "block";
+      async function refresh(qOverride) {
+        if (!STATE) return;
+
+        if (HERO_SHOWN) {
+          HERO_SHOWN = false;
+          hide("hero");
+          show("grid");
         }
-      
-        async function refresh(qOverride){
-            if (!STATE) return;
-          
-            if (HERO_SHOWN){ 
-              HERO_SHOWN = false; 
-              hide("hero"); 
-              show("grid"); 
+        if (qOverride) setText("question", qOverride);
+
+        // show the “Ask another question” bar
+        show("toolbar");
+
+        renderQuestion(STATE);
+        renderAnswerVerified(STATE);
+        await renderGeneSummary(STATE, {
+          byId,
+          show,
+          hide,
+          fetchTextCached,
+          escapeHtml: (s) =>
+            String(s ?? "").replace(
+              /[&<>"']/g,
+              (ch) =>
+                ({
+                  "&": "&amp;",
+                  "<": "&lt;",
+                  ">": "&gt;",
+                  '"': "&quot;",
+                  "'": "&#39;",
+                })[ch],
+            ),
+        });
+        await renderVariantSummary(STATE, {
+          byId,
+          show,
+          hide,
+          fetchTextCached,
+          escapeHtml: (s) =>
+            String(s ?? "").replace(
+              /[&<>"']/g,
+              (ch) =>
+                ({
+                  "&": "&amp;",
+                  "<": "&lt;",
+                  ">": "&gt;",
+                  '"': "&quot;",
+                  "'": "&#39;",
+                })[ch],
+            ),
+        });
+        renderDrugCentral(STATE);
+        renderProt(STATE);
+        renderChembl(STATE);
+        renderAaSeq(STATE);
+        broadcastThemeToIframes();
+      }
+
+      // ---- Run (server) ----
+      let WAITER = null;
+      let LOG_TIMER = null;
+      let LOG_POS = 0;
+
+      function startLogFollower(onLine) {
+        stopLogFollower();
+        LOG_POS = 0;
+        LOG_TIMER = setInterval(async () => {
+          try {
+            const r = await fetch("log?pos=" + LOG_POS, { cache: "no-store" });
+            if (!r.ok) return;
+            const { pos, data } = await r.json();
+            if (typeof pos === "number") LOG_POS = pos;
+            if (typeof data === "string") {
+              const lines = data
+                .split(/\r?\n/)
+                .map((s) => s.trim())
+                .filter(Boolean);
+              const last = lines[lines.length - 1];
+              if (last && typeof onLine === "function") onLine(last);
             }
-            if (qOverride) setText("question", qOverride);
-          
-            // show the “Ask another question” bar
-            show("toolbar");
-          
-            renderQuestion(STATE);
-            renderAnswerVerified(STATE);
-            await renderGeneSummary(STATE, {
-                byId,
-                show,
-                hide,
-                fetchTextCached,  
-                escapeHtml: (s) => String(s ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
-              });
-            await renderVariantSummary(STATE, {
-                byId,
-                show,
-                hide,
-                fetchTextCached,
-                escapeHtml: (s) => String(s ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
-              });
-            renderProt(STATE);
-            renderChembl(STATE);
-            renderAaSeq(STATE);
-            renderRaw(STATE);
-            broadcastThemeToIframes();
+          } catch {}
+        }, 900);
+      }
+
+      function stopLogFollower() {
+        if (LOG_TIMER) clearInterval(LOG_TIMER);
+        LOG_TIMER = null;
+      }
+
+      async function runServer(q) {
+        if (!WAITER) WAITER = Wait.attach();
+        setBusy(true);
+        WAITER.start("Submitting…", "Starting pipeline");
+
+        // Follow the live log WHILE /run is executing
+        startLogFollower((line) => WAITER.setMessage(line.slice(0, 220)));
+
+        try {
+          // Kick off the run and WAIT for the final JSON (server is synchronous)
+          const resp = await fetch("run?q=" + encodeURIComponent(q), { cache: "no-store" });
+
+          // If the server refused because another run is active
+          if (resp.status === 409) {
+            WAITER.setError("A run is already in progress.");
+            return;
+          }
+          if (!resp.ok) {
+            WAITER.setError("Run failed (" + resp.status + ")");
+            return;
           }
 
-                
-        // ---- Run (server) ----
-        let WAITER = null;
-let LOG_TIMER = null;
-let LOG_POS = 0;
+          // THIS IS THE FINAL STATE — no need to poll /state
+          STATE = await resp.json();
+          LOCAL_FILES.clear();
+          FILE_CACHE.clear();
+          setArtifactBaseFromState(STATE);
 
-function startLogFollower(onLine) {
-  stopLogFollower();
-  LOG_POS = 0;
-  LOG_TIMER = setInterval(async () => {
-    try {
-      const r = await fetch("log?pos=" + LOG_POS, { cache: "no-store" });
-      if (!r.ok) return;
-      const { pos, data } = await r.json();
-      if (typeof pos === "number") LOG_POS = pos;
-      if (typeof data === "string") {
-        const lines = data.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-        const last = lines[lines.length - 1];
-        if (last && typeof onLine === "function") onLine(last);
+          // Render
+          await refresh(q);
+        } catch (err) {
+          console.error(err);
+          WAITER.setError(err?.message || String(err));
+        } finally {
+          stopLogFollower();
+          WAITER.stop();
+          setBusy(false);
+        }
       }
-    } catch {}
-  }, 900);
-}
-function stopLogFollower() { if (LOG_TIMER) clearInterval(LOG_TIMER); LOG_TIMER = null; }
 
-async function runServer(q){
-  if (!WAITER) WAITER = Wait.attach();
-  setBusy(true);
-  WAITER.start("Submitting…", "Starting pipeline");
+      function wireRun(btnId, inputId) {
+        const btn = byId(btnId);
+        const inp = byId(inputId);
+        if (!btn || !inp) return;
+        const go = () => {
+          const q = inp.value.trim();
+          if (!q) {
+            inp.focus();
+            return;
+          }
+          runServer(q);
+        };
+        btn.addEventListener("click", go);
+        inp.addEventListener("keydown", (e) => e.key === "Enter" && go());
+      }
 
-  // Follow the live log WHILE /run is executing
-  startLogFollower((line) => WAITER.setMessage(line.slice(0, 220)));
+      wireRun("runBtn", "q");
+      wireRun("runBtn2", "q2");
 
-  try {
-    // Kick off the run and WAIT for the final JSON (server is synchronous)
-    const resp = await fetch("run?q=" + encodeURIComponent(q), { cache: "no-store" });
-
-    // If the server refused because another run is active
-    if (resp.status === 409) {
-      WAITER.setError("A run is already in progress.");
-      return;
-    }
-    if (!resp.ok) {
-      WAITER.setError("Run failed (" + resp.status + ")");
-      return;
-    }
-
-    // THIS IS THE FINAL STATE — no need to poll /state
-    STATE = await resp.json();
-    LOCAL_FILES.clear();
-    FILE_CACHE.clear();
-    setArtifactBaseFromState(STATE);
-
-
-    // Render
-    await refresh(q);
-
-  } catch (err) {
-    console.error(err);
-    WAITER.setError(err?.message || String(err));
-  } finally {
-    stopLogFollower();
-    WAITER.stop();
-    setBusy(false);
-  }
-}
-
-        
-        function wireRun(btnId, inputId){
-          const btn = byId(btnId), inp = byId(inputId);
-          if (!btn || !inp) return;
-          const go = () => { const q = inp.value.trim(); if (!q) { inp.focus(); return; } runServer(q); };
-          btn.addEventListener("click", go);
-          inp.addEventListener("keydown", (e) => e.key === "Enter" && go());
-        }
-        wireRun("runBtn", "q");
-        wireRun("runBtn2", "q2");  
-      
-        // ---- Load JSON (both inputs) ----
-        (function wireJson(id){
-          const input = byId(id);
-          if (!input) return;
-          input.addEventListener("change", () => {
-            const f = input.files?.[0]; if (!f) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-              try { STATE = JSON.parse(String(reader.result||"{}")); LOCAL_FILES.clear(); FILE_CACHE.clear();setArtifactBaseFromState(STATE); refresh(); }
-              catch { alert("Invalid JSON file."); }
-            };
-            reader.readAsText(f);
-            input.value = "";
-          });
-        })("jsonFile");
-        (function wireJson2(id){
-          const input = byId(id);
-          if (!input) return;
-          input.addEventListener("change", () => {
-            const f = input.files?.[0]; if (!f) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-              try { STATE = JSON.parse(String(reader.result||"{}")); LOCAL_FILES.clear(); FILE_CACHE.clear();setArtifactBaseFromState(STATE); refresh(); }
-              catch { alert("Invalid JSON file."); }
-            };
-            reader.readAsText(f);
-            input.value = "";
-          });
-        })("jsonFile2");
-      
-        // ---- Load Folder (both pickers) ----
-        function wireFolder(id){
-          const picker = byId(id);
-          if (!picker) return;
-          picker.addEventListener("change", async () => {
-            LOCAL_FILES.clear(); FILE_CACHE.clear(); ARTIFACT_BASE = "";
-            const files = Array.from(picker.files || []);
-            let demoKey = null;
-            for (const f of files) {
-              const key = (f.webkitRelativePath || f.name).replace(/\\/g,"/");
-              const txt = await f.text().catch(()=>null);
-              if (txt != null) LOCAL_FILES.set(key, txt);
-              if (/\/demo\.json$/i.test(key) || /^demo\.json$/i.test(key)) demoKey = key;
+      // ---- Load JSON (both inputs) ----
+      (function wireJson(id) {
+        const input = byId(id);
+        if (!input) return;
+        input.addEventListener("change", () => {
+          const f = input.files?.[0];
+          if (!f) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              STATE = JSON.parse(String(reader.result || "{}"));
+              LOCAL_FILES.clear();
+              FILE_CACHE.clear();
+              setArtifactBaseFromState(STATE);
+              refresh();
+            } catch {
+              alert("Invalid JSON file.");
             }
-            if (!demoKey){ alert("Folder loaded, but no demo.json found."); return; }
-            try { STATE = JSON.parse(LOCAL_FILES.get(demoKey) || "{}"); }
-            catch { alert("Could not parse demo.json"); return; }
-            const parts = demoKey.split("/"); parts.pop();
-            ARTIFACT_BASE = parts.length ? parts.join("/") + "/" : "";
-            await refresh();
-            picker.value = "";
-          });
-        }
-        wireFolder("folderPicker");
-        wireFolder("folderPicker2");
-      
-        // ---- Demo select ----
-        byId("demoSelect")?.addEventListener("change", async () => {
-          const v = byId("demoSelect").value;
-          if (!v) return;
+          };
+          reader.readAsText(f);
+          input.value = "";
+        });
+      })("jsonFile");
+
+      (function wireJson2(id) {
+        const input = byId(id);
+        if (!input) return;
+        input.addEventListener("change", () => {
+          const f = input.files?.[0];
+          if (!f) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              STATE = JSON.parse(String(reader.result || "{}"));
+              LOCAL_FILES.clear();
+              FILE_CACHE.clear();
+              setArtifactBaseFromState(STATE);
+              refresh();
+            } catch {
+              alert("Invalid JSON file.");
+            }
+          };
+          reader.readAsText(f);
+          input.value = "";
+        });
+      })("jsonFile2");
+
+      // ---- Load Folder (both pickers) ----
+      function wireFolder(id) {
+        const picker = byId(id);
+        if (!picker) return;
+        picker.addEventListener("change", async () => {
+          LOCAL_FILES.clear();
+          FILE_CACHE.clear();
+          ARTIFACT_BASE = "";
+          const files = Array.from(picker.files || []);
+          let demoKey = null;
+          for (const f of files) {
+            const key = (f.webkitRelativePath || f.name).replace(/\\/g, "/");
+            const txt = await f.text().catch(() => null);
+            if (txt != null) LOCAL_FILES.set(key, txt);
+            if (/\/demo\.json$/i.test(key) || /^demo\.json$/i.test(key)) demoKey = key;
+          }
+          if (!demoKey) {
+            alert("Folder loaded, but no demo.json found.");
+            return;
+          }
           try {
-            const r = await fetch(v, { cache:"no-store" });
-            if (!r.ok) throw new Error("fetch failed");
-            STATE = await r.json();
-            setArtifactBaseFromUrl(v);
-            refresh();
-          } catch { alert("Could not load demo JSON."); }
+            STATE = JSON.parse(LOCAL_FILES.get(demoKey) || "{}");
+          } catch {
+            alert("Could not parse demo.json");
+            return;
+          }
+          const parts = demoKey.split("/");
+          parts.pop();
+          ARTIFACT_BASE = parts.length ? parts.join("/") + "/" : "";
+          await refresh();
+          picker.value = "";
         });
-      
-        // ---- Download current STATE ----
-        byId("downloadBtn")?.addEventListener("click", () => {
-          if (!STATE) { alert("No JSON loaded yet."); return; }
-          const blob = new Blob([JSON.stringify(STATE, null, 2)], { type:"application/json" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a"); a.href = url; a.download = "alvessa_state.json"; a.click();
-          setTimeout(()=>URL.revokeObjectURL(url), 800);
+      }
+
+      wireFolder("folderPicker");
+      wireFolder("folderPicker2");
+
+      // ---- Demo select ----
+      byId("demoSelect")?.addEventListener("change", async () => {
+        const v = byId("demoSelect").value;
+        if (!v) return;
+        try {
+          const r = await fetch(v, { cache: "no-store" });
+          if (!r.ok) throw new Error("fetch failed");
+          STATE = await r.json();
+          setArtifactBaseFromUrl(v);
+          refresh();
+        } catch {
+          alert("Could not load demo JSON.");
+        }
+      });
+
+      // ---- Download current STATE ----
+      byId("downloadBtn")?.addEventListener("click", () => {
+        if (!STATE) {
+          alert("No JSON loaded yet.");
+          return;
+        }
+        const blob = new Blob([JSON.stringify(STATE, null, 2)], {
+          type: "application/json",
         });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "alvessa_state.json";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 800);
+      });
 
+      const DEMO_PATH = "out/20250924-004900_ui/demo.json"; // the hardwired demo folder
 
-const DEMO_PATH = "out/20250924-004900_ui/demo.json";  // the hardwired demo folder
-byId("tryDemoLink").addEventListener("click", async (e) => {
-  e.preventDefault();
-  try {
-    const r = await fetch(DEMO_PATH, { cache:"no-store" });
-    if (!r.ok) throw new Error("failed");
-    STATE = await r.json();
-    setArtifactBaseFromUrl(DEMO_PATH);
-    refresh();
-  } catch(err) {
-    alert("Could not load demo: " + err.message);
-  }
-});
-byId("loadFolderBtn").addEventListener("click", () => {
-  byId("folderPicker").click();
-});
+      byId("tryDemoLink")?.addEventListener("click", async (e) => {
+        e.preventDefault();
+        try {
+          const r = await fetch(DEMO_PATH, { cache: "no-store" });
+          if (!r.ok) throw new Error("failed");
+          STATE = await r.json();
+          setArtifactBaseFromUrl(DEMO_PATH);
+          refresh();
+        } catch (err) {
+          alert("Could not load demo: " + err.message);
+        }
+      });
 
-      </script>
-      
+      byId("loadFolderBtn")?.addEventListener("click", () => {
+        byId("folderPicker").click();
+      });
+    </script>
   </body>
 </html>

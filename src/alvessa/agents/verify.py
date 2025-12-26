@@ -4,7 +4,6 @@ Contributors:
 Created: 2024-06-25
 Updated: 2025-10-20
 
-
 Description: 
 Self-verification node that checks if the answer matches context."""
 
@@ -33,9 +32,7 @@ def _numbers(s: str) -> Set[str]:
     """Extract standalone numeric tokens; never digits that are part of gene-like tokens."""
     return set(_NUM_RE.findall(s or ""))
 
-
 _CHARS_RE = re.compile(r"\[chars\s+(\d+)\s*[–-]\s*(\d+)\]", re.I)
-
 
 # split a semicolon list but ignore semicolons inside quotes
 def _split_proofs_safely(proofs_raw: str) -> list[str]:
@@ -53,12 +50,12 @@ def _split_proofs_safely(proofs_raw: str) -> list[str]:
 
 _CHARS_RE = re.compile(r"\[chars\s+(\d+)\s*[–-]\s*(\d+)\]", re.I | re.U)
 
-
 def _parse_one_proof(p: str) -> Dict[str, Any]:
     p = (p or "").strip()
     snippet = ""
     title = None
     char_range = None
+    doc_index = None
 
     first_quote = p.find('"')
     closing_marker = '"@'
@@ -81,10 +78,18 @@ def _parse_one_proof(p: str) -> Dict[str, Any]:
         if a <= b:
             char_range = [a, b]
 
+    # doc index marker: [doc N]
+    doc_match = re.search(r"\[doc\s+(\d+)\]", p)
+    if doc_match:
+        try:
+            doc_index = int(doc_match.group(1))
+        except Exception:
+            doc_index = None
+
     return {
         "cited_text": snippet,
         "title": title,
-        "document_index": None,  # will be resolved via manifest
+        "document_index": doc_index,  # optional, may be resolved via manifest
         "char_range": char_range
     }
 
@@ -117,15 +122,14 @@ def _link_titles_to_indices(proofs: List[Dict[str, Any]], manifest: List[Dict[st
         if title and title in title2idx:
             p["document_index"] = title2idx[title]
 
-
-
-def _link_titles_to_indices(proofs: List[Dict[str, Any]], manifest: List[Dict[str, Any]]) -> None:
-    title2idx = {str(m["title"]).strip(): int(m["index"])
-                 for m in manifest if "title" in m and "index" in m}
+def _slice_proofs_from_docs(proofs: List[Dict[str, Any]], doc_texts: Dict[int, str]) -> None:
+    """
+    Assume cited_text was already sliced upstream. Raise if missing/invalid.
+    """
     for p in proofs:
-        title = (p.get("title") or "").strip()
-        if title and title in title2idx:
-            p["document_index"] = title2idx[title]
+        cited = p.get("cited_text")
+        if not cited or "error retrieving cited text" in str(cited):
+            raise ValueError(f"[verify] Missing or bad cited_text in proof: {p}")
 
 # -----------------------------------
 # Deterministic verdict
@@ -205,9 +209,12 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
                 for p in (s.get("proofs") or [])
             ]
         })
+        
+    print('*****************************************')
+    print(pack)
 
     system_msg = (
-        "You are a meticulous research assitant. Provide qualitative feedback on whether each statement of the following answer is well supported "
+        "You are a meticulous research assistant. Provide qualitative feedback on whether each statement of the following answer is well supported "
         "by the quoted snippets (proofs). Do NOT invent facts or add citations, and double check the numbers.\n"
         "Special case: statements that begin with 'Possible speculation:' are allowed as cautious synthesis IF they are "
         "clearly grounded in the cited evidence. Flag only if they overreach or contradict the proofs.\n"
@@ -311,7 +318,6 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
         parsed = {}    
     return parsed
 
-
 def _merge_chunked_feedback(chunks: List[Dict[str, Any]] | None) -> Dict[str, Any]:
     if DEBUG:
         print(f"[_merge_chunked_feedback] Merging {len(chunks) if chunks else 0} chunks")
@@ -350,10 +356,8 @@ def _merge_chunked_feedback(chunks: List[Dict[str, Any]] | None) -> Dict[str, An
     return combined
 
 
-
 def _is_speculation_text(text: str) -> bool:
     return (text or "").lstrip().lower().startswith("possible speculation:")
-
 
 def verify_evidence_node(state: "State") -> "State":
     if DEBUG:
@@ -376,7 +380,31 @@ def verify_evidence_node(state: "State") -> "State":
 
     idx2title = {int(m["index"]): str(m["title"]) for m in manifest if "index" in m and "title" in m}
 
-    # 3) Deterministic categorical verdicts
+    # Build index -> raw document text lookup (from manifest; fall back to reply docs or manifest text)
+    doc_texts: Dict[int, str] = {}
+    for m in manifest:
+        try:
+            i = int(m.get("index"))
+        except Exception:
+            continue
+        txt = m.get("text")
+        if txt:
+            doc_texts[i] = str(txt)
+    # If reply carries a documents dict, merge it
+    docs_dict = reply.get("documents") or {}
+    if isinstance(docs_dict, dict):
+        for k, v in docs_dict.items():
+            try:
+                ki = int(k)
+            except Exception:
+                continue
+            doc_texts[ki] = str(v or "")
+
+    # 3) Slice proofs using char ranges where possible
+    for s in statements:
+        _slice_proofs_from_docs(s.get("proofs", []), doc_texts)
+
+    # 4) Deterministic categorical verdicts
     verified: List[Dict[str, Any]] = []
     for s in statements:
         verdict, reasons = _deterministic_verdict(s["text"], s.get("proofs", []), idx2title)
@@ -388,7 +416,7 @@ def verify_evidence_node(state: "State") -> "State":
             "is_speculation": _is_speculation_text(s["text"]),
         })
 
-    # 4) LLM PASS
+    # 5) LLM PASS
     overall_feedback = _llm_feedback(verified, question)
     
     support_quality = None
@@ -427,6 +455,22 @@ def verify_evidence_node(state: "State") -> "State":
             s["verdict"] = s.get("verdict")  # keep deterministic verdict
             
     # recompute summary based on all verdicts when available
+    def _norm_label(lbl):
+        return (lbl or "").strip().lower()
+
+    summary = {
+        "supported":   sum(1 for s in verified if _norm_label(s.get("verdict")) == "supported"),
+        "partial":     sum(1 for s in verified if _norm_label(s.get("verdict")) == "partial"),
+        "unsupported": sum(1 for s in verified if _norm_label(s.get("verdict")) in {"unsupported", "speculation-overreach"}),
+    }
+
+    # Upgrade fail if any unsupported/speculation-overreach label
+    total_statements = max(1, sum(summary.values()))
+    unsupported_ratio = summary["unsupported"] / total_statements
+    if verdict != "fail" and (unsupported_ratio >= 0.3):
+        verdict = "fail"
+
+    # recompute summary based on LLM verdicts when available
     def _norm_label(lbl):
         return (lbl or "").strip().lower()
 

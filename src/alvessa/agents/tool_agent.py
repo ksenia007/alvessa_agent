@@ -16,7 +16,7 @@ from src.tools.biogrid.node import bioGRID_predictions_agent
 from src.tools.uniprot.node import uniprot_node
 from src.tools.gwas.node import gwas_associations_agent
 from src.tools.registry import TOOL_CATALOG, TOOL_FN_MAP, EXAMPLE_TOOL_SELECTION
-from src.config import TOOL_SELECTOR_MODEL, N_CHARS
+from src.config import TOOL_SELECTOR_MODEL, TOOL_SELECTOR_MODEL_BACKUP, N_CHARS
 from src.alvessa.clients.claude import claude_call
 from typing import Any, Dict, List
 import inspect
@@ -33,7 +33,7 @@ def format_state_for_prompt(state: State) -> str:
     question = state["messages"][-1]["content"]
     catalog = "\n".join(f"- {name}: {desc}" for name, desc in TOOL_CATALOG.items())
 
-    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" \n\n If the question mentioned a database or tool and we do not have it, use the most similar available one. Available tools: {catalog}.\n\n Examples outputs look like this: {EXAMPLE_TOOL_SELECTION}"""
+    return f"""You are an assistant deciding which tools to use to answer a biomedical question. User question: \"\"\"{question}\"\"\" \n\n If the question mentioned a database or tool and we do not have it, use the most similar available ones. If there are multiple tools with complementary or similar information, you are allowed to use complementary tools. However, avoid calling tools that create long context unless needed to answer the question. Try to get as much relevant information as possible. Available tools: {catalog}.\n\n Examples selection and outputs: {EXAMPLE_TOOL_SELECTION}"""
 
 def _safe_merge(acc: dict, out: dict) -> None:
     """Merge tool output into acc without mutating caller state."""
@@ -105,49 +105,10 @@ def tool_invoke(state: "State") -> "State":
         print(view)
         fn = TOOL_FN_MAP.get(name)
         if not fn:
-            # check twosample_mr_agent special case
-            if name.startswith("twosample_mr_agent"):
-                print('[TOOL RUN] Special case: twosample_mr_agent with parameters')
-                fn = TOOL_FN_MAP.get("twosample_mr_agent")
-                if fn:
-                    # parse parameters from the name, e.g. twosample_mr_agent-EXPOSURE-OUTCOME
-                    parts = name.split("-")
-                    if len(parts) == 3:
-                        exposure, outcome = parts[1], parts[2]
-                        if DEBUG:
-                            print(f"[TOOL RUN] → {name} (exposure={exposure}, outcome={outcome})")
-                        print('view in twosample_mr_agent:', view)
-                        out = fn(view, exposure_gwas=exposure, outcome_gwas=outcome)
-                        if out is None:
-                            used.add(name)
-                            continue
-                        out = dict(out)
-                        out.pop("messages", None)
-                        _safe_merge(acc, out)
+            print(f"[TOOL RUN] Skipping unknown tool: {name}", flush=True)
+            used.add(name)
 
-                        used.add(name)
-                        continue 
-                    if len(parts) == 4:
-                        # also pass in optional gene name
-                        exposure, outcome, gene = parts[1], parts[2], parts[3]
-                        if DEBUG:
-                            print(f"[TOOL RUN] → {name} (exposure={exposure}, outcome={outcome}, gene={gene})")
-                        out = fn(view, exposure_gwas=exposure, outcome_gwas=outcome, gene_name=gene)
-                        if out is None:
-                            used.add(name)
-                            continue
-                        out = dict(out) # shallow copy
-                        out.pop("messages", None)
-                        _safe_merge(acc, out)
-                        used.add(name)
-                        view.update(acc)
-
-                        continue    
-            else:
-                print(f"[TOOL RUN] Skipping unknown tool: {name}", flush=True)
-                used.add(name)
-
-                continue       
+            continue       
         else:
             print(f"[TOOL RUN] → {name}", flush=True)
 
@@ -193,7 +154,6 @@ def select_tools(state: "State") -> "State":
             f"IMPORTANT: if no additional tools are needed, return [] with no explanation.\n"
             f"Overall, NO explanation, downstream parser can only work with a list of tools.\n\n"
             f"Current context block:\n{current_context_block}\n\n No other words should be included in the response."
-            f"{system_msg_base}"
         )
         if len(system_msg) > N_CHARS:
             system_msg = system_msg[:N_CHARS] + "...<truncated>"
@@ -205,34 +165,37 @@ def select_tools(state: "State") -> "State":
     if DEBUG:
         print(f"[TOOL SELECTION PROMPT] {system_msg}")
 
-    try:
-        completion = claude_call(
-            model=TOOL_SELECTOR_MODEL,
-            max_tokens=256,
-            temperature=0,
-            messages=[{"role": "user", "content": system_msg}],
-        )
-        if DEBUG:
-            print(f"[TOOL SELECTION RESPONSE] {completion}")
-        tool_response = completion.content[0].text.strip()
-    except Exception as e:
-        print(f"[CLAUDE TOOL SELECTION ERROR] {e}")
-        tool_response = "[]"
+    def _call_selector(model_name: str) -> list:
+        try:
+            completion = claude_call(
+                model=model_name,
+                max_tokens=256,
+                temperature=0,
+                messages=[{"role": "user", "content": system_msg}],
+            )
+            if DEBUG:
+                print(f"[TOOL SELECTION RESPONSE][{model_name}] {completion}")
+            resp = completion.content[0].text.strip()
+        except Exception as e:
+            print(f"[CLAUDE TOOL SELECTION ERROR][{model_name}] {e}")
+            resp = "[]"
+        try:
+            parsed = ast.literal_eval(resp)
+            if not isinstance(parsed, list):
+                raise ValueError("not a list")
+            return parsed
+        except Exception as e:
+            print(f"[TOOL SELECTION PARSE ERROR][{model_name}] Could not parse: {resp}\n{e}")
+            return []
 
-    try:
-        selected_tools = ast.literal_eval(tool_response)
-        assert isinstance(selected_tools, list)
-    except Exception as e:
-        print(f"[TOOL SELECTION ERROR] Could not parse: {tool_response}\n{e}")
-        selected_tools = []
+    selected_tools = _call_selector(TOOL_SELECTOR_MODEL)
+    used_backup = False
+    if not selected_tools and TOOL_SELECTOR_MODEL_BACKUP:
+        selected_tools = _call_selector(TOOL_SELECTOR_MODEL_BACKUP)
+        used_backup = bool(selected_tools)
 
     selected_tools_main = [t for t in selected_tools if t in TOOL_FN_MAP and t not in used_tools]
-    # special case for 'twosample_mr_agent' which allows more complicated semi match, as fomatted twosample_mr_agent-value1-value2
-    found_2sample = [
-        t for t in selected_tools if t.startswith("twosample_mr_agent") 
-    ]
-    if found_2sample:
-        selected_tools_main.append(found_2sample)
+    
     if DEBUG:
         print(f"[TOOL SELECTION] Selected tools: {selected_tools}")
 
@@ -240,6 +203,8 @@ def select_tools(state: "State") -> "State":
         "use_tools": selected_tools,
         "tool_updates": tool_updates + (1 if used_tools else 0),
     }
+    if used_backup:
+        updates["tool_selection_retry"] = True
     return updates
 
 def run_async_sync(fn):

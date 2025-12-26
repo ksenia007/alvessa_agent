@@ -7,7 +7,7 @@ Updated:
 
 Description: 
 
-ClinVar tool
+ClinVar tools (gene-level diseases and variant summaries)
 
 """
 from __future__ import annotations
@@ -18,7 +18,6 @@ from src.state import State
 from src.tools.base import Node
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence
-from src.alvessa.domain.variant_class import Variant
 
 import json
 import pandas as pd
@@ -28,116 +27,108 @@ DEBUG = True
 CLINVAR_GENE_DISEASES = Path(__file__).resolve().parents[3] / "local_dbs" / "clinvar" / "clinvar_gene_condition_source_id.parquet"
 CLINVAR_DF = Path(__file__).resolve().parents[3] / "local_dbs" / "clinvar" / "clinvar_pathogenic_variants_grch38.parquet"
 
-def clinvar_node(state: "State") -> "State":
-    """
-    LangGraph node that annotates genes and variants with ClinVar data.
+def _load_gene_disease_df():
+    return pd.read_parquet(CLINVAR_GENE_DISEASES)
 
-    Parameters
-    ----------
-    state
-        Current graph state.
 
-    Returns
-    -------
-    State
-        Updated state with the omim fields filled.
-        
-    """
+def _load_variant_df():
+    return pd.read_parquet(CLINVAR_DF)
+
+
+def clinvar_gene_node(state: "State") -> "State":
+    """Annotate genes with ClinVar gene–disease associations (no variant objects)."""
     gene_entities = state.get("gene_entities") or {}
-    variant_entities = state.get("variant_entities") or {}
-    
-    try: 
-        clinvar_df = pd.read_parquet(CLINVAR_DF)
-        clinvar_gene_diseases_df = pd.read_parquet(CLINVAR_GENE_DISEASES)
+    try:
+        df = _load_gene_disease_df()
     except Exception as e:
         if DEBUG:
-            print(f"[ClinVar] Error loading ClinVar data: {e}")
-        return 
-    
-    genes_with_variants = set(clinvar_df.GeneSymbol.dropna().unique())
-    genes_with_disease = set(clinvar_gene_diseases_df.AssociatedGenes.dropna().unique())
+            print(f"[ClinVar-Gene] Error loading ClinVar gene-disease data: {e}")
+        return state
 
-    # add ClinVar data to gene entities
+    genes_with_disease = set(df.AssociatedGenes.dropna().unique())
+
     for gene_name, gene in gene_entities.items():
         if not gene_name:
             continue
-        
         try:
             if gene_name in genes_with_disease:
-                subset = clinvar_gene_diseases_df[
-                    clinvar_gene_diseases_df['AssociatedGenes'] == gene_name
-                ]
-                # there is DiseaseName+SourceName+LastUpdated (the last is date)
-                diseases = subset[['DiseaseName', 'SourceName', "LastUpdated"]].drop_duplicates()
-                disease_lines = []
+                subset = df[df["AssociatedGenes"] == gene_name]
+                diseases = subset[["DiseaseName", "SourceName", "LastUpdated"]].drop_duplicates()
+                lines = []
                 for _, row in diseases.iterrows():
-                    disease_lines.append(f"{row['DiseaseName']} (Source: {row['SourceName']}, Last Updated: {row['LastUpdated']})")
-                gene.update_text_summaries(
-                f"ClinVar-sourced diseases for {gene_name}: " + ", ".join(disease_lines) + f"|"
-                )
-        except:
+                    lines.append(
+                        f"{row['DiseaseName']} (source: {row['SourceName']}, updated: {row['LastUpdated']})"
+                    )
+                if lines:
+                    gene.update_text_summaries(f"*ClinVar: Diseases for {gene_name}: " + "; ".join(lines) + ".")
+                    gene.add_tool("clinvar_gene_node")
+        except Exception as exc:
             if DEBUG:
-                print(f"[ClinVar] Error processing diseases for gene {gene_name}")
-        try:         
+                print(f"[ClinVar-Gene] Error processing {gene_name}: {exc}")
+
+    return state
+
+
+def clinvar_variants_node(state: "State") -> "State":
+    """Summarize ClinVar pathogenic variants per gene as text (no Variant objects created)."""
+    gene_entities = state.get("gene_entities") or {}
+    try:
+        df = _load_variant_df()
+    except Exception as e:
+        if DEBUG:
+            print(f"[ClinVar-Variants] Error loading ClinVar variant data: {e}")
+        return state
+
+    genes_with_variants = set(df.GeneSymbol.dropna().unique())
+
+    for gene_name, gene in gene_entities.items():
+        if not gene_name:
+            continue
+        try:
             if gene_name in genes_with_variants:
-                subset = clinvar_df[
-                    clinvar_df['GeneSymbol'] == gene_name
-                ]
-                # for each line we want ALL columns that are not "-" and not NaN and not "na", and keep column name as explanaiton
+                subset = df[df["GeneSymbol"] == gene_name]
                 variant_lines = []
                 for _, row in subset.iterrows():
-                    variant_info_short = []
-                    variant_info_short.append(f"rs{row['rsid']}:")
-                    for col in ['Type', 'Name', 'ClinicalSignificance']:
-                        val = row[col]
+                    parts = []
+                    rsid = str(row.get("rsid", "")).strip()
+                    if rsid:
+                        rsid = rsid if rsid.startswith("rs") else f"rs{rsid}"
+                        parts.append(f"{rsid}:")
+                    for col in ["Type", "Name", "ClinicalSignificance"]:
+                        val = row.get(col)
                         if pd.isna(val) or val in ["-", "na", ""]:
                             continue
-                        variant_info_short.append(f"{val},")
-                                            
-                    # is rsID is not none and "rs"+str(rsID) is not in variant's existing identifiers, add it as new object
-                    if 'rsid' in row and pd.notna(row['rsid']):
-                        rsid = str(row['rsid'])
-                        if rsid.startswith("rs"):
-                            rsid_clean = rsid
-                        else:
-                            rsid_clean = "rs" + rsid
-                        if rsid_clean not in variant_entities.keys():
-                            # create new variant object
-                            new_variant = Variant(
-                                rsID = rsid_clean,
-                                tools_run=['clinvar_node'],
-                            )
-                            # add_location for GRCh38 if available: Chromosome, Start, ReferenceAllele, AlternateAllele
-                            if 'Chromosome' in row and pd.notna(row['Chromosome']) and \
-                                'Start' in row and pd.notna(row['Start']):
-                                chrom = str(row['Chromosome'])
-                                pos = int(row['Start'])
-                                ref = str(row['ReferenceAllele']) if 'ReferenceAllele' in row and pd.notna(row['ReferenceAllele']) else None
-                                alt = str(row['AlternateAllele']) if 'AlternateAllele' in row and pd.notna(row['AlternateAllele']) else None
-                                new_variant.add_location(build="GrCh38", chrom=chrom, pos=pos, ref=[ref] if ref else None, alt=[alt] if alt else None)
-                            variant_info_long = []
-                            for col in ['Name', 'ClinicalSignificance', 'SomaticClinicalImpact', 'Oncogenicity', 'OriginSimple', 'PhenotypeList']:
-                                val = row[col]
-                                if pd.isna(val) or val in ["-", "na", ""]:
-                                    continue
-                                variant_info_long.append(f"{val}")
-                            # add variant_info as text summary with update_text_summaries
-                            new_variant.update_text_summaries("ClinVar variant info: " + ", ".join(variant_info_long))
-                            variant_entities[rsid_clean] = new_variant
-                    variant_lines.append(", ".join(variant_info_short))
-                gene.update_text_summaries(f"ClinVar pathogenic variants for {gene_name}: " + "; ".join(variant_lines)+ f"|")
-        except:
+                        parts.append(str(val))
+                    if parts:
+                        variant_lines.append(" ".join(parts))
+                if variant_lines:
+                    gene.update_text_summaries(
+                        f"*ClinVar variants: Pathogenic/likely pathogenic records for {gene_name}: "
+                        + "; ".join(variant_lines)
+                        + "."
+                    )
+                    gene.add_tool("clinvar_variants_node")
+        except Exception as exc:
             if DEBUG:
-                print(f"[ClinVar] Error processing variants for gene {gene_name}")
-    if DEBUG:
-        print(f"[ClinVar] ClinVar fetched")
+                print(f"[ClinVar-Variants] Error processing {gene_name}: {exc}")
 
-    return 
+    return state
 
 NODES: tuple[Node, ...] = (
     Node(
-        name="clinvar_node",
-        entry_point=clinvar_node,
-        description="Add information for genes and pathogenic variants from the ClinVar database. For genes it pulls in associated diseases as well as variants. For variants it adds clinical significance and associated conditions. Should be run after GWAS (if used) and before other variant annotation tools.",
+        name="clinvar_gene_node",
+        entry_point=clinvar_gene_node,
+        description=(
+            "Annotates genes with ClinVar gene–disease associations (disease name, source, last updated). "
+        ),
+    ),
+    Node(
+        name="clinvar_variants_node",
+        entry_point=clinvar_variants_node,
+        description=(
+            "Retrieves pathogenic and likely pathogenic variants for input genes (rsID, variant type, name, clinical significance) from the ClinVar database. "
+            "Should only be called if exact variant information such as amino acid substitution or variant ID is required to answer the question, otherwise use ClinVar gene-level."
+            " Might create excessively long context for commonly implicated genes."
+        ),
     ),
 )

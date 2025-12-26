@@ -1,15 +1,15 @@
 /* === Theme Variables === */
 :root {
-  --bg-main: #0b1020;
-  --bg-card: #121832;
-  --bg-panel: #0e1430;
-  --border: #1e2a52;
-  --border-strong: #2a3a72;
-  --text-main: #e6e8ef;
-  --text-muted: #aab4d6;
+  --bg-main: #0a0908;
+  --bg-card: #0c0b0a;
+  --bg-panel: #0b0a0a;
+  --border: rgba(255, 180, 120, 0.18);
+  --border-strong: rgba(255, 180, 120, 0.28);
+  --text-main: #f3f0ea;
+  --text-muted: #a89a8a;
 
   /* Tooltips + legend colors (default = dark theme) */
-  --tooltip-bg: rgba(0, 0, 0, 0.9); /* slightly stronger opacity for readability */
+  --tooltip-bg: rgba(0, 0, 0, 0.9);
   --tooltip-fg: #ffffff;
   --legend-bg: var(--bg-main);
   --legend-text: var(--text-muted);
@@ -17,13 +17,13 @@
 
 /* Light theme overrides */
 body.light {
-  --bg-main: #ffffff;
+  --bg-main: #f8f7f5;
   --bg-card: #ffffff;
   --bg-panel: #ffffff;
-  --border: #d8dce6;
+  --border: rgba(12, 18, 36, 0.12);
   --border-strong: #cbd5e1;
-  --text-main: #0b1020;
-  --text-muted: #6b7280;
+  --text-main: #0b0f1a;
+  --text-muted: #5c6375;
 
   --tooltip-bg: rgba(255, 255, 255, 0.95);
   --tooltip-fg: #000000;
@@ -33,7 +33,7 @@ body.light {
 
 /* === Global Defaults === */
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'DM Sans', -apple-system, system-ui, sans-serif;
   margin: 0;
   padding: 0;
   background: var(--bg-panel);
@@ -41,11 +41,16 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Toolbar */
+/* === Toolbar as 2-column grid === */
 #toolbar {
-  display: flex;
-  align-items: flex-start;   /* allows stacked elements like ligand name block */
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto;   /* left: controls, right: legend */
+  grid-template-rows: auto auto;     /* row 1: controls+legend, row 2: cysdbControls */
+  grid-template-areas:
+    "controls legend"
+    "cysdb    cysdb";
+  gap: 6px 20px;
+
   padding: 8px 12px;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
@@ -53,10 +58,11 @@ body {
   z-index: 2;
 }
 
-/* Controls */
+/* Main Controls (left column) */
 #controls {
+  grid-area: controls;
   display: flex;
-  flex-wrap: wrap;           /* ensures ligand block wraps below */
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   color: var(--text-main);
@@ -81,37 +87,134 @@ body {
 }
 
 #styleSelect {
-  min-width: 220px; /* Wider for longer surface labels */
+  min-width: 220px;
 }
 
 #ligandSelect {
-  min-width: 260px; /* Ligand entries are longer */
-  display: none;    /* hidden until BioLiP2 mode is selected */
+  min-width: 260px;
+  display: none; /* shown by JS when BioLiP2 overlay is active */
 }
 
 #ligandLabel {
   font-size: 14px;
   color: var(--text-muted);
-  display: none; /* hidden by default */
+  display: none; /* shown by JS */
 }
 
-/* Ligand Name block (forced to new line, uniform margins) */
+/* Ligand name block */
 #ligandNameBlock {
-  display: none;
-  flex-basis: 100%;          /* forces block onto its own row */
-  margin: 6px 0;             /* consistent top/bottom spacing */
+  display: none;             /* JS toggles this */
+  flex-basis: 100%;
+  margin: 6px 0;
 }
+
 #ligandNameBlock label {
   font-size: 14px;
   color: var(--text-muted);
 }
+
 #ligandNameValue {
   font-size: 14px;
-  color: var(--text-main);   /* matches dropdown text */
+  color: var(--text-main);
   margin-left: 4px;
 }
 
-/* Viewer */
+/* === CysDB Controls Row (full width, second grid row) === */
+#cysdbControls {
+  grid-area: cysdb;
+  /* JS will toggle display to 'flex' when needed */
+  display: none;
+  width: 100%;
+  margin: 6px 0 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-direction: column;  /* stack FPocket row and CysDB row */
+  gap: 4px;
+}
+
+/* Each row inside CysDB controls (line 1: FPocket, line 2: CysDB…) */
+.cysdb-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#cysdbControls .cysdb-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 4px 0 0;
+  color: var(--text-muted);
+}
+
+/* FPocket label uses same bold style but without extra left indent */
+#cysdbControls .cysdb-option.cysdb-label {
+  margin-left: 0;
+}
+
+#cysdbControls .cysdb-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+}
+
+#cysdbControls .cysdb-option input {
+  margin: 0;
+}
+
+/* Divider: "|", "[", "]" */
+#cysdbControls .cysdb-divider {
+  opacity: 0.6;
+  margin: 0 4px;
+  font-weight: 600;
+}
+
+#cysdbControls .cysdb-or {
+  margin: 0 4px;
+  opacity: 0.9;
+}
+
+/* CysDB color square */
+.cysdb-color-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border-strong);
+  background: #ff1f8f;
+  vertical-align: middle;
+}
+
+/* Legend (right column) */
+#legend {
+  grid-area: legend;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--legend-text);
+  min-width: 260px;
+  margin-right: 8px;  /* keeps legend away from right edge */
+  flex-shrink: 0;
+  justify-self: end;   /* align to right side of toolbar */
+}
+
+#legend span {
+  font-size: 12px;
+  color: var(--legend-text);
+}
+
+#colorLegend {
+  width: 200px;
+  height: 20px;
+  border: 1px solid var(--border-strong);
+  background: var(--legend-bg);
+  border-radius: 4px;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+/* Viewer Container */
 #viewer-container {
   width: 100%;
   height: 580px;
@@ -130,28 +233,4 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-}
-
-/* Legend */
-#legend {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--legend-text);
-  min-width: 260px; /* Ensure legend stays wide enough */
-}
-
-#legend span {
-  font-size: 12px;
-  color: var(--legend-text);
-}
-
-#colorLegend {
-  width: 200px;
-  height: 20px;
-  border: 1px solid var(--border-strong);
-  background: var(--legend-bg);
-  border-radius: 4px;
-  transition: background 0.3s ease, border-color 0.3s ease;
 }

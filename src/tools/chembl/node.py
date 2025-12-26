@@ -120,7 +120,7 @@ def chembl_agent(state: "State") -> "State":
 
         summary = make_summary_text(gene_symbol, uniprot_id, target_data)
         gene_obj = state["gene_entities"][gene_symbol]
-        gene_obj.update_text_summaries("ChEMBL drug-target evidence:\n" + summary)
+        gene_obj.update_text_summaries("*ChEMBL: " + summary.replace("\n", " ").strip())
 
         chembl_data_all[gene_symbol] = target_data
 
@@ -131,7 +131,7 @@ def chembl_agent(state: "State") -> "State":
         last_gene = genes[-1]
         if state["gene_entities"].get(last_gene):
             state["gene_entities"][last_gene].update_text_summaries(
-                interpretation_notes(include_bioactivity=True)
+                "*ChEMBL: " + interpretation_notes(include_bioactivity=True).strip()
             )
 
     # --- Build HTML frontend ---
@@ -163,7 +163,8 @@ if __name__ == "__main__":
     # Example: python node.py TP53 EGFR DRD2
     #genes = sys.argv[1:] if len(sys.argv) > 1 else ["TMEM179", "C20orf85", "POTEM", "ZNF533", "WDR90"]
     #genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "DRD2", "ADRB2"]
-    genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "ADRB2"]
+    #genes = sys.argv[1:] if len(sys.argv) > 1 else ["TP53", "EGFR", "ADRB2"]
+    genes = sys.argv[1:] if len(sys.argv) > 1 else ["ABAT"]
     base_name = genes[0] if len(genes) == 1 else f"{genes[0]}_plus{len(genes)-1}"
 
     state = State({

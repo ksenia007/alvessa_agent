@@ -13,6 +13,8 @@ clinvar_df_grch38 = clinvar_df[clinvar_df['Assembly'] == 'GRCh38'].copy()
 # %%
 # rename 'RS# (dbSNP)' to 'rsid'
 clinvar_df_grch38 = clinvar_df_grch38.rename(columns={'RS# (dbSNP)': 'rsid'})
+# remove rsID=-1 
+clinvar_df_grch38 = clinvar_df_grch38[clinvar_df_grch38['rsid'] != '-1'].copy()
 clinvar_df_grch38
 # %%
 # read in allele

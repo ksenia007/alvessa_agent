@@ -1,6 +1,6 @@
 # alvessa_agent/evals/generation/chembl_questions.py
 # Author: Dmitri Kosenkov
-# Updated: 2025-10-16
+# Updated: 2025-12-10
 #
 # Description
 # -----------
@@ -11,9 +11,12 @@
 #   alvessa_agent/local_dbs/known_tool_prot_genes_list.tsv
 #   Columns: gene_symbol  uniprot_id
 #
-# Output (default, strict 3-column TSV):
-#   alvessa_agent/out/chembl_validation_questions.tsv
-#   Columns (tab-separated, with header): question    answer  tool
+# Output (CSV):
+#   alvessa_agent/results/set1.csv
+#   alvessa_agent/results/set2.csv
+#   ...
+#   Each CSV has exactly 20 questions from a single template.
+#   Columns: question, answer, tool, tool_specified_in_question
 #
 
 import sys
@@ -53,13 +56,24 @@ CHEMBL_DB_PATH = ROOT / "local_dbs" / "chembl_35.db"
 # Config
 # =============================================================================
 SEED = 42
-MAX_ATTEMPTS_PER_Q = 4000
-TEMPLATE_MAX_PER_ID = 4  # exactly 3 per template (best effort)
+MAX_ATTEMPTS_PER_Q = 8000
+QUESTIONS_PER_SET = 20  # exactly 20 per set
 
 ASSAY_TYPES = ("IC50", "Ki", "EC50")
 ASSAY_MARGIN_PERCENT = 30.0  # require winner to be at least 30% better (lower) than all others
 
 RAND = random.Random(SEED)
+
+# Keywords for detecting when a question explicitly specifies a tool or DB
+_TOOL_NAME_KEYWORDS = [
+    "chembl",
+    "chembl tool",
+    "drugcentral",
+    "alphamissense",
+    "clinvar",
+    "cysdb",
+    "protein tool",
+]
 
 # =============================================================================
 # Logging / Progress
@@ -67,6 +81,7 @@ RAND = random.Random(SEED)
 def _now_str() -> str:
     import datetime as _dt
     return _dt.datetime.now().strftime("%H:%M:%S")
+
 
 class Progress:
     def __init__(self, name: str, target: int):
@@ -276,7 +291,7 @@ TEMPLATES: List[TemplateDef] = [
     ("q5_assay", "Which gene shows stronger binding (lower {assay}) among the options?"),
 ]
 
-def _letters():
+def _letters() -> List[str]:
     return ["A", "B", "C", "D"]
 
 def _fmt_options(genes: List[str]) -> str:
@@ -287,7 +302,7 @@ def _unique_token_owner(token_sets: List[set], token: str) -> Optional[int]:
     return owners[0] if len(owners) == 1 else None
 
 def _pick_unique_token(token_sets: List[set]) -> Tuple[Optional[int], Optional[str]]:
-    all_tokens = []
+    all_tokens: List[str] = []
     for s in token_sets:
         all_tokens.extend(list(s))
     for t in all_tokens:
@@ -338,11 +353,213 @@ class QuartetSampler:
         return pool
 
 # =============================================================================
+# Tool name detection
+# =============================================================================
+def _tool_specified_in_question(q_text: str) -> str:
+    """
+    Return "True" if the question explicitly names a tool or database
+    (AlphaMissense, ClinVar, DrugCentral, CysDB, ChEMBL, protein tool, etc.), else "False".
+    Comparison is case-insensitive.
+    """
+    q_lower = q_text.lower()
+    for kw in _TOOL_NAME_KEYWORDS:
+        if kw.lower() in q_lower:
+            return "True"
+    return "False"
+
+# =============================================================================
+# Per-template generation
+# =============================================================================
+def _generate_set_for_template(
+    conn: sqlite3.Connection,
+    sampler: QuartetSampler,
+    template: TemplateDef,
+    set_index: int,
+    out_dir: Path,
+    seed: Optional[int] = SEED,
+) -> Path:
+    """
+    Generate exactly QUESTIONS_PER_SET questions for a single template and write to CSV.
+    Returns the output path.
+    """
+    template_id, qtext_base = template
+    rows: List[Dict[str, Any]] = []
+
+    p = Progress(f"ChemblQGen_set{set_index}_{template_id}", target=QUESTIONS_PER_SET)
+    if DEBUG:
+        print(
+            f"[{_now_str()}] Starting set {set_index} for template={template_id}: "
+            f"target={QUESTIONS_PER_SET}, attempts per item={MAX_ATTEMPTS_PER_Q}, seed={seed}",
+            flush=True,
+        )
+
+    for q_idx in range(1, QUESTIONS_PER_SET + 1):
+        success = False
+
+        for attempt in range(1, MAX_ATTEMPTS_PER_Q + 1):
+            quartet = sampler.sample()
+            genes = [g for g, _ in quartet]
+            unis = [u for _, u in quartet]
+            p.bump_attempt(genes)
+
+            # Resolve TIDs
+            tids: List[Optional[int]] = []
+            for u in unis:
+                try:
+                    tids.append(get_tid_cached(conn, u))
+                except Exception:
+                    tids.append(None)
+            if any(t is None for t in tids):
+                continue
+
+            ans_idx: Optional[int] = None
+            rendered: Optional[str] = None
+            diag_info: Dict[str, Any] = {}
+
+            try:
+                if template_id == "q1_moa":
+                    s_mechs = [set(fetch_approved_mechanisms(conn, int(t))) for t in tids]  # type: ignore[arg-type]
+                    idx, moa = _pick_unique_token(s_mechs)
+                    if idx is not None and moa:
+                        rendered = f"{qtext_base.format(moa=moa)}{_fmt_options(genes)}"
+                        ans_idx = idx
+                        diag_info = {"metric": "moa_unique", "moa": moa}
+
+                elif template_id == "q2_black_box":
+                    flags = [has_black_box_approved(conn, int(t)) for t in tids]  # type: ignore[arg-type]
+                    idxs = [i for i, v in enumerate(flags) if v]
+                    if len(idxs) == 1:
+                        rendered = f"{qtext_base}{_fmt_options(genes)}"
+                        ans_idx = idxs[0]
+                        diag_info = {"metric": "black_box_approved", "mask": flags}
+
+                elif template_id == "q3_phase3":
+                    flags = [has_phase3(conn, int(t)) for t in tids]  # type: ignore[arg-type]
+                    idxs = [i for i, v in enumerate(flags) if v]
+                    if len(idxs) == 1:
+                        rendered = f"{qtext_base}{_fmt_options(genes)}"
+                        ans_idx = idxs[0]
+                        diag_info = {"metric": "phase3_presence", "mask": flags}
+
+                elif template_id == "q4_indication":
+                    s_inds = [set(fetch_approved_indications(conn, int(t))) for t in tids]  # type: ignore[arg-type]
+                    idx, ind = _pick_unique_token(s_inds)
+                    if idx is not None and ind:
+                        rendered = f"{qtext_base.format(indication=ind)}{_fmt_options(genes)}"
+                        ans_idx = idx
+                        diag_info = {"metric": "indication_unique", "indication": ind}
+
+                elif template_id == "q5_assay":
+                    by_gene = [best_assay_values_by_type(conn, int(t)) for t in tids]  # type: ignore[arg-type]
+                    chosen: Optional[Tuple[str, int, List[Optional[float]]]] = None
+                    for assay in ASSAY_TYPES:
+                        vals = [gd.get(assay) for gd in by_gene]
+                        if any(v is None for v in vals):
+                            continue
+                        idx = _idx_unique_min_with_margin(vals, ASSAY_MARGIN_PERCENT)
+                        if idx is not None:
+                            chosen = (assay, idx, vals)
+                            break
+                    if chosen:
+                        assay, idx, vals = chosen
+                        rendered = f"{qtext_base.format(assay=assay)}{_fmt_options(genes)}"
+                        ans_idx = idx
+                        diag_info = {"metric": f"{assay}_min_nM_with_margin", "vals": vals}
+            except Exception as e:
+                warnings.warn(f"[chembl] evaluation failed: {e}")
+                rendered = None
+                ans_idx = None
+
+            if rendered is not None and ans_idx is not None:
+                letters = _letters()
+                ans_letter = letters[ans_idx]
+                tool_flag = _tool_specified_in_question(rendered)
+
+                rows.append(
+                    {
+                        "question": rendered,
+                        "answer": ans_letter,
+                        "tool": "chembl",
+                        "tool_specified_in_question": tool_flag,
+                    }
+                )
+
+                metric = diag_info.get("metric")
+                if "vals" in diag_info:
+                    vals = diag_info["vals"]
+                    vals_s = "[" + ",".join(("NA" if v is None else f"{float(v):.4g}") for v in vals) + "]"
+                    extra = f" vals={vals_s}"
+                elif "mask" in diag_info:
+                    extra = f" mask={diag_info['mask']}"
+                elif "moa" in diag_info:
+                    extra = f" moa={diag_info['moa']}"
+                elif "indication" in diag_info:
+                    extra = f" indication={diag_info['indication']}"
+                else:
+                    extra = ""
+                print(
+                    f"[{_now_str()}] SET{set_index:02d} Q{q_idx:02d} attempt#{attempt:02d} "
+                    f"ok tmpl={template_id} genes={genes} metric={metric}{extra} "
+                    f"answer={ans_letter} {genes[ans_idx]}",
+                    flush=True,
+                )
+
+                p.bump_success()
+                success = True
+                break  # next question in this set
+
+        if not success:
+            p.bump_skip()
+            print(
+                f"[{_now_str()}] SET{set_index:02d} Q{q_idx:02d}: "
+                f"SKIPPED after {MAX_ATTEMPTS_PER_Q} attempts (tmpl={template_id})"
+            )
+            # Hard requirement: 20 questions per set. Fail fast if we cannot generate.
+            raise RuntimeError(
+                f"Failed to generate question {q_idx} for template {template_id} "
+                f"in set {set_index} after {MAX_ATTEMPTS_PER_Q} attempts."
+            )
+
+    p.report(intermediate=False)
+
+    out_path = out_dir / f"set{set_index}.csv"
+    df_out = pd.DataFrame(
+        rows,
+        columns=["question", "answer", "tool", "tool_specified_in_question"],
+    )
+    df_out.to_csv(out_path, index=False, header=True)
+    print(f"[{_now_str()}] OK Wrote {len(df_out)} questions -> {out_path}")
+    return out_path
+
+# =============================================================================
 # Generation core
 # =============================================================================
-def generate_chembl_questions(out_path: Optional[Path] = None, seed: Optional[int] = SEED):
+def generate_chembl_questions(
+    out_path: Optional[Path] = None,
+    seed: Optional[int] = SEED,
+) -> List[Path]:
+    """
+    Generate question sets for all TEMPLATES.
+
+    Each set:
+      - Contains exactly QUESTIONS_PER_SET questions.
+      - Uses a single question stem from TEMPLATES.
+      - Is written to setN.csv (N starts at 1) in the target directory.
+
+    Returns:
+      List of Paths to the generated CSV files.
+    """
     if seed is not None:
         random.seed(seed)
+
+    # Decide output directory based on out_path
+    if out_path is not None and out_path.is_dir():
+        out_dir = out_path
+    elif out_path is not None:
+        out_dir = out_path.parent
+    else:
+        out_dir = OUT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     # Load (gene_symbol, uniprot_id)
     if not KNOWN_GENE_LIST_PATH.exists():
@@ -352,160 +569,38 @@ def generate_chembl_questions(out_path: Optional[Path] = None, seed: Optional[in
     if "gene_symbol" not in df.columns or "uniprot_id" not in df.columns:
         raise ValueError("Input TSV must contain columns: gene_symbol, uniprot_id")
 
-    pairs = [(r["gene_symbol"].strip(), r["uniprot_id"].strip()) for _, r in df.iterrows()
-             if str(r["gene_symbol"]).strip() and str(r["uniprot_id"]).strip()]
+    pairs = [
+        (r["gene_symbol"].strip(), r["uniprot_id"].strip())
+        for _, r in df.iterrows()
+        if str(r["gene_symbol"]).strip() and str(r["uniprot_id"]).strip()
+    ]
     if len(pairs) < 4:
-        raise ValueError("Need at least 4 (gene_symbol, uniprot_id) pairs in known_tool_prot_genes_list.tsv")
+        raise ValueError(
+            "Need at least 4 (gene_symbol, uniprot_id) pairs in known_tool_prot_genes_list.tsv"
+        )
 
     sampler = QuartetSampler(pairs, seed=seed)
     conn = get_conn()
-    rows: List[Dict[str, Any]] = []
-
-    # Build worklist
-    tmpl_ids = [tid for (tid, _) in TEMPLATES]
-    worklist: List[str] = []
-    for tid in tmpl_ids:
-        worklist.extend([tid] * TEMPLATE_MAX_PER_ID)
-    random.shuffle(worklist)
-    tmpl_map = {tid: txt for (tid, txt) in TEMPLATES}
-
-    p = Progress("ChemblQGen", target=len(worklist))
-    if DEBUG:
-        print(f"[{_now_str()}] Starting generation: target={len(worklist)}, attempts per item={MAX_ATTEMPTS_PER_Q}, seed={seed}")
+    output_files: List[Path] = []
 
     try:
-        for idx_wl, template_id in enumerate(worklist, start=1):
-            qtext_base = tmpl_map[template_id]
-            success = False
-
-            for attempt in range(1, MAX_ATTEMPTS_PER_Q + 1):
-                quartet = sampler.sample()
-                genes = [g for g, _ in quartet]
-                unis = [u for _, u in quartet]
-                p.bump_attempt(genes)
-
-                # Resolve TIDs
-                tids: List[Optional[int]] = []
-                for u in unis:
-                    try:
-                        tids.append(get_tid_cached(conn, u))
-                    except Exception:
-                        tids.append(None)
-                if any(t is None for t in tids):
-                    continue
-
-                # Evaluate per template
-                ans_idx: Optional[int] = None
-                rendered = None
-                diag_info: Dict[str, Any] = {}
-
-                try:
-                    if template_id == "q1_moa":
-                        s_mechs = [set(fetch_approved_mechanisms(conn, int(t))) for t in tids]  # type: ignore[arg-type]
-                        idx, moa = _pick_unique_token(s_mechs)
-                        if idx is not None and moa:
-                            rendered = f"{qtext_base.format(moa=moa)}{_fmt_options(genes)}"
-                            ans_idx = idx
-                            diag_info = {"metric": "moa_unique", "moa": moa}
-
-                    elif template_id == "q2_black_box":
-                        flags = [has_black_box_approved(conn, int(t)) for t in tids]  # type: ignore[arg-type]
-                        idxs = [i for i, v in enumerate(flags) if v]
-                        if len(idxs) == 1:
-                            rendered = f"{qtext_base}{_fmt_options(genes)}"
-                            ans_idx = idxs[0]
-                            diag_info = {"metric": "black_box_approved", "mask": flags}
-
-                    elif template_id == "q3_phase3":
-                        flags = [has_phase3(conn, int(t)) for t in tids]  # type: ignore[arg-type]
-                        idxs = [i for i, v in enumerate(flags) if v]
-                        if len(idxs) == 1:
-                            rendered = f"{qtext_base}{_fmt_options(genes)}"
-                            ans_idx = idxs[0]
-                            diag_info = {"metric": "phase3_presence", "mask": flags}
-
-                    elif template_id == "q4_indication":
-                        s_inds = [set(fetch_approved_indications(conn, int(t))) for t in tids]  # type: ignore[arg-type]
-                        idx, ind = _pick_unique_token(s_inds)
-                        if idx is not None and ind:
-                            rendered = f"{qtext_base.format(indication=ind)}{_fmt_options(genes)}"
-                            ans_idx = idx
-                            diag_info = {"metric": "indication_unique", "indication": ind}
-
-                    elif template_id == "q5_assay":
-                        by_gene = [best_assay_values_by_type(conn, int(t)) for t in tids]  # type: ignore[arg-type]
-                        # Try each assay type; require all four genes to have numeric values and a unique minimum with margin
-                        chosen: Optional[Tuple[str, int, List[Optional[float]]]] = None
-                        for assay in ASSAY_TYPES:
-                            vals = [gd.get(assay) for gd in by_gene]
-                            if any(v is None for v in vals):
-                                continue  # enforce non-NA for all four genes
-                            idx = _idx_unique_min_with_margin(vals, ASSAY_MARGIN_PERCENT)
-                            if idx is not None:
-                                chosen = (assay, idx, vals)
-                                break
-                        if chosen:
-                            assay, idx, vals = chosen
-                            rendered = f"{qtext_base.format(assay=assay)}{_fmt_options(genes)}"
-                            ans_idx = idx
-                            diag_info = {"metric": f"{assay}_min_nM_with_margin", "vals": vals}
-                except Exception as e:
-                    warnings.warn(f"[chembl] evaluation failed: {e}")
-                    rendered = None
-                    ans_idx = None
-
-                if rendered is not None and ans_idx is not None:
-                    letters = _letters()
-                    ans_letter = letters[ans_idx]
-
-                    # Append only required TSV fields
-                    rows.append({
-                        "question": rendered,
-                        "answer": ans_letter,
-                        "tool": "chembl",
-                    })
-
-                    # Console diagnostics
-                    metric = diag_info.get("metric")
-                    if "vals" in diag_info:
-                        vals = diag_info["vals"]
-                        vals_s = "[" + ",".join(("NA" if v is None else f"{float(v):.4g}") for v in vals) + "]"
-                        extra = f" vals={vals_s}"
-                    elif "mask" in diag_info:
-                        extra = f" mask={diag_info['mask']}"
-                    elif "moa" in diag_info:
-                        extra = f" moa={diag_info['moa']}"
-                    elif "indication" in diag_info:
-                        extra = f" indication={diag_info['indication']}"
-                    else:
-                        extra = ""
-                    print(
-                        f"[{_now_str()}] WL{idx_wl:02d} attempt#{attempt:02d} ok tmpl={template_id} "
-                        f"genes={genes} metric={metric}{extra} answer={ans_letter} {genes[ans_idx]}",
-                        flush=True,
-                    )
-
-                    p.bump_success()
-                    success = True
-                    break  # next worklist item
-
-            if not success:
-                p.bump_skip()
-                print(f"[{_now_str()}] WL{idx_wl:02d}: SKIPPED after {MAX_ATTEMPTS_PER_Q} attempts (tmpl={template_id})")
-
+        for set_index, template in enumerate(TEMPLATES, start=1):
+            out_file = _generate_set_for_template(
+                conn=conn,
+                sampler=sampler,
+                template=template,
+                set_index=set_index,
+                out_dir=out_dir,
+                seed=seed,
+            )
+            output_files.append(out_file)
     finally:
         try:
             conn.close()
         except Exception:
             pass
 
-    # Write strict 3-column TSV
-    out_path = out_path or (OUT_DIR / "chembl_validation_questions.tsv")
-    df_out = pd.DataFrame(rows, columns=["question", "answer", "tool"])
-    df_out.to_csv(out_path, sep="\t", index=False, header=True)
-    print(f"[{_now_str()}] OK Wrote {len(df_out)} -> {out_path}")
-
-    p.report(intermediate=False)
+    return output_files
 
 # =============================================================================
 # Main

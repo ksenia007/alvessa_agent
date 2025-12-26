@@ -27,8 +27,8 @@ The following files must be downloaded before using the GWAS and Sei tools:
 -  Gencode annotaitons
 
 - `alvessa_proteins.db`   
-**Download Location:** https://drive.google.com/file/d/1p9gg-iogIIu7LAmwPBmoSVQtJbalDrTj/view?usp=drive_link  
-Database supporting protein structure visualization and druggability analysis (AlphaFold pLDDT, FPocket, SASA, IUPPred3, and BioLiP2 binding sites).
+**Download Location:** https://drive.google.com/file/d/1EfhQjLYrsI0gNkOv0DV4ZrgFWcL6rs_e/view?usp=drive_link
+Database supporting protein structure visualization and druggability analysis (AlphaFold pLDDT, FPocket, SASA, IUPPred3, BioLiP2 binding sites, and CysDB).
 
 - `DisProt_release_2025_06_with_ambiguous_evidences.json`  
 **Download Location:** https://drive.google.com/file/d/1sLM0mw3bu8rqOAX47Xurx32UujeLOVu4/view?usp=drive_link  
@@ -47,7 +47,7 @@ Contains PDB protein structures (from AlphaFold DB) corresponding to proteins in
 Locally built from UniProtKB reviewed human proteome (Homo sapiens, tax_id 9606).
 SQLite database of reviewed human UniProt entries for sequence-to-gene resolution and protein annotation (accessions, gene names, isoforms, and core metadata), including a custom index for quick searching genes by amino acid sequences, used by `aa_seq` tool.
 
-- `drugcentral.dump.11012023.db`
+- `drug_central.dump.11012023.db`
 **Download Location:** https://drive.google.com/file/d/1FrovOP2Uab4pyLsgc0XKc5qwNnTYEnQ9/view?usp=drive_link
-Source: Locally built from DrugCentral PostgreSQL dump (2023-11-01).
-SQLite snapshot of DrugCentral for querying approved and investigational drugs, indications, mechanisms of action, targets, and key safety/regulatory annotations, used by `drug_cntrl` tool.
+Source: Locally built from Drug Central PostgreSQL dump (2023-11-01).
+SQLite snapshot of DrugCentral for querying approved and investigational drugs, indications, mechanisms of action, targets, and key safety/regulatory annotations, used by `drug_central` tool.

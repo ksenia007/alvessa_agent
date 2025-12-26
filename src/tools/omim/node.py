@@ -59,21 +59,16 @@ def omim_agent(state: "State") -> "State":
             relevant_phenotypes = omim_df[omim_df['Approved Gene Symbol'] == gene.symbol]['extracted'].values[0].split(';')
 
             if len(relevant_phenotypes) > 0:
-                summary_lines.append(f"All phenotypes annotated to {gene.symbol} from OMIM: " + ";".join(relevant_phenotypes))
+                summary_lines.append(f"*OMIM: Phenotypes annotated to {gene.symbol}: " + "; ".join(relevant_phenotypes) + ".")
                 gene.add_many_omim_annotated_terms(relevant_phenotypes)
 
                 if summary_lines:
-                    gene.update_text_summaries(
-                        " ".join(summary_lines) + f" End of record for {gene.symbol} |"
-                    )
+                    gene.update_text_summaries(" ".join(summary_lines))
                 
                     gene.add_tool("OMIM")
 
         except:
-            print(gene)
-
-
-        time.sleep(0.3)  # courteous pause
+            print('Error in OMIM tool for ', gene)
 
     if DEBUG:
         print(f"[OMIM] Predictions fetched")
@@ -83,6 +78,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="OMIM",
         entry_point=omim_agent,
-        description="Fetches information about phenotype annotations for the input genes from OMIM, which provides comprehensive, curated data linking human genes to disease phenotypes, detailing clinical features, inheritance patterns, and molecular genetics of genetic disorders.",
+        description=" Fetches curated OMIM entries describing Mendelian disease phenotypes caused by pathogenic variants in the input genes, including clinical features, inheritance patterns, and molecular genetic evidence.",
     ),
 )

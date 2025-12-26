@@ -47,6 +47,7 @@ class Gene:
     binding_peaks: Dict[str, Any] = field(default_factory=dict)
     mirna_targets: Dict[str, List[str]] = field(default_factory=dict)
     alliancegenome_info: List[Dict[str, str]] = field(default_factory=list)
+    viral_interactions: List[Dict[str, Any]] = field(default_factory=list)
     text_summaries_from_tools: List[str] = field(default_factory=list)
     tools_run: List[str] = field(default_factory=list)
 
@@ -281,6 +282,14 @@ class Gene:
 
     def has_interactions_collected(self) -> bool:
         return any(self.interactions.human_interactions.values())
+
+    def add_viral_interactions(self, interactions: List[Dict[str, Any]]) -> None:
+        """
+        Append viral interaction records. Each record can include partner, pubmed_ids, detection_method, source_db, etc.
+        """
+        for rec in interactions or []:
+            if rec and rec not in self.viral_interactions:
+                self.viral_interactions.append(rec)
         
     # ------------------------------------------------------------------
     # MSigDB
@@ -576,7 +585,7 @@ class GeneTextPresenter:
                 lines.append(loc_line)
 
         txp = self.gene.transcriptome
-        if txp.transcript_count is not None:
+        if txp.transcript_count is not None and txp.transcript_count!=0:
             tx_bits = [f"n_transcripts={txp.transcript_count}:"]
             # add transcript name + exon count
             for tx_id, tx_info in txp.transcripts.items():

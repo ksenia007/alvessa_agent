@@ -92,14 +92,15 @@ def sei_predictions_agent(state: "State") -> "State":
                     variants[var_id].add_functional_prediction(g, "SEI", seq_class_name)
                     if g in gene_objs.keys():
                         gene_objs[g].add_tool("SEI")
-                        gene_objs[g].update_text_summaries("Values predicted by Sei: Sei model clustered ChipSeq, DNase, and histone mark profiles into 40 groups (sequence classes). The Sei class represents the role of sequence where variant falls; agnositc to coding regions, can have sequence class even in exons.")
+                        gene_objs[g].update_text_summaries(
+                            "*Sei: Values predicted by Sei: the Sei model clusters predicted effects on ChIP-seq, DNase, and histone mark profiles into 40 sequence classes. Each Sei class represents the inferred regulatory role of the local sequence where a variant occurs. These classes are annotation-agnostic and may be assigned to variants in both non-coding and coding (exonic) regions."
+                        )
                     assigned += 1
 
         except Exception as e:
             warnings.warn(f"[SEI] Failed to process {var_id}: {e}")
             continue
 
-    time.sleep(0.3)  # courteous pause
     return
 
 

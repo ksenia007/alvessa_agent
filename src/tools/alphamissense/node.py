@@ -20,27 +20,6 @@ from src.tools.base import Node
 
 DEBUG=True
 
-def _symbol_to_uniprot(gene):
-
-    all_symbols = []
-    try:
-        r = requests.get(f'https://mygene.info/v3/query?q={gene}&fields=uniprot')
-        r.raise_for_status()
-        hits = r.json().get("hits", [])
-        for hit in hits:
-            try:
-                uniprot = hit.get("uniprot", {})
-                if "Swiss-Prot" in uniprot:
-                    all_symbols.append(uniprot["Swiss-Prot"])
-            except Exception as inner_e:
-                warnings.warn(
-                    f"Skipping malformed UniProt entry for gene {gene}: {inner_e}"
-                )    
-    except Exception as e:
-        print(e)
-
-    return all_symbols
-
 def _uniprot_to_symbol(uniprot_id: str) -> str:
     """
     Convert UniProt accession(s) to gene symbol(s) using mygene.info.
@@ -70,7 +49,7 @@ def _uniprot_to_symbol(uniprot_id: str) -> str:
 
 def alphamissense_predictions_agent(state: "State") -> "State":
     """
-    LangGraph node that runs alphamissense predictions for 
+    LangGraph node that runs alphamissense predictions for
 
     Parameters
     ----------
@@ -81,59 +60,63 @@ def alphamissense_predictions_agent(state: "State") -> "State":
     -------
     State
         Updated state with the `"alphamissense_predictions"` field filled.
-        
+
     """
 
-    print(f"[AlphaMissense] started... {datetime.now()}")
-    # preds = state.get("alphamissense_predictions", {}).copy()
     variants = state.get("variant_entities", {}).copy()
     gene_objs = state.get("gene_entities", {}).copy()
 
-    # Gracefully handle file reading errors
-    try:
-        pathogenicity_class_df_hg38 = pd.read_parquet('local_dbs/AlphaMissense_hg38.parquet')
-    except Exception as e:
-        warnings.warn(f"Failed to load required files: {e}. Cannot run AlphaMissense predictions.")
-        return 
-    
-    
-    print(f"[AlphaMissense] loaded am file... {datetime.now()}")
-    
+    # Early return if no variants to process
+    if not variants:
+        if DEBUG:
+            print("[AlphaMissense] No variants to process, skipping")
+        return
+
+    if DEBUG:
+        print(f"[AlphaMissense] Started with {len(variants)} variants... {datetime.now()}")
+
+    # Build SNP records FIRST, before loading the large parquet file
     snp_records = []
     for var_id, var_obj in variants.items():
         locs = var_obj.get_location('GrCh38')
         if not locs:
             continue
-        related_genes = var_obj.get_related_genes()
 
-        chrom, pos,  alts = locs.get('chrom'), locs.get('pos'),  locs.get('alt')
-        if not alts:
-            warnings.warn(f"Skipping variant {var_id} ")
-            continue
-        if locs:
-            if not alts: 
-                continue
-            for alt in alts:
-                snp_records.append({
-                    "var_id": var_id,
-                    "snp_key": f"SNP:REF->{alt}",
-                    "chrom": f"chr{chrom}",
-                    "pos": pos,
-                    "alt": alt
-                })
-        else:
-            warnings.warn(f"Missing coordinate data")
-            raise ValueError(f"Missing coordinate data for variant")
+        chrom, pos, alts = locs.get('chrom'), locs.get('pos'), locs.get('alt')
 
-
-    if not snp_records:
-        try:
-            variants[var_id].update_text_summaries("No AlphaMissense predictions found.")
-            return 
-        except:
+        # Skip if missing essential data
+        if not alts or not chrom or not pos:
             if DEBUG:
-                print(f"[AlphaMissense] No SNP records found to process and error in assigning text.")
-            return
+                warnings.warn(f"Skipping variant {var_id} - missing coordinate data")
+            continue
+
+        # Add SNP records for each alt allele
+        for alt in alts:
+            snp_records.append({
+                "var_id": var_id,
+                "snp_key": f"SNP:REF->{alt}",
+                "chrom": f"chr{chrom}",
+                "pos": pos,
+                "alt": alt
+            })
+
+    # Early return if no processable SNPs
+    if not snp_records:
+        if DEBUG:
+            print("[AlphaMissense] No SNP records found to process")
+        return
+
+    if DEBUG:
+        print(f"[AlphaMissense] Built {len(snp_records)} SNP records from {len(variants)} variants")
+
+    # NOW load the large parquet file - only if we have SNPs to look up
+    try:
+        pathogenicity_class_df_hg38 = pd.read_parquet('local_dbs/AlphaMissense_hg38.parquet')
+        if DEBUG:
+            print(f"[AlphaMissense] Loaded AlphaMissense parquet... {datetime.now()}")
+    except Exception as e:
+        warnings.warn(f"Failed to load AlphaMissense parquet: {e}. Cannot run predictions.")
+        return
 
     snps_df = pd.DataFrame(snp_records)
 
@@ -147,28 +130,47 @@ def alphamissense_predictions_agent(state: "State") -> "State":
     except Exception as e:
         warnings.warn(f"[AlphaMissense] Merge failed: {e}")
         return 
-    # drop lines with NaN in am_class
+    # Drop lines with NaN in am_class
     merged = merged.dropna(subset=['am_class'])
-    print(f"[AlphaMissense] finished merging... {datetime.now()}")
-    # add gene column based on uniprot_IDs
+
+    if DEBUG:
+        print(f"[AlphaMissense] Finished merging, found {len(merged)} predictions... {datetime.now()}")
+
+    # Early return if no predictions found
+    if merged.empty:
+        if DEBUG:
+            print("[AlphaMissense] No predictions found after merge")
+        return
+
+    # Add gene column based on uniprot_IDs
     if 'gene' not in merged.columns:
         needed_conversions = merged['uniprot_id'].dropna().unique()
-        uniprot_to_symbol_map = {uid: _uniprot_to_symbol(uid) for uid in needed_conversions}
+        if DEBUG:
+            print(f"[AlphaMissense] Converting {len(needed_conversions)} UniProt IDs to gene symbols...")
+
+        uniprot_to_symbol_map = {}
+        for i, uid in enumerate(needed_conversions):
+            uniprot_to_symbol_map[uid] = _uniprot_to_symbol(uid)
+            # Rate limit: 1 request per 0.2s to be courteous to mygene.info API
+            if i < len(needed_conversions) - 1:
+                time.sleep(0.2)
+
         merged['gene'] = merged['uniprot_id'].map(uniprot_to_symbol_map)
 
     grouped = merged.groupby(['gene', 'var_id', 'snp_key'], as_index=False).agg({
         'am_class': lambda x: next(iter(set(filter(pd.notna, x))), None)
     })
 
+    predictions_added = 0
     for row in grouped.itertuples(index=False):
         gene, var_id, snp_key, am_class = row
         if am_class is None:
             continue
         variants[var_id].add_functional_prediction(gene, 'AlphaMissense', am_class)
+        predictions_added += 1
 
-    print(f"[AlphaMissense] done... {datetime.now()}")
-
-    time.sleep(0.3)  # courteous pause
+    if DEBUG:
+        print(f"[AlphaMissense] Done! Added {predictions_added} predictions... {datetime.now()}")
 
     return 
 

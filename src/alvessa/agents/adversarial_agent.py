@@ -39,7 +39,7 @@ from src.state import State
 from src.alvessa.agents.verify import _parse_answer_tuples, _link_titles_to_indices, _deterministic_verdict, _is_speculation_text, _llm_feedback
 
 N_CHANGE = 1  # number of adversarial statements to inject
-MODE = 4  # adversarial mode
+MODE = 2  # adversarial mode
 
 def _create_contradiction_statement(statement: str, proofs: List[str]) -> str:
     """ Create a contradiction statement that contradicts the original statement without using the proofs. Use the LLM CONDITIONED_MODEL to generate the contradiction. """

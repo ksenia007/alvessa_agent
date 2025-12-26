@@ -101,13 +101,12 @@ def alliancegenome_predictions_agent(state: "State") -> "State":
                 if DEBUG:
                     print(f"[AllianceOfGenomes] No info found for ID {alliance_id}")
                 continue
-            gene.add_alliancegenome_info(info)  # need to implement this method in Gene class, structured to future UI consumption
+            gene.add_alliancegenome_info(info) 
             
             # save summary text info. Create a string:
-            summary += f"Matched to {alliance_id}, {info.get('species', {}).get('name', 'unknown species')}. Summary: {info.get('geneSynopsis', 'No summary available.')}. Auto-summary: {info.get('automatedGeneSynopsis', 'No auto-summary available.')} |"
+            summary += f"Matched to {alliance_id}, {info.get('species', {}).get('name', 'unknown species')}. Summary: {info.get('geneSynopsis', 'No summary available.')}. Auto-summary: {info.get('automatedGeneSynopsis', 'No auto-summary available.')}. "
         
-        summary += " End of Alliance of Genome information."
-        gene.update_text_summaries(summary.strip())
+        gene.update_text_summaries(f"*AllianceOfGenomes: {summary.strip()}")
         gene.add_tool("AllianceOfGenomes")
         time.sleep(0.3)
 
@@ -116,6 +115,6 @@ NODES: tuple[Node, ...] = (
     Node(
         name="AllianceOfGenomes",
         entry_point=alliancegenome_predictions_agent,
-        description="Fetches Alliance of Genome - consortium of 7 model organism databases - information for genes across all available model organisms. Pulls species specific summaries and gene descriptions.",
+        description="Fetches species-specific gene summary descriptions from the Alliance of Genome Resources, a consortium integrating curated data from major model organism databases for yeast (Saccharomyces cerevisiae), worm (Caenorhabditis elegans), fruit fly (Drosophila melanogaster), zebrafish (Danio rerio), mouse (Mus musculus), rat (Rattus norvegicus), and frog (Xenopus species). The returned summaries provide high-level functional and biological context for the input genes across available model organisms (for example, core molecular function, conserved biological roles, and representative phenotypes described in model systems).",
     ),
 )
