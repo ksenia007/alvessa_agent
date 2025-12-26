@@ -581,8 +581,8 @@ export async function renderGeneSummary(st, deps = {}) {
       const tx = g.transcriptome || {};
       const txBits = [];
       if (isPosInt(tx.transcript_count)) txBits.push(`Transcripts: ${esc(String(tx.transcript_count))}`);
-      if (isNum(tx.median_transcript_span_bp)) txBits.push(`Median span: ${esc(String(tx.median_transcript_span_bp))} bp`);
-      if (isNum(tx.max_transcript_span_bp))    txBits.push(`Max span: ${esc(String(tx.max_transcript_span_bp))} bp`);
+      if (tx.median_transcript_span_bp != null && isNum(tx.median_transcript_span_bp)) txBits.push(`Median span: ${esc(String(tx.median_transcript_span_bp))} bp`);
+      if (tx.max_transcript_span_bp != null && isNum(tx.max_transcript_span_bp))    txBits.push(`Max span: ${esc(String(tx.max_transcript_span_bp))} bp`);
       const txLine = txBits.length ? txBits.join(" • ") : "";
   
       // expandable sections (only when non-empty)

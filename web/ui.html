@@ -1216,18 +1216,16 @@
                 ensureModal();
                 var body = MODAL.querySelector('.modal-body');
                 var proofs = Array.isArray(stmt.proofs) ? stmt.proofs : [];
-                if (!proofs.length) {
-                  body.innerHTML = '<div class="muted">No references available for this statement.</div>';
-                  openModal();
-                  return;
-                }
+                var reasons = Array.isArray(stmt.reasons) ? stmt.reasons : [];
+                var feedback = stmt.llm_feedback;
+
                 var list = proofs.map(function(p, i){
                   var title = p && (p.title || p.source) ? (p.title || p.source) : ('Citation ' + (i + 1));
                   var cited = p && p.cited_text
                     ? '<blockquote class="cite-block">' + esc(String(p.cited_text)) + '</blockquote>'
                     : '<div class="muted">No cited text provided.</div>';
                   var url = p && p.url
-                    ? '<div class="muted sm"><a href="' + esc(p.url) + '" target="_blank" rel="noopener">Open source</a></div>'
+                    ? '<div class="muted sm"><a href="' + esc(p.url) + '" target="_blank" rel="noopener">Open source ↗</a></div>'
                     : '';
                   return [
                     '<li class="ref-item">',
@@ -1239,7 +1237,21 @@
                     '</li>'
                   ].join('');
                 }).join('');
-                body.innerHTML = '<ul class="refs-list">' + list + '</ul>';
+
+                var reasonsPills = reasons.map(function(r){ return '<span class="pill">' + esc(String(r)) + '</span>'; }).join(' ');
+                var spec = stmt.is_speculation ? '<span class="pill">speculation</span>' : '';
+
+                body.innerHTML = [
+                  '<div class="muted" style="margin-bottom:6px;">Statement</div>',
+                  '<div class="stmt-text">' + esc(stmt.text || '') + '</div>',
+                  '',
+                  '<div class="muted" style="margin:10px 0 6px;">Citations</div>',
+                  '<ol class="refs-list">' + (list || '<li class="muted">No proofs attached.</li>') + '</ol>',
+                  '',
+                  '<div class="muted" style="margin:10px 0 6px;">Feedback & reasons</div>',
+                  '<div class="mono wrap">' + esc(feedback || '—') + '</div>',
+                  '<div>' + spec + (reasonsPills ? ' ' + reasonsPills : '') + '</div>'
+                ].join('');
                 openModal();
               }
               function wireClicks(scope){

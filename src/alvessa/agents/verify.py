@@ -32,6 +32,20 @@ def _numbers(s: str) -> Set[str]:
     """Extract standalone numeric tokens; never digits that are part of gene-like tokens."""
     return set(_NUM_RE.findall(s or ""))
 
+def _parse_token_error(exc_str: str) -> tuple[int, int] | None:
+    match = re.search(r'(\d+) tokens > (\d+) maximum', str(exc_str))
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    return None
+
+def _truncate_proof_snippets(pack: List[Dict[str, Any]], max_chars: int) -> None:
+    for stmt in pack:
+        proofs = stmt.get("proofs") or []
+        for p in proofs:
+            snippet = p.get("snippet") or ""
+            if len(snippet) > max_chars:
+                p["snippet"] = snippet[:max_chars]
+
 _CHARS_RE = re.compile(r"\[chars\s+(\d+)\s*[–-]\s*(\d+)\]", re.I)
 
 # split a semicolon list but ignore semicolons inside quotes
@@ -252,15 +266,13 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
     # check the length of user_msg, and if it exceeds MAX_TOKENS, we will split and make multiple calls
     # approx tokens as # words * 1.33
     approx_tokens = int(len(user_msg.split()) * 1.5)
-    if approx_tokens > MAX_TOKENS:
-        if DEBUG:
-            print(f"[_llm_feedback] Warning: user_msg approx tokens {approx_tokens} exceeds MAX_TOKENS {MAX_TOKENS}. Truncating statements.")
-        # split into 2 or 3 chunks, and if still too long, truncate each statement text; call LLM on each chunk and aggregate results
-        n_chunks = max(1, math.ceil(approx_tokens / MAX_TOKENS))
-        chunk_size = max(1, math.ceil(len(pack) / n_chunks))
+    n_chunks = max(1, math.ceil(approx_tokens / MAX_TOKENS))
+
+    def _call_chunked(current_pack: List[Dict[str, Any]], current_chunks: int) -> Dict[str, Any]:
+        chunk_size = max(1, math.ceil(len(current_pack) / current_chunks))
         all_parsed: List[Dict[str, Any]] = []
-        for start in range(0, len(pack), chunk_size):
-            chunk_pack = pack[start:start + chunk_size]
+        for start in range(0, len(current_pack), chunk_size):
+            chunk_pack = current_pack[start:start + chunk_size]
             chunk_payload = {
                 "question": question,
                 "statements": chunk_pack,
@@ -291,13 +303,39 @@ def _llm_feedback(statements: List[Dict[str, Any]], question: str) -> Optional[D
             return _merge_chunked_feedback(all_parsed)
         return {}
 
-    raw = claude_call(
-        model=CONDITIONED_MODEL,
-        temperature=0,
-        max_tokens=13000,
-        system=system_msg,
-        messages=[{"role": "user", "content": user_msg}],
-    )
+    for stage in range(3):
+        try:
+            if n_chunks > 1:
+                return _call_chunked(pack, n_chunks)
+
+            raw = claude_call(
+                model=CONDITIONED_MODEL,
+                temperature=0,
+                max_tokens=13000,
+                system=system_msg,
+                messages=[{"role": "user", "content": user_msg}],
+            )
+        except Exception as exc:
+            if not _parse_token_error(str(exc)):
+                raise
+            if stage == 0:
+                if DEBUG:
+                    print(f"[_llm_feedback] Token limit hit; increasing chunks from {n_chunks} to {max(2, n_chunks * 2)}")
+                n_chunks = max(2, n_chunks * 2)
+                continue
+            if stage == 1:
+                if DEBUG:
+                    print("[_llm_feedback] Token limit hit again; truncating proof snippets")
+                _truncate_proof_snippets(pack, max_chars=2000)
+                payload = {
+                    "question": question,
+                    "statements": pack,
+                }
+                user_msg = json.dumps(payload, ensure_ascii=True)
+                approx_tokens = int(len(user_msg.split()) * 1.5)
+                n_chunks = max(1, math.ceil(approx_tokens / MAX_TOKENS))
+                continue
+            raise
     
     # Extract plain text from Anthropic object
     txt = ""

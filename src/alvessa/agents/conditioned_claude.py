@@ -53,13 +53,13 @@ def _parse_token_error(exc_str: str) -> tuple[int, int] | None:
 def _estimate_document_tokens(doc: dict) -> int:
     """
     Rough token estimate for a document block.
-    Uses chars / 4 as conservative estimate (Claude's typical ratio).
+    Uses chars / 3 as conservative estimate 
     """
     try:
         src = doc.get("source", {})
         if isinstance(src, dict) and src.get("type") == "text":
             text = str(src.get("data", ""))
-            return len(text) // 4  # Conservative estimate
+            return len(text) // 3  # Conservative estimate
     except:
         pass
     return 0
@@ -477,7 +477,7 @@ def _anthropic_join_text(
 
             # Fallback to model-provided cited_text
             if not snippet and cited:
-                snippet = _short_proof(cited, n=2400)
+                snippet = _short_proof(cited, n=24000)
 
             # Resolve title via manifest if missing
             if (not title) and idx2title is not None and d_idx is not None:
@@ -660,6 +660,34 @@ def conditioned_claude_node(state: "State") -> "State":
     model_used = CONDITIONED_MODEL
     used_backup = False
     raw = None
+    if DEBUG:
+        doc_lengths = [_estimate_document_tokens(doc) for doc in doc_blocks_working]
+        doc_count = len(doc_lengths)
+        mean_len = (sum(doc_lengths) / doc_count) if doc_count else 0
+        max_len = max(doc_lengths) if doc_lengths else 0
+        print("[conditioned_claude_node] Doc stats:")
+        print(f"  Count: {doc_count}")
+        print(f"  Mean est tokens: {mean_len:.1f}")
+        print(f"  Max est tokens: {max_len}")
+        if doc_lengths:
+            longest_idx = max(range(len(doc_lengths)), key=lambda i: doc_lengths[i])
+            longest_doc = doc_blocks_working[longest_idx]
+            src = longest_doc.get("source", {})
+            if isinstance(src, dict) and src.get("type") == "text":
+                text = str(src.get("data", ""))
+                sections = text.split("*")
+                db_char_counts = {}
+                for section in sections:
+                    section = section.strip()
+                    if not section:
+                        continue
+                    first_word = section.split(None, 1)[0]
+                    db_char_counts[first_word] = db_char_counts.get(first_word, 0) + len(section)
+                print(f"  Longest doc index: {longest_idx}")
+                print(f"  Longest doc sections: {sum(1 for s in sections if s.strip())}")
+                if db_char_counts:
+                    top_db, top_chars = max(db_char_counts.items(), key=lambda x: x[1])
+                    print(f"  Top db in longest doc by chars: {top_db} ({top_chars} chars)")
 
     for attempt in range(MAX_RETRIES + 1):
         # Rebuild user_content with current doc_blocks_working
@@ -700,8 +728,8 @@ def conditioned_claude_node(state: "State") -> "State":
                 current_tokens, max_tokens = token_info
                 overage = current_tokens - max_tokens
                 overage_pct = overage / current_tokens
-                # Add 20% buffer to ensure we get under the limit
-                reduction_needed = overage_pct + 0.20
+                # Add buffer to ensure we get under the limit
+                reduction_needed = overage_pct + 0.40*(attempt+1)
 
                 if DEBUG:
                     print(f"\n[conditioned_claude_node] PROMPT TOO LONG")
@@ -710,34 +738,35 @@ def conditioned_claude_node(state: "State") -> "State":
                     print(f"  Overage: {overage:,} tokens ({overage_pct*100:.1f}%)")
                     print(f"  Retry {attempt + 1}/{MAX_RETRIES}: reducing by {reduction_needed*100:.1f}%")
 
-                # Find longest document
-                longest_indices = _find_longest_documents(doc_blocks_working, n=1)
+                # Find longest documents (on second retry, shorten 2)
+                num_to_shorten = 1 if attempt == 0 else 2
+                longest_indices = _find_longest_documents(doc_blocks_working, n=num_to_shorten)
                 if not longest_indices:
                     if DEBUG:
                         print("ERROR: No documents to shorten!")
                     raise
 
-                longest_idx = longest_indices[0]
-                old_doc = doc_blocks_working[longest_idx]
-                old_tokens = _estimate_document_tokens(old_doc)
-                title = old_doc.get("title", f"Doc #{longest_idx}")
+                for longest_idx in longest_indices:
+                    old_doc = doc_blocks_working[longest_idx]
+                    old_tokens = _estimate_document_tokens(old_doc)
+                    title = old_doc.get("title", f"Doc #{longest_idx}")
 
-                # Shorten it
-                new_doc = _shorten_document(old_doc, reduction_needed)
-                new_tokens = _estimate_document_tokens(new_doc)
-                doc_blocks_working[longest_idx] = new_doc
+                    # Shorten it
+                    new_doc = _shorten_document(old_doc, reduction_needed)
+                    new_tokens = _estimate_document_tokens(new_doc)
+                    doc_blocks_working[longest_idx] = new_doc
 
-                shortened_docs.append({
-                    "title": title,
-                    "attempt": attempt + 1,
-                    "old_tokens": old_tokens,
-                    "new_tokens": new_tokens,
-                    "reduction_pct": (old_tokens - new_tokens) / old_tokens if old_tokens > 0 else 0
-                })
+                    shortened_docs.append({
+                        "title": title,
+                        "attempt": attempt + 1,
+                        "old_tokens": old_tokens,
+                        "new_tokens": new_tokens,
+                        "reduction_pct": (old_tokens - new_tokens) / old_tokens if old_tokens > 0 else 0
+                    })
 
-                if DEBUG:
-                    print(f"Shortened '{title}':")
-                    print(f"    {old_tokens:,} -> {new_tokens:,} tokens ({(old_tokens-new_tokens)/old_tokens*100:.1f}% reduction)")
+                    if DEBUG:
+                        print(f"Shortened '{title}':")
+                        print(f"    {old_tokens:,} -> {new_tokens:,} tokens ({(old_tokens-new_tokens)/old_tokens*100:.1f}% reduction)")
 
                 continue  # Retry with shortened docs
 
