@@ -1,6 +1,5 @@
 """
 Plot a donut chart of question counts per subfolder under benchmarks_generation/questions/GenomeArena.
-Requires pandas and matplotlib.
 """
 
 from __future__ import annotations

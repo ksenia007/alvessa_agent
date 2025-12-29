@@ -45,15 +45,15 @@ def main() -> int:
     )
     parser.add_argument("--n", type=int, default=52, help="Number of questions to sample (default: 100).")
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42).")
-    parser.add_argument("--phrase_subset", action="store_true", help="If set, create a subset of questions containing 'P-HIPSter'.")
+    parser.add_argument("--phrase_subset", action="store_true", help="If set, create a subset of questions containing 'disgenet'.")
     args = parser.parse_args()
 
     try:
         if args.phrase_subset:
             subset_by_phrase(
                 Path(args.input),
-                Path(args.output).with_name(Path(args.output).stem + "_PHIPSTER.csv"),
-                phrase="P-HIPSter",
+                Path(args.output).with_name(Path(args.output).stem + "_DISGENET.csv"),
+                phrase="disgenet",
             )
         else:
             subset_dbqa(Path(args.input), Path(args.output), n=args.n, seed=args.seed)

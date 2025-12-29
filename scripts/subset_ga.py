@@ -4,10 +4,10 @@ import pandas as pd
 import random
 import os
 from pathlib import Path
-LOC = Path("/Users/sokolova/Documents/research/alvessa_agent/benchmarks_generation/questions/GenomeArena")
+LOC = Path("benchmarks_generation/questions/GenomeArena")
 # loop though subfolders and folders, find all csv files, shuffle and take 10% of rows, save to a new file
 subset_ratio = 0.1
-FILE_SAVE = Path("/Users/sokolova/Documents/research/alvessa_agent/benchmarks_generation/questions/subset_ga_questions.csv")
+FILE_SAVE = Path("benchmarks_generation/questions/subset_ga_questions.csv")
 
 all_files = []
 for root, dirs, files in os.walk(LOC):
@@ -29,6 +29,4 @@ print(f"Total questions in subset GA dataset: {len(final_subset_df)}")
 os.makedirs(FILE_SAVE.parent, exist_ok=True)
 final_subset_df.to_csv(FILE_SAVE, index=False)
 
-# %%
-final_subset_df.question.value_counts()
-# %%
+#%%

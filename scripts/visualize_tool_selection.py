@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 # %%
-loc = '/Users/sokolova/Documents/research/alvessa_agent/results/benchmark_results/FINAL2_GA_20251224-200223_cli/benchmark_summary.csv'
+loc = 'results/benchmark_results/FINAL2_GA_20251224-200223_cli/benchmark_summary.csv'
 preds = pd.read_csv(loc)
 
 # --- drop rows where either tool_tag or used_tools is NaN ---
