@@ -2,7 +2,7 @@
   <img src="https://github.com/user-attachments/assets/2bdd5321-8ffe-44ae-aaff-be11a715bdc5" alt="Alvessa" width="1100"/>
 </p>
 <h1 align="center">
-  <strong>Alvessa: Agentic Evidence-Grounded Research Assistant for Genomics</strong>
+  <strong>An Evidence-Grounded Research Assistant for Functional Genomics and Drug Target Assessment</strong>
 </h1>
 
 <p align="center">
