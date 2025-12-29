@@ -1,6 +1,6 @@
 # Scripts
 
-Scripts for reproducing benchmark evaluations and figures in the paper.
+Scripts for reproducing evaluations and figures in the paper.
 
 ## Benchmark Evaluation
 
