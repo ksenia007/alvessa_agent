@@ -98,7 +98,7 @@ We are also crowdsourcing a dataset of questions where the answer is known but r
 
 **Gene Annotation:** GENCODE, UniProt, Alliance of Genome Resources, OMIM
 
-**Pathways & Interactions:** Reactome, MSigDB, BioGRID, Gene Ontology
+**Pathways & Interactions:** Reactome, MSigDB, BioGRID, Gene Ontology, IntAct (viral)
 
 **Regulatory:** ReMap, miRDB
 
