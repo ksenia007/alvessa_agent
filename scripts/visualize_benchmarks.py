@@ -25,13 +25,13 @@ OTHER_HATCHES = [ "\\\\",  "xx", "//", "++", "--"]
 WIDTH_PLOT = (4/3)*4
 fig_ext = '_LLM'
 
-MODEL_FILES = {
-    "Alvessa*": 'results/benchmark_results/FINAL2_GA_20251224-200223_cli/benchmark_summary.csv',
-    'Biomni*\n\n\n': "results/benchmark_results/biomni_baseline_GA_10_subset_20251218-2235.csv", 
-}
-OTHER_HATCHES = ["..", "xx", "//", "\\\\",  "++", "--"]
-WIDTH_PLOT = (4/3)*2
-fig_ext = '_B'
+# MODEL_FILES = {
+#     "Alvessa*": 'results/benchmark_results/FINAL2_GA_20251224-200223_cli/benchmark_summary.csv',
+#     'Biomni*\n\n\n': "results/benchmark_results/biomni_baseline_GA_10_subset_20251218-2235.csv", 
+# }
+# OTHER_HATCHES = ["..", "xx", "//", "\\\\",  "++", "--"]
+# WIDTH_PLOT = (4/3)*2
+# fig_ext = '_B'
 
 BAR_WIDTH = 0.85  # unified bar width across all plots
 
@@ -46,8 +46,8 @@ FOLDER_NAME_MAP = {
     "gencode": "GENCODE",
     "gencode_gene_node": "GENCODE",
     "GWAS": "GWAS",
-    "gwas+alphamissense": "GWAS+\nAlphaMissense",
-    "query_gwas_extensive,alphamissense": "GWAS+\nAlphaMissense",
+    "gwas+alphamissense": "Annot+\nAlphaMissense",
+    "query_gwas_extensive,alphamissense": "Annot+\nAlphaMissense",
     "miRDB": "miRDB",
     "MSigDB": "MSigDB",
     "OMIM": "OMIM",
@@ -198,7 +198,7 @@ def _plot_by_folder(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) ->
     models_order = list(data.keys())
     styles = _compute_styles(models_order)
     n_models = len(models_order)
-    width = BAR_WIDTH
+    width = BAR_WIDTH / 5
 
     text_color = "#111111" if theme == "white" else "#F5F5F5"
     # match overall: white outline for hatching
@@ -242,7 +242,7 @@ def _plot_by_folder(data: Dict[str, pd.DataFrame], out_dir: Path, theme: str) ->
                 (bbox.xmin, bbox.ymin),
                 bbox.width,
                 bbox.height,
-                boxstyle="round,pad=0.02",
+                boxstyle="round,pad=0.00",
                 linewidth=1.0,
                 facecolor=color,
                 edgecolor=outline_color,
