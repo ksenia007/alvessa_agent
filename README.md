@@ -22,7 +22,7 @@
 
 ---
 
-Alvessa is a multi-agent framework that provides **verifiable, evidence-grounded answers** to genomics questions. Unlike general-purpose LLMs that can hallucinate identifiers or fabricate specifics, Alvessa enforces statement-level verification against retrieved database records, with feedback and explanations for each claim.
+Alvessa is a multi-agent framework that provides **verifiable, evidence-grounded answers** to genomics and drug target assessment questions. Unlike general-purpose LLMs that can hallucinate identifiers or fabricate specifics, Alvessa enforces statement-level verification against retrieved database records, with feedback and explanations for each claim.
 
 
 ## ✨ Key Features
