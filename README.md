@@ -6,6 +6,11 @@
 </h1>
 
 <p align="center">
+  <a href="https://alvessa.ai"><img src="https://img.shields.io/badge/🌐_Live_Demo-alvessa.ai-blue?style=for-the-badge" alt="Live Demo"/></a>
+  <a href="https://github.com/ksenia007/alvessa_agent/tree/main/tutorials"><img src="https://img.shields.io/badge/📚_Tutorials-GitHub-yellow?style=for-the-badge" alt="Tutorials"/></a>
+</p>
+
+<p align="center">
   <a href="#-key-features">Features</a> •
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-usage">Usage</a> •
@@ -18,6 +23,7 @@
 ---
 
 Alvessa is a multi-agent framework that provides **verifiable, evidence-grounded answers** to genomics questions. Unlike general-purpose LLMs that can hallucinate identifiers or fabricate specifics, Alvessa enforces statement-level verification against retrieved database records, with feedback and explanations for each claim.
+
 
 ## ✨ Key Features
 
