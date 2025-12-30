@@ -41,16 +41,15 @@ Alvessa is a multi-agent framework that provides **verifiable, evidence-grounded
 # Clone and install
 git clone https://github.com/ksenia007/alvessa_agent.git
 cd alvessa_agent
-
-# specify python
-pyenv install 3.10.9
-pyenv local 3.10.9  
+conda create -n agents python=3.10 -y
 conda activate agents
 pip install -e .
 
 # download and unzip local_dbs (45GB)
+cd local_dbs
 curl -O https://alvessa-public-access-bucket.s3.us-east-1.amazonaws.com/local_dbs.zip
 unzip local_dbs.zip
+cd ..
 
 # Set API keys
 export ANTHROPIC_API_KEY="your-key"
@@ -58,11 +57,9 @@ export BIOGRID_API_KEY="your-key"        # optional
 export DISGENET_API_KEY="your-key"       # optional
 
 # Launch the UI
-alvessa ui 8000
+alvessa ui
 # Open http://127.0.0.1:8000
 ```
-
-**Requirements:** Python 3.10+, local database files in `local_dbs/`
 
 ## 💻 Usage
 
