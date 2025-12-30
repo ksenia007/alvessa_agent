@@ -7,7 +7,6 @@ name = "alvessa-agent"
 version = "0.1.0"
 description = "Alvessa - An agentic evidence-grounded research assistant for genomics and drug target assessment."
 readme = "README.md"
-requires-python = ">=3.10"
 
 dependencies = [
   "anthropic==0.52.1",
@@ -22,7 +21,7 @@ dependencies = [
   "pytest==8.4.1",
   "requests==2.32.3",
   "scikit-learn==1.7.0",
-  "scipy==1.10.1",
+  "scipy==1.11.4",
   "seaborn==0.13.2",
   "statsmodels==0.14.0",
   "typing_extensions==4.13.2",
