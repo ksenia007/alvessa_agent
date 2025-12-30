@@ -41,6 +41,10 @@ Alvessa is a multi-agent framework that provides **verifiable, evidence-grounded
 # Clone and install
 git clone https://github.com/ksenia007/alvessa_agent.git
 cd alvessa_agent
+
+# specify python
+pyenv install 3.10.9
+pyenv local 3.10.9  
 conda activate agents
 pip install -e .
 
