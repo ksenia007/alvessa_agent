@@ -1,9 +1,5 @@
 """
-Author: Ksenia 
-Crated: 2025-11-24
-
-
-Description: 
+Description:
 
 Fetch alliance genome information"""
 

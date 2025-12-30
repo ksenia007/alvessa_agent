@@ -1,11 +1,5 @@
 """
-Author: Ksenia Sokolova <sokolova@princeton.edu>
-Contributors: 
-Created: 2024-06-25
-Updated: 2025-06-26
-
-
-Description: 
+Description:
 
 UniProt tool: fetch entry + extract disease / function / GO traits.
 """

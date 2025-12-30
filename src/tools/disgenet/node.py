@@ -1,11 +1,5 @@
 """
-Author: Keerthana Nallamotu <kn6412@princeton.edu>
-Contributors: 
-Created: 2024-11-12
-Updated: 2025-11-13
-
-
-Description: 
+Description:
 
 Tool to query DisGeNet annotations with a list of gene symbols"""
 

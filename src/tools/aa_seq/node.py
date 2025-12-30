@@ -3,9 +3,7 @@
 # AA Sequence-to-Gene Tool Node
 # ===========================================================
 #
-# Author: Dmitri Kosenkov
-# Created: 2025-11-25
-# Updated: 2025-11-25
+# Description:
 #
 # This node integrates the AA sequence resolver with the Alvessa
 # agent framework.

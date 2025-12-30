@@ -1,12 +1,6 @@
 
 """
-Author: Ksenia Sokolova <sokolova@princeton.edu>
-Contributors: 
-Created: 2025-09-07
-Updated: 
-
-
-Description: 
+Description:
 
 ReMap tool to get bindings in front of TSS """
 

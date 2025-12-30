@@ -1,11 +1,5 @@
 """
-Author: Keerthana Nallamotu <kn6412@princeton.edu>
-Contributors: 
-Created: 2024-08-21
-Updated: 2025-09-09
-
-
-Description: 
+Description:
 
 Tool to query miRDB with a list of miRNAs"""
 

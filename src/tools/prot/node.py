@@ -1,10 +1,9 @@
 # src/tools/prot/node.py
-# Author: Dmitri Kosenkov
-# Created: 2025-09-20
-# Updated: 2025-12-08
 """
 node.py
 =======
+
+Description:
 
 Main entry point for the protein visualization and summarization tool.
 Refactored from standalone tool_prot.py into the src.tools.prot package.

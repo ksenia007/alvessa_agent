@@ -1,11 +1,5 @@
 """
-Author: Ksenia Sokolova <sokolova@princeton.edu>
-Contributors: 
-Created: 2024-06-25
-Updated: 2025-08-10
-
-
-Description: 
+Description:
 
 Helpers to query HumanBase and MyGene.info. The latter is used to convert to entrez IDs, needed in HB"""
 

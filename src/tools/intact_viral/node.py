@@ -1,7 +1,7 @@
 """
 Annotate genes with host–virus interactions from IntAct (viral dataset with gene names).
 
-Reads local_dbs/intact_viral_with_genes.txt (PSI-MITAB style) and, for each gene in the state,
+Reads local_dbs/intact_viral_with_genes.txt and, for each gene in the state,
 finds rows where the gene symbol appears in Gene Names A or Gene Names B. For matching rows,
 emits a text summary listing the viral partner gene names (the opposite interactor) and taxid A/B.
 No structured data is stored; only text summaries with prefix *IntActViral: ...

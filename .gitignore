@@ -27,3 +27,5 @@ alvessa_agent.egg*
 benchmarks_generation/
 results/
 *.csv
+local_dbs_copy/
+temp/

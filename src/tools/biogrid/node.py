@@ -1,11 +1,5 @@
 """
-Author: Keerthana Nallamotu <kn6412@princeton.edu>
-Contributors: 
-Created: 2024-06-27
-Updated: 2025-09-12
-
-
-Description: 
+Description:
 
 Tool to query BioGRID interactions with a list of gene symbols"""
 

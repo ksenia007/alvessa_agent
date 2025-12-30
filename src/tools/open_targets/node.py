@@ -1,11 +1,5 @@
 """
-Author: Keerthana Nallamotu <kn6412@princeton.edu>
-Contributors: 
-Created: 2024-10-4
-Updated: 2025-10-6
-
-
-Description: 
+Description:
 
 Tool to query OpenTarget annotations with a list of gene symbols"""
 

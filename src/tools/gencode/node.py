@@ -1,11 +1,5 @@
 """
-Author: Ksenia Sokolova <sokolova@princeton.edu>
-Contributors: 
-Created: 2025-08-11
-Updated: 
-
-
-Description: 
+Description:
 
 Agent wrapper to annotate genes and variants with GENCODE features.
 """

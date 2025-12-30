@@ -2,9 +2,7 @@
 # ChEMBL Drug–Target Summarization and Visualization Tool
 # ===========================================================
 #
-# Author: Dmitri Kosenkov
-# Created: 2025-09-25
-# Updated: 2025-10-08
+# Description:
 #
 # This module queries a local ChEMBL v35+ database for drug–target evidence.
 # It summarizes FDA-approved, clinical, and bioactivity data per UniProt ID.

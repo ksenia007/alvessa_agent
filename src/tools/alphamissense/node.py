@@ -1,11 +1,5 @@
 """
-Author: Keerthana Nallamotu <kn6412@princeton.edu>
-Contributors: 
-Created: 2024-08-05
-Updated: 2025-08-10
-
-
-Description: 
+Description:
 
 Tool to extract AlphaMissense prediction for variants of interest"""
 

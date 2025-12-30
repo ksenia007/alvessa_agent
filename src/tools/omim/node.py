@@ -1,11 +1,5 @@
 """
-Author: Keerthana Nallamotu <kn6412@princeton.edu>
-Contributors: 
-Created: 2024-9-27
-Updated: 2025-10-10
-
-
-Description: 
+Description:
 
 Tool to query OMIM annotations with a list of gene symbols"""
 
