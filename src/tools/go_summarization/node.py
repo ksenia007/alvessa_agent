@@ -1,11 +1,5 @@
 """
-Author: Keerthana Nallamotu <kn6412@princeton.edu>
-Contributors: 
-Created: 2024-07-11
-Updated: 2025-07-14
-
-
-Description: 
+Description:
 Tool to summarize the GO terms associated with a list of genes"""
 
 from __future__ import annotations
@@ -116,7 +110,6 @@ def _load_enrichment(
 
 def summarize_biogrid_go_agent(state: "State") -> "State":
     """Run GO enrichment on BioGRID interactors for each gene."""
-
     gene_entities = state.get("gene_entities") or {}
     if not gene_entities:
         return

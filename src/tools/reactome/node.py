@@ -1,11 +1,5 @@
 """
-Author: Keerthana Nallamotu <kn6412@princeton.edu>
-Contributors: 
-Created: 2024-08-05
-Updated: 2025-08-05
-
-
-Description: 
+Description:
 
 Tool to query Reactome Pathways with a list of gene symbols"""
 

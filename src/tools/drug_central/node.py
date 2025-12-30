@@ -3,9 +3,7 @@
 # DrugCentral Drug-Target, Indication, and Safety Tool
 # ===========================================================
 #
-# Author: Dmitri Kosenkov
-# Created: 2025-11-17
-# Updated: 2025-12-02
+# Description:
 #
 # This module queries a local DrugCentral SQLite database for
 # drug-centric evidence: structure, regulatory status, targets,

@@ -1,11 +1,5 @@
 """
-Author: Ksenia Sokolova <sokolova@princeton.edu>
-Contributors: 
-Created: 2025-11-24
-Updated: 
-
-
-Description: 
+Description:
 
 ClinVar tools (gene-level diseases and variant summaries)
 

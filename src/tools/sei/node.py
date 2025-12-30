@@ -1,11 +1,5 @@
 """
-Author: Keerthana Nallamotu <kn6412@princeton.edu>
-Contributors: 
-Created: 2024-07-08
-Updated: 2025-07-08
-
-
-Description: 
+Description:
 
 Tool to run Sei model for variants of interest"""
 
