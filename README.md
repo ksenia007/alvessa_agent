@@ -38,6 +38,10 @@ cd alvessa_agent
 conda activate agents
 pip install -e .
 
+# download and unzip local_dbs (45GB)
+curl -O https://alvessa-public-access-bucket.s3.us-east-1.amazonaws.com/local_dbs.zip
+unzip local_dbs.zip
+
 # Set API keys
 export ANTHROPIC_API_KEY="your-key"
 export BIOGRID_API_KEY="your-key"        # optional
