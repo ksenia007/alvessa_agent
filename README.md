@@ -93,7 +93,7 @@ A curated benchmark of **720 multiple-choice questions** spanning:
 - Protein structure
 - Gene-phenotype associations
 
-GenomeArena can be downloaded from [here](https://alvessa-public-access-bucket.s3.us-east-1.amazonaws.com/GenomeArena.zip)
+GenomeArena can be downloaded from [here](https://alvessa-public-access-bucket.s3.us-east-1.amazonaws.com/GenomeArena.zip) and scripts used to generate the questions are available [here](https://github.com/ksenia007/alvessa_agent/tree/main/evals/generation)
 
 ## 💡 Contribute Questions
 
