@@ -8,6 +8,7 @@
 <p align="center">
   <a href="https://alvessa.ai"><img src="https://img.shields.io/badge/🌐_Live_Demo-alvessa.ai-blue?style=for-the-badge" alt="Live Demo"/></a>
   <a href="https://github.com/ksenia007/alvessa_agent/tree/main/tutorials"><img src="https://img.shields.io/badge/📚_Tutorials-GitHub-yellow?style=for-the-badge" alt="Tutorials"/></a>
+  <a href="https://www.biorxiv.org/content/10.64898/2025.12.30.697073v1"><img src="https://img.shields.io/badge/📄_Manuscript-BioRxiv-red?style=for-the-badge" alt="Manuscript"/></a>
 </p>
 
 <p align="center">
@@ -144,13 +145,16 @@ As well as structured entity artifacts:
 If you use Alvessa in your research, please cite:
 
 ```bibtex
-@article{TBD}
+@article{sokolova2025alvessa,
+  title   = {An Evidence-Grounded Research Assistant for Functional Genomics and Drug Target Assessment},
+  author  = {Sokolova, Ksenia and Kosenkov, Dmitri and Nallamotu, Keerthana and Vedula, Sanketh and Sokolov, Daniil and Sapiro, Guillermo and Troyanskaya, Olga G},
+  journal = {bioRxiv},
+  year    = {2025},
+  month   = dec,
+  doi     = {10.64898/2025.12.30.697073},
+  url     = {https://www.biorxiv.org/content/10.64898/2025.12.30.697073v1},
+}
 ```
-
-## 📜 License
-
-[License details here]
-
 ---
 
 <p align="center">
