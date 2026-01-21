@@ -12,12 +12,6 @@ The Protein Tool is a modular Alvessa component that:
 - Aggregates residue-level annotations into compact per-protein summaries
 - Produces both a **text summary** and a **Protein Structure** visualization panel
 
-The Protein Tool is designed to help answer questions such as:
-- “Assess druggability of EGFR”
-- “Where are the strongest predicted pockets in KRAS?”
-- “Are there ligandable cysteines near functional sites in PTPN1?”
-- “Does this protein have large disordered regions that may affect targeting?”
-
 ---
 
 ## When the Protein Tool Is Used
@@ -27,7 +21,6 @@ The **Protein Tool is invoked automatically** if Alvessa determines it is releva
 ### Example queries
 - “Assess druggability of EGFR”
 - “Analyze structural context of BRCA1”
-- “Show pockets and binding sites for MTOR”
 - “Find ligandable cysteines in KEAP1”
 - “Assess druggability of the protein with this amino acid sequence: PDLSAHNNHMAKVLTPELYAELRAKSTPSG"
 
