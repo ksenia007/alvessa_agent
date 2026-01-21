@@ -1,6 +1,6 @@
 # Protein Tool Tutorial
 
-This tutorial explains how to use and interpret the **Protein Tool** outputs in Alvessa. The Protein Tool integrates structure-based signals (AlphaFold), pocket-based druggability (FPocket), solvent exposure and polarity (FreeSASA), intrinsic disorder (IUPred3 + DisProt), MoRF propensity (ANCHOR2), and experimentally supported binding sites (BioLiP2). Where available, it also integrates cysteine chemoproteomics annotations (CysDB) aligned to UniProt residue numbering.
+This tutorial explains how to use and interpret the **Protein Tool** outputs in Alvessa. The Protein Tool integrates structure-based signals (AlphaFold), pocket-based druggability (FPocket), solvent exposure and polarity (FreeSASA), intrinsic disorder, MoRF propensity (IUPred3 + DisProt), and experimentally supported binding sites (BioLiP2). Where available, it also integrates cysteine chemoproteomics annotations (CysDB) aligned to UniProt residue numbering.
 
 ---
 
@@ -31,7 +31,7 @@ The **Protein Tool is invoked automatically** if Alvessa determines it is releva
 - “Find ligandable cysteines in KEAP1”
 - “Assess druggability of the protein with this amino acid sequence: PDLSAHNNHMAKVLTPELYAELRAKSTPSG"
 
-You can request analysis for any gene using its gene symbol (Entrez/UniProt-resolved) or a complete or partial amino acid sequence of the protein (typically 15–30 amino acids is sufficient). If a query contains multiple genes, the Protein Tool processes each gene independently.
+You can request analysis for any gene using its gene symbol (Entrez) or a complete or partial amino acid sequence of the protein (typically 15–30 amino acids is sufficient). If a query contains multiple genes, the Protein Tool processes each gene independently.
 
 ---
 
@@ -310,7 +310,7 @@ The Protein Tool provides a unified, residue-level view of:
 - **Pocket-based druggability** (FPocket)
 - **Cysteine chemoproteomics evidence** (CysDB)
 - **Solvent exposure** and **surface polarity** (FreeSASA)
-- **Intrinsic disorder** and **MoRF propensity** (IUPred3, DisProt, ANCHOR2)
+- **Intrinsic disorder** and **MoRF propensity** (IUPred3, DisProt)
 - **Experimental binding sites** (BioLiP2)
 
 Together, these overlays support structure-aware and chemistry-informed reasoning about where a protein is likely to be targetable, which residues are supported by experimental evidence, and which regions should be interpreted cautiously due to low confidence or intrinsic disorder.
