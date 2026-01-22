@@ -38,7 +38,7 @@ When the DrugCentral Tool runs, you will typically see:
 
 ### 1) Question and Text Summary
 
-<img src="img/drugcentral_text_summary_overview.png" alt="Question and text summary overview" width="50%">
+<img src="img/drugcentral_text_summary_overview.png" alt="Question and text summary overview" width="80%">
 
 *Question and text summary overview*
 
@@ -50,7 +50,7 @@ This section provides a **compact narrative overview** of each resolved drug, su
 
 ### 2) DrugCentral Data Panel Overview
 
-<img src="img/drugcentral_data_panel_overview.png" alt="DrugCentral Data Panel Overview" width="50%">
+<img src="img/drugcentral_data_panel_overview.png" alt="DrugCentral Data Panel Overview" width="80%">
 
 *DrugCentral Data Panel Overview*
 
@@ -71,7 +71,7 @@ Each section corresponds to curated tables in the DrugCentral database and can b
 
 ### 3) Overview and Structure Details
 
-<img src="img/drugcentral_overview_structure.png" alt="Overview and Structure" width="50%">
+<img src="img/drugcentral_overview_structure.png" alt="Overview and Structure" width="80%">
 
 *Overview and Structure*
 
@@ -97,7 +97,7 @@ This section defines the **chemical and identifier core** of the drug, including
 
 ### 4) Regulatory Status and Pharmaceutical Products
 
-<img src="img/drugcentral_regulatory_products.png" alt="Regulatory Status and Pharmaceutical Products" width="50%">
+<img src="img/drugcentral_regulatory_products.png" alt="Regulatory Status and Pharmaceutical Products" width="80%">
 
 *Regulatory Status and Pharmaceutical Products*
 
@@ -122,7 +122,7 @@ This section summarizes regulatory and product-level information, including:
 
 ### 5) Drug Use and Indications
 
-<img src="img/drugcentral_indications.png" alt="Drug Use and Indications" width="50%">
+<img src="img/drugcentral_indications.png" alt="Drug Use and Indications" width="80%">
 
 *Drug Use and Indications*
 
@@ -145,11 +145,11 @@ Lists therapeutic usage information, including:
 
 ### 6) Targets and Bioactivity
 
-<img src="img/drugcentral_targets_bioactivity_1.png" alt="Targets and Bioactivity: Bioactivity Summary" width="50%">
+<img src="img/drugcentral_targets_bioactivity_1.png" alt="Targets and Bioactivity: Bioactivity Summary" width="80%">
 
 *Targets and Bioactivity: Bioactivity Summary*
 
-<img src="img/drugcentral_targets_bioactivity_2.png" alt="Targets and Bioactivity: Pharmacologic Actions" width="50%">
+<img src="img/drugcentral_targets_bioactivity_2.png" alt="Targets and Bioactivity: Pharmacologic Actions" width="80%">
 
 *Targets and Bioactivity: Pharmacologic Actions*
 
@@ -182,7 +182,7 @@ Summarizes curated pharmacologic roles, such as:
 
 ### 7) Safety and Adverse Events
 
-<img src="img/drugcentral_safety_faers.png" alt="Safety and Adverse Events" width="50%">
+<img src="img/drugcentral_safety_faers.png" alt="Safety and Adverse Events" width="80%">
 
 *Safety and Adverse Events*
 
@@ -232,7 +232,7 @@ PTs indicate *reported adverse event concepts*, not confirmed diagnoses or causa
 
 ### 8) Cross References and Drug Classes
 
-<img src="img/drugcentral_crossrefs.png" alt="Cross References and Drug Classes" width="50%">
+<img src="img/drugcentral_crossrefs.png" alt="Cross References and Drug Classes" width="80%">
 
 *Cross References and Drug Classes*
 
