@@ -1,6 +1,6 @@
 # Protein Tool Tutorial
 
-This tutorial explains how to use and interpret the **Protein Tool** outputs in Alvessa. The Protein Tool integrates structure-based signals (AlphaFold), pocket-based druggability (FPocket), solvent exposure and polarity (FreeSASA), intrinsic disorder, MoRF propensity (IUPred3 + DisProt), and experimentally supported binding sites (BioLiP2). Where available, it also integrates cysteine chemoproteomics annotations (CysDB) aligned to UniProt residue numbering.
+This tutorial explains how to use and interpret the **Protein Tool** outputs in Alvessa. The Protein Tool integrates structure-based signals (AlphaFold), pocket-based druggability (FPocket), solvent exposure and polarity (FreeSASA), intrinsic disorder (IUPred3 + DisProt), MoRF propensity (ANCHOR2), and experimentally supported binding sites (BioLiP2). Where available, it also integrates cysteine chemoproteomics annotations (CysDB) aligned to UniProt residue numbering.
 
 ---
 
@@ -24,13 +24,13 @@ The **Protein Tool is invoked automatically** if Alvessa determines it is releva
 - “Find ligandable cysteines in KEAP1”
 - “Assess druggability of the protein with this amino acid sequence: PDLSAHNNHMAKVLTPELYAELRAKSTPSG"
 
-You can request analysis for any gene using its gene symbol (Entrez) or a complete or partial amino acid sequence of the protein (typically 15–30 amino acids is sufficient). If a query contains multiple genes, the Protein Tool processes each gene independently.
+You can request analysis for any gene using its gene symbol (Entrez/UniProt-resolved) or a complete or partial amino acid sequence of the protein (typically 15–30 amino acids is sufficient). If a query contains multiple genes, the Protein Tool processes each gene independently.
 
 ---
 
 ## Data Sources and Protein Inclusion Criteria
 
-Proteins are included in `alvessa_proteins.db` only if they satisfy all of the following:
+Proteins are included in the protein database only if they satisfy all of the following:
 - A defined **Entrez gene symbol**
 - A **UniProt accession**
 - Precomputed **FPocket** and **FreeSASA** parameters
@@ -47,7 +47,9 @@ When the Protein Tool runs, you will typically see:
 1. **Answer**  
    A text summary that includes interpretation notes, flags, and per-protein aggregated metrics. Similar to those provided on the figure below.
 
-![Answer section](img/protein_tool_outputs_text_summary_overview.png)
+<img src="img/protein_tool_outputs_text_summary_overview.png" alt="Answer section" width="50%">
+
+*Answer section*
 
 ---
 
@@ -64,7 +66,9 @@ When the Protein Tool runs, you will typically see:
 - **Structural Overlay:** dropdown  
   Selects which feature track is visualized on the structure.
 
-![Gene dropdown and Structural Overlay dropdown highlighted](img/protein_structure_panel_controls.png)
+<img src="img/protein_structure_panel_controls.png" alt="Gene dropdown and Structural Overlay dropdown highlighted" width="50%">
+
+*Gene dropdown and Structural Overlay dropdown highlighted*
 
 ---
 
@@ -86,7 +90,9 @@ Shows the raw protein structure without additional overlays.
 - Inspect overall fold and domain organization
 - Orient the structure before applying overlays
 
-![Protein Backbone Visualization](img/overlay_backbone.png)
+<img src="img/overlay_backbone.png" alt="Protein Backbone Visualization" width="50%">
+
+*Protein Backbone Visualization*
 
 ---
 
@@ -105,9 +111,12 @@ A low mean pLDDT flag appears in the summary when the average falls below 70.
 - Avoid over-interpreting predicted pockets in low-confidence regions
 - Distinguish structured domains from flexible tails/loops
 
-![Protein pLDDT Scores Visualization](img/overlay_plddt.png)
+<img src="img/overlay_plddt.png" alt="Protein pLDDT Scores Visualization" width="50%">
+
+*Protein pLDDT Scores Visualization*
 
 ---
+
 ### 3) Druggability (FPocket + CysDB)
 
 Displays per-residue **structural druggability** derived primarily from FPocket pocket predictions, with complementary chemoproteomics context from CysDB when available.
@@ -144,11 +153,13 @@ For CysDB, separate checkboxes allow you to visualize cysteine residues that are
 - Combine FPocket scores with pLDDT to focus on structurally confident, pocket-rich regions  
 - Integrate pocket predictions with CysDB cysteine annotations to prioritize chemically tractable and experimentally supported sites  
 
-![Per-residue FPocket druggability mapped onto the AlphaFold structure. CysDB cysteine annotations can be overlaid separately to highlight experimentally supported reactive or ligandable residues within predicted pockets.](img/overlay_fpocket_cysdb.png)
+<img src="img/overlay_fpocket_cysdb.png" alt="Per-residue FPocket druggability mapped onto the AlphaFold structure. CysDB cysteine annotations can be overlaid separately to highlight experimentally supported reactive or ligandable residues within predicted pockets." width="50%">
+
+*Per-residue FPocket druggability mapped onto the AlphaFold structure. CysDB cysteine annotations can be overlaid separately to highlight experimentally supported reactive or ligandable residues within predicted pockets.*
 
 ---
 
-Displays the protein’s solvent-accessible surface, colored by per-residue total **SASA** (solvent-accessible surface area, reported in Å² per residue), precomputed using FreeSASA and stored in `alvessa_proteins.db`.
+Displays the protein’s solvent-accessible surface, colored by per-residue total **SASA** (solvent-accessible surface area, reported in Å² per residue), precomputed using FreeSASA and stored in the local database.
 
 **Interpretation:**
 - Higher SASA indicates a more exposed residue  
@@ -160,9 +171,12 @@ Values are normalized for visualization, while raw summary statistics (minimum, 
 - Determine whether predicted pockets or functional residues are solvent-exposed  
 - Prioritize accessible residues for binding or reactivity hypotheses  
 
-![Per-residue solvent-accessible surface area (SASA) mapped onto the protein structure.](img/overlay_sasa.png)
+<img src="img/overlay_sasa.png" alt="Per-residue solvent-accessible surface area (SASA) mapped onto the protein structure." width="50%">
+
+*Per-residue solvent-accessible surface area (SASA) mapped onto the protein structure.*
 
 ---
+
 ### 5) Surface Polarity Index (FreeSASA)
 
 Displays a per-residue **surface polarity index** derived from the polar and apolar components of solvent-accessible surface area (SASA).
@@ -184,7 +198,9 @@ If Aₚ,ᵢ + Aₐ,ᵢ = 0 (buried residues), or if values are missing, the pola
 - Identify hydrophobic versus polar surface patches  
 - Add physicochemical context when evaluating pocket suitability  
 
-![Per-residue surface polarity index mapped onto the protein structure.](img/overlay_polarity_index.png)
+<img src="img/overlay_polarity_index.png" alt="Per-residue surface polarity index mapped onto the protein structure." width="50%">
+
+*Per-residue surface polarity index mapped onto the protein structure.*
 
 ---
 
@@ -210,9 +226,12 @@ All scores are aligned to UniProt residue numbers and scaled to **[0, 1]**.
 - Identify long disordered segments that may be difficult to target with structure-based approaches  
 - Avoid over-interpreting FPocket or surface features in regions likely to be unstructured  
 
-![Per-residue intrinsic disorder mapped onto the protein structure.](img/overlay_disorder.png)
+<img src="img/overlay_disorder.png" alt="Per-residue intrinsic disorder mapped onto the protein structure." width="50%">
+
+*Per-residue intrinsic disorder mapped onto the protein structure.*
 
 ---
+
 ### 7) Disorder MoRF Hotspot (ANCHOR2)
 
 Displays **MoRF (Molecular Recognition Feature) propensity**, computed using ANCHOR2. MoRFs are short segments within intrinsically disordered regions that are predicted to remain flexible on their own but may adopt a defined structure when they interact with a binding partner.
@@ -228,7 +247,9 @@ This view highlights residues that are likely involved in **transient, regulatio
 - Interpret binding and regulatory potential in otherwise disordered regions  
 - Complement FPocket analysis by revealing non-pocket-based interaction sites  
 
-![Per-residue MoRF propensity mapped onto the protein structure.](img/overlay_morf.png)
+<img src="img/overlay_morf.png" alt="Per-residue MoRF propensity mapped onto the protein structure." width="50%">
+
+*Per-residue MoRF propensity mapped onto the protein structure.*
 
 ---
 
@@ -254,7 +275,9 @@ When a ligand is selected, the corresponding **experimental PDB structure** is d
 - Distinguish known binding regions from purely computational hypotheses  
 - Inspect ligand-protein interactions observed in solved structures  
 
-![Experimentally supported BioLiP2 binding sites mapped onto the protein structure.](img/overlay_biolip2.png)
+<img src="img/overlay_biolip2.png" alt="Experimentally supported BioLiP2 binding sites mapped onto the protein structure." width="50%">
+
+*Experimentally supported BioLiP2 binding sites mapped onto the protein structure.*
 
 ---
 
@@ -282,7 +305,6 @@ A practical workflow for interpreting Protein Tool outputs:
 
 This stepwise approach helps prioritize structurally confident, experimentally supported, and chemically tractable regions for downstream analysis.
 
-
 ---
 
 ## Notes and Common Pitfalls
@@ -296,6 +318,7 @@ This stepwise approach helps prioritize structurally confident, experimentally s
 These considerations help avoid over-interpreting computational signals and support more reliable, structure-aware conclusions.
 
 ---
+
 ## Summary
 
 The Protein Tool provides a unified, residue-level view of:
@@ -303,7 +326,7 @@ The Protein Tool provides a unified, residue-level view of:
 - **Pocket-based druggability** (FPocket)
 - **Cysteine chemoproteomics evidence** (CysDB)
 - **Solvent exposure** and **surface polarity** (FreeSASA)
-- **Intrinsic disorder** and **MoRF propensity** (IUPred3, DisProt)
+- **Intrinsic disorder** and **MoRF propensity** (IUPred3, DisProt, ANCHOR2)
 - **Experimental binding sites** (BioLiP2)
 
 Together, these overlays support structure-aware and chemistry-informed reasoning about where a protein is likely to be targetable, which residues are supported by experimental evidence, and which regions should be interpreted cautiously due to low confidence or intrinsic disorder.
