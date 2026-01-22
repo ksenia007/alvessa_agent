@@ -48,7 +48,7 @@ When the ChEMBL Tool runs, you will typically see:
 
 ### 1) Question and Text Summary
 
-<img src="img/chembl_text_summary_overview.png" alt="Question and text summary overview" width="50%">
+<img src="img/chembl_text_summary_overview.png" alt="Question and text summary overview" width="80%">
 
 *Question and text summary overview*
 
@@ -61,7 +61,7 @@ The text summary provides a compact, agent-readable overview of drug–target ev
 
 ### 2) Gene-Centric Panel Overview
 
-<img src="img/chembl_gene_centric_panel.png" alt="ChEMBL gene-centric panel overview" width="50%">
+<img src="img/chembl_gene_centric_panel.png" alt="ChEMBL gene-centric panel overview" width="80%">
 
 *ChEMBL gene-centric panel overview*
 
@@ -78,7 +78,7 @@ Each section presents a different layer of drug–target evidence while maintain
 
 ### 3) FDA-Approved Drugs Panel
 
-<img src="img/chembl_fda_approved.png" alt="FDA-approved drugs targeting the selected gene panel" width="50%">
+<img src="img/chembl_fda_approved.png" alt="FDA-approved drugs targeting the selected gene panel" width="80%">
 
 *FDA-approved drugs targeting the selected gene panel*
 
@@ -102,7 +102,7 @@ To follow the link, click on the compound’s **2D structure** to select it, the
 
 ### 4) Clinical and Preclinical Trials Panel
 
-<img src="img/chembl_clinical_preclinical.png" alt="Clinical and preclinical compounds associated with the selected target" width="50%">
+<img src="img/chembl_clinical_preclinical.png" alt="Clinical and preclinical compounds associated with the selected target" width="80%">
 
 *Clinical and preclinical compounds associated with the selected target*
 
@@ -122,7 +122,7 @@ These entries help distinguish well-established targets from those that are acti
 
 ### 5) Bioactivity Evidence Panel
 
-<img src="img/chembl_bioactivity.png" alt="Assay-level bioactivity evidence for compounds targeting the selected gene" width="50%">
+<img src="img/chembl_bioactivity.png" alt="Assay-level bioactivity evidence for compounds targeting the selected gene" width="80%">
 
 *Assay-level bioactivity evidence for compounds targeting the selected gene*
 
@@ -136,7 +136,7 @@ For each compound, the strongest reported activity is displayed using:
 - **2D chemical structure**
 
 Here:
-- **IC₅₀** (half-maximal inhibitory concentration) is the concentration required to reduce target activity by 50% in an inhibition assay.
+- **IC₅₀** (half-maximal inhibitory concentration) is the concentration required to reduce target activity by 80% in an inhibition assay.
 - **Kᵢ** (inhibition constant) reflects binding affinity derived from equilibrium measurements and is often considered less assay-dependent than IC₅₀.
 - **EC₅₀** (half-maximal effective concentration) is the concentration required to achieve 50% of the maximal effect in activation or functional assays.
 - **n** indicates the number of independent assay measurements supporting the reported value.
