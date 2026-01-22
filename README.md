@@ -155,6 +155,18 @@ If you use Alvessa in your research, please cite:
   url     = {https://www.biorxiv.org/content/10.64898/2025.12.30.697073v1},
 }
 ```
+When results derived from specific resources are used in publications or downstream analyses, please also cite those primary databases directly, in accordance with their recommended citation policies.
+
+
+### License
+This project is released under the terms described in `LICENSE.pdf`.  
+Please note that Alvessa uses data from third-party databases, each of which is governed by its own license and usage terms. Users are responsible for complying with the licenses and citation requirements of all external resources used in their analyses.
+
+
+## 📧 Contact us
+If you have any questions, please email us at `info@alvessa.ai`
+
+
 ---
 
 <p align="center">
