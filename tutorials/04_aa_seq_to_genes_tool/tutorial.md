@@ -40,7 +40,7 @@ This is a short (10–amino acid) peptide corresponding to the extreme N-terminu
 
 When the tool is triggered, Alvessa first displays a **text-based answer summary** that interprets the sequence resolution results at a high level.
 
-<img src="img/aa_seq_text_summary_overview.png" alt="Question and text summary overview" width="50%">
+<img src="img/aa_seq_text_summary_overview.png" alt="Question and text summary overview" width="80%">
 
 *Question and text summary overview*
 
@@ -74,7 +74,7 @@ This summary is intended to answer the user’s question directly while flagging
 
 To inspect the matches in detail, the **AA Sequence Mapping (UniProt / Genes) panel** provides a structured, tabular view of all resolved UniProt hits.
 
-<img src="img/aa_sequence_mapping_panel_overview.png" alt="AA Sequence Mapping panel overview" width="50%">
+<img src="img/aa_sequence_mapping_panel_overview.png" alt="AA Sequence Mapping panel overview" width="80%">
 
 *AA Sequence Mapping panel overview*
 
@@ -88,7 +88,7 @@ This panel separates results into:
 
 When **TP53 (Entrez Gene ID: 7157)** is selected, the panel displays all UniProt accessions associated with this gene that match the query sequence.
 
-<img src="img/aa_sequence_gene_hits.png" alt="Mapped UniProt hits for TP53" width="50%">
+<img src="img/aa_sequence_gene_hits.png" alt="Mapped UniProt hits for TP53" width="80%">
 
 *Mapped UniProt hits for TP53*
 
@@ -122,7 +122,7 @@ Accordingly, the tool resolves the query confidently at the **gene level**, whil
 
 In addition to gene-associated hits, the panel may also display **UniProt accessions without gene annotation**.
 
-<img src="img/aa_sequence_no_gene_hits.png" alt="UniProt accessions without gene annotation" width="50%">
+<img src="img/aa_sequence_no_gene_hits.png" alt="UniProt accessions without gene annotation" width="80%">
 
 *UniProt accessions without gene annotation*
 
