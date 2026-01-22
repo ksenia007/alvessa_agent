@@ -47,7 +47,7 @@ When the Protein Tool runs, you will typically see:
 1. **Answer**  
    A text summary that includes interpretation notes, flags, and per-protein aggregated metrics. Similar to those provided on the figure below.
 
-<img src="img/protein_tool_outputs_text_summary_overview.png" alt="Answer section" width="50%">
+<img src="img/protein_tool_outputs_text_summary_overview.png" alt="Answer section" width="80%">
 
 *Answer section*
 
@@ -66,7 +66,7 @@ When the Protein Tool runs, you will typically see:
 - **Structural Overlay:** dropdown  
   Selects which feature track is visualized on the structure.
 
-<img src="img/protein_structure_panel_controls.png" alt="Gene dropdown and Structural Overlay dropdown highlighted" width="50%">
+<img src="img/protein_structure_panel_controls.png" alt="Gene dropdown and Structural Overlay dropdown highlighted" width="80%">
 
 *Gene dropdown and Structural Overlay dropdown highlighted*
 
@@ -90,7 +90,7 @@ Shows the raw protein structure without additional overlays.
 - Inspect overall fold and domain organization
 - Orient the structure before applying overlays
 
-<img src="img/overlay_backbone.png" alt="Protein Backbone Visualization" width="50%">
+<img src="img/overlay_backbone.png" alt="Protein Backbone Visualization" width="80%">
 
 *Protein Backbone Visualization*
 
@@ -111,7 +111,7 @@ A low mean pLDDT flag appears in the summary when the average falls below 70.
 - Avoid over-interpreting predicted pockets in low-confidence regions
 - Distinguish structured domains from flexible tails/loops
 
-<img src="img/overlay_plddt.png" alt="Protein pLDDT Scores Visualization" width="50%">
+<img src="img/overlay_plddt.png" alt="Protein pLDDT Scores Visualization" width="80%">
 
 *Protein pLDDT Scores Visualization*
 
@@ -153,7 +153,7 @@ For CysDB, separate checkboxes allow you to visualize cysteine residues that are
 - Combine FPocket scores with pLDDT to focus on structurally confident, pocket-rich regions  
 - Integrate pocket predictions with CysDB cysteine annotations to prioritize chemically tractable and experimentally supported sites  
 
-<img src="img/overlay_fpocket_cysdb.png" alt="Per-residue FPocket druggability mapped onto the AlphaFold structure. CysDB cysteine annotations can be overlaid separately to highlight experimentally supported reactive or ligandable residues within predicted pockets." width="50%">
+<img src="img/overlay_fpocket_cysdb.png" alt="Per-residue FPocket druggability mapped onto the AlphaFold structure. CysDB cysteine annotations can be overlaid separately to highlight experimentally supported reactive or ligandable residues within predicted pockets." width="80%">
 
 *Per-residue FPocket druggability mapped onto the AlphaFold structure. CysDB cysteine annotations can be overlaid separately to highlight experimentally supported reactive or ligandable residues within predicted pockets.*
 
@@ -171,7 +171,7 @@ Values are normalized for visualization, while raw summary statistics (minimum, 
 - Determine whether predicted pockets or functional residues are solvent-exposed  
 - Prioritize accessible residues for binding or reactivity hypotheses  
 
-<img src="img/overlay_sasa.png" alt="Per-residue solvent-accessible surface area (SASA) mapped onto the protein structure." width="50%">
+<img src="img/overlay_sasa.png" alt="Per-residue solvent-accessible surface area (SASA) mapped onto the protein structure." width="80%">
 
 *Per-residue solvent-accessible surface area (SASA) mapped onto the protein structure.*
 
@@ -198,7 +198,7 @@ If Aₚ,ᵢ + Aₐ,ᵢ = 0 (buried residues), or if values are missing, the pola
 - Identify hydrophobic versus polar surface patches  
 - Add physicochemical context when evaluating pocket suitability  
 
-<img src="img/overlay_polarity_index.png" alt="Per-residue surface polarity index mapped onto the protein structure." width="50%">
+<img src="img/overlay_polarity_index.png" alt="Per-residue surface polarity index mapped onto the protein structure." width="80%">
 
 *Per-residue surface polarity index mapped onto the protein structure.*
 
@@ -226,7 +226,7 @@ All scores are aligned to UniProt residue numbers and scaled to **[0, 1]**.
 - Identify long disordered segments that may be difficult to target with structure-based approaches  
 - Avoid over-interpreting FPocket or surface features in regions likely to be unstructured  
 
-<img src="img/overlay_disorder.png" alt="Per-residue intrinsic disorder mapped onto the protein structure." width="50%">
+<img src="img/overlay_disorder.png" alt="Per-residue intrinsic disorder mapped onto the protein structure." width="80%">
 
 *Per-residue intrinsic disorder mapped onto the protein structure.*
 
@@ -247,7 +247,7 @@ This view highlights residues that are likely involved in **transient, regulatio
 - Interpret binding and regulatory potential in otherwise disordered regions  
 - Complement FPocket analysis by revealing non-pocket-based interaction sites  
 
-<img src="img/overlay_morf.png" alt="Per-residue MoRF propensity mapped onto the protein structure." width="50%">
+<img src="img/overlay_morf.png" alt="Per-residue MoRF propensity mapped onto the protein structure." width="80%">
 
 *Per-residue MoRF propensity mapped onto the protein structure.*
 
@@ -275,7 +275,7 @@ When a ligand is selected, the corresponding **experimental PDB structure** is d
 - Distinguish known binding regions from purely computational hypotheses  
 - Inspect ligand-protein interactions observed in solved structures  
 
-<img src="img/overlay_biolip2.png" alt="Experimentally supported BioLiP2 binding sites mapped onto the protein structure." width="50%">
+<img src="img/overlay_biolip2.png" alt="Experimentally supported BioLiP2 binding sites mapped onto the protein structure." width="80%">
 
 *Experimentally supported BioLiP2 binding sites mapped onto the protein structure.*
 
