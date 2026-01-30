@@ -24,7 +24,7 @@ The **Protein Tool is invoked automatically** if Alvessa determines it is releva
 - “Find ligandable cysteines in KEAP1”
 - “Assess druggability of the protein with this amino acid sequence: PDLSAHNNHMAKVLTPELYAELRAKSTPSG"
 
-You can request analysis for any gene using its gene symbol (Entrez/UniProt-resolved) or a complete or partial amino acid sequence of the protein (typically 15–30 amino acids is sufficient). If a query contains multiple genes, the Protein Tool processes each gene independently.
+You can request analysis for any gene using its gene symbol (Entrez/UniProt-resolved) or a complete or partial amino acid sequence of the protein (typically 16–32 amino acids is sufficient). If a query contains multiple genes, the Protein Tool processes each gene independently.
 
 ---
 
