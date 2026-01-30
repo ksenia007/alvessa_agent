@@ -31,7 +31,7 @@ from src.tools.drug_central.drug_extraction import (
 # Amino acid recognition constants
 # ============================================================
 
-MIN_AA_LEN = 10
+MIN_AA_LEN = 16
 AA_CHARS = "ACDEFGHIKLMNPQRSTVWY"
 AA_SET = set(AA_CHARS + AA_CHARS.lower())
 
@@ -218,7 +218,7 @@ def _extract_candidate_sequences(text: str) -> List[str]:
     Rules:
       - AA sequences are contiguous runs of letters from the set:
           ACDEFGHIKLMNPQRSTVWY (case-insensitive).
-      - Minimum length: 10 characters.
+      - Minimum length: MIN_AA_LEN, currently 16 characters.
       - Handles:
           * Inline sequences (e.g., <sequence>MARLGN...</sequence>).
           * FASTA-style blocks (lines after '>' headers are joined).
