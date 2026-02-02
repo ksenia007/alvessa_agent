@@ -50,7 +50,11 @@ class GWASQueryEngine:
     @property
     def associations_df(self):
         if self._associations_df is None:
-            self._associations_df = pd.read_csv(self.associations_file, sep='\t', low_memory=False)
+            try:
+                self._associations_df = pd.read_csv(self.associations_file, sep='\t', low_memory=False)
+            except Exception as e:
+                warnings.warn(f"[GWAS] Failed to load GWAS data: {e}")
+                self._associations_df = pd.DataFrame()
         return self._associations_df
     
     def query_gene(self, gene_symbol: str, p_threshold: float = 5e-8, min_assoc: int = 1,

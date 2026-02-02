@@ -101,12 +101,17 @@ def miRDB_agent(state: "State") -> "State":
     #preds = state.get("mirDB_targets", {}).copy()
     gene_objs = state.get('gene_entities', {})
 
-    df = pd.read_csv(
-        'local_dbs/miRDB_v6.0_prediction_result.txt',
-        sep='\t',
-        header=None,
-        names=['miRNAID', 'geneID', 'confidence']
-    )
+    try:
+        df = pd.read_csv(
+            'local_dbs/miRDB_v6.0_prediction_result.txt',
+            sep='\t',
+            header=None,
+            names=['miRNAID', 'geneID', 'confidence']
+        )
+    except Exception as e:
+        if DEBUG:
+            print(f"[miRDB] Failed to load miRDB data: {e}")
+        return
 
     for gene in gene_objs.keys():
         if 'mir' not in gene.lower() and 'let' not in gene.lower() and 'lin' not in gene.lower():

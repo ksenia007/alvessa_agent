@@ -3,10 +3,6 @@
 #  AA Sequence / Gene Tool Package
 # ===========================================================
 #
-# Author: Dmitri Kosenkov
-# Created: 2025-11-20
-# Updated: 2025-11-25
-#
 # This package enables fast AA sequence-to-gene resolution
 # using a local copy of UniProtKB.
 #

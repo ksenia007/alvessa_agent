@@ -4,9 +4,6 @@
 # Indications, Safety, and UI Summaries
 # ===========================================================
 #
-# Author: Dmitri Kosenkov (patterned after chembl/utils.py)
-# Created: 2025-11-17
-#
 # This module exposes a DRY, high-level API over the local
 # Drug Central SQLite dump for use by the `drug_central` tool.
 #

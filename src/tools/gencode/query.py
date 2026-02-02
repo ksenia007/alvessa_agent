@@ -1,11 +1,6 @@
-""" 
-Author: Ksenia Sokolova <sokolova@princeton.edu>
-Contributors: 
-Created: 2025-08-11
-
+"""
 Description:
 Gencode GTF query tool: annotate variants with GTF features or get locations of genes
-
 """
 # %%
 import pandas as pd
@@ -16,7 +11,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 
 # Load expanded GTF
-gtf_df = pd.read_parquet("local_dbs/gencode.v48.expanded.parquet")
+try:
+    gtf_df = pd.read_parquet("local_dbs/gencode.v48.expanded.parquet")
+except Exception as e:
+    print(f"[Gencode] Failed to load Gencode data: {e}")
+    gtf_df = pd.DataFrame()
 
 FEATURES_TO_FLAG = ["gene", "transcript", "exon", "CDS", "UTR", "start_codon", "stop_codon"]
 

@@ -1,8 +1,4 @@
 # src/tools/prot/tool_prot_plddt.py
-# Author: Dmitri Kosenkov
-# Created: 2025-08-25
-# Updated: 2025-09-18
-#
 # pLDDT-specific data retrieval and normalization.
 
 from typing import Optional, Dict, List, Tuple

@@ -1,8 +1,4 @@
 # src/tools/prot/tool_prot_sasa_pi.py
-# Author: Dmitri Kosenkov
-# Created: 2025-08-25
-# Updated: 2025-09-18
-#
 # SASA, Polarity Index (PI), and residue label retrieval and normalization.
 # ASCII-only. No omissions.
 

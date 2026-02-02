@@ -1,7 +1,4 @@
 # src/tools/prot/cysdb.py
-# Author: Dmitri Kosenkov
-# Created: 2025-12-08
-#
 # CysDB cysteine chemoproteomics and functional context loader.
 #
 # Table: data_cys_db_residues
