@@ -29,3 +29,4 @@ results/
 *.csv
 local_dbs_copy/
 temp/
+paper/

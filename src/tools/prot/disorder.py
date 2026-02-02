@@ -1,8 +1,4 @@
 # src/tools/prot/disorder.py
-# Author: Dmitri Kosenkov
-# Created: 2025-09-25
-# Updated: 2025-09-27
-#
 # Consensus disorder analysis manager.
 # Uses IUPred3 (short/long) + DisProt regions.
 # MoRF propensity from IUPred3 ANCHOR2 predictions.

@@ -37,7 +37,12 @@ def omim_agent(state: "State") -> "State":
     """
     gene_entities = state.get("gene_entities") or {}
 
-    omim_df = pd.read_csv(OMIM, sep = '\t', comment='#', header=None, names = ['Chromosome','Genomic Position Start','Genomic Position End','Cyto Location','Computed Cyto Location','MIM Number','Gene/Locus And Other Related Symbols','Gene Name','Approved Gene Symbol','Entrez Gene ID','Ensembl Gene ID','Comments','Phenotypes','Mouse Gene Symbol/ID'])
+    try:
+        omim_df = pd.read_csv(OMIM, sep = '\t', comment='#', header=None, names = ['Chromosome','Genomic Position Start','Genomic Position End','Cyto Location','Computed Cyto Location','MIM Number','Gene/Locus And Other Related Symbols','Gene Name','Approved Gene Symbol','Entrez Gene ID','Ensembl Gene ID','Comments','Phenotypes','Mouse Gene Symbol/ID'])
+    except Exception as e:
+        if DEBUG:
+            print(f"[OMIM] Failed to load OMIM data: {e}")
+        return
 
     # Fixing weird formatting they have for phenotypes
     pattern = r'(, \d+ \(\d+\))|(\s\(\d+\))'

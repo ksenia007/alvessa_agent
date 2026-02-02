@@ -1,8 +1,4 @@
 # src/tools/prot/utils.py
-# Author: Dmitri Kosenkov
-# Created: 2025-09-20
-# Updated: 2025-12-08
-#
 # Shared utilities for the agentic protein visualization tool.
 
 import json

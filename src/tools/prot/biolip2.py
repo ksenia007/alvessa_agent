@@ -1,8 +1,4 @@
 # src/tools/prot/biolip2.py
-# Author: Dmitri Kosenkov
-# Created: 2025-09-28
-# Updated: 2025-10-01
-#
 # BioLiP2 + ChEMBL evidence manager.
 # Exports ligand-binding evidence per UniProt ID.
 

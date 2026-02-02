@@ -3,10 +3,6 @@
 # OpenFDA Black-Box Warning Fetcher for ChEMBL Molecules
 # ===========================================================
 #
-# Author: Dmitri Kosenkov
-# Created: 2025-10-09
-# Updated: 2025-10-09 (refined caching, fallback, DailyMed URL)
-#
 # Provides a simple API and CLI tool for retrieving FDA
 # boxed (black-box) warning text for a given preferred drug
 # name (pref_name) using the openFDA drug labeling API.

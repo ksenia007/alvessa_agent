@@ -3,10 +3,6 @@
 # ChEMBL Drug-Target Evidence Utilities with OpenFDA Integration
 # ===========================================================
 #
-# Author: Dmitri Kosenkov
-# Created: 2025-09-25
-# Updated: 2025-12-01
-#
 # Extends core ChEMBL utilities with OpenFDA black-box text retrieval.
 # Adds black_box_text and black_box_url fields for frontend integration.
 #

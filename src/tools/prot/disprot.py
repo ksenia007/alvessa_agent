@@ -1,8 +1,4 @@
 # src/tools/prot/disprot.py
-# Author: Dmitri Kosenkov
-# Created: 2025-09-23
-# Updated: 2025-09-27
-#
 # DisProt data parser, query helpers, and CLI testing harness.
 
 import sys

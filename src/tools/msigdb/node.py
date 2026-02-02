@@ -49,8 +49,13 @@ def msigdb_agent(state: "State") -> "State":
     """
     gene_entities = state.get("gene_entities") or {}
 
-    with open(MSIGDB, "r") as file:
-        msigdata = json.load(file)
+    try:
+        with open(MSIGDB, "r") as file:
+            msigdata = json.load(file)
+    except Exception as e:
+        if DEBUG:
+            print(f"[MSigDB] Failed to load MSigDB data: {e}")
+        return
 
     for gene_name, gene in gene_entities.items():
         if not gene_name or gene_name not in msigdata:
