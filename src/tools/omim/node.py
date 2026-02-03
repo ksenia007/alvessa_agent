@@ -18,7 +18,7 @@ DEBUG = True
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 LOCAL_DBS = REPO_ROOT / "local_dbs"
-OMIM = LOCAL_DBS / "genemap2.txt"
+OMIM = LOCAL_DBS / "omim_genemap2.txt"
 
 def omim_agent(state: "State") -> "State":
     """
