@@ -1,0 +1,9 @@
+Instructions to download and parse MSigDB data for use in Alvessa:
+
+In order to get access to MSigDB downloadable gene set data will need to register at this link: https://www.gsea-msigdb.org/gsea/login.jsp. 
+Once you have access to download the data, you should download the 'Human Gene Set JSON file set (ZIPped)' folder. 
+Out of this folder, extract the full MSigDB annotations file (it should be formatted similar to 'msigdb.v2026.1.Hs.json') and place in the 'local_dbs' folder.
+Run the following command to preprocess the MSigDB data:
+    python process_msigdb.py name_of_your_full_MSigDB_annotation_file
+You should now be able to run the OMIM tool through Alvessa.
+
