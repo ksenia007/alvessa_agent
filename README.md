@@ -56,13 +56,29 @@ cd ..
 export ANTHROPIC_API_KEY="your-key"
 export BIOGRID_API_KEY="your-key"        # optional
 export DISGENET_API_KEY="your-key"       # optional
+```
+Some tools rely on databases that require separate registration and local downloads due to licensing restrictions. These resources are optional and only needed if you plan to use the corresponding tools.
 
+**OMIM.**
+Access to OMIM downloadable data requires registration at [https://www.omim.org/downloads](https://www.omim.org/downloads). Once access is granted, download the file `genemap2.txt` and place it directly into the `local_dbs/` folder. No additional preprocessing is required.
+
+**MSigDB.**
+Access to MSigDB gene set data requires registration at [https://www.gsea-msigdb.org/gsea/login.jsp](https://www.gsea-msigdb.org/gsea/login.jsp). Download the “Human Gene Set JSON file set (ZIP)”, extract the archive, and locate the full MSigDB annotation JSON (e.g. `msigdb.v2026.1.Hs.json`). Copy this file into the `local_dbs/` folder, then run the preprocessing step below to enable MSigDB-based tools:
+
+```bash
+cd src/tools/msigdb
+python process_msigdb.py file_name
+```
+
+
+## 💻 Usage
+
+To run Alvessa in UI mode:
+```
 # Launch the UI
 alvessa ui
 # Open http://127.0.0.1:8000
 ```
-
-## 💻 Usage
 
 ### CLI Commands
 
